@@ -1,0 +1,12 @@
+/* All refinements in this file are phone-only. Desktop is the captured baseline. */
+@media(max-width:767px) {
+ .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {padding:0 0 var(--mobile-bottom);}
+ .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {position:static;flex:0 0 var(--mobile-top);width:100%;transition:none;}
+ .tj-root.tj-root.tj-root.tj-root .tj-content-inner>*,.tj-root.tj-root.tj-root.tj-root .tj-card>* {min-width:0;max-width:100%;}
+ .tj-root.tj-root.tj-root.tj-root :is(button,a[href],[role="button"],[role="tab"],[role="switch"]) {min-height:44px!important;}
+ .tj-root.tj-root.tj-root.tj-root :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,.tj-picker-trigger) {min-height:48px!important;max-width:100%;min-width:0;}
+ .tj-root.tj-root.tj-root.tj-root :is(p,.tj-muted-txt) {overflow-wrap:anywhere;}
+ .tj-root.tj-root.tj-root.tj-root :is(.tj-page-transition,.tj-content-inner,.tj-modal,.tj-mobile-sheet,.tj-card) {transform:none!important;filter:none!important;backdrop-filter:none!important;}
+ .tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom::before {content:'';position:absolute;bottom:100%;left:0;right:0;height:24px;pointer-events:none;background:linear-gradient(to top,var(--tj-bg),transparent);}
+ [data-scroll-row="true"] {max-width:100%;min-width:0;overscroll-behavior-x:contain;}
+}

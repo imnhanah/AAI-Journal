@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {ownedStoragePaths} from '../_shared/deleteProfileStorage.js';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,11 +14,9 @@ async function removeOwnedStorage(service: ReturnType<typeof createClient>, user
   const { data: buckets, error } = await service.storage.listBuckets();
   if (error) throw error;
   for (const bucket of buckets || []) {
-    const { data: objects, error: listError } = await service.storage.from(bucket.name).list('', { limit: 1000 });
-    if (listError) throw listError;
-    const paths = (objects || []).filter((object: any) => object.metadata?.owner === userId || object.owner === userId).map((object) => object.name);
-    if (paths.length) {
-      const { error: removeError } = await service.storage.from(bucket.name).remove(paths);
+    const paths = await ownedStoragePaths(service.storage, bucket.name, userId);
+    for (let offset = 0; offset < paths.length; offset += 100) {
+      const { error: removeError } = await service.storage.from(bucket.name).remove(paths.slice(offset, offset + 100));
       if (removeError) throw removeError;
     }
   }
@@ -33,12 +32,14 @@ Deno.serve(async (request) => {
   if (!url || !anonKey || !serviceKey) return reply({ error: "Profile deletion is not configured on the server." }, 500);
 
   const body = await request.json().catch(() => ({}));
-  if (body.confirmation !== "DELETE") return reply({ error: "Confirmation is required." }, 400);
 
   const authorization = request.headers.get("Authorization") || "";
   const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } } });
   const { data: { user }, error: userError } = await userClient.auth.getUser();
   if (userError || !user) return reply({ error: "Sign in again before deleting your profile." }, 401);
+  // Non-destructive readiness probe used before enabling the confirmation UI.
+  if (body.action === 'check') return reply({ready:true});
+  if (body.confirmation !== "DELETE") return reply({ error: "Confirmation is required." }, 400);
 
   try {
     const service = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CHALLENGE_PLAN as plan, STREAK_CHALLENGE_PLAN, emptyChallenge, changeChallengeStatus as change } from './challengeModel.js';
-import { buildChallengePlan, isChallengeEnabled } from './challengeModel.js';
+import { CHALLENGE_PLAN as plan, STREAK_CHALLENGE_PLAN, FIXED_CHALLENGE_MAX_LEVEL, emptyChallenge, changeChallengeStatus as change, challengeModeActivationRule } from './challengeModel.js';
+import { buildChallengePlan, isChallengeEnabled, challengeFailureFloor } from './challengeModel.js';
 
 test('Custom deposit preserves the original ladder; absent balance keeps challenge off', () => {
   for (const value of [1, 100, 1000, 12.5]) {
@@ -15,6 +15,16 @@ test('Custom deposit preserves the original ladder; absent balance keeps challen
   }
   assert.equal(isChallengeEnabled({ challengeEnabled: false, challengeStartingBalance: 100 }), false);
   assert.equal(isChallengeEnabled({ challengeEnabled: true, challengeStartingBalance: 100 }), true);
+});
+test('Adaptive Balance compounds from the chosen Level 1 balance and has its own drawdown floor', () => {
+  const plan=buildChallengePlan(100,'adaptive',10,3,{adaptiveRiskPct:2,adaptiveDrawdownPct:10});
+  assert.equal(plan.length,10);
+  assert.deepEqual(plan[0],{level:1,start:100,risk:2,profit:6,end:106,lots:0,tp:3,sl:0,riskPct:2,profitPct:6});
+  assert.equal(plan[1].start,106);
+  assert.equal(plan[1].risk,2.12);
+  assert.equal(plan[1].end,112.36);
+  assert.equal(challengeFailureFloor(100,'adaptive',{adaptiveDrawdownPct:10}),90);
+  assert.equal(challengeFailureFloor(100,'risk',{}),20);
 });
 test('Passing level five completes all preceding levels without discarding notes', () => {
   const original = { ...emptyChallenge(), notes: { 2: 'Keep my note' } };
@@ -54,6 +64,20 @@ test('Mode 2 retains the old risk, stop-loss and lot ladder but uses 3.1R profit
   assert.equal(streak[1].start, 33.95);
   assert.equal(streak.at(-1).end, 124939.15);
   assert.deepEqual(streak, STREAK_CHALLENGE_PLAN);
+});
+test('fixed modes are available through Level 24 and require Adaptive Balance above it', () => {
+  assert.equal(FIXED_CHALLENGE_MAX_LEVEL, 24);
+
+  for (const [mode, reward] of [['risk', 1.5], ['streak', 2.8]]) {
+    const level24Start = buildChallengePlan(20, mode, 30, reward)[FIXED_CHALLENGE_MAX_LEVEL - 1].start;
+
+    assert.equal(challengeModeActivationRule({ mode, reward, balance: level24Start }), null);
+
+    const result = challengeModeActivationRule({ mode, reward, balance: level24Start + 0.01 });
+    assert.equal(result.kind, 'balance');
+    assert.equal(result.ceiling, level24Start);
+    assert.match(result.message, /Level 24/);
+  }
 });
 test('Pass advances, step back reactivates previous level without changing plan', () => {
   let state = change(emptyChallenge(), 1, 'Pass');

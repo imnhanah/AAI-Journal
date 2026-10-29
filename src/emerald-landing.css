@@ -1,0 +1,149 @@
+/* Emerald Studio is public-site-only: journal layouts and financial colours are untouched. */
+.public-site.pub-emerald-site{--elm-tint:color-mix(in srgb,var(--pub-green) 7%,var(--pub-panel));--elm-shadow:color-mix(in srgb,var(--pub-green) 10%,transparent)}
+/* The public light palette needs quieter structure: hierarchy should come from
+   spacing and type, not hard, dashboard-like outlines around every surface. */
+.public-site.pub-emerald-site.public-light{--pub-line:color-mix(in srgb,var(--pub-text) 11%,transparent)}
+.pub-emerald-site .pub-header{padding-inline:max(24px,calc((100% - 1320px)/2));gap:24px;min-height:88px;height:auto;padding-block:16px;background:var(--pub-bg)}
+.pub-emerald-site .pub-brand{letter-spacing:.07em;font-size:18px;gap:9px}
+.pub-emerald-site .pub-brand-mark{width:36px;height:36px;border-radius:0}
+.pub-emerald-site .pub-header nav{gap:24px;flex-wrap:wrap;justify-content:flex-end}
+.pub-emerald-site .pub-header nav>button{min-height:44px}
+.pub-emerald-site .pub-header .pub-theme{width:44px;height:44px;flex:none}
+.pub-emerald-site .pub-language{min-width:0}
+.pub-emerald-site .pub-container{width:min(1240px,calc(100% - 64px))}
+.pub-emerald-site .pub-lightbox img{max-height:calc(100dvh - 80px)}
+.emerald-landing{isolation:isolate}
+.emerald-landing *{min-width:0}
+.emerald-landing h1,.emerald-landing h2,.emerald-landing h3{color:var(--pub-text);text-wrap:balance}
+.emerald-landing h2{font-size:clamp(28px,3.2vw,44px);line-height:1.15;letter-spacing:-.045em;margin:15px 0 18px;font-weight:650}
+.emerald-landing p{font-size:16px;line-height:1.75;color:var(--pub-muted)}
+.emerald-landing .pub-eyebrow{font-size:12px;letter-spacing:.13em;line-height:1.6}
+.emerald-landing button{font:inherit}
+.emerald-landing .elm-hero{position:relative;padding-top:80px;padding-bottom:50px;text-align:center}
+.elm-hero::before{content:'';position:absolute;inset:0 -20px 10%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,var(--elm-shadow),transparent 70%)}
+.elm-live-dot{display:inline-block;vertical-align:middle;width:6px;height:6px;background:var(--pub-green);border-radius:50%;margin-inline-end:8px}
+.elm-hero h1{font-size:clamp(48px,6.4vw,90px);line-height:1.02;letter-spacing:-.065em;margin:22px 0;font-weight:650}
+.elm-hero h1>span,.elm-closing h2>span{color:var(--pub-green)}
+.elm-hero>p{max-width:560px;margin:24px auto 28px;font-size:18px;line-height:1.65}
+.elm-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.pub-emerald-site .elm-primary,.pub-emerald-site .elm-secondary{display:inline-flex;gap:14px;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border-radius:8px;font-size:14px;line-height:1.4;font-weight:600;text-align:center;text-decoration:none}
+.pub-emerald-site .elm-primary{border:1px solid var(--pub-green);background:var(--pub-green);color:var(--color-ink-283)}
+.pub-emerald-site .elm-secondary{border:1px solid var(--pub-line);background:var(--pub-panel);color:var(--pub-text)}
+.elm-primary svg,.elm-secondary svg{flex:none}
+.elm-primary:hover{box-shadow:0 4px 24px var(--elm-shadow)}
+.elm-secondary:hover{border-color:var(--pub-green)}
+.elm-assurance{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px 24px;margin:22px 0 42px;font-size:12px;color:var(--pub-muted)}
+.elm-assurance>span{display:flex;gap:6px;align-items:center}
+.elm-assurance svg{color:var(--pub-green);flex:none}
+.elm-hero-product{margin:0 auto;max-width:1136px;padding:8px 8px 0;border:1px solid color-mix(in srgb,var(--pub-green) 24%,var(--pub-line));border-radius:16px;background:var(--pub-panel);box-shadow:0 28px 80px var(--elm-shadow)}
+.pub-emerald-site .pub-screen{background:var(--pub-panel);box-shadow:none;border:0;padding:0;border-radius:10px;overflow:hidden;transition:none}
+.pub-emerald-site .pub-screen img{width:100%;height:auto;border-radius:10px;transform:none!important;transition:none;display:block}
+.pub-emerald-site .pub-screen:hover,.pub-emerald-site .pub-screen:focus-visible{box-shadow:none}
+.pub-emerald-site .pub-enlarge{opacity:1;right:12px;bottom:12px;min-height:36px;pointer-events:none;background:var(--pub-panel);color:var(--pub-text);border:1px solid var(--pub-line);border-radius:6px;max-width:calc(100% - 24px);font-size:12px}
+.elm-hero-product figcaption{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;padding:14px 10px;color:var(--pub-muted);font-size:12px;text-align:start}
+.elm-hero-product figcaption>span:first-child{color:var(--pub-green);letter-spacing:.09em}
+.elm-principles{border-block:1px solid var(--pub-line)}
+.elm-principles>.pub-container{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding-block:26px}
+.elm-principles .pub-container>div{display:flex;gap:12px;align-items:center;justify-content:center;font-size:14px}
+.elm-principles svg{color:var(--pub-green);flex:none}
+.elm-showcase,.elm-toolkit,.elm-faq{padding-block:80px}
+.elm-section-heading{display:flex;align-items:end;justify-content:space-between;gap:35px;margin-bottom:32px}
+.elm-section-heading>div{flex:1}
+.elm-section-heading>p{max-width:340px;margin:0 0 18px;font-size:14px}
+.elm-section-heading h2{margin-bottom:0}
+.elm-section-heading h2>span{color:var(--pub-muted)}
+.elm-workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.elm-workspace-tabs>button{border:1px solid var(--pub-line);background:transparent;color:var(--pub-muted);min-height:44px;border-radius:8px;padding:10px 18px;font-size:14px}
+.elm-workspace-tabs>button[aria-selected=true]{background:var(--elm-tint);color:var(--pub-green);border-color:color-mix(in srgb,var(--pub-green) 42%,var(--pub-line))}
+.elm-workspace-tabs>button:hover{color:var(--pub-text)}
+.elm-product-panel{padding:8px;border:1px solid var(--pub-line);background:var(--pub-panel);border-radius:14px}
+.elm-product-panel>header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 14px 20px}
+.elm-product-panel h3{font-size:17px;letter-spacing:-.02em;margin:0;line-height:1.4}
+.elm-product-panel>header>span{color:var(--pub-muted);font-size:12px;white-space:nowrap}
+.elm-product-panel>p{margin:16px 14px;font-size:14px;max-width:850px}
+.elm-toolkit{padding-top:10px}
+.elm-bento{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.elm-bento>article{padding:28px;border:1px solid var(--pub-line);border-radius:14px;background:var(--pub-panel);display:flex;flex-direction:column;align-items:flex-start}
+.elm-bento>article.elm-bento-lead{grid-row:span 2;background:linear-gradient(140deg,var(--elm-tint),var(--pub-panel))}
+.elm-bento>article.elm-news-feature{grid-column:span 2}
+.elm-icon{display:inline-grid;place-items:center;color:var(--pub-green);background:var(--elm-tint);width:42px;height:42px;border-radius:12px;margin-bottom:28px}
+.elm-bento .pub-eyebrow{font-size:12px;color:var(--pub-muted);letter-spacing:.1em}
+.elm-bento h3{font-size:23px;line-height:1.3;letter-spacing:-.035em;margin:12px 0 0;font-weight:600}
+.elm-bento p{font-size:14px;line-height:1.75;margin:14px 0 24px}
+.elm-bento-lead h3{font-size:30px}
+.elm-detail-lines{display:grid;gap:16px;margin:16px 0 30px;color:var(--pub-muted);font-size:14px}
+.elm-detail-lines>span{display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+.elm-detail-lines svg{flex:none;color:var(--pub-green);margin-top:3px}
+.pub-emerald-site .elm-text-link{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:44px;padding:8px 0;color:var(--pub-green);background:none;border:0;margin-top:auto;font-size:14px;font-weight:600}
+.elm-routine-example{width:100%;display:grid;border-top:1px solid var(--pub-line);padding-top:6px;gap:0;font-size:13px}
+.elm-routine-example>span{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--pub-line);padding:10px 0}
+.elm-routine-example svg{color:var(--pub-green);flex:none}
+.elm-open-circle{width:13px;height:13px;border:1px solid var(--pub-muted);border-radius:50%;margin-inline:1px}
+.elm-workflow{padding-block:72px;background:var(--elm-tint);border-block:1px solid var(--pub-line)}
+.elm-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px;margin-top:36px}
+.elm-steps article{border-top:1px solid var(--pub-line);padding-top:22px}
+.elm-steps article>div{display:flex;justify-content:space-between;align-items:center;color:var(--pub-green);font-size:14px;letter-spacing:.08em}
+.elm-steps h3{font-size:23px;letter-spacing:-.03em;line-height:1.3;margin:22px 0 12px}
+.elm-steps p{font-size:14px;max-width:320px}
+.elm-review-story{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:60px;align-items:center;padding-block:90px;border-bottom:1px solid var(--pub-line)}
+.elm-review-story>div>p{font-size:15px}
+.elm-faq .pub-faq-list{max-width:none}
+.elm-faq summary{min-height:60px}
+.elm-closing{padding:75px 0 85px;text-align:center;background:radial-gradient(ellipse at 50% 80%,var(--elm-shadow),transparent 65%);border-top:1px solid var(--pub-line)}
+.elm-closing h2{font-size:clamp(32px,4vw,54px);margin-block:20px}
+.elm-closing p{margin:22px 0 28px}
+.pub-emerald-site .elm-footer{padding-top:36px;margin-top:0}
+.elm-footer>small{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;line-height:1.6}
+.elm-footer nav>button{min-height:44px}
+@media(min-width:768px) and (prefers-reduced-motion:no-preference){.elm-hero-product{animation:elm-product-reveal .65s ease-out both}@keyframes elm-product-reveal{from{opacity:.5}to{opacity:1}}}
+@media(max-width:1000px){.pub-emerald-site .pub-header{gap:12px}.pub-emerald-site .pub-header nav{gap:12px}.elm-bento>article{padding:22px}.elm-review-story{gap:30px}.elm-bento h3{font-size:21px}.elm-bento-lead h3{font-size:26px}.elm-section-heading>p{max-width:290px}}
+@media(max-width:767px){
+ .pub-emerald-site .pub-container{width:calc(100% - 32px)}
+ .pub-emerald-site .pub-header{position:relative;min-height:74px;padding:14px 16px;gap:12px;align-items:center}
+ .pub-emerald-site .pub-header>a{flex:1}
+ .pub-emerald-site .pub-header nav{width:100%;gap:6px 14px;justify-content:flex-start;flex-wrap:wrap;font-size:13px}
+ .pub-emerald-site .pub-header .pub-brand{font-size:16px}
+ .pub-emerald-site .pub-header nav>*{min-height:44px}
+ .pub-emerald-site .pub-header nav>.pub-language{flex:1;min-width:100px;max-width:150px}
+ .pub-emerald-site .pub-header .pub-language .tj-picker-trigger{min-height:44px;max-width:100%;width:100%}
+ .pub-emerald-site .pub-header .pub-signup{padding:10px 12px}
+ .pub-emerald-site section[id]{scroll-margin-top:24px}
+ .emerald-landing .elm-hero{padding-top:46px;padding-bottom:30px;text-align:start}
+ .elm-hero::before{inset:0 0 10%}
+ .elm-hero h1{font-size:clamp(46px,12vw,70px);letter-spacing:-.06em;margin-block:20px}
+ .elm-hero>p{font-size:16px;line-height:1.7;margin:22px 0 26px}
+ .elm-actions{justify-content:flex-start;gap:10px}
+ .pub-emerald-site .elm-primary,.pub-emerald-site .elm-secondary{font-size:13px;padding:12px 15px;gap:8px;min-height:48px}
+ .elm-assurance{justify-content:flex-start;gap:12px 18px;margin:20px 0 28px}
+ .elm-hero-product{padding:4px 4px 0;border-radius:12px}
+ .elm-hero-product figcaption{font-size:12px;padding:12px 8px}
+ .elm-hero-product figcaption>span:first-child{display:none}
+ .elm-principles>.pub-container{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px;padding-block:24px}
+ .elm-principles .pub-container>div{justify-content:flex-start;gap:8px;font-size:12px}
+ .elm-section-heading{display:block;margin-bottom:24px}
+ .elm-section-heading>p{max-width:none;margin:20px 0 0}
+ .elm-showcase,.elm-faq{padding-block:48px}
+ .elm-toolkit{padding-bottom:48px}
+ .elm-workspace-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .elm-workspace-tabs>button{padding:10px 6px;font-size:12px;min-height:44px}
+ .elm-product-panel>header{display:block;padding:12px 8px 15px}
+ .elm-product-panel h3{font-size:16px;margin-bottom:8px}
+ .elm-product-panel>header>span{white-space:normal}
+ .elm-product-panel>p{margin:14px 8px;font-size:13px}
+ .elm-bento{grid-template-columns:minmax(0,1fr);gap:12px}
+ .elm-bento>article{padding:24px}
+ .elm-bento>article.elm-bento-lead{grid-row:auto}
+ .elm-bento>article.elm-news-feature{grid-column:auto}
+ .elm-icon{margin-bottom:22px}
+ .elm-workflow{padding-block:45px}
+ .elm-steps{grid-template-columns:minmax(0,1fr);gap:22px;margin-top:28px}
+ .elm-steps p{max-width:none}
+ .elm-review-story{grid-template-columns:minmax(0,1fr);gap:22px;padding-block:48px}
+ .elm-review-story .elm-detail-lines{margin-bottom:0}
+ .elm-closing{padding-block:55px}
+ .elm-faq summary{font-size:15px;line-height:1.5}
+ .pub-emerald-site .pub-enlarge{min-height:30px;font-size:12px;right:6px;bottom:6px;padding:5px 8px}
+ .elm-footer nav{gap:10px 18px}
+ .elm-footer>small{display:block}
+ .elm-footer>small>span{display:block;margin-top:12px}
+}

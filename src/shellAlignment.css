@@ -1,0 +1,106 @@
+/* The header sits in the normal app flow; only the page area scrolls. */
+:root { --shell-gap:12px; }
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {
+  display:flex;gap:var(--shell-gap);padding:var(--shell-gap);
+  box-sizing:border-box;height:100dvh;min-height:0;--shell-rail-width:244px;--shell-chat-clearance:80px;
+  --shell-sidebar-surface:color-mix(in srgb,var(--surface) 88%,var(--bg));
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root:has(.tj-sidebar-collapsed) {--shell-rail-width:82px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {
+  position:relative;inset:auto;margin:0 !important;height:100% !important;
+  max-height:100%;padding:0 12px var(--shell-gap) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed {
+  padding:0 8px var(--shell-gap) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {
+  display:flex;flex-direction:column;gap:0;flex:1;min-width:0;
+  height:100%;min-height:0;overflow:visible;margin:0;padding:0;box-sizing:border-box;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root :is(.tj-sidebar-v2,.tj-topbar) {
+  border:1px solid var(--color-border-250) !important;border-radius:22px !important;
+  background:var(--color-surface-249) !important;
+  box-shadow:0 12px 28px var(--color-shadow-83) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light :is(.tj-sidebar-v2,.tj-topbar) {
+  background:var(--color-white) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+  position:relative;inset:auto;margin:0;padding:0 16px;box-sizing:border-box;z-index:1;opacity:1;
+  height:64px;min-height:64px;max-height:64px;flex:0 0 64px;
+  transition:none;
+}
+/* The journal switcher belongs above page-level popovers such as the Analytics
+   year picker. Keep this below modal overlays, which start at z-index 80. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-account-menu-open { z-index:70; }
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar::before {content:none;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {
+  flex:1;min-height:0;min-width:0;margin:0;padding:0 0 calc(var(--shell-gap) + var(--shell-chat-clearance));border:0;border-radius:0;box-sizing:border-box;
+  overflow-y:auto;background:transparent;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content-inner {
+  width:100%;max-width:none;margin:0;padding:0;min-height:100%;
+}
+/* Floating-button clearance belongs below the content, not beside page rows. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-header {
+  position:relative;margin-top:-1px;height:96px;min-height:96px;flex:0 0 96px;display:flex;align-items:center;
+  border-bottom:0;box-sizing:border-box;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-header::after {content:none;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-profile {
+  width:100%;height:100%;min-height:0;margin:0;padding:0 5px;border:0;display:flex;align-items:center;justify-content:flex-start;gap:12px;text-align:left;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-profile-avatar {width:56px;height:56px;flex-shrink:0;box-sizing:border-box;border:2px solid var(--tj-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--tj-accent) 10%,transparent),0 4px 16px color-mix(in srgb,var(--tj-accent) 24%,transparent);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-profile-identity {display:block;min-width:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-profile-identity strong {display:block;overflow:hidden;color:var(--tj-text);font-size:.9375rem;line-height:1.2;text-overflow:ellipsis;white-space:nowrap;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-collapsed .tj-sidebar-profile-avatar {width:56px;height:56px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile {justify-content:center;gap:0;padding-inline:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile-identity {display:none!important;visibility:hidden;width:0;min-width:0;margin:0;padding:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-profile-avatar img {object-fit:cover;object-position:50% 25%;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-list-wrap {margin-top:var(--shell-gap);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-list-wrap {overflow:hidden;contain:paint;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-scroll {flex:1 1 0 !important;min-height:0 !important;overflow-y:auto !important;overflow-x:hidden !important;scrollbar-width:none !important;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-scroll::-webkit-scrollbar {display:none !important;width:0 !important;height:0 !important;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-scroll {width:100%;margin-right:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-scroll-cue-top {
+  background:linear-gradient(to bottom,var(--shell-sidebar-surface),transparent);
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-scroll-cue-bottom {
+  background:linear-gradient(to top,var(--shell-sidebar-surface),transparent);
+}
+/* The sidebar remains an inline rail at narrow desktop widths too. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-backdrop {display:none;}
+
+/* Full-height rail: geometry only, so sidebar expand/collapse motion is unchanged. */
+@media (min-width:901px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {
+    padding:0;
+    gap:0;
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {
+    align-self:stretch;
+    height:100dvh !important;
+    max-height:none !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    border-left:0 !important;
+    border-top:0 !important;
+    border-bottom:0 !important;
+    background:var(--shell-sidebar-surface) !important;
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+    background:var(--bg) !important;
+    border-bottom:0 !important;
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content-inner { padding:0 28px 36px 24px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) { overflow:hidden; padding:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) :is(.tj-content-inner, .tj-page-transition) { height:100%; min-height:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) .tj-page-transition { display:flex; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) .cv-board { height:100%; min-height:0; }
+}

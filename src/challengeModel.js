@@ -34,29 +34,96 @@ export const STREAK_CHALLENGE_PLAN = (() => {
   });
 })();
 export const emptyChallenge = () => ({ activeLevel: 1, statuses: {}, notes: {} });
-export const isChallengeEnabled = account => !!account?.challengeEnabled && Number.isFinite(Number(account.challengeStartingBalance)) && Number(account.challengeStartingBalance) > 0;
-export function buildChallengePlan(startingBalance, mode = 'risk') {
+export const CHALLENGE_LEVEL_OPTIONS = [10, 15, 20, 30];
+export const normaliseChallengeLevelCount = value => CHALLENGE_LEVEL_OPTIONS.includes(Number(value)) ? Number(value) : 30;
+export const FIXED_CHALLENGE_MAX_LEVEL = 24;
+// Challenge funding always comes from the account itself.  The legacy
+// challengeStartingBalance field is retained only for older saved workspaces.
+const challengeFundingBalance = account => Number(account?.balance ?? account?.challengeStartingBalance);
+export const isChallengeEnabled = account => !!account?.challengeEnabled && Number.isFinite(challengeFundingBalance(account)) && challengeFundingBalance(account) > 0;
+export const challengeReward = (value, mode = 'risk') => Number(value) > 0 && Number.isFinite(Number(value)) ? Number(value) : mode === 'streak' ? 3.1 : null;
+export const canUseLossStreak = reward => Number(reward) >= 2.8 && Number(reward) <= 5;
+export const isAdaptiveBalanceMode = mode => mode === 'adaptive';
+export function challengeModeActivationRule({mode='risk',reward,balance}={}) {
+  if (isAdaptiveBalanceMode(mode)) return null;
+  const value=Number(reward);
+  const range=mode==='streak' ? [2.8,5] : [1.5,2];
+  const modeName=mode==='streak' ? 'Mode 2' : 'Mode 1';
+  if (!Number.isFinite(value) || value<range[0] || value>range[1]) {
+    return {kind:'reward',message:`${modeName} supports a reward between ${range[0]}R and ${range[1]}R. Choose Mode 3 — Adaptive Balance for a different reward.`};
+  }
+  const referencePlan=buildChallengePlan(20,mode,30,value);
+  const ceiling=referencePlan[FIXED_CHALLENGE_MAX_LEVEL-1]?.start;
+  if (Number.isFinite(Number(balance)) && Number(balance)>ceiling) {
+    return {kind:'balance',ceiling,message:`This live balance is above Mode 1 and Mode 2’s Level ${FIXED_CHALLENGE_MAX_LEVEL} limit. Use Mode 3 — Adaptive Balance.`};
+  }
+  return null;
+}
+export const adaptiveChallengeSettings = settings => {
+  const riskPct=Number(settings?.adaptiveRiskPct);
+  const drawdownPct=Number(settings?.adaptiveDrawdownPct);
+  return {
+    riskPct:Number.isFinite(riskPct) && riskPct>0 ? riskPct : 1,
+    drawdownPct:Number.isFinite(drawdownPct) && drawdownPct>=0 && drawdownPct<100 ? drawdownPct : 10,
+  };
+};
+export const challengeFailureFloor = (startingBalance, mode='risk', settings={}) => {
+  const start=Number(startingBalance);
+  if(!Number.isFinite(start) || start<=0) return 0;
+  // Modes 1 and 2 always use the worksheet's original Level 1 floor. A
+  // larger deposit can fund or jump levels, but it never raises the point at
+  // which the fixed $20 ladder fails.
+  return isAdaptiveBalanceMode(mode) ? Math.round(start*(1-adaptiveChallengeSettings(settings).drawdownPct/100)*100)/100 : CHALLENGE_PLAN[0].start;
+};
+export function buildChallengePlan(startingBalance, mode = 'risk', levelCount = 30, rewardRatio = null, adaptiveSettings = {}) {
   const start = Number(startingBalance);
   if (!Number.isFinite(start) || start <= 0) return [];
+  if (isAdaptiveBalanceMode(mode)) {
+    const {riskPct}=adaptiveChallengeSettings(adaptiveSettings);
+    const reward=challengeReward(rewardRatio, 'risk') || 3;
+    const profitPct=riskPct*reward;
+    let balance=Math.round(start*100)/100;
+    return Array.from({length:normaliseChallengeLevelCount(levelCount)},(_,index)=>{
+      const levelStart=balance;
+      const risk=Math.round(levelStart*riskPct)/100;
+      const profit=Math.round(levelStart*profitPct)/100;
+      balance=Math.round((levelStart+profit)*100)/100;
+      return {level:index+1,start:levelStart,risk,profit,end:balance,lots:0,tp:reward,sl:0,riskPct,profitPct};
+    });
+  }
   const plan = mode === 'streak' ? STREAK_CHALLENGE_PLAN : CHALLENGE_PLAN;
-  return plan.map(row => ({ ...row }));
+  const reward = challengeReward(rewardRatio, mode);
+  if (!rewardRatio) return plan.slice(0, normaliseChallengeLevelCount(levelCount)).map(row => ({ ...row }));
+  let balance = CHALLENGE_PLAN[0].start;
+  return CHALLENGE_PLAN.slice(0, normaliseChallengeLevelCount(levelCount)).map(row => {
+    const profit = Math.round(row.risk * reward * 100) / 100;
+    const start = balance;
+    balance = Math.round((start + profit) * 100) / 100;
+    return { ...row, start, profit, end:balance, tp:Math.round(row.sl * reward * 100) / 100, riskPct:row.risk / start * 100, profitPct:profit / start * 100 };
+  });
 }
 export function changeChallengeStatus(state, level, status) {
-  if (!Number.isInteger(level) || level < 1 || level > 30 || !['', 'Pass', 'In progress', 'Step back'].includes(status)) throw new Error('Invalid challenge status');
+  const levelCount = normaliseChallengeLevelCount(state.automation?.levelCount);
+  if (!Number.isInteger(level) || level < 1 || level > levelCount || !['', 'Pass', 'In progress', 'Step back'].includes(status)) throw new Error('Invalid challenge status');
   const statuses = { ...state.statuses, [level]: status };
-  if (status === 'Step back') for (const key of Object.keys(statuses)) if (+key > level) statuses[key] = '';
+  // Any move back into an unfinished state invalidates later progress. This
+  // keeps the visible ladder sequential whether the user selects Step back,
+  // In progress, or Not started.
+  if (status === 'Step back' || status === 'In progress' || !status) for (const key of Object.keys(statuses)) if (+key > level) statuses[key] = '';
   if (status === 'Pass') for (let previous = 1; previous < level; previous++) statuses[previous] = 'Pass';
   let activeLevel = state.activeLevel;
   if (status) {
     Object.keys(statuses).forEach(key => { if (+key !== level && statuses[key] === 'In progress') statuses[key] = ''; });
-    activeLevel = status === 'Pass' ? Math.min(31, level + 1) : status === 'Step back' ? Math.max(1, level - 1) : level;
-    if (activeLevel === 31) activeLevel = CHALLENGE_PLAN.find(row => statuses[row.level] !== 'Pass')?.level || 31;
-    if (activeLevel <= 30 && activeLevel !== level) statuses[activeLevel] = 'In progress';
+    activeLevel = status === 'Pass' ? Math.min(levelCount + 1, level + 1) : status === 'Step back' ? Math.max(1, level - 1) : level;
+    if (activeLevel === levelCount + 1) activeLevel = CHALLENGE_PLAN.slice(0, levelCount).find(row => statuses[row.level] !== 'Pass')?.level || levelCount + 1;
+    if (activeLevel <= levelCount && activeLevel !== level) statuses[activeLevel] = 'In progress';
   }
   if (!status) {
     Object.keys(statuses).forEach(key => { if (statuses[key] === 'In progress') statuses[key] = ''; });
     activeLevel = Math.max(1, level - 1);
     statuses[activeLevel] = 'In progress';
   }
-  return { ...state, statuses, activeLevel };
+  const manualStepBack = status === 'Step back' && level > 1 && state.statuses?.[level] !== 'Step back';
+  const automation = manualStepBack ? {...state.automation, manualStepBacks:(state.automation?.manualStepBacks ?? Object.entries(state.statuses || {}).filter(([key,value])=>Number(key)>1 && value==='Step back').length)+1} : state.automation;
+  return { ...state, statuses, activeLevel, ...(automation ? {automation} : {}) };
 }

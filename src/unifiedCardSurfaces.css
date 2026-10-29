@@ -1,0 +1,347 @@
+/*
+ * Shared dark-theme surface hierarchy.
+ *
+ * Primary workspace cards and their ordinary content use the same softer navy
+ * surface as Dashboard and Trade Log. Inputs, dialogs, status states and
+ * interactive controls retain their established treatment.
+ */
+.tj-root.tj-theme-dark :is(
+  .bt-reference-library,
+  .tj-news-workspace,
+  .tj-psychology-workspace,
+  .tj-finance-page,
+  .tj-challenge-reference,
+  .tj-calendar-page,
+  .tj-reference-analytics,
+  .tj-review-library,
+  .tj-account-settings-redesign,
+  .tj-management-reference
+) {
+  --tj-panel: var(--color-surface-133);
+  --tj-panel-alt: var(--color-surface-133);
+  --tj-input-bg: var(--color-surface-144);
+}
+
+/* The dark canvas stays dark; ordinary editable/control surfaces do not. */
+.tj-root.tj-theme-dark {
+  --tj-input-bg: var(--color-surface-133);
+}
+
+/* Crisp Ledger: a near-white canvas, white working surfaces, and quiet nesting. */
+.tj-root.tj-theme-light {
+  --tj-bg: var(--journal-light-bg);
+  --tj-panel: var(--card);
+  --tj-panel-alt: var(--card-alt);
+  --tj-input-bg: var(--bg);
+}
+
+/* Make the Crisp Ledger canvas visible behind every page, not just its cards. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light,
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light :is(.tj-main, .tj-content) {
+  background: var(--journal-light-bg) !important;
+}
+
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 {
+  background: var(--card-alt) !important;
+}
+
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-topbar {
+  background: var(--bg) !important;
+}
+
+.tj-root.tj-theme-light :is(
+  .bt-reference-library,
+  .tj-news-workspace,
+  .tj-psychology-workspace,
+  .tj-finance-page,
+  .tj-challenge-reference,
+  .tj-calendar-page,
+  .tj-reference-analytics,
+  .tj-review-library,
+  .tj-account-settings-redesign,
+  .tj-management-reference
+) {
+  --tj-panel: var(--card);
+  --tj-panel-alt: var(--card-alt);
+  --tj-input-bg: var(--bg);
+}
+
+.tj-root.tj-theme-light .tj-sidebar {
+  background: var(--card-alt);
+}
+
+/* A chosen profile palette owns the entire workspace canvas. The journal's
+   original dark theme includes teal atmosphere glows; without this override
+   they remain visible beneath otherwise correctly themed cards. */
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) {
+  background-color: var(--bg) !important;
+  background-image:
+    radial-gradient(circle at 7% 8%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 32%),
+    radial-gradient(circle at 94% 7%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 40%) !important;
+}
+
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) :is(.tj-main, .tj-content) {
+  background-color: var(--bg);
+}
+
+/* Crisp Ledger deliberately owns the default light canvas. A user-selected
+   light palette must take precedence over that default as well. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light[data-profile-theme]:not([data-profile-theme="default"]),
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light[data-profile-theme]:not([data-profile-theme="default"]) :is(.tj-main, .tj-content) {
+  background: var(--bg) !important;
+}
+
+/* Replace legacy green UI treatments with the active profile palette. Profit
+   and loss indicators intentionally remain semantic green/red elsewhere. */
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-profile-studio-modal .tj-theme-choice.tj-chip-active,
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-profile-studio-modal .tj-profile-reference-identity em {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card)) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+  color: var(--accent) !important;
+}
+
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-finance-record {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+}
+
+/* News uses green as a low-impact/event-interface treatment rather than a
+   profit result. Let it follow the selected palette instead. */
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-news-workspace {
+  --tj-green: var(--accent);
+}
+
+/* This dashboard copy is advisory, rather than a financial-status signal.
+   It should therefore use the selected workspace palette. */
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) :is(.tj-dashboard-welcome, .tj-dashboard-quote) {
+  --tj-green: var(--accent);
+}
+
+.tj-root.tj-theme-light :is(
+  .tj-account-settings-hub-modal,
+  .tj-account-settings-redesign,
+  .tj-profile-studio-modal,
+  .tj-profile-redesign,
+  .tj-trade-composer-modal,
+  .tj-markup-composer-modal,
+  .tj-review-editor-modal
+) {
+  --tj-panel: var(--bg);
+  --tj-panel-alt: var(--card-alt);
+  --tj-input-bg: var(--bg);
+}
+
+.tj-root.tj-theme-dark :is(
+  .tj-account-settings-hub-modal,
+  .tj-account-settings-redesign,
+  .tj-profile-studio-modal,
+  .tj-profile-redesign,
+  .tj-trade-composer-modal,
+  .tj-markup-composer-modal,
+  .tj-review-editor-modal
+) {
+  --tj-panel: var(--color-surface-133);
+  --tj-panel-alt: var(--color-surface-133);
+  --tj-input-bg: var(--color-surface-133);
+}
+
+/* These modal styles define their own dark tokens later in the cascade. */
+.tj-root.tj-root.tj-theme-dark :is(
+  .tj-account-settings-hub-modal,
+  .tj-account-settings-redesign,
+  .tj-profile-studio-modal,
+  .tj-profile-redesign,
+  .tj-trade-composer-modal,
+  .tj-markup-composer-modal,
+  .tj-review-editor-modal
+) {
+  --tj-panel: var(--color-surface-133) !important;
+  --tj-panel-alt: var(--color-surface-133) !important;
+  --tj-input-bg: var(--color-surface-133) !important;
+}
+
+/* Management's list rows and controls are ordinary cards, not dark inset wells. */
+.tj-root.tj-root.tj-theme-dark .tj-management-reference {
+  --tj-input-bg: var(--color-surface-133) !important;
+}
+
+.tj-root.tj-root.tj-theme-dark .tj-profile-redesign :is(
+  .tj-personal-profile-card,
+  .tj-personal-appearance-card,
+  .tj-profile-regional-card,
+  .tj-profile-display-card,
+  .tj-profile-routine-card,
+  .tj-personal-security-card,
+  .tj-profile-security-combined,
+  .tj-profile-studio-footer
+),
+.tj-root.tj-root.tj-theme-dark .tj-account-settings-redesign :is(
+  .tj-reference-accounts-card,
+  .tj-reference-details-card,
+  .tj-reference-position-card,
+  .tj-reference-challenge-card,
+  .tj-settings-section,
+  .tj-reference-finance-toggle,
+  .tj-finance-settings-account,
+  .tj-settings-hub-footer
+),
+.tj-root.tj-root.tj-theme-dark .tj-trade-composer-modal :is(
+  .tj-trade-reference-card,
+  .tj-account-target-result
+) ,
+.tj-root.tj-root.tj-theme-dark .tj-markup-composer-modal :is(
+  .tj-markup-section,
+  .tj-markup-session-review
+) ,
+.tj-root.tj-root.tj-theme-dark .tj-review-editor-modal :is(
+  .tj-review-reference-card,
+  .tj-review-execution-grid > div
+) {
+  background: var(--tj-panel-alt) !important;
+}
+
+.tj-root.tj-root.tj-theme-dark :is(
+  .tj-profile-redesign,
+  .tj-account-settings-redesign,
+  .tj-trade-composer-modal,
+  .tj-markup-composer-modal,
+  .tj-review-editor-modal
+) :is(.tj-input, .tj-picker-trigger, textarea) {
+  background: var(--tj-panel-alt) !important;
+}
+
+.tj-root.tj-root.tj-theme-dark :is(.tj-trade-composer-modal, .tj-markup-composer-modal) :is(
+  .tj-trade-direction-toggle,
+  .tj-markup-bias-toggle
+) {
+  background: var(--tj-panel-alt) !important;
+}
+
+/* Entry dialogs use the same navy card surface throughout, never a black well. */
+.tj-root.tj-root.tj-theme-dark :is(.tj-trade-composer-modal, .tj-markup-composer-modal, .tj-review-editor-modal) {
+  background: var(--color-surface-133) !important;
+}
+
+.tj-root.tj-root.tj-theme-dark :is(.tj-trade-composer-modal, .tj-markup-composer-modal, .tj-review-editor-modal) :is(
+  .tj-modal-head,
+  .tj-entry-identity,
+  .tj-entry-composer-scroll,
+  .tj-entry-composer-footer
+) {
+  background: var(--color-surface-133) !important;
+}
+
+/* Page-level cards: match the Dashboard and Trade Log primary card surface. */
+.tj-root.tj-theme-dark .bt-reference-library .tj-backtest-workspace,
+.tj-root.tj-theme-dark .tj-finance-page.tj-finance-clean,
+.tj-root.tj-theme-dark .tj-calendar-page :is(
+  .tj-main-attached-calendar,
+  .tj-calendar-insights,
+  .tj-calendar-narrative,
+  .tj-panel,
+  .tj-perf-summary-card,
+  .tj-calendar-narrative-metrics,
+  .tj-calendar-narrative-grid section
+),
+.tj-root.tj-theme-dark .tj-reference-analytics :is(
+  .tj-analytics-equity-hero,
+  .tj-analytics-engine-wide,
+  .tj-live-panel,
+  .tj-performance-model-card,
+  .tj-confluence-surface,
+  .tj-confluence-highlights > div,
+  .tj-confluence-row,
+  .tj-execution-weekly-card,
+  .tj-execution-weekday-card,
+  .tj-core-breakdown,
+  .tj-session-time,
+  .tj-execution-days,
+  .tj-performance-daily-surface,
+  .tj-performance-daily-summary > div,
+  .tj-risk-audit,
+  .tj-risk-control,
+  .tj-risk-coach,
+  .tj-risk-next
+) {
+  background: var(--tj-panel-alt);
+}
+
+/* Neutral details stay on the shared surface rather than returning to black. */
+.tj-root.tj-theme-dark .tj-calendar-page :is(
+  .tj-attached-calendar-scroll,
+  .tj-attached-day,
+  .tj-attached-week,
+  .tj-calendar-insights-head nav
+),
+.tj-root.tj-theme-dark .tj-reference-analytics :is(
+  .tj-analytics-hero-return,
+  .tj-analytics-equity-chart > .recharts-responsive-container,
+  .tj-analytics-equity-milestones > div,
+  .tj-engine-score,
+  .tj-engine-metrics > div,
+  .tj-performance-daily-bars,
+  .tj-core-breakdown-grid > section,
+  .tj-discipline-grid > div,
+  .tj-risk-control-grid > section,
+  .tj-risk-control-grid > section:nth-child(2) > div
+) {
+  background: var(--tj-panel);
+}
+
+/* The account chooser is a primary control surface; its metric tiles recess once. */
+.tj-root.tj-theme-dark .tj-sidebar .tj-account-menu {
+  background: var(--tj-panel-alt);
+}
+
+.tj-root.tj-theme-dark .tj-sidebar .tj-account-center-metrics > div {
+  background: var(--tj-panel);
+}
+
+/* These legacy components use direct dark-surface values instead of tokens. */
+.tj-root.tj-theme-dark .tj-news-workspace :is(
+  .tj-news-month-day,
+  .tj-news-month-week,
+  .tj-holiday-row
+),
+.tj-root.tj-theme-dark .tj-management-reference {
+  background: var(--tj-panel-alt);
+}
+
+.tj-root.tj-theme-dark .tj-management-reference .tj-rule-row {
+  background: transparent;
+}
+
+/* Toolbar and savings surfaces follow their parent card instead of black wells. */
+.tj-root.tj-theme-dark .tj-reference-analytics .tj-analytics-deck,
+.tj-root.tj-theme-dark .tj-reference-analytics .tj-analytics-deck-controls,
+.tj-root.tj-theme-dark .tj-reference-analytics .tj-analytics-deck-controls .tj-picker-trigger,
+.tj-root.tj-theme-dark .tj-finance-page .tj-finance-type-tabs {
+  background: transparent !important;
+}
+
+.tj-root.tj-theme-dark :is(
+  .tj-compact-chart-tooltip,
+  .tj-reference-result-tooltip,
+  .tj-weekly-bar-tooltip
+) {
+  background: var(--color-surface-133) !important;
+}
+
+.tj-root.tj-theme-dark .tj-management-reference :is(
+  .tj-input,
+  .tj-picker-trigger,
+  .tj-rule-row
+) {
+  background: transparent;
+}
+
+.tj-root.tj-theme-dark .tj-reference-analytics .tj-analytics-deck-tab-active,
+.tj-root.tj-theme-dark .tj-finance-page .tj-finance-type-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--tj-accent) 14%, transparent) !important;
+}
+
+.tj-root.tj-theme-dark .tj-finance-page .tj-savings-orbit,
+.tj-root.tj-theme-dark .tj-finance-page .tj-savings-orbit-ring > div {
+  background: var(--tj-panel-alt);
+}

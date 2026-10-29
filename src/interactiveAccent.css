@@ -1,0 +1,154 @@
+/* Interaction colours follow the profile; outcome and safety colours remain semantic. */
+.tj-root.tj-root.tj-root .tj-nav-symbol-mask {
+  background:currentColor;filter:none;opacity:1;
+  mask-image:var(--nav-symbol-image);-webkit-mask-image:var(--nav-symbol-image);
+  mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;
+  mask-position:center;-webkit-mask-position:center;
+}
+.tj-root.tj-root.tj-root .tj-sidebar-collapsed .tj-nav-item > .tj-nav-symbol-mask {
+  width:16px;max-width:none;height:16px;opacity:1;overflow:visible;flex:0 0 16px;
+}
+.tj-root.tj-root.tj-root .tj-sidebar-collapsed .tj-nav-item:not(.tj-nav-danger) {color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-sidebar-collapsed .tj-nav-item:not(.tj-nav-danger) .tj-sidebar-glyph {color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-nav-item:not(.tj-nav-danger):is(:hover,:focus-visible) .tj-sidebar-glyph {color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-nav-item:not(.tj-nav-danger):is(:hover,:focus-visible),
+.tj-root.tj-root.tj-root .tj-sidebar .tj-nav-active {
+  color:var(--accent);background:var(--tj-accent-muted);border-color:var(--tj-accent-border);
+}
+.tj-root.tj-root.tj-root :is(.tj-symbol-title,.tj-management-title) .tj-nav-symbol-mask {color:var(--accent);}
+.tj-root.tj-root.tj-root :is(button,a,input,textarea,select,[role="button"]):focus-visible {
+  outline:2px solid var(--accent);outline-offset:3px;
+}
+.tj-root.tj-root.tj-root :is(select,.tj-picker-trigger,input[type="number"],input[type="date"],input[type="time"],input[type="file"]):focus {border-color:var(--tj-accent-border);}
+.tj-root.tj-root.tj-root input:is([type="checkbox"],[type="radio"],[type="range"]) {accent-color:var(--accent);}
+.tj-root.tj-root.tj-root :is(.tj-btn-primary,.tj-fab,.tj-add-rule-btn,.tj-review-save-btn):not(:disabled) {background:var(--accent);color:var(--on-accent);}
+.tj-root.tj-root.tj-root :is(.tj-btn-primary,.tj-fab,.tj-add-rule-btn,.tj-review-save-btn):hover:not(:disabled) {background:var(--tj-primary-hover,var(--accent));}
+.tj-root.tj-root.tj-root :is(.tj-btn-outline,.tj-icon-btn,.tj-picker-trigger,.tj-markup-sort-option):hover:not(:disabled):not(.tj-markup-delete-button):not([title^="Delete"]):not([title^="Remove"]) {
+  border-color:var(--tj-accent-border);background:var(--tj-accent-muted);color:var(--accent);
+}
+.tj-root.tj-root.tj-root :is(.tj-tab-active,.tj-engine-tab-active,.tj-performance-view-active,.tj-analytics-deck-tab-active,.tj-markup-sort-option-active,.tj-icon-btn-active) {
+  background:var(--tj-accent-muted);border-color:var(--tj-accent-border);color:var(--accent);
+}
+.tj-root.tj-root.tj-root :is(.tj-settings-switch-on,.tj-profile-mini-switch[aria-checked="true"]) {background:var(--accent);}
+.tj-root.tj-root.tj-root :is(.tj-markup-progress i,.tj-markup-coverage b,.tj-finance-saving-progress > i b) {background:var(--accent);}
+.tj-root.tj-root.tj-root .tj-floating-picker .tj-picker-options button:hover:not(:disabled) {background:var(--tj-accent-muted);color:var(--accent);border-color:var(--tj-accent-border);}
+.tj-root.tj-root.tj-root .tj-attached-calendar .tj-attached-day-today {border-color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-attached-calendar .tj-attached-day-today:hover {border-color:var(--accent);}
+/* Highlight only the clickable row, not nested P&L, statuses or chart series. */
+.tj-root.tj-root.tj-root .tj-tlog-card :is(.tj-tlog-row,.tj-reference-markup-row)::after {background:radial-gradient(240px circle at var(--pointer-x,50%) var(--pointer-y,50%),color-mix(in srgb,var(--accent) 18%,transparent),transparent 78%);}
+.tj-root.tj-root.tj-root :is(.tj-markup-card-grid,.tj-tradelog-card-grid) .tj-tlog-card > :is(.tj-tlog-row,.tj-reference-markup-row) {transition:background-color .16s ease;}
+.tj-root.tj-root.tj-root :is(.tj-markup-card-grid,.tj-tradelog-card-grid) .tj-tlog-card > :is(.tj-tlog-row,.tj-reference-markup-row):focus-visible {background:color-mix(in srgb,var(--accent) 8%,transparent) !important;outline-offset:-3px;}
+@media(hover:hover) and (pointer:fine) {
+  .tj-root.tj-root.tj-root :is(.tj-markup-card-grid,.tj-tradelog-card-grid) .tj-tlog-card > :is(.tj-tlog-row,.tj-reference-markup-row):hover {background:color-mix(in srgb,var(--accent) 8%,transparent) !important;}
+}
+/* Destructive confirmation retains red rather than adopting the brand accent. */
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-profile-avatar {border-color:var(--tj-accent-border);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-profile:is(:hover,:focus-visible) .tj-sidebar-profile-avatar {border-color:var(--accent);box-shadow:0 0 0 3px var(--tj-accent-muted);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-user .tj-account-initial {color:var(--accent);border-color:var(--tj-accent-border);background:var(--tj-accent-muted);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-user:is(:hover,:focus-visible,[aria-expanded="true"]) {border-color:var(--tj-accent-border);background:var(--tj-accent-muted);}
+.tj-root.tj-root.tj-root .tj-account-center-list .tj-account-row-active .tj-account-initial,
+.tj-root.tj-root.tj-root .tj-account-center-active .tj-account-initial-lg {color:var(--accent);border-color:var(--tj-accent-border);background:var(--tj-accent-muted);}
+.tj-root.tj-root.tj-root .tj-header-account-switcher .tj-account-initial {
+  color:var(--accent);
+  border-color:var(--tj-accent-border);
+  background:var(--tj-accent-muted);
+}
+.tj-root.tj-root.tj-root :is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-settings-switch[aria-checked="true"] {background:var(--accent);border-color:var(--tj-accent-border);}
+.tj-root.tj-root.tj-root :is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-settings-switch[aria-checked="true"] i {background:var(--on-accent);}
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-account-mode-option.is-active {background:var(--tj-accent-muted);border-color:var(--tj-accent-border);color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button:focus-visible,
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-settings-danger-menu > button:focus-visible {
+  outline:none;
+  box-shadow:none;
+}
+/* Controls already communicate their selected state through colour and fill.
+   Keep focus rings on cards, but remove the extra rectangle from ordinary
+   tabs, menus, buttons and form controls throughout the app. */
+.tj-root.tj-root.tj-root :is(
+  button:not([class*="card"]),
+  a:not([class*="card"]),
+  input,
+  textarea,
+  select,
+  [role="button"]:not([class*="card"])
+):focus-visible {
+  outline:none;
+  box-shadow:none;
+}
+/* Settings navigation uses colour for its active state; no boxed outline or
+   underline should appear around a selected item such as Danger Zone. */
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button:is(.is-active,.is-danger) {
+  border-color:transparent !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button:is(.is-active,.is-danger)::after {
+  display:none !important;
+}
+.tj-root.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hub-nav > button {
+  border:0 !important;
+  box-shadow:none !important;
+}
+.tj-root.tj-root.tj-root :is(.tj-single-switch-ack,.tj-settings-danger-ack) input {accent-color:var(--tj-red);}
+.tj-root.tj-root.tj-root :is(.tj-btn-danger-outline,.tj-danger-button,.tj-single-switch-confirm,.tj-settings-danger-confirm,.tj-finance-delete,.tj-markup-delete-button):focus-visible {outline-color:var(--tj-red);}
+@media(prefers-reduced-motion:reduce) {.tj-root.tj-root.tj-root :is(.tj-markup-card-grid,.tj-tradelog-card-grid) .tj-tlog-card > :is(.tj-tlog-row,.tj-reference-markup-row) {transition:none;}}
+
+/* Profile footer reference: a quiet outlined cancel and a wider accent pill. */
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-name-input {border-color:var(--tj-accent-border);caret-color:var(--accent);}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-name-input:is(:focus,:focus-visible) {border-color:var(--accent);outline:2px solid var(--accent);outline-offset:3px;box-shadow:none;}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer :is(.tj-btn-outline,.tj-btn-primary) {box-sizing:border-box;height:36px;min-height:36px;padding:9px 18px;border-radius:999px;font-size:var(--text-min);font-weight:700;line-height:16px;box-shadow:none;transition:background-color .16s ease,border-color .16s ease;}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer .tj-btn-outline {min-width:76px;border:1px solid var(--border-strong,var(--tj-border));background:transparent;color:var(--tj-text);}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer .tj-btn-outline:hover:not(:disabled) {border-color:var(--accent);background:var(--tj-accent-muted);}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer .tj-btn-primary {min-width:116px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent) !important;}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer .tj-btn-primary:hover:not(:disabled) {background:var(--tj-primary-hover,var(--accent));border-color:var(--tj-primary-hover,var(--accent));}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer :is(.tj-btn-outline,.tj-btn-primary):disabled {opacity:.5;cursor:not-allowed;}
+
+/* Shared dismiss control: consistent across modal and compact popup headers. */
+.tj-root.tj-root.tj-root :is(.tj-modal-close,.tj-image-viewer-close,.pub-pricing-close,.tj-icon-btn[title^="Close"],.tj-icon-btn[aria-label^="Close"]) {
+  box-sizing:border-box;display:inline-grid;place-items:center;flex:0 0 32px;
+  width:32px;height:32px;min-width:32px;min-height:32px;padding:0;margin:0;
+  border:1px solid var(--tj-border);border-radius:9px;background:transparent;
+  color:var(--tj-muted);box-shadow:none;cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease;
+}
+.tj-root.tj-root.tj-root :is(.tj-modal-close,.tj-image-viewer-close,.pub-pricing-close,.tj-icon-btn[title^="Close"],.tj-icon-btn[aria-label^="Close"]) svg {width:16px;height:16px;pointer-events:none;}
+.tj-root.tj-root.tj-root :is(.tj-modal-close,.tj-image-viewer-close,.pub-pricing-close,.tj-icon-btn[title^="Close"],.tj-icon-btn[aria-label^="Close"]):hover:not(:disabled) {background:var(--tj-accent-muted);border-color:var(--tj-accent-border);color:var(--accent);}
+.tj-root.tj-root.tj-root :is(.tj-modal-close,.tj-image-viewer-close,.pub-pricing-close,.tj-icon-btn[title^="Close"],.tj-icon-btn[aria-label^="Close"]):focus-visible {outline:2px solid var(--accent);outline-offset:3px;}
+.tj-root.tj-root.tj-root :is(.tj-modal-close,.tj-image-viewer-close,.pub-pricing-close,.tj-icon-btn[title^="Close"],.tj-icon-btn[aria-label^="Close"]):disabled {opacity:.45;cursor:not-allowed;}
+
+/* Selected controls communicate with fill and colour, never a boxed edge.
+   This deliberately excludes selectable content cards (theme, account,
+   challenge and backtest cards), whose borders carry useful hierarchy. */
+.tj-root.tj-root.tj-root :is(
+  .tj-sidebar .tj-nav-active,
+  .tj-tab-active,
+  .tj-engine-tab-active,
+  .tj-performance-view-active,
+  .tj-analytics-deck-tab-active,
+  .tj-markup-sort-option-active,
+  .tj-icon-btn-active,
+  .tj-finance-ledger-filters > button[aria-pressed="true"],
+  .tj-challenge-range-tools button[aria-pressed="true"],
+  .tj-reference-analytics .tj-monthly-ranges > button.is-active,
+  .tj-day-trade-chips button[aria-pressed="true"],
+  .tj-management-nav > button[aria-pressed="true"],
+  .tj-account-center-section-head .tj-btn-outline[aria-pressed="true"],
+  .tj-appearance-live-strip button[aria-pressed="true"],
+  .tj-account-settings-redesign .tj-account-mode-option.is-active,
+  .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed="true"],
+  .tj-account-settings-hub-modal .tj-challenge-reference-layout .tj-challenge-mode-buttons button[aria-pressed="true"],
+  .tj-profile-redesign .tj-accent-option[aria-pressed="true"],
+  .tj-profile-studio-modal .tj-accent-option[aria-pressed="true"],
+  .tj-account-center-head .tj-icon-btn[aria-pressed="true"],
+  .tj-picker-options button[aria-checked="true"],
+  .tj-date-days button[aria-pressed="true"],
+  .tj-phone-log-pills button[aria-pressed="true"],
+  .tj-phone-finance-filters button[aria-pressed="true"],
+  .tj-phone-challenge-status-sheet button[aria-pressed="true"],
+  .tj-phone-news-alert-options button[aria-pressed="true"],
+  .tj-mobile-more-grid button[aria-current="page"],
+  .tj-mobile-journals button[aria-current="true"]
+) {
+  border-color:transparent !important;
+  box-shadow:none !important;
+}

@@ -1,0 +1,28 @@
+/* Semantic status colours stay independent of the selected app accent. */
+.tj-markup-status-planned, .tj-markup-reference-planned { --markup-status-color: var(--tj-blue); }
+.tj-markup-status-watching, .tj-markup-reference-watching { --markup-status-color: var(--tj-amber); }
+.tj-markup-status-executed, .tj-markup-reference-executed { --markup-status-color: var(--tj-green); }
+.tj-markup-status-not-executed, .tj-markup-status-passed,
+.tj-markup-reference-not-executed, .tj-markup-reference-passed { --markup-status-color: var(--tj-muted); }
+
+.tj-root.tj-root.tj-root .tj-markup-status,
+.tj-root.tj-root.tj-root .tj-markup-status-trigger,
+.tj-root.tj-root.tj-root.tj-root .tj-picker-markup-status .tj-picker-options .tj-markup-status-option {
+  color: var(--markup-status-color, var(--tj-muted));
+  border-color: color-mix(in srgb, var(--markup-status-color, var(--tj-muted)) 40%, var(--tj-border));
+  background: color-mix(in srgb, var(--markup-status-color, var(--tj-muted)) 9%, var(--tj-panel));
+}
+.tj-root.tj-root.tj-root.tj-root .tj-picker-markup-status .tj-picker-options .tj-markup-status-option { border: 1px solid transparent; min-height:44px; }
+.tj-root.tj-root.tj-root.tj-root .tj-picker-markup-status .tj-picker-options .tj-markup-status-option:is(:hover, [aria-checked="true"]) {
+  border-color: color-mix(in srgb, var(--markup-status-color) 55%, var(--tj-border));
+  background: color-mix(in srgb, var(--markup-status-color) 16%, var(--tj-panel));
+}
+.tj-root.tj-root.tj-root.tj-root .tj-picker-markup-status .tj-picker-options .tj-markup-status-option[aria-checked="true"]::before {
+  border-color: var(--markup-status-color);
+  background: radial-gradient(circle, var(--markup-status-color) 0 2.5px, transparent 3px);
+}
+.tj-root.tj-root.tj-root.tj-root .tj-picker-markup-status .tj-picker-options .tj-markup-status-option[aria-checked="true"]::after { color:var(--markup-status-color); }
+.tj-root.tj-root .tj-markup-card-grid .tj-reference-markup-card {
+  border-left-color: color-mix(in srgb, var(--markup-status-color, var(--tj-muted)) 65%, var(--tj-border));
+}
+

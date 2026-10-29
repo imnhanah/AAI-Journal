@@ -1,0 +1,33 @@
+.tj-root .tj-single-switch-overlay {position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--tj-bg) 65%,transparent);backdrop-filter:none;-webkit-backdrop-filter:none;}
+.tj-root .tj-single-switch-dialog {box-sizing:border-box;width:min(420px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;padding:20px;border:1px solid var(--tj-border);border-radius:18px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 24px 60px color-mix(in srgb,var(--tj-text) 20%,transparent);}
+.tj-root .tj-single-switch-dialog header {display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.tj-root .tj-single-switch-icon {display:grid;place-items:center;flex:none;width:40px;height:40px;border:1px solid color-mix(in srgb,var(--tj-danger) 30%,transparent);border-radius:11px;background:color-mix(in srgb,var(--tj-danger) 10%,var(--tj-bg));color:var(--tj-danger);}
+.tj-root .tj-single-switch-dialog h3 {margin:0 0 4px;font-size:16px;line-height:1.3;}
+.tj-root .tj-single-switch-dialog header p {margin:0;color:var(--tj-muted);font-size:var(--text-min);line-height:1.5;}
+.tj-root .tj-single-switch-deleted,.tj-root .tj-single-switch-kept {padding:12px;border:1px solid var(--tj-border);border-radius:12px;margin-bottom:12px;background:var(--tj-bg);}
+.tj-root .tj-single-switch-deleted {border-color:color-mix(in srgb,var(--tj-danger) 30%,var(--tj-border));background:color-mix(in srgb,var(--tj-danger) 10%,var(--tj-bg));}
+.tj-root .tj-single-switch-section-heading {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;}
+.tj-root .tj-single-switch-section-heading strong {font-size:var(--text-min);letter-spacing:1px;text-transform:uppercase;color:var(--tj-accent);}
+.tj-root .tj-single-switch-deleted .tj-single-switch-section-heading strong {color:var(--tj-danger);}
+.tj-root .tj-single-switch-section-heading > div {display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;}
+.tj-root .tj-single-switch-section-heading span {padding:2px 7px;border:1px solid color-mix(in srgb,var(--tj-danger) 35%,transparent);border-radius:99px;color:var(--tj-danger);font-size:var(--text-min);overflow-wrap:anywhere;}
+.tj-root .tj-single-switch-dialog ul {list-style:none;margin:0;padding:0;display:grid;gap:7px;}
+.tj-root .tj-single-switch-dialog li {display:flex;align-items:flex-start;gap:8px;font-size:var(--text-min);font-weight:600;line-height:1.5;}
+.tj-root .tj-single-switch-dialog li svg {width:13px;height:13px;flex:none;margin-top:2px;color:var(--tj-accent);}
+.tj-root .tj-single-switch-deleted li svg {color:var(--tj-danger);}
+.tj-root .tj-single-switch-dialog li small {font-size:inherit;font-weight:500;color:var(--tj-muted);}
+.tj-root .tj-single-switch-ack {display:flex;align-items:center;gap:8px;font-size:var(--text-min);font-weight:600;margin:14px 0;cursor:pointer;}
+.tj-root .tj-single-switch-ack input {width:16px;height:16px;margin:0;accent-color:var(--tj-danger);flex:none;}
+.tj-root .tj-single-switch-dialog footer {display:flex;gap:8px;}
+.tj-root .tj-single-switch-dialog footer button {padding:10px 13px;border-radius:99px;font-size:var(--text-min);font-weight:700;line-height:1.4;}
+.tj-root .tj-single-switch-confirm {flex:1;border:1px solid var(--tj-danger);background:var(--tj-danger);color:var(--color-white);cursor:pointer;}
+.tj-root .tj-single-switch-confirm:disabled {opacity:.45;cursor:not-allowed;}
+.tj-root .tj-single-switch-dialog button:focus-visible,.tj-root .tj-single-switch-ack input:focus-visible {outline:2px solid var(--tj-danger);outline-offset:3px;}
+@media(max-width:420px) {.tj-root .tj-single-switch-dialog {padding:16px;}.tj-root .tj-single-switch-dialog footer {flex-wrap:wrap;}.tj-root .tj-single-switch-dialog footer button {flex:1;min-width:120px;}}
+.tj-root .tj-single-switch-overlay {--tj-danger:var(--tj-red);--tj-panel:var(--card);--tj-border:var(--border);--tj-text:var(--text);--tj-muted:var(--muted);--tj-accent:var(--green);}
+.tj-root.tj-theme-light .tj-single-switch-overlay {--tj-panel:var(--color-white);}
+
+
+/* Blur lives behind readable content, never on its container. */
+.tj-root .tj-single-switch-overlay {isolation:isolate;}
+.tj-root .tj-single-switch-overlay::before {content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}

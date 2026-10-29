@@ -1,0 +1,88 @@
+.tj-phone-image-icon {display:none;}
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal.tj-trade-composer-modal {
+    width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;
+    margin:0;padding:0;border:0;border-radius:0!important;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;--tj-card:var(--tj-panel-alt);background:var(--tj-bg);
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-trade-composer-modal {--tj-card:var(--color-white);}
+  .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-trade-composer-modal :is(.tj-modal-head,.tj-entry-composer-footer) {background:var(--color-white);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-head {
+    display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;row-gap:2px;
+    padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;flex:none;min-height:70px;box-sizing:border-box;
+  }
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-title {grid-column:2;grid-row:1;text-align:left;font-size:20px;line-height:1.3;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-header-note {grid-column:2;grid-row:2;font-size:12px;line-height:1.35;margin:0;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-head-actions {display:flex;grid-column:1;grid-row:1/3;margin:0;justify-self:start;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-close {height:44px!important;width:44px!important;min-width:44px;min-height:44px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-body {display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0;gap:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-identity {flex:none;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;padding:12px 16px;background:var(--tj-bg);margin:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-identity>div {display:flex;flex-direction:column;gap:4px;text-align:left;min-width:0;padding:10px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-card);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-identity small {font-size:12px;letter-spacing:.06em;line-height:1.2;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-identity strong {font-size:14px;line-height:1.3;overflow-wrap:anywhere;}
+  .tj-root .tj-trade-composer-modal .tj-entry-identity .tj-amber {color:var(--tj-amber);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer {display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0 16px 12px;padding:0;gap:0;flex:none;border:1px solid var(--tj-border);border-radius:12px;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs button {min-height:46px!important;border:0;border-radius:0;display:flex;justify-content:center;align-items:center;gap:4px;font-size:14px;padding:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs i {font-size:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs [aria-selected="true"] {color:var(--tj-accent);background:color-mix(in srgb,var(--tj-accent) 12%,var(--tj-card));box-shadow:inset 0 -2px var(--tj-accent);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-scroll {flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 16px 20px;scrollbar-width:thin;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal [role="tabpanel"] {display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal [role="tabpanel"]>section {min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal [role="tabpanel"][hidden] {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-reference-card {min-width:0;margin:0;padding:16px;border:1px solid var(--tj-border);border-radius:16px;background:var(--tj-card);box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal h4 {font-size:17px;line-height:1.3;margin:0 0 14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-field {min-width:0;gap:6px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-field-label {text-align:left;font-size:13px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal :is(input,.tj-picker-trigger,textarea) {width:100%;min-width:0;max-width:100%;box-sizing:border-box;font-size:15px!important;line-height:1.3;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal :is(input,.tj-picker-trigger) {height:48px!important;min-height:48px!important;padding:0 12px;border-radius:10px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-picker-trigger {gap:8px;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-entry-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-reference-setup>.tj-section-label {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-core-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-core-grid>.tj-field:is(:first-child,:last-child) {grid-column:1/-1;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle button {height:50px!important;min-height:50px!important;font-size:15px;border-radius:10px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal :is(.tj-trade-timing-row,.tj-trade-pnl-grid,.tj-trade-reference-psychology .tj-grid2) {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-timing-row {margin-top:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-grid3 {grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-balance-target-picks {display:flex;flex-wrap:wrap;gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-balance-target-picks label {min-height:44px;min-width:44px;border-radius:999px;padding:8px 12px;font-size:13px;box-sizing:border-box;cursor:pointer;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-balance-target-picks input {width:18px;height:18px!important;min-height:0!important;accent-color:var(--tj-accent);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-account-target-result {min-width:0;padding:12px 0 0;margin-top:12px;border:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-account-target-result>strong {font-size:13px;margin-bottom:10px;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-reference-psychology-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:16px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-dropzone {min-height:116px;padding:0;border:1px dashed var(--tj-border);background:var(--tj-input-bg);border-radius:12px;display:grid;place-items:center;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-add-image {width:100%;min-height:114px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-process-heading {display:flex;align-items:start;gap:12px;flex-wrap:wrap;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-score-pills {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-score-pills>span {display:flex;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;border-color:var(--tj-border);background:var(--tj-input-bg);color:var(--tj-muted);font-size:13px;min-width:0;overflow-wrap:anywhere;}
+  .tj-root .tj-trade-composer-modal .tj-trade-score-pills b {color:var(--tj-text);font-size:13px;}
+  .tj-root .tj-trade-composer-modal .tj-trade-score-pills b.tj-red {color:var(--tj-red);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-rule-verification-grid {display:grid;grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-confluence-toggle {width:100%;min-height:46px!important;font-size:14px;margin:12px 0 0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-tagwrap {display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-tag {min-height:44px!important;min-width:44px;padding:8px 12px;font-size:13px;white-space:normal;overflow-wrap:anywhere;max-width:100%;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-process-mistakes .tj-tag-active {background:color-mix(in srgb,var(--tj-red) 12%,var(--tj-card));border-color:color-mix(in srgb,var(--tj-red) 45%,var(--tj-border));color:var(--tj-red);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-process-notes {order:3;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-process-mistakes {order:4;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer {flex:none;display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;margin:0;padding:12px 16px max(16px,env(safe-area-inset-bottom,0px));border-top:1px solid var(--tj-border);background:var(--tj-panel);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer button {height:48px!important;min-height:48px!important;font-size:15px;border-radius:12px;padding:0 12px;white-space:nowrap;justify-content:center;text-align:center;}
+  .tj-root .tj-trade-composer-modal .tj-phone-image-icon {display:block;}
+  .tj-root .tj-phone-instrument-overlay {position:fixed;inset:0;z-index:200500;isolation:isolate;}
+  .tj-root .tj-phone-instrument-backdrop {position:absolute;inset:0;background:color-mix(in srgb,var(--tj-bg) 55%,transparent);backdrop-filter:blur(5px);}
+  .tj-root .tj-phone-instrument-sheet {position:absolute;left:0;right:0;bottom:0;max-height:75dvh;display:flex;flex-direction:column;gap:12px;padding:10px 16px max(16px,env(safe-area-inset-bottom,0px));box-sizing:border-box;border:1px solid var(--tj-border);border-bottom:0;border-radius:24px 24px 0 0;background:var(--tj-panel);color:var(--tj-text);animation:tj-phone-instrument-enter .18s ease-out;}
+  .tj-root .tj-phone-picker-handle {width:100%;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;flex:none;touch-action:none;}
+  .tj-root .tj-phone-picker-handle span {width:36px;height:4px;border-radius:4px;background:var(--tj-border);}
+  .tj-root .tj-phone-instrument-sheet header {display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;}
+  .tj-root .tj-phone-instrument-sheet h3 {font-size:20px;margin:0;line-height:1.3;}
+  .tj-root .tj-phone-instrument-sheet header button {width:44px;height:44px!important;min-width:44px;min-height:44px!important;border:1px solid var(--tj-border);border-radius:10px;background:var(--tj-input-bg);}
+  .tj-root .tj-phone-instrument-sheet input {height:48px;min-height:48px;font-size:15px;flex:none;width:100%;box-sizing:border-box;}
+  .tj-root .tj-phone-instrument-options {overflow-y:auto;min-height:0;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;}
+  .tj-root .tj-phone-instrument-options button {width:100%;min-height:50px!important;flex:none;padding:12px;display:flex;align-items:center;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-input-bg);color:var(--tj-text);font-size:15px;text-align:left;cursor:pointer;}
+  .tj-root .tj-phone-instrument-options [aria-checked="true"] {color:var(--tj-accent);border-color:var(--tj-accent);background:color-mix(in srgb,var(--tj-accent) 12%,var(--tj-panel));}
+  .tj-root .tj-phone-instrument-options small {font-size:12px;color:var(--tj-muted);margin-left:auto;}
+  .tj-root .tj-phone-instrument-options p {font-size:13px;}
+  .tj-root :is(.tj-trade-composer-modal,.tj-phone-instrument-sheet) button:focus-visible {outline:2px solid var(--tj-accent);outline-offset:2px;}
+  @keyframes tj-phone-instrument-enter {from {bottom:-24px;opacity:0;}to {bottom:0;opacity:1;}}
+  @media(prefers-reduced-motion:reduce) {.tj-root .tj-phone-instrument-sheet {animation:none;}}
+}

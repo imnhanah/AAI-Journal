@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { readAllPages } from '../_shared/readAllPages.js';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,13 +30,23 @@ Deno.serve(async (request) => {
   const accountId = String(body.accountId || "");
   if (!accountId) return json({ error: "Choose an account before generating coaching." }, 400);
 
-  const [{ data: account, error: accountError }, { data: trades, error: tradesError }, { data: markups }, { data: reviews }] = await Promise.all([
+  const history = async (table: string, columns: string) => {
+    try {
+      const data = await readAllPages((after: string | null, size: number) => {
+        let query = supabase.from(table).select(`id,${columns}`).eq('account_id',accountId).eq('user_id',user.id).order('id',{ascending:true}).limit(size);
+        if (after) query = query.gt('id',after);
+        return query;
+      });
+      return {data,error:null};
+    } catch (error) { return {data:null,error:{message: error instanceof Error ? error.message : 'Journal unavailable'}}; }
+  };
+  const [{ data: account, error: accountError }, { data: trades, error: tradesError }, { data: markups, error: markupsError }, { data: reviews, error: reviewsError }] = await Promise.all([
     supabase.from("accounts").select("id,name,balance,monthly_goal_pct,yearly_goal_pct,daily_loss_limit_pct,monthly_loss_limit_pct").eq("id", accountId).eq("user_id", user.id).single(),
-    supabase.from("trades").select("trade_date,asset,direction,net_pnl,pnl,gross_pnl,commission,swap,rr,session,entry_session,entry_type,types,mistakes,rating").eq("account_id", accountId).eq("user_id", user.id).order("trade_date", { ascending: false }).limit(500),
-    supabase.from("premarket_markups").select("markup_date,instrument,bias,status").eq("account_id", accountId).eq("user_id", user.id).limit(200),
-    supabase.from("trade_reviews").select("trade_id,rule_adherence,psychology,lessons").eq("account_id", accountId).eq("user_id", user.id).limit(300),
+    history('trades','trade_date,asset,direction,net_pnl,pnl,gross_pnl,commission,swap,rr,session,entry_session,entry_type,types,mistakes,rating'),
+    history('premarket_markups','markup_date,instrument,bias,status'),
+    history('trade_reviews','trade_id,rule_adherence,psychology,lessons'),
   ]);
-  if (accountError || tradesError || !account) return json({ error: "Could not load this account’s journal data." }, 500);
+  if (accountError || tradesError || markupsError || reviewsError || !account) return json({ error: "Could not load this account’s journal data." }, 500);
 
   const pnl = (trade: Record<string, unknown>) => Number(trade.net_pnl ?? trade.pnl ?? 0) || 0;
   const list = trades || [];

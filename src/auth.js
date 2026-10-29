@@ -1,4 +1,13 @@
 import { supabase } from "./supabaseClient";
+import { START_PAGES } from './displayPreferences';
+import { activatePrivateUser } from './privateCacheRuntime';
+
+// Keep email-confirmation links in the same environment where the account was
+// created. This is localhost during development and the live domain in
+// production.
+function currentAppUrl() {
+  return typeof window === 'undefined' ? undefined : `${window.location.origin}/`;
+}
 
 // Maps Supabase's raw error messages/status to something a person should
 // actually see. Supabase's own messages are reasonable but inconsistent in
@@ -35,11 +44,12 @@ function friendlyAuthError(error) {
   return error.message || "Something went wrong. Please try again.";
 }
 
-export async function signUp({ name, email, password }) {
+export async function signUp({ name, email, password, financialDisclaimerAcknowledged = false }) {
   const cleanEmail = email.trim().toLowerCase();
   if (!name || !name.trim()) return { error: "Please enter your name." };
   if (!cleanEmail || !cleanEmail.includes("@")) return { error: "Please enter a valid email address." };
   if (!password || password.length < 6) return { error: "Password must be at least 6 characters." };
+  if (!financialDisclaimerAcknowledged) return { error: "Please acknowledge the Financial Disclaimer to create an account." };
 
   try {
     // Supabase enforces email uniqueness itself (auth.users.email is unique) —
@@ -48,7 +58,10 @@ export async function signUp({ name, email, password }) {
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
-      options: { data: { display_name: name.trim() } },
+      options: {
+        data: { display_name: name.trim(), financial_disclaimer_signup_acknowledged: true },
+        emailRedirectTo: currentAppUrl(),
+      },
     });
     if (error) return { error: friendlyAuthError(error) };
 
@@ -104,6 +117,7 @@ export async function signOut() {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) return { error: friendlyAuthError(error) };
+    await activatePrivateUser(null);
     return {};
   } catch (e) {
     return { error: friendlyAuthError(e) };
@@ -140,6 +154,13 @@ export async function updatePassword(newPassword) {
 
 // The destructive work happens in a protected Edge Function. This browser
 // call only carries the current user's JWT and never exposes a service key.
+export async function checkProfileDeletionReady() {
+  try {
+    const {data, error} = await supabase.functions.invoke('delete-profile', {body:{action:'check'}, timeout:10000});
+    if (error || data?.ready !== true) return {ready:false, error:'Profile deletion is unavailable. The protected delete-profile function must be deployed and verified.'};
+    return {ready:true};
+  } catch { return {ready:false, error:'Could not verify profile deletion. Check your connection and the server deployment.'}; }
+}
 export async function deleteProfilePermanently() {
   try {
     const { data, error } = await supabase.functions.invoke("delete-profile", { body: { confirmation: "DELETE" } });
@@ -151,13 +172,19 @@ export async function deleteProfilePermanently() {
   }
 }
 
-export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, theme, themePreference, accentColor, timezone, dateFormat, timeFormat }) {
+export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled, privacyScreenTimeoutMinutes, theme, themePreference, accentColor, themePalettes, timezone, dateFormat, timeFormat, language, week_start, start_page, hide_balances }) {
   const cleanName = (fullName || displayName || "").trim();
   const cleanDisplayName = (displayName || cleanName).trim();
   if (!cleanName) return { error: "Please enter your full name." };
   try {
+    const { data: currentSession } = await supabase.auth.getSession();
+    const currentAvatar = currentSession?.session?.user?.user_metadata?.avatar_url || null;
+    const displayData = {};
+    if (week_start !== undefined) displayData.week_start = week_start === 'sunday' ? 'sunday' : 'monday';
+    if (start_page !== undefined) displayData.start_page = START_PAGES.includes(start_page) ? start_page : 'dashboard';
+    if (hide_balances !== undefined) displayData.hide_balances = hide_balances === true;
     const { data, error } = await supabase.auth.updateUser({
-      data: { display_name: cleanDisplayName, full_name: cleanName, avatar_url: avatarUrl || null, session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
+      data: { ...displayData, ...(language !== undefined ? { language } : {}), display_name: cleanDisplayName, full_name: cleanName, ...(avatarUrl !== undefined && (avatarUrl || null) !== currentAvatar ? {avatar_url:avatarUrl || null} : {}), session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, privacy_screen_enabled: !!privacyScreenEnabled, privacy_screen_timeout_minutes: [5, 15, 60].includes(Number(privacyScreenTimeoutMinutes)) ? Number(privacyScreenTimeoutMinutes) : 15, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", ...(themePalettes && typeof themePalettes === 'object' ? { theme_palettes: themePalettes } : {}), timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
     });
     if (error) return { error: friendlyAuthError(error) };
     const { error: profileError } = await supabase
@@ -188,13 +215,18 @@ export async function getSession() {
 }
 
 export function onAuthStateChange(callback) {
-  const { data } = supabase.auth.onAuthStateChange((event, session) => callback(event, session));
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    // Invalidate in-flight private requests synchronously; never call Auth again
+    // from inside its callback (Supabase holds its session lock here).
+    void activatePrivateUser(session?.user?.id || null);
+    callback(event, session);
+  });
   return () => data.subscription.unsubscribe();
 }
 
 export async function getProfile(userId) {
   try {
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+    const { data, error } = await supabase.from("profiles").select("id,email,display_name,created_at,updated_at").eq("id", userId).single();
     if (error) return null;
     return data;
   } catch (e) {

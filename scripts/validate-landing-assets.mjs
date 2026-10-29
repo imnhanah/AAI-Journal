@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs';
+import { LANDING_SCREENSHOTS, landingScreenshotUrl } from '../src/landingScreenshots.js';
 
-// Catch missing screenshots before a production archive can be created.
-const sources = ['PublicSite.jsx', 'LandingHelp.jsx', 'LandingGallery.jsx'];
-const names = new Set(sources.flatMap(file => [...readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8').matchAll(/['"]([a-z0-9-]+\.png)['"]/g)].map(match => match[1])));
-for (const name of names) {
-  const bytes = readFileSync(new URL(`../public/landing/${name}`, import.meta.url));
-  if (bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error(`Invalid landing screenshot: ${name}`);
+// Catch missing active screenshots before a production archive can be created.
+let pairs = 0;
+for (const id of Object.keys(LANDING_SCREENSHOTS)) {
+  for (const theme of ['dark','light']) {
+    const bytes = readFileSync(new URL(`../public${landingScreenshotUrl(id,theme)}`,import.meta.url));
+    if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes.at(-2) !== 0xff || bytes.at(-1) !== 0xd9) throw new Error(`Invalid Demo screenshot: ${id}/${theme}`);
+    pairs++;
+  }
 }
-console.log(`Validated ${names.size} landing screenshots.`);
+console.log(`Validated ${pairs} theme-matched Demo screenshots.`);

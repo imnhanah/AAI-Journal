@@ -1,0 +1,87 @@
+.tj-analytics-phone-tab {display:none;}
+.tj-analytics-chip-rail {grid-column:1/-1;min-width:0;position:relative;}
+.tj-analytics-chip-fade {display:none;}
+@media(max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root .tj-signal-page-analytics {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics {display:grid;grid-template-rows:auto auto;gap:12px;flex:none;min-height:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics>.tj-view-transition {display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:auto;gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck {display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:12px;padding:0;border:0;background:none!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-copy {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-controls {display:contents;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-controls>.tj-themed-control {grid-column:1;grid-row:1;width:100%;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-period-wrap {grid-column:2;grid-row:1;justify-self:stretch;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-period {width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:8px;font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-period svg:first-child {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-controls button[aria-label="Analytics account"] {width:100%;height:44px;min-height:44px;font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-tabs {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-column:1/-1;grid-row:2;padding:3px;width:100%;overflow:visible;background:var(--tj-panel);border:1px solid var(--tj-border);border-radius:12px;gap:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-deck-tabs button {min-width:0;min-height:44px;padding:4px;font-size:12px;letter-spacing:0;white-space:normal;}
+  .tj-analytics-desktop-tab {display:none;}
+  .tj-analytics-phone-tab {display:inline;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(.tj-analytics-equity-hero,.tj-analytics-engine,.tj-live-analytics,.tj-performance-surface,.tj-execution-weekly-card,.tj-execution-weekday-card,.tj-core-breakdown,.tj-risk-audit) {min-width:0;padding:16px;border-radius:16px;background:var(--tj-panel)!important;min-height:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-head {display:grid;grid-template-columns:minmax(0,1fr);gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-head h2 {font-size:28px;overflow-wrap:anywhere;}
+  .tj-analytics-equity-head h2 span {display:none;}
+  .tj-analytics-equity-head p {font-size:12px!important;line-height:1.5;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-hero-return {display:flex;flex-wrap:wrap;gap:6px 12px;text-align:left;align-items:center;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-hero-return strong {font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-chart {display:grid;grid-template-rows:220px auto;min-height:0;gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-milestones {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-milestones>div {min-width:0;padding:12px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-panel-alt);}
+  .tj-analytics-equity-milestones :is(strong,span) {white-space:normal!important;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-wide-head {display:grid;gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-tabs {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-tabs button {min-height:44px;font-size:12px;padding:6px;white-space:normal;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-wide-value,.tj-root.tj-root.tj-root.tj-root .tj-engine-drilldown-hero {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-wide-value>div>strong {font-size:28px;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-score {min-width:0;width:100%;padding:12px;}
+  .tj-engine-score small {white-space:normal!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-metrics {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-engine-metrics>div {min-width:0;padding:12px;}
+  .tj-engine-metrics strong {font-size:20px!important;overflow-wrap:anywhere;white-space:normal!important;}
+  .tj-engine-metrics span {white-space:normal!important;line-height:1.4;}
+  .tj-root.tj-root.tj-root.tj-root .tj-live-analytics-grid {display:grid;grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root .tj-live-panel {display:grid;grid-template-rows:auto auto auto;min-height:0;}
+  .tj-live-panel-head {flex-wrap:wrap;}
+  .tj-root.tj-root.tj-root.tj-root .tj-live-panel:nth-child(n+2) {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-performance-workspace,.tj-root.tj-root.tj-root.tj-root .tj-execution-workspace,.tj-root.tj-root.tj-root.tj-root .tj-risk-workspace {display:grid;grid-auto-rows:auto;grid-template-rows:none;gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-performance-views {display:block;padding:0;border:0;background:none!important;min-width:0;}
+  .tj-performance-views>div:first-child,.tj-performance-views>small {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-chip-rail nav {display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none;gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-analytics-chip-rail nav button {flex:none;min-height:44px;font-size:12px;padding:10px 12px;border-radius:24px;}
+  .tj-analytics-chip-fade {display:block;position:absolute;top:0;bottom:0;width:24px;pointer-events:none;}
+  .tj-analytics-chip-fade.after {right:0;background:linear-gradient(to right,transparent,var(--tj-bg));}
+  .tj-analytics-chip-fade.before {left:0;background:linear-gradient(to left,transparent,var(--tj-bg));}
+  .tj-root.tj-root.tj-root.tj-root .tj-performance-title {display:grid;gap:6px;}
+  .tj-performance-title>div>span {display:none;}
+  .tj-root.tj-root.tj-root.tj-root :is(.tj-performance-model-highlights,.tj-performance-model-charts,.tj-performance-model-grid,.tj-performance-four,.tj-confluence-highlights,.tj-instrument-highlights,.tj-instrument-performance-grid,.tj-performance-daily-summary) {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-performance-model-highlights :is(strong,span),.tj-performance-model-grid strong {white-space:normal!important;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-model-comparison-bars>div {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;}
+  .tj-model-comparison-bars>div>i {grid-row:2;grid-column:1/-1;}
+  .tj-model-comparison-bars>div>span {overflow-wrap:anywhere;white-space:normal!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-execution-rhythm-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-execution-weekly-chart {height:240px;min-height:240px;flex:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-execution-weekday-bars>div {grid-template-columns:34px minmax(0,1fr) 72px 32px;gap:6px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-execution-weekday-bars {gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-execution-weekday-bars :is(strong,em,span) {font-size:12px!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-core-breakdown-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-core-breakdown-grid>section:first-child>.recharts-responsive-container,.tj-core-breakdown-grid>section:first-child p,.tj-core-breakdown-grid>section:first-child>i,.tj-discipline-head {display:none!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-discipline-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-discipline-grid>div {padding:0;border:0;background:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-core-breakdown-grid>section,.tj-root.tj-root.tj-root.tj-root .tj-discipline-grid {min-height:0;grid-auto-rows:auto;align-content:start;height:auto;}
+  .tj-root.tj-root.tj-root.tj-root .tj-discipline-grid>div {min-height:0;grid-template-rows:auto 5px;align-content:start;gap:6px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-four span {white-space:normal;overflow:visible;line-height:1.4;}
+  .tj-discipline-grid p,.tj-core-breakdown-grid footer,.tj-execution-bottom {display:none!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-four {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-risk-title>div>span {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-four>div {padding:12px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-audit-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+  .tj-risk-audit-grid header {flex-wrap:wrap;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-utilisation>div {grid-template-columns:86px minmax(0,1fr) 44px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-breaches {gap:12px!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-breaches>div {background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel))!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-breach-trigger {grid-template-columns:minmax(0,1fr)!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-risk-diagnostics,.tj-root.tj-root.tj-root.tj-root .tj-risk-next,.tj-root.tj-root.tj-root.tj-root .tj-risk-control,.tj-root.tj-root.tj-root.tj-root .tj-risk-coach {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(small,.tj-pill,.tj-section-label,.tj-muted-txt) {font-size:12px!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(strong,span,small,p,em) {text-overflow:clip;}
+  .tj-reference-analytics .tj-analytics-period-popover {width:min(340px,calc(100vw - 32px));right:0;}
+}

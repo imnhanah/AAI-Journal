@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { notifyJournalMutation } from './privateCacheRuntime';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -14,7 +15,15 @@ const timedFetch = async (input, init = {}) => {
   else parentSignal?.addEventListener?.("abort", abort, { once: true });
   const timer = window.setTimeout(abort, SAFARI_SAFE_REQUEST_TIMEOUT);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+    const table = url.pathname.match(/\/rest\/v1\/([^/]+)$/)?.[1];
+    if (response.ok && table && !['GET','HEAD'].includes(String(init.method || 'GET').toUpperCase())) {
+      let body; try { body = JSON.parse(init.body || '{}'); } catch { body = {}; }
+      const id = url.searchParams.get('id')?.replace(/^eq\./, '') || null;
+      notifyJournalMutation(table, init.method === 'DELETE' || Object.hasOwn(body, 'screenshots'), id);
+    }
+    return response;
   } finally {
     window.clearTimeout(timer);
     parentSignal?.removeEventListener?.("abort", abort);

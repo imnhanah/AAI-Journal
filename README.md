@@ -27,14 +27,33 @@ trades.
 
 ## 2. Set up the database
 
-1. In your Supabase project, open **SQL Editor → New query**.
-2. Paste the entire contents of `supabase/schema.sql` and click **Run**.
+For a **new, empty project**, follow the numbered order in
+[`supabase/MIGRATION_MANIFEST.md`](supabase/MIGRATION_MANIFEST.md). It starts
+with `schema.sql`, then applies the finance, balances, challenges, backtest,
+calendar-cache, and low-egress sync migrations in their dependency order.
 
-That one file creates every table (`profiles`, `accounts`, `trades`,
-`rules`, `journal_entries`, `user_settings`), enables Row Level Security on
-all of them, adds the ownership policies, and sets up a trigger so a
-`profiles` row is created automatically the moment someone signs up. It's
-safe to re-run if you ever need to.
+Do not treat `schema.sql` as a general production upgrade script. It is the
+fresh-install baseline and includes historical backfill updates and trigger
+recreation. For an existing project, first back up the database, run the
+read-only verifier below, and apply only the missing migrations from the
+manifest. Never run `supabase/seed_two_account_demo.sql` in production: it
+deletes/recreates Demo data.
+
+### Verify an installation safely
+
+After the required migrations are installed, run the catalog-only verifier.
+It checks expected tables, columns, RPC argument signatures, RLS, and policies
+without reading journal records or modifying the database:
+
+```bash
+npm run verify:supabase -- --db-url "$SUPABASE_DB_URL"
+```
+
+The command requires a local `psql` client and a database URL with enough
+catalog access. It does not print the URL and runs inside `BEGIN READ ONLY`.
+If `psql` is unavailable, paste
+[`supabase/verify_installation.sql`](supabase/verify_installation.sql) into
+the Supabase SQL Editor instead.
 
 ## 3. (Optional) Enable Google sign-in
 

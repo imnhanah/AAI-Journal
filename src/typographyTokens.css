@@ -1,0 +1,82 @@
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+:root {
+  --text-min: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-title: 20px;
+  --text-page: 32px;
+}
+body { font-size:var(--text-base); }
+.tj-root :is(input,select,textarea,.tj-picker-trigger) {font-size:var(--text-base);}
+.tj-root :is(.tj-btn-primary,.tj-btn-outline,.tj-picker-options button) {font-size:14px;}
+.tj-root .tj-field-label {font-size:var(--text-min);}
+.tj-root :is(.tj-muted-txt,.tj-field-help) {font-size:var(--text-sm);}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-nav-item {font-size:16px;min-height:50px;}
+.tj-root.tj-root.tj-root .tj-sidebar .tj-theme-nav>span:last-child {font-size:16px;}
+/* Fixed text sizes in settings: identical across theme/accent and viewport. */
+.tj-root.tj-root.tj-root.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) {
+  width:min(920px,calc(100vw - 48px)) !important;
+  height:auto !important;max-height:92vh !important;
+  display:flex;flex-direction:column;overflow:hidden;
+  font-size:var(--text-base);line-height:1.45;
+}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-modal-body {
+  display:flex;flex-direction:column;flex:1;min-height:0;max-height:none;height:auto;overflow:hidden;
+}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-studio,.tj-settings-hub) {min-height:0;flex:1;overflow:hidden;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-studio-scroll,.tj-settings-hub-content) {flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(input,select,textarea,.tj-input,.tj-picker-trigger) {
+  font-size:15px !important;min-height:46px !important;height:46px !important;line-height:1.4 !important;
+}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) textarea {height:auto !important;min-height:92px !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) button {
+  font-size:14px !important;min-height:42px !important;line-height:1.4 !important;white-space:normal;overflow-wrap:anywhere;
+}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-picker-trigger {font-size:15px !important;min-height:46px !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-picker-trigger,.tj-theme-choice)>span {font-size:inherit !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(p,small,.tj-muted-txt,.tj-field-help,.tj-personal-section-title>span,.tj-settings-switch-row small,.tj-cloud-sync-toggle small) {font-size:13px !important;line-height:1.45 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-field-label,label) {font-size:13px !important;font-weight:700 !important;line-height:1.45 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(em,.tj-chip,.tj-profile-routine-status,.tj-profile-preview>span,.tj-profile-reference-stats small,.tj-profile-reference-stats strong,.tj-settings-workspace-summary small,.tj-balance-context-card small,.tj-accent-option small) {font-size:12px !important;line-height:1.45 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-display-row strong,.tj-settings-switch-row strong,.tj-cloud-sync-toggle strong,.tj-profile-routine-toggle-row strong,.tj-profile-routine-items-row strong,.tj-accent-head strong) {font-size:13px !important;line-height:1.45 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(h3,h4,.tj-personal-section-title strong,.tj-profile-routine-heading>strong,.tj-settings-section-title strong,.tj-account-picker-heading strong) {font-size:18px !important;line-height:1.35 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-modal-title,.tj-profile-reference-identity strong,.tj-settings-workspace-heading>p) {font-size:22px !important;line-height:1.35 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-settings-switch {
+  width:44px !important;min-width:44px !important;height:26px !important;min-height:26px !important;flex:0 0 44px !important;padding:0 !important;
+}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-settings-switch i {width:20px !important;height:20px !important;top:2px !important;left:2px !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) .tj-settings-switch[aria-checked=true] i {transform:translateX(18px) !important;}
+.tj-root .tj-profile-redesign .tj-accent-option {height:auto !important;min-height:86px !important;}
+.tj-root .tj-profile-redesign .tj-accent-option>i {height:56px !important;}
+.tj-root .tj-profile-redesign .tj-accent-option>span {font-size:13px !important;line-height:1.45 !important;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-studio-footer,.tj-settings-hub-footer) {flex-shrink:0;flex-wrap:wrap;}
+.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-studio-footer,.tj-settings-hub-footer) button {height:42px !important;}
+.tj-root.tj-root.tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-reference-identity>span,.tj-profile-reference-identity strong,.tj-balance-context-card strong) {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-overflow:clip;
+}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-accent-row {grid-template-columns:repeat(3,minmax(0,1fr));}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-display-row .tj-theme-choice-row {width:max-content;max-width:100%;}
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-display-row .tj-theme-choice-row button {min-width:80px;}
+/* Larger text must wrap/truncate rather than overlap or shrink. */
+.tj-root :is(.tj-field,.tj-stat-card,.tj-reference-kpi,.tj-guardrail-metric,.tj-profile-reference-column,.tj-balance-context-card) {min-width:0;}
+.tj-root :is(.tj-stat-value,.tj-reference-kpi-value,.tj-flow-trade-result,.tj-balance-context-card strong,.tj-guardrail-card-main strong) {overflow-wrap:anywhere;}
+.tj-root :is(.tj-chip,.tj-account-badge,.tj-calendar-insight-label) {white-space:normal;overflow-wrap:anywhere;}
+.tj-root .tj-attached-day {min-height:70px;}
+.tj-root .tj-attached-day :is(strong,span,small) {max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.tj-root :is(.tj-week-card,.tj-attached-week) {min-width:0;overflow-wrap:anywhere;}
+@media(max-width:760px) {
+  .tj-root.tj-root.tj-root .tj-profile-redesign :is(.tj-profile-reference-grid,.tj-profile-reference-top),
+  .tj-root.tj-root .tj-account-settings-redesign :is(.tj-single-account-reference-grid,.tj-settings-linked-grid,.tj-account-context-grid) {grid-template-columns:minmax(0,1fr);}
+  .tj-root .tj-profile-redesign .tj-profile-reference-stats {flex-wrap:wrap;}
+  .tj-root .tj-modal:is(.tj-profile-redesign,.tj-account-settings-redesign) :is(.tj-profile-display-row,.tj-profile-routine-items-row,.tj-settings-section-head) {flex-wrap:wrap;}
+}
+button, input, select, textarea { font-family: var(--font-sans); }
+code, pre, kbd, samp { font-family: var(--font-mono); font-weight: 400; }
+:is(.tj-root, .public-site) :is(code, pre, kbd, samp) { font-family: var(--font-mono); font-weight: 400; }

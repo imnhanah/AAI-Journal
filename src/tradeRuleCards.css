@@ -1,0 +1,18 @@
+.tj-rule-verification { margin:16px 0 24px; }
+.tj-rule-verification-head { display:flex; gap:24px; align-items:center; margin-bottom:14px; }
+.tj-rule-verification-head>strong { color:var(--tj-accent); font-size:1rem; white-space:nowrap; }
+.tj-rule-verification-head>strong span { color:var(--tj-muted); font-size:var(--text-min); font-weight:500; }
+.tj-rule-verification-track { height:4px; flex:1; border-radius:99px; background:var(--tj-border); overflow:hidden; }
+.tj-rule-verification-track i { display:block; height:100%; background:var(--tj-accent); transition:width .15s ease; }
+.tj-rule-verification-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.tj-root .tj-rule-verification-card { position:relative; display:grid; grid-template-columns:34px minmax(0,1fr); gap:6px 12px; align-content:center; min-height:96px; padding:16px; border:1px solid var(--tj-border); border-radius:12px; background:var(--tj-panel-alt); color:var(--tj-text); text-align:left; font:inherit; cursor:pointer; transition:border-color .15s ease,background .15s ease; }
+.tj-root .tj-rule-verification-card:hover { border-color:color-mix(in srgb,var(--tj-accent) 55%,var(--tj-border)); }
+.tj-root .tj-rule-verification-card.is-confirmed { border-color:color-mix(in srgb,var(--tj-accent) 65%,var(--tj-border)); background:color-mix(in srgb,var(--tj-accent) 8%,var(--tj-panel-alt)); }
+.tj-rule-verification-icon { grid-row:span 2; display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--tj-panel); border:1px solid var(--tj-border); color:var(--tj-muted); font-size:var(--text-min); font-weight:800; }
+.tj-rule-verification-card.is-confirmed .tj-rule-verification-icon { color:var(--tj-accent); border-color:color-mix(in srgb,var(--tj-accent) 35%,var(--tj-border)); }
+.tj-rule-verification-card strong { font-size:.87rem; font-weight:600; line-height:1.4; }
+.tj-rule-verification-card small { color:var(--tj-muted); font-size:var(--text-min); }
+.tj-rule-verification-card.is-confirmed small { color:var(--tj-accent); }
+.tj-rule-verification-card:focus-visible { outline:2px solid var(--tj-accent); outline-offset:3px; }
+@media(max-width:600px) { .tj-rule-verification-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce) { .tj-rule-verification-track i { transition:none; } }

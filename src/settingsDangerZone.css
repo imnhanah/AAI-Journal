@@ -1,0 +1,36 @@
+.tj-root .tj-settings-danger-menu {position:relative;margin-left:auto;align-self:center;flex-shrink:0;}
+.tj-root .tj-settings-danger-menu > button {min-height:auto!important;padding:0!important;margin:0!important;font-size:var(--text-min);font-weight:700;border:0!important;border-radius:0!important;background:transparent!important;color:var(--tj-red);}
+.tj-root .tj-settings-danger-menu > button:hover {text-decoration:underline;}
+.tj-root .tj-settings-danger-popover {position:absolute;right:0;top:calc(100% + 10px);z-index:20;width:min(330px,calc(100vw - 48px));box-sizing:border-box;padding:12px;border:1px solid color-mix(in srgb,var(--tj-red) 35%,var(--tj-border));border-radius:14px;background:var(--tj-panel);box-shadow:0 14px 38px var(--redesign-color-36);}
+.tj-root .tj-settings-danger-popover header {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;}
+.tj-root .tj-settings-danger-popover header strong {display:flex;align-items:center;gap:6px;color:var(--tj-red);font-size:var(--text-min);}
+.tj-root .tj-settings-danger-popover header small {font-size:var(--text-min);color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root .tj-settings-danger-popover > div {display:flex;align-items:center;gap:12px;margin-top:8px;padding:11px;border:1px solid color-mix(in srgb,var(--tj-red) 25%,var(--tj-border));border-radius:10px;background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel));}
+.tj-root .tj-settings-danger-popover > div > span {flex:1;min-width:0;display:grid;gap:4px;}
+.tj-root .tj-settings-danger-popover > div strong {font-size:var(--text-min);color:var(--tj-red);}
+.tj-root .tj-settings-danger-popover > div small {font-size:var(--text-min);line-height:1.5;color:var(--tj-text);}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav .tj-settings-danger-popover > div button {display:flex;align-items:center;gap:4px;min-height:34px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--tj-red) 35%,var(--tj-border));border-radius:8px;font-size:var(--text-min);background:var(--tj-panel);color:var(--tj-red);cursor:pointer;}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav .tj-settings-danger-popover > div:last-child button {background:var(--tj-red);color:var(--color-white);}
+.tj-root .tj-settings-danger-overlay {position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:20px;background:var(--redesign-color-6);backdrop-filter:none;-webkit-backdrop-filter:none;}
+.tj-root .tj-settings-danger-dialog {box-sizing:border-box;width:min(360px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;padding:24px;border:1px solid var(--tj-border);border-radius:18px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 24px 60px var(--redesign-color-7);text-align:center;}
+.tj-root.tj-theme-light .tj-settings-danger-dialog,.tj-root.tj-theme-light .tj-settings-danger-popover {background:var(--color-white);}
+.tj-root .tj-settings-danger-icon {display:grid;place-items:center;width:42px;height:42px;margin:0 auto 13px;border:1px solid color-mix(in srgb,var(--tj-red) 35%,var(--tj-border));border-radius:12px;background:color-mix(in srgb,var(--tj-red) 10%,var(--tj-panel));color:var(--tj-red);}
+.tj-root .tj-settings-danger-dialog.is-delete .tj-settings-danger-icon {background:var(--tj-red);color:var(--color-white);}
+.tj-root .tj-settings-danger-dialog h3 {font-size:15px;line-height:1.4;margin:0 0 8px;overflow-wrap:anywhere;}
+.tj-root .tj-settings-danger-dialog p {font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);margin:0 0 12px;}
+.tj-root .tj-settings-danger-accounts {display:flex;justify-content:center;flex-wrap:wrap;gap:5px;margin:12px 0;}
+.tj-root .tj-settings-danger-accounts span {padding:3px 7px;border:1px solid color-mix(in srgb,var(--tj-red) 32%,var(--tj-border));border-radius:999px;color:var(--tj-red);background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel));font-size:var(--text-min);overflow-wrap:anywhere;max-width:100%;}
+.tj-root .tj-settings-danger-ack {display:flex;justify-content:center;align-items:center;gap:7px;font-size:var(--text-min);font-weight:600;margin:12px 0;cursor:pointer;}
+.tj-root .tj-settings-danger-ack input {accent-color:var(--tj-red);width:14px;height:14px;flex-shrink:0;}
+.tj-root .tj-settings-danger-name {display:block;text-align:left;font-size:var(--text-min);color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root .tj-settings-danger-name .tj-input {box-sizing:border-box;width:100%;min-width:0;height:36px;margin-top:7px;border-radius:8px;font-size:12px;}
+.tj-root .tj-settings-danger-buttons {display:flex;gap:9px;margin-top:16px;}
+.tj-root .tj-settings-danger-buttons button {flex:1;min-width:0;min-height:38px;padding:8px 12px;border-radius:8px;font-size:var(--text-min);font-weight:700;cursor:pointer;}
+.tj-root .tj-settings-danger-confirm {border:1px solid var(--tj-red);background:var(--tj-red);color:var(--color-white);}
+.tj-root .tj-settings-danger-buttons button:disabled {opacity:.45;cursor:not-allowed;}
+.tj-root .tj-settings-danger-dialog .tj-settings-danger-error {color:var(--tj-red);margin-top:10px;}
+
+
+/* Blur lives behind readable content, never on its container. */
+.tj-root .tj-settings-danger-overlay {isolation:isolate;}
+.tj-root .tj-settings-danger-overlay::before {content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}

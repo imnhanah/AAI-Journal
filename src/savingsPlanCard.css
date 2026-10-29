@@ -1,0 +1,60 @@
+.tj-root.tj-root .tj-savings-orbit {container-type:inline-size;container-name:savings-orbit;display:block;min-width:0;max-width:100%;padding:20px;margin:0;border:1px solid var(--tj-border);border-radius:20px;background:var(--tj-input-bg);color:var(--tj-text);font-size:14px;line-height:1.4;}
+.tj-root.tj-root .tj-savings-orbit-header {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.tj-root.tj-root .tj-savings-orbit-header>div {display:grid;gap:4px;min-width:0;}
+.tj-root.tj-root .tj-savings-orbit-header small {font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--tj-muted);text-transform:uppercase;}
+.tj-root.tj-root .tj-savings-orbit-header h3 {font-size:18px;font-weight:700;line-height:1.3;margin:0;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-header span {font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-header .tj-savings-orbit-rate {padding:5px 9px;white-space:nowrap;border-radius:20px;background:color-mix(in srgb,var(--accent) 12%,var(--tj-input-bg));color:var(--accent);}
+.tj-root.tj-root .tj-savings-orbit-summary {display:grid;grid-template-columns:minmax(0,1fr) 96px;align-items:center;gap:12px;margin:24px 0 18px;}
+.tj-root.tj-root .tj-savings-orbit-summary>div:first-child {display:grid;gap:5px;min-width:0;}
+.tj-root.tj-root .tj-savings-orbit-label,.tj-root.tj-root .tj-savings-orbit-target {font-size:12px;color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-money {font-size:32px;font-weight:800;line-height:1.15;letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-ring {width:96px;height:96px;box-sizing:border-box;padding:6px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) var(--savings-progress),var(--tj-border) 0);}
+.tj-root.tj-root .tj-savings-orbit-ring>div {width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:50%;background:var(--tj-input-bg);}
+.tj-root.tj-root .tj-savings-orbit-ring svg {color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-ring strong {font-size:22px;font-weight:800;line-height:1.25;}
+.tj-root.tj-root .tj-savings-orbit-ring span {font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-remaining {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-bottom:18px;font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-remaining strong {font-size:14px;color:var(--tj-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-allocation {border-top:1px solid var(--tj-border);padding-top:16px;}
+.tj-root.tj-root .tj-savings-orbit-profit {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.tj-root.tj-root .tj-savings-orbit-profit>div {display:grid;gap:4px;min-width:0;}
+.tj-root.tj-root .tj-savings-orbit-profit small {font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-profit strong {font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-profit>span {font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-split {display:flex;gap:4px;height:10px;}
+.tj-root.tj-root .tj-savings-orbit-split>i {background:var(--tj-border);border-radius:4px 0 0 4px;}
+.tj-root.tj-root .tj-savings-orbit-split>b {background:var(--accent);border-radius:0 4px 4px 0;}
+.tj-root.tj-root .tj-savings-orbit-destinations {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;}
+.tj-root.tj-root .tj-savings-orbit-destinations>div {display:grid;gap:4px;min-width:0;}
+.tj-root.tj-root .tj-savings-orbit-destinations>div:last-child {text-align:right;}
+.tj-root.tj-root .tj-savings-orbit-destinations span {font-size:12px;color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-destinations strong {font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-destinations>div:last-child strong {color:var(--accent);}
+.tj-root.tj-root .tj-savings-orbit-paid {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-paid strong {overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-footer {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--tj-border);padding:16px 0 0;margin:18px 0 0;}
+.tj-root.tj-root .tj-savings-orbit-footer>div {display:grid;gap:4px;min-width:0;}
+.tj-root.tj-root .tj-savings-orbit-footer span {font-size:12px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-savings-orbit-footer strong {font-size:23px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-savings-orbit-footer .tj-savings-orbit-transfer {display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;max-width:100%;padding:10px 12px;font-size:13px;line-height:1.3;white-space:normal;border-radius:12px;margin:0;}
+.tj-root.tj-root .tj-savings-orbit-transfer:disabled {opacity:.5;cursor:not-allowed;}
+.tj-root.tj-root .tj-savings-orbit-error {font-size:12px;color:var(--tj-red);margin:12px 0 0;overflow-wrap:anywhere;}
+@container savings-orbit (max-width:300px) {
+  .tj-root.tj-root .tj-savings-orbit-summary {grid-template-columns:minmax(0,1fr) 80px;}
+  .tj-root.tj-root .tj-savings-orbit-ring {width:80px;height:80px;padding:5px;}
+  .tj-root.tj-root .tj-savings-orbit-money {font-size:28px;}
+  .tj-root.tj-root .tj-savings-orbit-footer .tj-savings-orbit-transfer {width:100%;}
+}
+/* Long amounts get whole-value space, not digit-level line breaks.
+   Container sizing also covers the narrow sidebar on a wide desktop. */
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-money {font-size:clamp(12px,6cqi,26px);white-space:nowrap;overflow-wrap:normal;letter-spacing:-.02em;}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-target {white-space:nowrap;overflow-wrap:normal;}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-destinations {grid-template-columns:minmax(0,1fr);}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-destinations>div {display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-destinations>div:last-child {text-align:left;}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-destinations strong,
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-profit strong,
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-footer strong {font-size:clamp(12px,6cqi,23px);white-space:nowrap;overflow-wrap:normal;}
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-remaining strong,
+.tj-root.tj-root .tj-savings-orbit.tj-savings-orbit-long .tj-savings-orbit-paid strong {white-space:nowrap;overflow-wrap:normal;}

@@ -1,0 +1,196 @@
+/*
+ * Borderless presentation layer
+ *
+ * This intentionally names ordinary application surfaces instead of applying
+ * a global border reset. Form fields, modal/dialog boundaries, semantic
+ * status and danger treatments, and ChartViewer drawing affordances remain
+ * owned by their component styles.
+ */
+.tj-root {
+  --borderless-hover: color-mix(in srgb, var(--accent) 10%, var(--raised));
+  --borderless-selected: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+/* App chrome and navigation are surfaces, not framed containers. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2,
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-settings .tj-nav-item,
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-user,
+.case-library-sidebar,
+.cse-header,
+.cse-outline,
+.cse-workspace,
+.cse-panel {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Case Study shares the journal canvas instead of rendering page-sized wells. */
+:is(
+  .case-library,
+  .case-study-editor,
+  .case-secondary-page,
+  .case-v2-resource,
+  .case-v2-templates,
+  .cse-workspace
+) {
+  background: transparent !important;
+}
+
+/* Keep only the supporting rails subtly distinct from the shared canvas. */
+:is(.case-library-sidebar, .cse-outline, .cse-panel) {
+  background: color-mix(in srgb, var(--surface) 80%, var(--bg)) !important;
+}
+
+/* Ordinary study, library, and workspace content surfaces. */
+:is(
+  .case-metrics .case-metric,
+  .case-shelf,
+  .case-library-all,
+  .case-secondary-page,
+  .case-library .case-study-card,
+  .case-v2-resource__list > button,
+  .case-v2-evidence-detail,
+  .case-v2-template-layout > article,
+  .case-v2-template-layout li,
+  .case-evidence-grid article,
+  .case-template-manager button,
+  .case-template-grid button,
+  .cse-evidence-shelf,
+  .cse-evidence-cards article,
+  .cse-evidence-list article,
+  .cse-chart-evidence button,
+  .cse-validation,
+  .tj-trade-reference-card,
+  .tj-account-target-result,
+  .tj-markup-section,
+  .tj-markup-session-review,
+  .tj-review-reference-card,
+  .tj-review-execution-grid > div,
+  .tj-personal-profile-card,
+  .tj-personal-appearance-card,
+  .tj-profile-regional-card,
+  .tj-profile-display-card,
+  .tj-profile-routine-card,
+  .tj-personal-security-card,
+  .tj-reference-accounts-card,
+  .tj-reference-details-card,
+  .tj-reference-position-card,
+  .tj-reference-challenge-card,
+  .tj-settings-section,
+  .tj-finance-settings-account,
+  .bt-reference-library,
+  .tj-news-workspace,
+  .tj-psychology-workspace,
+  .tj-finance-page,
+  .tj-challenge-reference,
+  .tj-calendar-page,
+  .tj-reference-analytics,
+  .tj-review-library,
+  .tj-account-settings-redesign,
+  .tj-management-reference
+) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Interactive cards and rows communicate through a quiet surface change. */
+:is(
+  .tj-sidebar-v2 .tj-nav-item,
+  .case-library-sidebar > button,
+  .case-metrics .case-metric,
+  .case-shelf__items button,
+  .case-library .case-study-card,
+  .case-v2-filter-row button,
+  .case-v2-resource__list > button,
+  .case-v2-template-tabs button,
+  .case-v2-template-layout aside button,
+  .case-template-manager button,
+  .case-template-grid button,
+  .cse-outline li button,
+  .cse-evidence-preview,
+  .cse-evidence-thumb,
+  .cse-evidence-choice,
+  .cse-evidence-actions .cse-open-viewer,
+  .cse-actions-panel button,
+  .cse-chart-evidence button
+) {
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(
+    .tj-sidebar-v2 .tj-nav-item:not(.tj-nav-active):not(.tj-nav-danger),
+    .case-library-sidebar > button:not(.is-active),
+    .case-metrics .case-metric,
+    .case-shelf__items button,
+    .case-library .case-study-card,
+    .case-v2-filter-row button:not(.is-active),
+    .case-v2-resource__list > button:not(.is-active),
+    .case-v2-template-tabs button:not(.is-active),
+    .case-v2-template-layout aside button:not(.is-active),
+    .case-template-manager button,
+    .case-template-grid button,
+    .cse-outline li button:not(.is-active),
+    .cse-evidence-preview,
+    .cse-evidence-thumb,
+    .cse-evidence-choice,
+    .cse-evidence-actions .cse-open-viewer,
+    .cse-actions-panel button:not(.is-danger),
+    .cse-chart-evidence button
+  ):hover {
+    background: var(--borderless-hover) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
+/* Active/tapped choices remain clear without an accent rectangle. */
+:is(
+  .tj-sidebar-v2 .tj-nav-active,
+  .case-library-sidebar > button.is-active,
+  .case-v2-filter-row button.is-active,
+  .case-v2-resource__list > button.is-active,
+  .case-v2-template-tabs button.is-active,
+  .case-v2-template-layout aside button.is-active,
+  .cse-outline li button.is-active,
+  .cse-panel-tabs button.is-active,
+  .cse-evidence-cards article.is-selected,
+  .cse-evidence-list article.is-selected
+) {
+  background: var(--borderless-selected) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* The study outline needs a stronger reading cue than compact utility tabs. */
+.cse-outline li button.is-active {
+  background: color-mix(in srgb, var(--accent) 24%, var(--raised)) !important;
+  color: var(--text) !important;
+  font-weight: 700;
+}
+.cse-outline li button.is-active span { color: var(--text); opacity: .82; }
+
+/* Preserve structural dividers only; ordinary rows no longer look boxed. */
+.case-research-panels .case-shelf__items button,
+.cse-picker-list label,
+.cse-panel-tabs,
+.cse-split-evidence,
+.cse-evidence-detail footer,
+.cse-v2-reference-list {
+  box-shadow: none !important;
+}
+
+/* Keyboard focus stays explicit after removing earlier blanket suppression. */
+.tj-root :is(button, a, input, textarea, select, [role="button"], [role="tab"]):focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tj-sidebar-v2 .tj-nav-item, .case-library button, .cse-layout button) {
+    transition: none !important;
+  }
+}
+

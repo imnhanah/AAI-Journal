@@ -1,12 +1,97 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {emptyChallenge,CHALLENGE_PLAN} from './challengeModel.js';
+import {emptyChallenge,CHALLENGE_PLAN,changeChallengeStatus} from './challengeModel.js';
+import {fundedChallengeLevel} from './challengeLifecycle.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
-const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:grossPnl-99,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
+// These tests isolate gross-based progression; lifecycle tests cover net balance.
+const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:0,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
 const start=(mode,level=1,old=[])=>resetAutomation(emptyChallenge(),old,mode,level,now);
 const replay=(base,trades,patch={})=>replayChallenge(base,{...account,trades,...patch});
+test('withdrawals and trading transfers fall back to the funded level without changing trade profit',()=>{
+  for (const type of ['withdrawal','transfer']) {
+    const trades=[row(1,2,{pnl:2})];
+    const movement={type,source:'trading',amount:1,createdAt:new Date(2026,8,14,12).toISOString()};
+    const state=replay(start('risk',4),trades,{financeMovements:[movement]});
+    assert.equal(state.activeLevel,fundedChallengeLevel(CHALLENGE_PLAN,21));
+    assert.equal(state.liveBalance,21);
+    assert.equal(state.levelPnl,0);
+    assert.equal(trades[0].pnl,2);
+    assert.equal(state.statuses[4],'Step back');
+    assert.match(state.notes[4],type === 'withdrawal' ? /withdrawal/ : /transfer out/);
+    assert.equal(replay(start('risk',4),trades).activeLevel,4);
+  }
+});
+test('a new challenge captures the live account balance at its checkpoint',()=>{
+  const historical=row(1,80,{pnl:80,createdAt:new Date(2026,8,14,9,0).toISOString()});
+  const baseline=resetAutomation(emptyChallenge(),[historical],'risk',1,now,30,100);
+  const state=replayChallenge(baseline,{...account,balance:20,trades:[historical]});
+  assert.equal(baseline.automation.startingBalance,100);
+  assert.equal(state.liveBalance,100);
+  assert.equal(state.counted,0);
+});
+test('Adaptive Balance stays at Level 1 after a loss and fails only at its configured drawdown floor',()=>{
+  const baseline=resetAutomation({...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:2,adaptiveDrawdownPct:10}},[],'adaptive',1,now,10,100);
+  const safeLoss=row(1,-2,{pnl:-2});
+  const safe=replayChallenge(baseline,{...account,balance:100,trades:[safeLoss]});
+  assert.equal(safe.activeLevel,1);
+  assert.equal(safe.failed,false);
+  const failedLoss=row(1,-11,{pnl:-11});
+  const failed=replayChallenge(baseline,{...account,balance:100,trades:[failedLoss]});
+  assert.equal(failed.failed,true);
+});
+test('the active level reconciles to the current live balance when a loss does not trigger a streak step-back',()=>{
+  const loss=row(1,-1,{pnl:-9});
+  const baseline=resetAutomation(emptyChallenge(),[],'streak',1,now,30,55.99);
+  const state=replayChallenge(baseline,{...account,balance:55.99,trades:[loss]});
+  // In the Mode 2 ladder, $46.99 is above level 2's start ($33.95) but
+  // below level 3's start ($52.55), so it belongs at level 2.
+  assert.equal(state.liveBalance,46.99);
+  assert.equal(state.activeLevel,2);
+  assert.equal(state.statuses[1],'Jumped');
+  assert.equal(state.statuses[2],'In progress');
+  assert.equal(state.statuses[3],'Step back');
+});
+test('a risk-limit step-back is never re-promoted by the remaining funded balance',()=>{
+  const baseline=resetAutomation(emptyChallenge(),[],'risk',1,now,30,100);
+  // $100 starts on level 7. The gross loss fails that rung, while the small
+  // net loss leaves enough capital to fund it; replay must retain level 6.
+  const state=replayChallenge(baseline,{...account,balance:100,trades:[row(1,-30,{pnl:-0.01})]});
+  assert.equal(state.liveBalance,99.99);
+  assert.equal(state.activeLevel,6);
+  assert.equal(state.statuses[7],'Step back');
+  assert.equal(state.statuses[6],'In progress');
+  assert.equal(state.fundingJumps[7],undefined);
+});
+test('cash out within current funding preserves progress; savings-funded transfers do not reduce trading capital',()=>{
+  const when=new Date(2026,8,14,12).toISOString();
+  assert.equal(replay(start('risk'),[row(1,2,{pnl:2})],{financeMovements:[{type:'withdrawal',source:'trading',amount:1,createdAt:when}]}).levelPnl,2);
+  assert.equal(replay(start('risk',4),[],{financeMovements:[{type:'transfer',source:'savings',amount:100,createdAt:when}]}).activeLevel,4);
+});
+test('activity counts repeated downward moves even after a level is revisited',()=>{
+  const base=start('risk',4);
+  const trades=[row(1,-10),row(2,14),row(3,-10)];
+  const state=replay(base,trades);
+  assert.equal(state.stepBacks,2);
+  assert.equal(state.activeLevel,3);
+  assert.equal(replay(base,trades.slice(0,2)).stepBacks,1);
+  assert.equal(replay(base,[...trades.slice(0,2),{...trades[2],grossPnl:0}]).stepBacks,1);
+  assert.equal(replay(base,[]).stepBacks,0);
+});
+test('activity excludes level-one boundary, deposits and foreign trades from step-backs',()=>{
+  assert.equal(replay(start('risk'),[row(1,-10)]).stepBacks,0);
+  assert.equal(replay(start('risk',4),[row(1,-10,{accountId:'b'})]).stepBacks,0);
+  const state=replay(start('risk',4),[],{financeMovements:[{type:'deposit',amount:100,createdAt:new Date(2026,8,14,12).toISOString()}]});
+  assert.equal(state.stepBacks,0);
+});
+test('manual step-backs retain their count after their status is replaced',()=>{
+  let state=changeChallengeStatus(emptyChallenge(),4,'Step back');
+  state=changeChallengeStatus(state,4,'Pass');
+  state=changeChallengeStatus(state,4,'Step back');
+  assert.equal(replay(state,[]).stepBacks,2);
+  assert.equal(replay(changeChallengeStatus(state,4,'Step back'),[]).stepBacks,2);
+});
 test('manual and disabled accounts never move',()=>{
   assert.equal(replay(start(null),[row(1,100)]).activeLevel,1);
   assert.equal(replay(start('risk'),[row(1,100)],{challengeEnabled:false}).activeLevel,1);

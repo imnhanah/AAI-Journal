@@ -1,0 +1,527 @@
+.tj-root .tj-routine-overlay {position:fixed;inset:0;z-index:160;display:grid;place-items:center;padding:18px;background:color-mix(in srgb,var(--tj-bg) 70%,transparent);backdrop-filter:none;}
+.tj-root .tj-routine-popup {position:relative;width:min(450px,100%);max-height:calc(100dvh - 36px);overflow:auto;box-sizing:border-box;padding:20px 23px 14px;border:1px solid var(--tj-border);border-radius:20px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 20px 60px var(--color-shadow-29);}
+.tj-root .tj-routine-close {position:absolute;right:12px;top:12px;z-index:2;}
+.tj-root .tj-routine-popup>header {position:relative;padding-right:60px;min-height:58px;}
+.tj-root .tj-routine-popup>header>small,.tj-root .tj-routine-group>header {font-size:var(--text-min);text-transform:uppercase;letter-spacing:1.3px;font-weight:800;}
+.tj-root .tj-routine-popup>header>small {color:var(--tj-accent);}
+.tj-root .tj-routine-popup h2 {font-size:22px;margin:7px 0 4px;line-height:1.25;}
+.tj-root .tj-routine-popup p {font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);margin:0;}
+.tj-root .tj-routine-ring {position:absolute;right:6px;top:18px;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:conic-gradient(var(--tj-accent) var(--routine-progress),var(--tj-border) 0);}
+.tj-root .tj-routine-ring b {display:grid;grid-auto-flow:column;align-items:center;justify-content:center;width:36px;height:36px;background:var(--tj-panel);border-radius:50%;font-size:15px;}
+.tj-root .tj-routine-ring small {font-size:var(--text-min);color:var(--tj-muted);}
+.tj-root .tj-routine-session-streak {display:flex;align-items:center;justify-content:space-between;gap:10px;margin:15px 0;}
+.tj-root .tj-routine-sessions {display:flex;gap:3px;font-size:var(--text-min);letter-spacing:.6px;}
+.tj-root .tj-routine-sessions span {padding:5px 7px;border:1px solid var(--tj-border);border-radius:5px;color:var(--tj-muted);}
+.tj-root .tj-routine-sessions .is-current {background:var(--tj-accent-muted);color:var(--tj-accent);border-color:var(--tj-accent-border);}
+.tj-root .tj-routine-history {display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.tj-root .tj-routine-history>span {display:flex;gap:3px;}
+.tj-root .tj-routine-history i {width:5px;height:5px;border-radius:50%;border:1px solid var(--tj-border);}
+.tj-root .tj-routine-history i.is-done {background:var(--tj-accent);border-color:var(--tj-accent);}
+.tj-root .tj-routine-history i.is-today {background:transparent;border-color:var(--tj-accent);}
+.tj-root .tj-routine-history small {font-size:var(--text-min);color:var(--tj-muted);}
+.tj-root .tj-routine-group {margin-top:14px;}
+.tj-root .tj-routine-group>header {display:flex;justify-content:space-between;margin-bottom:8px;color:var(--tj-muted);font-size:var(--text-min);}
+.tj-root .tj-routine-group>header>small:last-child {color:var(--tj-accent);}
+.tj-root .tj-routine-row {display:flex;align-items:center;gap:8px;border:1px solid var(--tj-border);border-radius:9px;background:var(--tj-panel-alt);margin-bottom:5px;min-height:42px;padding:6px 10px;box-sizing:border-box;}
+.tj-root .tj-routine-row.is-checked {background:var(--tj-accent-muted);border-color:var(--tj-accent-border);}
+.tj-root .tj-routine-row label {display:flex;gap:9px;align-items:center;flex:1;min-width:0;cursor:pointer;}
+.tj-root .tj-routine-row input {position:absolute;opacity:0;width:1px;height:1px;}
+.tj-root .tj-routine-tick {display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px;border:1px solid var(--tj-border);border-radius:5px;}
+.tj-root .tj-routine-tick svg {visibility:hidden;}
+.tj-root .is-checked .tj-routine-tick {background:var(--tj-accent);color:var(--on-accent);border-color:var(--tj-accent);}
+.tj-root .is-checked .tj-routine-tick svg {visibility:visible;}
+.tj-root .tj-routine-row input:focus-visible+.tj-routine-tick {outline:2px solid var(--tj-accent);outline-offset:3px;}
+.tj-root .tj-routine-row strong {font-size:var(--text-min);display:block;line-height:1.5;}
+.tj-root .tj-routine-row small {display:block;font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);}
+.tj-root .tj-routine-row em {font-size:var(--text-min);font-style:normal;color:var(--tj-purple);border:1px solid var(--tj-purple);border-radius:4px;padding:1px 4px;margin-left:6px;}
+.tj-root .tj-routine-row>button {background:transparent;border:0;color:var(--tj-accent);font-size:var(--text-min);cursor:pointer;white-space:nowrap;}
+.tj-root .tj-routine-popup footer {margin-top:16px;border-top:1px solid var(--tj-border);padding-top:13px;}
+.tj-root .tj-routine-popup footer>div {display:flex;justify-content:space-between;gap:10px;}
+.tj-root .tj-routine-popup footer button {border-radius:8px;font-size:var(--text-min);padding:10px 14px;}
+.tj-root .tj-routine-popup footer>small {display:block;text-align:center;margin-top:12px;font-size:var(--text-min);color:var(--tj-muted);}
+.tj-root .tj-routine-popup.is-complete {border-color:var(--tj-accent-border);}
+.tj-root .tj-routine-popup.is-complete .tj-routine-ring {background:conic-gradient(var(--tj-amber) var(--routine-progress),var(--tj-border) 0);}
+.tj-root .tj-routine-management header {display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.tj-root .tj-routine-management h2 {font-size:20px;}.tj-root .tj-routine-management h3 {margin:24px 0 12px;font-size:14px;}
+.tj-root .tj-routine-management p,.tj-root .tj-profile-routine-card p {font-size:var(--text-min);line-height:1.6;color:var(--tj-muted);}
+.tj-root .tj-routine-app-items>div {display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--tj-border);}
+.tj-root .tj-routine-app-items strong {font-size:12px;display:block;}.tj-root .tj-routine-app-items small {display:block;color:var(--tj-muted);font-size:var(--text-min);margin-top:4px;}
+.tj-root .tj-routine-add {display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:8px;}
+.tj-root .tj-routine-custom>div {display:flex;align-items:center;gap:7px;padding:9px 0;border-bottom:1px solid var(--tj-border);}
+.tj-root .tj-routine-custom .tj-input {min-width:0;flex:1;}.tj-root .tj-routine-custom .tj-picker {max-width:150px;}
+.tj-root .tj-routine-management .tj-settings-switch,.tj-root .tj-profile-routine-card .tj-settings-switch {width:34px;height:20px;min-width:34px;background:var(--tj-border);border:0;border-radius:999px;position:relative;}
+.tj-root .tj-routine-management .tj-settings-switch i,.tj-root .tj-profile-routine-card .tj-settings-switch i {position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--tj-text);}
+.tj-root .tj-routine-management .tj-settings-switch[aria-checked=true],.tj-root .tj-profile-routine-card .tj-settings-switch[aria-checked=true] {background:var(--tj-accent);}
+.tj-root .tj-routine-management .tj-settings-switch[aria-checked=true] i,.tj-root .tj-profile-routine-card .tj-settings-switch[aria-checked=true] i {transform:translateX(14px);background:var(--on-accent);}
+@media(max-width:600px) {.tj-root .tj-routine-add{grid-template-columns:1fr;}.tj-root .tj-routine-custom>div{flex-wrap:wrap;}.tj-root .tj-routine-session-streak{flex-wrap:wrap;}.tj-root .tj-routine-popup{padding:24px 16px 16px;}}
+
+/* Profile reference: status in the header, switch beside its description,
+   and a separate management row. Keep colours tied to the user's theme. */
+.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-reference-column > .tj-profile-routine-card {padding:18px;border-radius:17px;flex:0 0 auto;}
+.tj-root.tj-root .tj-profile-routine-card .tj-profile-routine-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;}
+.tj-root.tj-root .tj-profile-routine-heading>strong {font-size:15px;line-height:1.4;}
+.tj-root.tj-root .tj-profile-routine-status {padding:3px 11px;border:1px solid var(--tj-border);border-radius:999px;background:var(--tj-panel-alt);color:var(--tj-muted);font-size:var(--text-min);font-weight:700;line-height:1.3;}
+.tj-root.tj-root .tj-profile-routine-toggle-row {display:flex;align-items:center;gap:12px;}
+.tj-root.tj-root .tj-profile-routine-card :is(.tj-profile-routine-toggle-row,.tj-profile-routine-items-row)>div {min-width:0;}
+.tj-root.tj-root .tj-profile-routine-card :is(.tj-profile-routine-toggle-row,.tj-profile-routine-items-row) strong {display:block;font-size:13px;line-height:1.4;}
+.tj-root.tj-root .tj-profile-routine-card p {margin:0;color:var(--tj-muted);font-size:12px;line-height:1.45;}
+.tj-root.tj-root .tj-profile-routine-items-row {display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--tj-border);}
+.tj-root.tj-root .tj-profile-routine-items-row .tj-btn-outline {flex-shrink:0;border:1px solid var(--tj-border);border-radius:999px;background:var(--tj-panel-alt);color:var(--tj-text);padding:8px 13px;font-size:var(--text-min);font-weight:700;white-space:nowrap;}
+.tj-root.tj-root .tj-profile-routine-card .tj-settings-switch {width:39px;min-width:39px;height:22px;flex-shrink:0;cursor:pointer;}
+.tj-root.tj-root .tj-profile-routine-card .tj-settings-switch i {width:16px;height:16px;background:var(--tj-muted);}
+.tj-root.tj-root .tj-profile-routine-card .tj-settings-switch[aria-checked=true] i {transform:translateX(17px);background:var(--on-accent);}
+.tj-root.tj-root .tj-profile-routine-card .tj-settings-switch:focus-visible {outline:2px solid var(--tj-accent);outline-offset:3px;}
+@media(max-width:480px) {.tj-root.tj-root .tj-profile-routine-items-row {flex-wrap:wrap;}}
+
+/* Daily routine management board. Other management lists keep their layout. */
+.tj-root.tj-root .tj-management-reference {--tj-bg:var(--color-surface-144);--tj-panel:var(--color-surface-252);--tj-panel-alt:var(--color-surface-249);--tj-input-bg:var(--color-surface-134);--tj-border:var(--color-border-241);--tj-text:var(--color-ink-238);--tj-muted:var(--color-ink-240);background:var(--tj-bg);color:var(--tj-text);padding:18px;border-radius:12px;border-color:var(--tj-border);box-shadow:none;font-family: var(--font-sans);}
+.tj-root.tj-root.tj-theme-light .tj-management-reference {--tj-bg:var(--redesign-color-5);--tj-panel:var(--color-white);--tj-panel-alt:var(--redesign-color-5);--tj-input-bg:var(--redesign-color-5);--tj-border:var(--redesign-color-27);--tj-text:var(--text);--tj-muted:var(--muted);}
+/* A profile palette must own the Management workspace too. These selectors
+   otherwise reinstate the old green-tinted light surface inside this page. */
+.tj-root.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-management-reference {--tj-bg:var(--bg);--tj-panel:var(--card);--tj-panel-alt:var(--card-alt);--tj-input-bg:var(--bg);--tj-border:var(--border);--tj-text:var(--text);--tj-muted:var(--muted);background:var(--bg)!important;}
+/* Keep Management surfaces within one dark theme family: the tool cards should
+   not fall back to a nearly-black alternate surface. */
+.tj-root.tj-root.tj-theme-dark .tj-management-reference {
+  /* Management cards borrow the chosen palette's accent rather than falling
+     back to the generic black alternate surface. */
+  --tj-panel:color-mix(in srgb,var(--accent) 7%,var(--card));
+  --tj-panel-alt:color-mix(in srgb,var(--accent) 7%,var(--card));
+  --tj-input-bg:color-mix(in srgb,var(--accent) 5%,var(--card));
+}
+.tj-root.tj-root .tj-management-reference>header {margin-bottom:10px;}
+.tj-root.tj-root .tj-management-reference>header small {display:block;font-size:var(--text-min);line-height:12px;letter-spacing:1px;color:var(--tj-muted);font-weight:700;}
+.tj-root.tj-root .tj-management-reference h1 {font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.7px;margin:0 0 2px;}
+.tj-root.tj-root .tj-management-reference>header p {font-size:var(--text-min);line-height:17px;color:var(--tj-muted);margin:0;}
+.tj-root.tj-root .tj-management-reference .tj-management-layout {grid-template-columns:minmax(180px,20%) minmax(0,1fr);gap:12px;align-items:stretch;}
+.tj-root.tj-root .tj-management-reference .tj-management-nav {padding:14px 12px;border:1px solid var(--tj-border);border-radius:10px;background:var(--tj-panel);align-self:stretch;gap:6px;min-height:666px;box-sizing:border-box;}
+.tj-root.tj-root .tj-management-reference .tj-management-nav>small {font-size:var(--text-min);line-height:12px;letter-spacing:.7px;padding:0 4px;margin:0 0 4px;color:var(--tj-muted);}
+.tj-root.tj-root .tj-management-reference .tj-management-nav>small:not(:first-child) {border-top:1px solid var(--tj-border);padding-top:15px;margin-top:8px;}
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button {height:43px;min-height:43px;padding:10px 12px;background:var(--tj-panel);border-color:var(--tj-border);color:var(--tj-text);font-size:var(--text-min);line-height:16px;font-weight:700;font-family: var(--font-sans);box-shadow:none;}
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button[aria-pressed=true] {background:color-mix(in srgb,var(--tj-accent) 8%,var(--tj-input-bg));border-color:var(--tj-accent-border);color:var(--tj-accent);box-shadow:none;}
+.tj-root.tj-root .tj-management-reference .tj-management-nav em {background:var(--tj-input-bg);color:inherit;min-width:24px;height:22px;font-size:var(--text-min);line-height:1;font-weight:700;}
+.tj-root.tj-root .tj-routine-management {padding:20px 21px;border:1px solid var(--tj-border);border-radius:10px;background:var(--tj-panel);min-height:666px;box-sizing:border-box;container-type:inline-size;}
+.tj-root.tj-root .tj-routine-management>header {display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.tj-root.tj-root .tj-routine-management h2 {margin:0 0 3px;font-size:18px;font-weight:700;line-height:23px;letter-spacing:-.2px;}
+.tj-root.tj-root .tj-routine-management p {margin:0;font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-management-status {display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.tj-root.tj-root .tj-routine-management-status .tj-btn-outline,.tj-root.tj-root .tj-routine-status-chip {border:1px solid var(--tj-border);border-radius:999px;padding:4px 10px;background:var(--tj-input-bg);font-size:var(--text-min);line-height:13px;font-weight:700;color:var(--tj-text);white-space:nowrap;box-shadow:none;}
+.tj-root.tj-root button.tj-routine-status-chip {cursor:pointer;}
+.tj-root.tj-root button.tj-routine-status-chip:disabled {cursor:default;opacity:.65;}
+
+.tj-root.tj-root .tj-profile-routine-items-row .tj-btn-outline,.tj-root.tj-root .tj-routine-management-status .tj-btn-outline {min-height:38px;padding:8px 14px;border-radius:8px;}
+.tj-root.tj-root .tj-routine-management-status .tj-routine-status-chip {min-height:38px;padding:8px 14px;border-radius:8px;}
+.tj-root.tj-root .tj-routine-status-chip.is-on {background:var(--tj-accent-muted);border-color:var(--tj-accent-border);color:var(--tj-accent);}
+.tj-root.tj-root .tj-routine-management-banner {display:flex;align-items:center;gap:8px;margin:12px 0 16px;padding:10px 12px;min-height:38px;box-sizing:border-box;border:1px solid var(--tj-accent-border);border-radius:9px;background:color-mix(in srgb,var(--tj-accent) 8%,var(--tj-input-bg));}
+.tj-root.tj-root .tj-routine-management-banner svg {flex-shrink:0;color:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-management-banner p {color:var(--tj-text);}
+.tj-root.tj-root .tj-routine-management-banner strong {color:var(--tj-accent);}
+.tj-root.tj-root .tj-routine-section-heading {display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 12px;}
+.tj-root.tj-root .tj-routine-section-heading h3 {margin:0;font-size:var(--text-min);line-height:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--tj-muted);font-weight:700;}
+.tj-root.tj-root .tj-routine-section-heading>small {font-size:var(--text-min);color:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-app-items,.tj-root.tj-root .tj-routine-custom {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+.tj-root.tj-root .tj-routine-app-items>div,.tj-root.tj-root .tj-routine-custom>div {display:flex;align-items:center;gap:7px;padding:9px 11px;min-width:0;height:48px;box-sizing:border-box;border:1px solid var(--tj-border);border-radius:9px;background:var(--tj-input-bg);}
+.tj-root.tj-root .tj-routine-item-copy {flex:1;min-width:0;}
+.tj-root.tj-root .tj-routine-app-items strong {font-size:var(--text-min);line-height:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tj-root.tj-root .tj-routine-app-items small {font-size:var(--text-min);margin-top:2px;line-height:12px;color:var(--tj-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tj-root.tj-root .tj-routine-group-tag {flex-shrink:0;font-size:var(--text-min);letter-spacing:.5px;text-transform:uppercase;font-weight:700;padding:0;background:transparent;color:var(--tj-accent);white-space:nowrap;}
+.tj-root.tj-root .tj-routine-group-tag.is-pretrade {background:transparent;color:var(--tj-purple);}
+.tj-root.tj-root .tj-routine-management .tj-settings-switch {flex:0 0 32px;width:32px;min-width:32px;height:18px;cursor:pointer;}
+.tj-root.tj-root .tj-routine-management .tj-settings-switch i {width:14px;height:14px;top:2px;left:2px;background:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-management .tj-settings-switch[aria-checked=true] i {background:var(--tj-panel);transform:translateX(14px);}
+.tj-root.tj-root .tj-routine-management .is-paused {background:var(--tj-panel-alt);}
+.tj-root.tj-root .tj-routine-management .is-paused :is(.tj-routine-item-copy,.tj-routine-custom-label,.tj-routine-group-tag) {opacity:.55;}
+.tj-root.tj-root .tj-routine-management.is-routine-off .tj-routine-list {opacity:.48;}
+.tj-root.tj-root .tj-routine-management.is-routine-off .tj-routine-list :is(button,input,.tj-routine-drag-handle) {pointer-events:none;}
+.tj-root.tj-root .tj-routine-add {margin-bottom:12px;grid-template-columns:minmax(0,1fr) 160px 64px;gap:9px;}
+.tj-root.tj-root .tj-routine-add :is(.tj-input,.tj-picker-trigger,.tj-btn-primary) {height:38px;min-height:38px;border-radius:9px;font-size:var(--text-min);box-sizing:border-box;}
+.tj-root.tj-root .tj-routine-add :is(.tj-input,.tj-picker-trigger) {background:var(--tj-input-bg);border-color:var(--tj-border);color:var(--tj-text);}
+.tj-root.tj-root .tj-routine-add .tj-input::placeholder {color:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-management .tj-routine-add .tj-btn-primary {background:var(--tj-accent);color:var(--on-accent);border:1px solid var(--tj-accent-border);}
+.tj-root.tj-root.tj-root .tj-management-reference button {box-shadow:none;}
+.tj-root.tj-root .tj-routine-custom>div {height:44px;min-height:44px;}
+.tj-root.tj-root .tj-routine-custom-label {font-size:var(--text-min);line-height:14px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tj-root.tj-root .tj-routine-item-actions {display:flex;align-items:center;align-self:stretch;gap:6px;margin-left:auto;flex:0 0 auto;}
+.tj-root.tj-root .tj-routine-custom .tj-icon-btn {display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;padding:0;border:1px solid var(--tj-border);border-radius:6px;background:var(--tj-panel);color:var(--tj-muted);}
+.tj-root.tj-root .tj-routine-custom .tj-icon-btn[aria-label^="Delete"] {color:var(--tj-red);border-color:color-mix(in srgb,var(--tj-red) 28%,var(--tj-border));}
+.tj-root.tj-root .tj-routine-drag-handle {display:flex;align-items:center;cursor:grab;color:var(--tj-muted);flex-shrink:0;}
+.tj-root.tj-root .tj-routine-drag-handle svg {width:8px;height:12px;}
+.tj-root.tj-root .tj-routine-inline-edit {display:flex;flex:1;min-width:0;gap:6px;flex-wrap:wrap;}
+.tj-root.tj-root .tj-routine-custom-card.is-editing {grid-column:1/-1;height:auto;min-height:48px;}
+.tj-root.tj-root .tj-routine-inline-edit .tj-input {min-width:160px;}
+.tj-root.tj-root .tj-routine-management :is(button,.tj-routine-drag-handle):focus-visible {outline:2px solid var(--tj-accent);outline-offset:3px;}
+@container(max-width:580px) {.tj-root.tj-root .tj-routine-app-items,.tj-root.tj-root .tj-routine-custom {grid-template-columns:1fr;}.tj-root.tj-root .tj-routine-management-status {justify-content:flex-start;}.tj-root.tj-root .tj-routine-management>header {flex-wrap:wrap;}.tj-root.tj-root .tj-routine-add {grid-template-columns:minmax(0,1fr) 140px 64px;}}
+@container(max-width:380px) {.tj-root.tj-root .tj-routine-add {grid-template-columns:1fr;}.tj-root.tj-root .tj-routine-custom>div {height:auto;min-height:48px;flex-wrap:wrap;}}
+@media(max-width:800px) {.tj-root.tj-root .tj-management-reference .tj-management-layout {grid-template-columns:1fr;}.tj-root.tj-root .tj-management-reference .tj-management-nav {min-height:0;}.tj-root.tj-root .tj-routine-management {padding:16px;min-height:0;}}
+
+/* Management workspace redesign: navigation stays calm while the active tool
+   becomes a clear, dedicated working surface. */
+.tj-root.tj-root .tj-management-reference { padding:26px; border:1px solid var(--tj-border); border-radius:18px; background:var(--tj-bg); }
+.tj-root.tj-root .tj-management-reference>header { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin:0 0 22px; padding:0 2px; }
+.tj-root.tj-root .tj-management-reference>header h1 { margin:3px 0 5px; font-size:32px; line-height:1; letter-spacing:-.045em; }
+.tj-root.tj-root .tj-management-reference>header p { max-width:540px; font-size:13px; line-height:1.45; }
+.tj-root.tj-root .tj-management-active-summary { display:grid; gap:3px; min-width:210px; padding:12px 14px; border:1px solid var(--tj-border); border-radius:12px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-active-summary small { font-size:9px; letter-spacing:.1em; color:var(--tj-muted); }
+.tj-root.tj-root .tj-management-active-summary strong { font-size:14px; }
+.tj-root.tj-root .tj-management-active-summary span { color:var(--tj-muted); font-size:11px; }
+.tj-root.tj-root .tj-management-reference .tj-management-layout { grid-template-columns:218px minmax(0,1fr); gap:18px; align-items:start; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav { position:sticky; top:16px; min-height:0; padding:12px; border-radius:14px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>small { padding:6px 7px 4px; font-size:10px; letter-spacing:.1em; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>small:not(:first-child) { margin-top:10px; padding-top:15px; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button { height:40px; min-height:40px; padding:8px 10px; border:1px solid transparent; border-radius:8px; background:transparent; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button:hover { background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button[aria-pressed=true] { border-color:var(--tj-accent-border); background:var(--tj-accent-muted); color:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav em { min-width:22px; height:20px; border-radius:6px; background:var(--tj-panel-alt); font-size:10px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content { min-width:0; min-height:620px; padding:22px; border:1px solid var(--tj-border); border-radius:16px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin:0 0 22px; padding:0 0 18px; border-bottom:1px solid var(--tj-border); }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head small { display:block; color:var(--tj-accent); font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head h2 { margin:5px 0 5px; font-size:22px; line-height:1.05; letter-spacing:-.03em; }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head p { max-width:560px; margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head>span { flex:0 0 auto; padding:6px 9px; border:1px solid var(--tj-border); border-radius:999px; color:var(--tj-muted); background:var(--tj-panel-alt); font-size:10px; font-weight:700; }
+.tj-root.tj-root .tj-management-reference .tj-management-content>.tj-management-collection,
+.tj-root.tj-root .tj-management-reference .tj-management-content>.tj-panel { max-width:100%; }
+.tj-root.tj-root .tj-management-reference .tj-management-content :is(.tj-management-collection,.tj-management-tool,.tj-panel) h2:first-child { font-size:18px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles { gap:9px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-rule-row { min-height:46px; border-radius:10px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-inline-add,
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-risk-preset-builder { padding:12px; border:1px solid var(--tj-border); border-radius:12px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-routine-management { min-height:0; padding:0; border:0; border-radius:0; background:transparent; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management>header { padding-bottom:16px; border-bottom:1px solid var(--tj-border); }
+.tj-root.tj-root .tj-management-reference .tj-routine-management h2 { font-size:22px; letter-spacing:-.025em; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management-banner { margin:16px 0; border-radius:10px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-custom { grid-template-columns:1fr; gap:8px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-custom>div { height:48px; padding:9px 12px; border-radius:10px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-routine-add { margin-bottom:18px; }
+@media(max-width:900px) { .tj-root.tj-root .tj-management-reference { padding:18px; } .tj-root.tj-root .tj-management-reference .tj-management-layout { grid-template-columns:185px minmax(0,1fr); gap:12px; } .tj-root.tj-root .tj-management-reference .tj-management-content { padding:18px; } }
+@media(max-width:700px) { .tj-root.tj-root .tj-management-reference>header { display:block; } .tj-root.tj-root .tj-management-active-summary { display:none; } .tj-root.tj-root .tj-management-reference .tj-management-layout { grid-template-columns:1fr; } .tj-root.tj-root .tj-management-reference .tj-management-nav { position:static; } .tj-root.tj-root .tj-management-reference .tj-management-content { min-height:0; padding:16px; } .tj-root.tj-root .tj-management-reference .tj-management-content-head { margin-bottom:16px; padding-bottom:14px; } .tj-root.tj-root .tj-management-reference .tj-management-content-head>span { display:none; } }
+
+/* Management v2 reference layout: horizontal setup navigation over a single,
+   full-width work surface in both light and dark themes. */
+.tj-root.tj-root .tj-management-reference { margin-top:18px; padding:28px; border:0; border-radius:0; background:var(--tj-bg); }
+.tj-root.tj-root .tj-management-reference>header { display:block; margin:0 0 16px; padding:0; }
+.tj-root.tj-root .tj-management-reference>header h1 { margin:5px 0 6px; font-size:31px; letter-spacing:-.04em; }
+.tj-root.tj-root .tj-management-reference>header p { font-size:12px; }
+.tj-root.tj-root .tj-management-reference .tj-management-active-summary { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-layout { display:grid; grid-template-columns:1fr; gap:16px; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav { position:static; display:flex; flex-direction:row; align-items:center; min-height:0; gap:4px; overflow-x:auto; padding:5px; border:1px solid var(--tj-border); border-radius:15px; background:var(--tj-panel); scrollbar-width:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav::-webkit-scrollbar { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>small { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button { flex:0 0 auto; height:40px; min-height:40px; padding:8px 14px; border:0; border-radius:10px; background:transparent; color:var(--tj-muted); white-space:nowrap; }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button:hover { background:var(--tj-panel-alt); color:var(--tj-text); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button[aria-pressed=true] { border:0; background:var(--tj-accent); color:var(--on-accent); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav em { height:20px; min-width:20px; padding:0 5px; border:1px solid var(--tj-border); border-radius:8px; background:var(--tj-panel-alt); color:var(--tj-muted); }
+.tj-root.tj-root .tj-management-reference .tj-management-nav>button[aria-pressed=true] em { border-color:color-mix(in srgb,var(--on-accent) 45%,transparent); background:color-mix(in srgb,var(--on-accent) 12%,transparent); color:inherit; }
+.tj-root.tj-root .tj-management-reference .tj-management-content { min-height:548px; padding:22px; border:1px solid var(--tj-border); border-radius:16px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-management-content-head { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-collection>h2,
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tool>h2 { font-size:21px; letter-spacing:-.025em; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-inline-add,
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-risk-preset-builder { padding:0; border:0; border-radius:0; background:transparent; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles { gap:10px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-rule-row { min-height:44px; border-radius:10px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress { display:grid; min-height:548px; align-content:start; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:18px; border-bottom:1px solid var(--tj-border); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head small { display:block; color:var(--tj-muted); font-size:10px; font-weight:800; letter-spacing:.1em; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head h2 { margin:5px 0; font-size:24px; line-height:1.1; letter-spacing:-.03em; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head p { margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge { display:inline-flex; align-items:center; gap:7px; flex:0 0 auto; padding:7px 10px; border:1px solid color-mix(in srgb,var(--tj-amber) 42%,var(--tj-border)); border-radius:999px; background:color-mix(in srgb,var(--tj-amber) 12%,var(--tj-panel)); color:var(--tj-amber); font-size:11px; font-weight:800; line-height:1.2; white-space:nowrap; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge i { width:7px; height:7px; border-radius:50%; background:currentColor; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-body { display:grid; gap:16px; padding:22px 0 0; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:15px; padding:18px; border:1px solid var(--tj-border); border-radius:14px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:14px; background:var(--tj-accent-muted); color:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message h3 { margin:0 0 4px; font-size:16px; line-height:1.25; letter-spacing:-.02em; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message p { max-width:560px; margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article { min-height:174px; padding:17px; border:1px solid var(--tj-border); border-radius:13px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article.is-current { border-color:var(--tj-accent-border); background:var(--tj-accent-muted); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article>span { display:grid; place-items:center; width:26px; height:26px; margin-bottom:16px; border-radius:50%; background:var(--tj-panel); color:var(--tj-muted); font-size:11px; font-weight:800; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article.is-current>span { background:var(--tj-accent); color:var(--on-accent); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail h3 { margin:0 0 7px; font-size:14px; line-height:1.3; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail p { margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail small { display:inline-block; margin-top:14px; color:var(--tj-muted); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail .is-current small { color:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-note { padding:12px 14px; border-left:3px solid var(--tj-accent); background:var(--tj-accent-muted); color:var(--tj-muted); font-size:12px; line-height:1.5; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management { min-height:0; padding:0; border:0; border-radius:0; background:transparent; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management>header { padding-bottom:12px; border-bottom:0; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management-banner { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-routine-custom { grid-template-columns:1fr; gap:8px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-custom>div { height:42px; min-height:42px; padding:7px 10px; border-radius:9px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-routine-add { margin:0 0 18px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management { display:grid; grid-template-columns:minmax(0,1fr) 285px; column-gap:18px; align-items:start; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management>header,
+.tj-root.tj-root .tj-management-reference .tj-routine-management>.tj-routine-management-banner,
+.tj-root.tj-root .tj-management-reference .tj-routine-management>p[role="alert"],
+.tj-root.tj-root .tj-management-reference .tj-routine-management>.tj-routine-section-heading,
+.tj-root.tj-root .tj-management-reference .tj-routine-management>.tj-routine-list { grid-column:1; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management-preview { grid-column:2; grid-row:1 / span 5; display:grid; align-content:start; gap:14px; padding:18px; border:1px solid var(--tj-border); border-radius:14px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-routine-management-preview>small { color:var(--tj-muted); font-size:9px; font-weight:800; letter-spacing:.1em; }
+.tj-root.tj-root .tj-management-reference .tj-routine-management-preview h3 { margin:0; font-size:17px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-heading p { margin:3px 0 0; color:var(--tj-muted); font-size:11px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring { --routine-progress:0%; position:relative; display:grid; place-items:center; flex:0 0 auto; width:58px; aspect-ratio:1; border-radius:50%; background:conic-gradient(var(--tj-accent) var(--routine-progress),var(--tj-border) 0); }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring::after { content:""; position:absolute; inset:5px; border-radius:inherit; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring b { position:relative; z-index:1; font-size:17px; letter-spacing:-.05em; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring b small { margin-left:1px; color:var(--tj-muted); font-size:10px; letter-spacing:0; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div { min-height:64px; padding:10px; border:1px solid var(--tj-border); border-radius:10px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats small,.tj-root.tj-root .tj-management-reference .tj-routine-missed-item small { display:block; color:var(--tj-muted); font-size:9px; font-weight:800; letter-spacing:.08em; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats strong { display:block; margin-top:5px; color:var(--tj-accent); font-size:20px; letter-spacing:-.04em; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats strong span { margin-left:3px; color:var(--tj-muted); font-size:10px; font-weight:700; letter-spacing:0; }
+.tj-root.tj-root .tj-management-reference .tj-routine-week { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; padding-top:2px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-week span { display:grid; justify-items:center; gap:5px; color:var(--tj-muted); font-size:10px; font-weight:800; }
+.tj-root.tj-root .tj-management-reference .tj-routine-week span>i { display:block; width:100%; aspect-ratio:1; border:1px solid var(--tj-border); border-radius:7px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-full>i { border-color:var(--tj-accent); background:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-partial>i { border-color:var(--tj-warning); background:color-mix(in srgb,var(--tj-warning) 22%,var(--tj-panel)); }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-missed>i { opacity:.55; }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-upcoming>i { border-style:dashed; opacity:.42; }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-today { color:var(--tj-text); }
+.tj-root.tj-root .tj-management-reference .tj-routine-week .is-today>i { box-shadow:0 0 0 2px color-mix(in srgb,var(--tj-accent) 28%,transparent); }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend { display:flex; flex-wrap:wrap; gap:9px; padding-bottom:2px; color:var(--tj-muted); font-size:9px; font-weight:700; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend span { display:flex; align-items:center; gap:4px; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend i { width:7px; height:7px; border-radius:50%; background:var(--tj-border); }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend .is-full { background:var(--tj-accent); }.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend .is-partial { background:var(--tj-warning); }.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend .is-missed { background:var(--tj-muted); opacity:.55; }
+.tj-root.tj-root .tj-management-reference .tj-routine-missed-item { padding:12px; border:1px solid var(--tj-accent-border); border-radius:10px; background:var(--tj-accent-muted); }
+.tj-root.tj-root .tj-management-reference .tj-routine-missed-item strong { display:block; margin-top:5px; font-size:12px; }.tj-root.tj-root .tj-management-reference .tj-routine-missed-item p,.tj-root.tj-root .tj-management-reference .tj-routine-progress-note { margin:4px 0 0; color:var(--tj-muted); font-size:10px; line-height:1.45; }
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-note { margin:0; padding-top:12px; border-top:1px solid var(--tj-border); }.tj-root.tj-root .tj-management-reference .tj-routine-progress-note b { color:var(--tj-accent); }
+@media(max-width:700px) { .tj-root.tj-root .tj-management-reference { padding:16px; } .tj-root.tj-root .tj-management-reference .tj-management-content { min-height:0; padding:16px; } .tj-root.tj-root .tj-management-reference .tj-management-nav { border-radius:12px; } }
+@media(max-width:700px) { .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress { min-height:420px; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head { display:block; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge { margin-top:12px; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message { align-items:start; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail { grid-template-columns:1fr; } }
+@media(max-width:920px) { .tj-root.tj-root .tj-management-reference .tj-routine-management { grid-template-columns:1fr; } .tj-root.tj-root .tj-management-reference .tj-routine-management-preview { grid-column:1; grid-row:auto; margin-top:18px; } }
+
+/* Shared list-manager treatment from the Management v2 references. */
+.tj-root.tj-root .tj-management-reference .tj-management-content :is(.tj-management-collection,.tj-panel) { position:relative; }
+.tj-root.tj-root .tj-management-reference .tj-management-content :is(.tj-management-collection,.tj-panel)>.tj-management-count { display:block; margin-top:2px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-search { position:absolute; top:0; right:0; width:min(270px,36%); margin:0; padding-left:34px; background:var(--tj-input-bg); }
+.tj-root.tj-root .tj-management-reference .tj-management-content :is(.tj-management-collection,.tj-panel)>.tj-management-search::before { content:""; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-inline-add { display:flex; align-items:center; margin-top:16px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-inline-add>.tj-input { min-height:40px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:14px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles .tj-rule-row { min-height:46px; padding:9px 12px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-default { border-radius:8px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-more { margin-top:14px; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-list-toggle { display:none; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-reveal-list { display:grid; margin-top:14px!important; }
+.tj-root.tj-root .tj-management-reference .tj-management-content .tj-rule-list .tj-rule-row { min-height:46px; border-radius:10px; }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-management-list { height:auto; min-height:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; overflow:visible; padding:0; border:0; }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-instrument-group { min-height:174px; padding:15px; border:1px solid var(--tj-border); border-radius:13px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-instrument-group:first-child { padding:15px; border-left:1px solid var(--tj-border); }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-management-tiles { display:flex; flex-wrap:wrap; align-content:start; gap:8px; padding:0; overflow:visible; }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-rule-row { min-height:36px; width:auto; padding:7px 10px; border-radius:8px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-rule-row .tj-management-row-actions { display:none; }
+@media(max-width:850px) { .tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles,.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-management-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:620px) { .tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-search { position:static; width:100%; margin:14px 0 0; } .tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles,.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-management-list { grid-template-columns:1fr; } }
+
+/* Risk preset cards follow the dedicated Management v2 risk layout. */
+.tj-root.tj-root .tj-management-reference .tj-risk-presets-manager .tj-risk-preset-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0 14px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-presets-manager .tj-risk-preset-cards article { display:grid; gap:12px; padding:16px; border:1px solid var(--tj-border); border-radius:14px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards h3 { margin:0; font-size:17px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards .tj-icon-btn { width:32px; height:32px; border:1px solid var(--tj-border); border-radius:8px; color:var(--tj-red); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-metrics span { display:grid; gap:4px; padding:12px; border:1px solid var(--tj-border); border-radius:10px; background:var(--tj-panel); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-metrics small,.tj-root.tj-root .tj-management-reference .tj-risk-preset-builder>small { color:var(--tj-muted); font-size:9px; font-weight:800; letter-spacing:.1em; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-metrics b { font-size:22px; line-height:1; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-metrics span:last-child b { color:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-balance { display:grid; grid-template-columns:1fr 2fr; gap:4px; height:6px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-balance i { border-radius:999px; background:var(--tj-red); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-balance i:last-child { background:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>p { margin:0; color:var(--tj-muted); font-size:10px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-presets-manager .tj-risk-preset-builder { display:grid; grid-template-columns:minmax(0,2fr) minmax(120px,1fr) minmax(120px,1fr) auto; gap:9px; align-items:end; padding:16px; border:1px solid var(--tj-border); border-radius:13px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-builder>small { grid-column:1/-1; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-builder label { font-size:9px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-builder .tj-btn-primary { min-height:40px; }
+@media(max-width:820px) { .tj-root.tj-root .tj-management-reference .tj-risk-presets-manager .tj-risk-preset-cards { grid-template-columns:1fr; } .tj-root.tj-root .tj-management-reference .tj-risk-presets-manager .tj-risk-preset-builder { grid-template-columns:1fr 1fr; } .tj-root.tj-root .tj-management-reference .tj-risk-preset-builder label:first-of-type,.tj-root.tj-root .tj-management-reference .tj-risk-preset-builder .tj-btn-primary { grid-column:1/-1; } }
+
+/* Data and backup follows the paired safeguard cards in the reference. */
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard { max-width:none; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-head { margin:0 0 16px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-icon { width:44px; height:44px; border:0; border-radius:12px; background:var(--tj-accent-muted); color:var(--tj-accent); }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-head h2 { font-size:21px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions { grid-template-columns:1fr 1fr; gap:14px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions article { display:flex; flex-direction:column; min-height:218px; padding:22px; border:1px solid var(--tj-border); border-top:3px solid var(--tj-accent); border-radius:14px; background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions article+article { border-left:1px solid var(--tj-border); border-top-color:var(--tj-red); background:var(--tj-panel-alt); }
+.tj-root.tj-root .tj-management-reference .tj-backup-action-icon { display:grid; place-items:center; width:43px; height:43px; margin-bottom:14px; border-radius:12px; background:var(--tj-accent-muted); color:var(--tj-accent); font-size:23px; font-weight:700; }
+.tj-root.tj-root .tj-management-reference .tj-backup-restore-card .tj-backup-action-icon { background:color-mix(in srgb,var(--tj-red) 12%,var(--tj-panel)); color:var(--tj-red); }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions h3 { font-size:17px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions p { min-height:0; margin-bottom:14px; font-size:12px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions .tj-btn-primary,
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions .tj-backup-import { align-self:flex-start; margin-top:auto; min-height:40px; border-radius:9px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-warning { margin:0 0 10px; padding:10px 12px; border-radius:9px; background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel)); font-size:11px; }
+.tj-root.tj-root .tj-management-reference .tj-backup-safeguard-warning p { margin:0; }
+@media(max-width:680px) { .tj-root.tj-root .tj-management-reference .tj-backup-safeguard-actions { grid-template-columns:1fr; } }
+
+/* Keep every management row's actions on one shared right edge. */
+.tj-root.tj-root .tj-management-reference .tj-rule-row :is(.tj-management-row-actions,.tj-rule-actions) { display:flex; align-items:center; justify-content:flex-end; gap:6px; min-width:66px; margin-left:auto; }
+.tj-root.tj-root .tj-management-reference .tj-rule-row :is(.tj-management-row-actions,.tj-rule-actions) .tj-icon-btn { flex:0 0 28px; width:28px; height:28px; display:grid; place-items:center; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header .tj-icon-btn { flex:0 0 32px; margin-left:auto; }
+.tj-root.tj-root .tj-management-reference .tj-routine-item-actions { min-width:62px; justify-content:flex-end; }
+
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header { display:grid; grid-template-columns:minmax(0,1fr) 32px; min-height:32px; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header .tj-icon-btn { grid-column:2; grid-row:1; align-self:start; justify-self:end; margin:0; }
+
+/* A labeled action makes the destructive preset control clear without making it dominant. */
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header { grid-template-columns:minmax(0,1fr) auto; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header .tj-risk-preset-delete { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:32px; padding:6px 10px; border:1px solid color-mix(in srgb,var(--tj-red) 45%,var(--tj-border)); border-radius:8px; background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel)); color:var(--tj-red); font-size:11px; font-weight:800; }
+.tj-root.tj-root .tj-management-reference .tj-risk-preset-cards article>header .tj-risk-preset-delete:hover { background:color-mix(in srgb,var(--tj-red) 15%,var(--tj-panel)); }
+
+/* Daily Routine workspace — summary first, then a calm two-column working list. */
+.tj-root.tj-root .tj-management-reference .tj-routine-management{
+  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:0 12px;align-items:start;
+}
+.tj-root.tj-root .tj-management-reference .tj-routine-management>header{grid-column:1/-1;grid-row:1;padding:0 0 16px;border:0;}
+.tj-root.tj-root .tj-management-reference .tj-routine-management>p[role="alert"]{grid-column:1/-1;grid-row:3;margin:12px 0 0;}
+.tj-root.tj-root .tj-management-reference .tj-routine-management>.tj-routine-section-heading{grid-column:1/-1;grid-row:4;margin:20px 0 12px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-management>.tj-routine-list{grid-column:1/-1;grid-row:5;}
+.tj-root.tj-root .tj-management-reference .tj-routine-management-banner{display:none;}
+
+.tj-root.tj-root .tj-management-reference .tj-routine-management-preview{
+  position:relative;grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:1.18fr .62fr .62fr 1.18fr 1.7fr;grid-template-rows:116px auto;gap:12px;
+  padding:0;border:0;border-radius:0;background:transparent;
+}
+.tj-root.tj-root .tj-management-reference .tj-routine-management-preview>small{position:absolute;top:14px;left:15px;z-index:1;color:var(--tj-muted);font-size:9px;letter-spacing:.1em;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-heading{
+  grid-column:1;grid-row:1;min-height:116px;padding:38px 14px 14px;border:1px solid var(--tj-border);border-radius:14px;background:var(--tj-panel-alt);
+}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-heading h3{font-size:16px;letter-spacing:-.025em;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-heading p{font-size:11px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring{width:63px;background:conic-gradient(var(--tj-accent) var(--routine-progress),var(--tj-border) 0);}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-ring::after{background:var(--tj-panel-alt);}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats{display:contents;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div{min-height:116px;padding:18px 14px 14px;border-radius:14px;background:var(--tj-panel-alt);}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:first-child{grid-column:2;grid-row:1;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:last-child{grid-column:3;grid-row:1;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats strong{margin-top:11px;font-size:28px;color:var(--tj-text);}
+.tj-root.tj-root .tj-management-reference .tj-routine-week{
+  grid-column:4;grid-row:1;align-self:stretch;padding:14px 14px 39px;border:1px solid var(--tj-border);border-radius:14px;background:var(--tj-panel-alt);
+}
+.tj-root.tj-root .tj-management-reference .tj-routine-week span>i{height:36px;aspect-ratio:auto;border-radius:8px;background:var(--tj-panel);}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-legend{grid-column:4;grid-row:1;z-index:1;align-self:end;margin:0 14px 11px;padding:0;font-size:9px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-missed-item{grid-column:5;grid-row:1;min-height:116px;padding:17px 15px;border-radius:14px;background:var(--tj-accent-muted);}
+.tj-root.tj-root .tj-management-reference .tj-routine-missed-item strong{font-size:14px;line-height:1.35;}
+.tj-root.tj-root .tj-management-reference .tj-routine-missed-item p{font-size:11px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-progress-note{grid-column:1/-1;grid-row:2;margin:0;padding:0;border:0;font-size:11px;}
+
+/* Keep the Routine summary cards inside the active theme rather than the generic black surface. */
+.tj-root.tj-theme-dark .tj-management-reference .tj-routine-progress-heading,
+.tj-root.tj-theme-dark .tj-management-reference .tj-routine-progress-stats>div,
+.tj-root.tj-theme-dark .tj-management-reference .tj-routine-week {
+  background:color-mix(in srgb,var(--tj-accent) 8%,var(--tj-panel))!important;
+}
+.tj-root.tj-theme-dark .tj-management-reference .tj-routine-progress-ring::after {background:color-mix(in srgb,var(--tj-accent) 8%,var(--tj-panel));}
+
+.tj-root.tj-root .tj-management-reference .tj-routine-add{display:grid;grid-template-columns:minmax(0,1fr) 208px 58px;gap:9px;margin:0 0 16px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-add :is(.tj-input,.tj-picker-trigger,.tj-btn-primary){height:40px;min-height:40px;border-radius:10px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-custom{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;counter-reset:routine;}
+.tj-root.tj-root .tj-management-reference .tj-routine-custom>div{counter-increment:routine;min-height:50px;height:50px;padding:9px 11px;border-radius:11px;background:var(--tj-panel-alt);}
+.tj-root.tj-root .tj-management-reference .tj-routine-drag-handle{gap:7px;min-width:36px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-drag-handle::after{content:counter(routine);font-size:10px;font-weight:800;color:var(--tj-muted);}
+.tj-root.tj-root .tj-management-reference .tj-routine-drag-handle svg{width:10px;height:14px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-custom-label{font-size:12px;}
+.tj-root.tj-root .tj-management-reference .tj-routine-group-tag{padding:4px 7px;border-radius:6px;background:color-mix(in srgb,var(--tj-accent) 15%,var(--tj-panel));font-size:9px;color:var(--tj-accent);}
+.tj-root.tj-root .tj-management-reference .tj-routine-group-tag.is-pretrade{background:color-mix(in srgb,var(--tj-purple) 16%,var(--tj-panel));color:var(--tj-purple);}
+.tj-root.tj-root .tj-management-reference .tj-routine-management .tj-settings-switch{width:40px;min-width:40px;height:22px;flex-basis:40px;background:var(--tj-accent);}
+.tj-root.tj-root .tj-management-reference .tj-routine-management .tj-settings-switch i{width:16px;height:16px;top:3px;left:3px;background:var(--tj-panel);}
+.tj-root.tj-root .tj-management-reference .tj-routine-management .tj-settings-switch[aria-checked=true] i{transform:translateX(18px);}
+.tj-root.tj-root .tj-management-reference .tj-routine-custom .tj-icon-btn{flex-basis:32px;width:32px;height:32px;border-radius:9px;}
+
+@media(max-width:1050px){
+  .tj-root.tj-root .tj-management-reference .tj-routine-management-preview{grid-template-columns:repeat(6,minmax(0,1fr));}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-heading{grid-column:span 2;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:first-child,.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:last-child{grid-column:span 1;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-week{grid-column:span 2;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-legend{grid-column:5 / span 2;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-missed-item{grid-column:1/-1;min-height:0;}
+}
+@media(max-width:700px){
+  .tj-root.tj-root .tj-management-reference .tj-routine-management-preview{grid-template-columns:1fr 1fr;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-heading{grid-column:1/-1;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:first-child,.tj-root.tj-root .tj-management-reference .tj-routine-progress-stats>div:last-child{grid-column:auto;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-week{grid-column:1/-1;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-progress-legend{grid-column:1/-1;margin:-26px 14px 11px;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-custom{grid-template-columns:1fr;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-add{grid-template-columns:1fr 1fr;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-add>.tj-input{grid-column:1/-1;}
+}
+@media(max-width:440px){
+  .tj-root.tj-root .tj-management-reference .tj-routine-add{grid-template-columns:1fr;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-add>.tj-input{grid-column:auto;}
+  .tj-root.tj-root .tj-management-reference .tj-routine-custom>div{height:auto;min-height:52px;}
+}
+
+/* Instrument groups must remain inside the active workspace card. */
+.tj-root.tj-root .tj-management-reference .tj-management-content { height:auto; overflow:visible; }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager { display:flow-root; padding-bottom:22px; }
+.tj-root.tj-root .tj-management-reference .tj-instrument-manager .tj-management-list { max-height:none!important; overflow:visible!important; }
+
+
+/* Blur lives behind readable content, never on its container. */
+.tj-root .tj-routine-overlay {isolation:isolate;}
+.tj-root .tj-routine-overlay::before {content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
+
+/* Two-column Start Day reference, at the same scale as Account settings. */
+.tj-root.tj-root .tj-routine-overlay {padding:24px;}
+.tj-root.tj-root .tj-routine-popup {width:min(920px,calc(100vw - 48px));max-height:92vh;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;padding:28px;border-radius:22px;background:var(--tj-chrome);}
+.tj-root.tj-root .tj-routine-popup > header {display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 40px 0 0;min-height:76px;flex-shrink:0;}
+.tj-root.tj-root .tj-routine-heading-copy {min-width:0;}
+.tj-root.tj-root .tj-routine-heading-copy > small {color:var(--tj-accent);font-size:12px;font-weight:800;letter-spacing:.12em;}
+.tj-root.tj-root .tj-routine-popup h2 {font-size:26px;font-weight:800;line-height:1.2;margin:6px 0;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-routine-popup p {font-size:13px;line-height:1.5;}
+.tj-root.tj-root .tj-routine-heading-meta {display:flex;align-items:center;gap:20px;flex-shrink:0;}
+.tj-root.tj-root .tj-routine-history {display:grid;justify-items:end;gap:7px;}
+.tj-root.tj-root .tj-routine-history > span {gap:5px;}
+.tj-root.tj-root .tj-routine-history i {width:8px;height:8px;box-sizing:border-box;}
+.tj-root.tj-root .tj-routine-history small {font-size:12px;}
+.tj-root.tj-root .tj-routine-ring {position:static;width:56px;height:56px;flex-shrink:0;box-shadow:none;}
+.tj-root.tj-root .tj-routine-ring b {width:46px;height:46px;font-size:20px;font-variant-numeric:tabular-nums;background:var(--tj-chrome);}
+.tj-root.tj-root .tj-routine-ring small {font-size:12px;}
+.tj-root.tj-root .tj-routine-close {top:14px;right:14px;}
+.tj-root.tj-root .tj-routine-sessions {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:20px 0 16px;flex-shrink:0;}
+.tj-root.tj-root .tj-routine-sessions > span {display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 10px;font-size:12px;font-weight:700;letter-spacing:.08em;border-radius:8px;background:var(--tj-panel-alt);box-sizing:border-box;}
+.tj-root.tj-root .tj-routine-sessions > .is-current {background:var(--tj-accent-muted);}
+.tj-routine-sessions i {width:5px;height:5px;border-radius:50%;background:var(--tj-accent);}
+.tj-root.tj-root .tj-routine-columns {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+.tj-root.tj-root .tj-routine-group {min-width:0;margin:0;padding:14px;border:1px solid var(--tj-border);border-radius:14px;background:var(--tj-input-bg);}
+.tj-root.tj-root .tj-routine-group > header {align-items:center;margin:0 0 12px;gap:8px;letter-spacing:.08em;}
+.tj-root.tj-root .tj-routine-group > header small {font-size:12px;line-height:1.4;}
+.tj-root.tj-root .tj-routine-group > header small:last-child {padding:3px 7px;border-radius:12px;background:var(--tj-accent-muted);white-space:nowrap;letter-spacing:normal;}
+.tj-routine-group-rows {display:grid;gap:8px;}
+.tj-root.tj-root .tj-routine-row {display:grid;gap:8px;margin:0;min-height:64px;padding:12px;border-radius:10px;background:var(--tj-panel);}
+.tj-root.tj-root .tj-routine-row.is-checked {background:var(--tj-accent-muted);border-color:var(--tj-accent-border);}
+.tj-root.tj-root .tj-routine-row label {align-items:flex-start;gap:12px;}
+.tj-root.tj-root .tj-routine-tick {width:28px;height:28px;flex:0 0 28px;border-radius:7px;background:var(--tj-input-bg);color:var(--tj-muted);box-sizing:border-box;}
+.tj-root.tj-root .tj-routine-tick svg {visibility:visible;}
+.tj-root.tj-root .is-checked .tj-routine-tick {background:var(--tj-accent);color:var(--on-accent);}
+.tj-root.tj-root .tj-routine-row-copy {min-width:0;flex:1;}
+.tj-root.tj-root .tj-routine-row strong {font-size:15px;font-weight:700;line-height:1.4;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-routine-row.is-checked strong {color:var(--tj-accent);}
+.tj-root.tj-root .tj-routine-row small {font-size:13px;line-height:1.4;margin-top:3px;}
+.tj-root.tj-root .tj-routine-row em {display:inline-block;font-size:12px;line-height:1.25;border-radius:8px;padding:1px 5px;vertical-align:middle;}
+.tj-root.tj-root .tj-routine-row > button {justify-self:start;margin-left:40px;padding:2px 0;font-size:12px;font-weight:700;white-space:normal;text-align:left;}
+.tj-routine-news-detail {display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.tj-root.tj-root .tj-routine-news-detail small {padding:4px 7px;margin:0;border:1px solid var(--tj-border);border-radius:8px;font-size:12px;background:var(--tj-input-bg);}
+.tj-root.tj-root .tj-routine-news-detail .tj-routine-news-impact {color:var(--tj-red);border-color:color-mix(in srgb,var(--tj-red) 25%,var(--tj-border));background:color-mix(in srgb,var(--tj-red) 7%,var(--tj-panel));}
+.tj-routine-account-detail {display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.65fr);gap:6px;margin-top:8px;}
+.tj-routine-account-detail > span {display:grid;align-content:start;gap:4px;padding:8px;border-radius:7px;background:var(--tj-input-bg);min-width:0;}
+.tj-root.tj-root .tj-routine-account-detail small {font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0;}
+.tj-routine-account-detail b {font-size:13px;font-weight:700;line-height:1.4;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root.tj-root .tj-routine-popup footer {display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;margin-top:20px;padding-top:18px;flex-shrink:0;}
+.tj-root.tj-root .tj-routine-popup footer > small {font-size:12px;line-height:1.5;margin:0;text-align:center;}
+.tj-root.tj-root .tj-routine-popup footer button {min-height:42px;font-size:14px;padding:10px 16px;box-shadow:none;}
+.tj-root.tj-root .tj-routine-popup button:focus-visible {outline:2px solid var(--tj-accent);outline-offset:3px;}
+.tj-root.tj-root.tj-theme-light .tj-routine-popup {background:var(--color-white);}
+.tj-root.tj-root.tj-theme-light .tj-routine-ring b {background:var(--color-white);}
+.tj-root.tj-root.tj-theme-light .tj-routine-row:not(.is-checked) {background:var(--color-white);}
+@media(max-width:700px) {
+  .tj-root.tj-root .tj-routine-popup {padding:22px;}
+  .tj-root.tj-root .tj-routine-columns {grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root .tj-routine-popup > header {align-items:flex-start;gap:12px;}
+  .tj-root.tj-root .tj-routine-heading-meta {flex-direction:column-reverse;align-items:flex-end;gap:10px;}
+  .tj-root.tj-root .tj-routine-popup footer {grid-template-columns:1fr auto;}
+  .tj-root.tj-root .tj-routine-popup footer > small {grid-row:2;grid-column:1/-1;}
+}
+@media(max-width:420px) {
+  .tj-root.tj-root .tj-routine-popup {padding:18px;}
+  .tj-root.tj-root .tj-routine-popup > header {display:grid;grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root .tj-routine-heading-meta {flex-direction:row;justify-content:space-between;align-items:center;}
+  .tj-root.tj-root .tj-routine-popup footer {grid-template-columns:1fr;}
+  .tj-root.tj-root .tj-routine-popup footer > small {grid-row:auto;grid-column:auto;}
+  .tj-routine-account-detail {grid-template-columns:minmax(0,1fr);}
+}

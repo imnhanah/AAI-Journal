@@ -1,0 +1,123 @@
+@media(max-width:767px) {
+  .tj-root .tj-signal-page-markups {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups {display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups>.tj-rules-head,
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups>.tj-markup-overview-grid {display:none;}
+  .tj-root .tj-phone-markup-overview {display:flex;flex-direction:column;gap:12px;}
+  .tj-root .tj-phone-markup-numbers {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .tj-root .tj-phone-markup-numbers section,.tj-root .tj-phone-markup-coverage {border:1px solid var(--tj-border);border-radius:16px;background:var(--tj-panel-alt);padding:16px;min-width:0;}
+  .tj-root.tj-theme-light .tj-phone-markup-numbers section,.tj-root.tj-theme-light .tj-phone-markup-coverage {background:var(--color-white);}
+  .tj-root .tj-phone-markup-numbers small {display:block;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--tj-muted);line-height:1.4;}
+  .tj-root .tj-phone-markup-numbers strong {display:block;margin-top:8px;font-size:28px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+  .tj-root .tj-phone-markup-coverage {display:grid;gap:10px;}
+  .tj-root .tj-phone-markup-coverage>div {display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;align-items:center;}
+  .tj-root .tj-phone-markup-coverage small {font-size:12px;color:var(--tj-muted);font-weight:700;text-transform:uppercase;}
+  .tj-root .tj-phone-markup-coverage i {height:6px;border-radius:6px;background:var(--tj-border);overflow:hidden;}
+  .tj-root .tj-phone-markup-coverage b {display:block;height:100%;background:var(--tj-accent);border-radius:6px;}
+  .tj-root .tj-phone-markup-coverage strong {font-size:12px;text-align:right;}
+  .tj-root.tj-root .tj-phone-new-markup {height:52px!important;min-height:52px!important;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-toolbar {display:flex;flex-direction:column;align-items:stretch;gap:10px;margin:0;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-toolbar-actions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-toolbar-actions button {display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:44px!important;min-height:44px!important;padding:0 8px;font-size:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-toolbar-status {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-list-pagination {font-size:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-list-pagination button {min-height:44px!important;font-size:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-pagination-arrows button {min-width:44px;min-height:44px!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups :is(.tj-markup-filter-popover,.tj-markup-sort-controls) {position:static;inset:auto;min-width:0;width:100%;max-width:100%;box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups :is(.tj-markup-filter-grid,.tj-markup-sort-options) {grid-template-columns:repeat(2,minmax(0,1fr));min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-filter-head {flex-wrap:wrap;gap:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-filter-head strong,
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-sort-controls>span {font-size:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-filter-head button {min-height:44px!important;min-width:44px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-filter-header-actions {flex-wrap:wrap;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups :is(.tj-picker-trigger,.tj-markup-sort-option,.tj-markup-clear-filters) {min-height:44px!important;font-size:13px;padding:8px;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-card-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-card {min-width:0;width:100%;border:1px solid var(--tj-border)!important;border-radius:16px;background:var(--tj-panel-alt)!important;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-reference-markups .tj-reference-markup-card {background:var(--color-white)!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-row {display:block!important;min-height:0!important;padding:14px!important;position:static!important;background:transparent!important;}
+  .tj-root .tj-phone-markup-header {display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .tj-root .tj-phone-markup-date {display:flex;justify-content:space-between;align-items:start;gap:8px;font-size:12px;color:var(--tj-muted);font-weight:600;}
+  .tj-root .tj-phone-markup-date>span:first-child {min-width:0;overflow-wrap:anywhere;}
+  .tj-root .tj-phone-markup-date .tj-markup-status {font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:3px 6px;white-space:normal;line-height:1.3;}
+  .tj-root .tj-phone-markup-date .tj-markup-status-executed {color:var(--tj-green);border-color:color-mix(in srgb,var(--tj-green) 45%,var(--tj-border));background:color-mix(in srgb,var(--tj-green) 12%,var(--tj-panel));}
+  .tj-root .tj-phone-markup-pair {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;}
+  .tj-root .tj-phone-markup-pair>div:first-child {display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;}
+  .tj-root .tj-phone-markup-pair strong {font-size:17px;font-weight:800;line-height:1.3;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+  .tj-root .tj-phone-markup-bias {font-size:12px;border-radius:6px;padding:3px 6px;background:var(--tj-input-bg);color:var(--tj-muted);font-weight:700;}
+  .tj-root .tj-phone-markup-bias-bullish {color:var(--tj-green);background:color-mix(in srgb,var(--tj-green) 12%,var(--tj-panel));}
+  .tj-root .tj-phone-markup-bias-bearish {color:var(--tj-red);background:color-mix(in srgb,var(--tj-red) 12%,var(--tj-panel));}
+  .tj-root .tj-phone-markup-pnl {text-align:right;min-width:0;}
+  .tj-root .tj-phone-markup-pnl small {display:block;font-size:12px;color:var(--tj-muted);margin-top:4px;}
+  .tj-root .tj-phone-markup-chips {display:flex;flex-wrap:wrap;gap:6px;}
+  .tj-root .tj-phone-markup-chips>span {font-size:12px;color:var(--tj-muted);background:var(--tj-input-bg);border:1px solid var(--tj-border);border-radius:999px;padding:4px 7px;overflow-wrap:anywhere;}
+  .tj-root .tj-phone-markup-actions {display:flex;justify-content:center;}
+  .tj-root .tj-phone-markup-actions.is-expanded {display:grid;grid-template-columns:1.1fr 1fr 44px 44px;gap:8px;}
+  .tj-root .tj-phone-markup-actions :is(button,summary) {height:44px!important;min-height:44px!important;min-width:44px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;padding:0 8px;box-sizing:border-box;cursor:pointer;}
+  .tj-root .tj-phone-markup-expand {width:100%;border:0;background:transparent;color:var(--tj-muted);}
+  .tj-root .tj-phone-markup-actions details {position:relative;min-width:0;}
+  .tj-root .tj-phone-markup-actions .tj-trade-actions-menu>div {right:0;left:auto;max-width:calc(100vw - 64px);width:210px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-detail-inner {padding:0 14px 14px;display:flex;flex-direction:column;gap:14px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-detail:not(.tj-reference-markup-detail-open) .tj-reference-markup-detail-inner {padding:0 14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-detail-top {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-detail-top>div {min-width:0;padding:10px;border-radius:10px;background:var(--tj-input-bg);}
+  .tj-root .tj-reference-markups .tj-markup-detail-top :is(strong,.tj-mlabel) {font-size:13px;overflow-wrap:anywhere;}
+  .tj-root .tj-reference-markups .tj-markup-detail-top>div:nth-child(2) strong {color:var(--tj-green);}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups :is(.tj-markup-expanded-grid,.tj-markup-reference-chart-row) {display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups :is(.tj-markup-plan-card,.tj-markup-linked-card,.tj-markup-charts-card) {padding:0;border:0;min-width:0;}
+  .tj-root .tj-reference-markups .tj-markup-charts-card:last-child:has(.tj-markup-chart-empty) {display:none;}
+  .tj-root .tj-reference-markups .tj-markup-plan-card .tj-markup-detail-heading>div {display:none;}
+  .tj-root .tj-reference-markups .tj-markup-detail-heading {flex-wrap:wrap;gap:8px;font-size:13px;}
+  .tj-root .tj-reference-markups .tj-markup-detail-heading small {font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-detail-heading>span {font-size:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-plan-rows>div {grid-template-columns:90px minmax(0,1fr);gap:8px;}
+  .tj-root .tj-reference-markups .tj-markup-plan-rows :is(span,strong) {font-size:13px;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-linked-markup-trade {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;min-width:0;padding:10px;border-radius:10px;}
+  .tj-root .tj-reference-markups .tj-linked-markup-trade>div {min-width:0;}
+  .tj-root .tj-reference-markups .tj-linked-markup-trade strong {font-size:13px;overflow-wrap:anywhere;}
+  .tj-root .tj-reference-markups .tj-linked-markup-trade span {font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root .tj-reference-markups .tj-linked-markup-trade>div:last-child {text-align:right;}
+  .tj-root.tj-root .tj-reference-markups .tj-markup-show-linked {min-height:44px!important;font-size:13px;width:100%;}
+  .tj-root .tj-reference-markups :is(.tj-markup-panel-empty,.tj-markup-chart-empty) {font-size:13px;min-height:64px;white-space:normal;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-chart-group {grid-template-columns:minmax(0,1fr);}
+  /* The phone form owns one scrollport; summary, steps and save bar stay pinned. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal.tj-markup-composer-modal {width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;margin:0;padding:0;border:0;border-radius:0!important;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--tj-bg);--tj-phone-markup-card:var(--tj-panel-alt);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-markup-composer-modal {--tj-phone-markup-card:var(--color-white);}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-head {display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;row-gap:2px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;flex:none;min-height:70px;box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-title {grid-column:2;grid-row:1;font-size:18px;line-height:1.3;text-align:left;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-header-note {grid-column:2;grid-row:2;font-size:12px;text-align:left;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-head-actions {display:flex;grid-column:1;grid-row:1/3;margin:0;justify-self:start;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-close {height:44px!important;min-height:44px!important;width:44px!important;min-width:44px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-modal-body {display:flex;flex-direction:column;flex:1;min-height:0;padding:0;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-entry-identity {flex:none;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin:0;padding:12px 16px;background:var(--tj-bg);}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-entry-identity>div {min-width:0;display:flex;flex-direction:column;gap:4px;text-align:left;padding:10px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-phone-markup-card);}
+  .tj-root .tj-markup-composer-modal .tj-entry-identity small {font-size:12px;line-height:1.3;letter-spacing:.06em;}
+  .tj-root .tj-markup-composer-modal .tj-entry-identity strong {font-size:14px;line-height:1.3;overflow-wrap:anywhere;}
+  .tj-root .tj-phone-markup-steps {flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0 16px 12px;border:1px solid var(--tj-border);border-radius:12px;overflow:hidden;}
+  .tj-root .tj-phone-markup-steps button {min-height:46px!important;padding:8px;font-size:14px;font-weight:600;border:0;border-radius:0;background:var(--tj-input-bg);color:var(--tj-muted);cursor:pointer;}
+  .tj-root .tj-phone-markup-steps [aria-selected="true"] {color:var(--tj-accent);background:color-mix(in srgb,var(--tj-accent) 12%,var(--tj-panel));box-shadow:inset 0 -2px var(--tj-accent);}
+  .tj-root .tj-phone-markup-form-scroll {flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 16px 20px;scrollbar-width:thin;}
+  .tj-root .tj-phone-markup-form-scroll [role="tabpanel"] {display:flex;flex-direction:column;gap:12px;}
+  .tj-root .tj-phone-markup-form-scroll [hidden] {display:none;}
+  .tj-root .tj-phone-markup-form-card {min-width:0;margin:0;padding:16px;border:1px solid var(--tj-border);border-radius:16px;background:var(--tj-phone-markup-card);}
+  .tj-root .tj-phone-markup-form-card h4 {font-size:17px;line-height:1.3;margin:0 0 14px;}
+  .tj-root .tj-phone-markup-setup-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;}
+  .tj-root .tj-phone-markup-instrument {grid-column:1/-1;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-field-label {font-size:13px;font-weight:600;line-height:1.4;white-space:normal;overflow-wrap:anywhere;text-align:left;}
+  .tj-root .tj-phone-markup-form-card>.tj-field {margin-bottom:14px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal :is(.tj-input,input,.tj-picker-trigger) {min-width:0;width:100%;max-width:100%;box-sizing:border-box;height:48px!important;min-height:48px!important;padding:0 12px;font-size:15px!important;line-height:1.3;text-align:left;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-picker-trigger {display:flex;justify-content:space-between;gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal textarea.tj-input {height:auto!important;min-height:84px!important;padding:12px;resize:vertical;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-markup-bias-toggle {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-markup-bias-toggle button {min-width:0;min-height:48px!important;font-size:13px;padding:8px 4px;}
+  .tj-root .tj-phone-markup-upload {margin-top:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-dropzone {min-height:64px;width:100%;padding:0;border:1px dashed var(--tj-border);border-radius:12px;background:var(--tj-input-bg);}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-trade-add-image {display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;width:100%;background:transparent;border:0;color:var(--tj-muted);font-size:13px;cursor:pointer;}
+  .tj-root .tj-markup-composer-modal .tj-phone-image-icon {display:block;}
+  .tj-root .tj-phone-markup-review-toggle {width:100%;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0;margin:0 0 12px;background:transparent;border:0;color:var(--tj-text);text-align:left;cursor:pointer;}
+  .tj-root .tj-phone-markup-review-toggle h4 {margin:0;}
+  .tj-root .tj-phone-markup-review-toggle>span {display:flex;align-items:center;gap:4px;font-size:12px;color:var(--tj-muted);}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-entry-composer-footer {flex:none;display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;margin:0;padding:12px 16px max(16px,env(safe-area-inset-bottom,0px));border-top:1px solid var(--tj-border);background:var(--tj-panel);}
+  .tj-root.tj-root.tj-root.tj-root .tj-markup-composer-modal .tj-entry-composer-footer button {height:48px!important;min-height:48px!important;font-size:15px;border-radius:12px;padding:0 12px;white-space:nowrap;justify-content:center;text-align:center;}
+  .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-markup-composer-modal :is(.tj-modal-head,.tj-entry-composer-footer) {background:var(--color-white);}
+  .tj-root :is(.tj-reference-markups,.tj-markup-composer-modal) :is(button,summary):focus-visible {outline:2px solid var(--tj-accent);outline-offset:2px;}
+}

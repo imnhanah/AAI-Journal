@@ -1,0 +1,8 @@
+.tj-money-private .tj-private-money-input {color:transparent!important;-webkit-text-security:disc;caret-color:transparent!important;text-shadow:none!important;pointer-events:none;user-select:none;background-image:repeating-linear-gradient(90deg,var(--tj-muted) 0 4px,transparent 4px 8px);background-size:28px 4px;background-position:12px center;background-repeat:no-repeat;}
+/* Raw chart axes can reveal the same balance even without a currency symbol. */
+.tj-money-private .recharts-yAxis .recharts-cartesian-axis-tick-value {visibility:hidden;}
+.tj-money-private .recharts-tooltip-item-value {visibility:hidden;}
+/* Uploaded charts may contain balance text baked into their pixels. */
+.tj-money-private :is(.tj-image-preview,.tj-image-viewer-stage) {position:relative;}
+.tj-money-private :is(.tj-image-preview,.tj-image-viewer-stage) img {visibility:hidden;}
+.tj-money-private :is(.tj-image-preview,.tj-image-viewer-stage)::after {content:'••••';position:absolute;inset:0;display:grid;place-items:center;background:var(--tj-panel-alt);color:var(--tj-muted);font-size:16px;}

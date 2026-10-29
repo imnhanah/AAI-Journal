@@ -1,0 +1,132 @@
+/* Finance reference: overview, ledger and a compact planning rail. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 {
+  container-type:inline-size;display:grid;gap:16px;min-width:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-toolbar {
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.tj-finance-toolbar p {margin:0;color:var(--tj-muted);font-size:13px;line-height:1.5;}
+.tj-finance-toolbar .tj-picker {flex-shrink:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview {
+  display:grid;grid-template-columns:1fr 1fr 1.15fr 1.15fr;gap:12px;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 :is(.tj-card,.tj-finance-entry,.tj-finance-savings) {
+  min-width:0;padding:18px;border:1px solid var(--tj-border);border-radius:14px;
+  background:var(--tj-panel);box-shadow:none;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview > .tj-card {
+  display:flex;flex-direction:column;justify-content:flex-start;gap:8px;margin:0;
+}
+.tj-finance-v2 small {font-size:12px;line-height:1.4;}
+.tj-finance-v2 .tj-finance-overview small {color:var(--tj-muted);font-weight:800;letter-spacing:.08em;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview strong {
+  font-family:var(--font-sans);font-size:26px;font-weight:800;line-height:1.15;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.tj-finance-v2 .tj-finance-overview :is(span,footer) {font-size:12px;line-height:1.45;color:var(--tj-muted);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-card-capital strong.tj-red {color:var(--tj-red);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-card-savings strong {color:var(--tj-purple);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-cycle-summary {
+  background:var(--tj-panel);border-color:var(--tj-border);
+}
+.tj-finance-v2 .tj-finance-net {display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-cashflow > i {
+  display:block;width:100%;height:8px;min-height:8px;border-radius:6px;overflow:hidden;background:var(--tj-red);margin:0;
+}
+.tj-finance-v2 .tj-finance-cashflow > i > b {display:block;height:100%;background:var(--tj-accent);}
+.tj-finance-v2 .tj-finance-cashflow footer {display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin:0;}
+.tj-finance-v2 .tj-finance-cashflow footer b {font-size:12px;font-weight:600;overflow-wrap:anywhere;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-layout {
+  display:grid;grid-template-columns:minmax(0,2.5fr) minmax(340px,1fr);grid-template-areas:"ledger rail";gap:16px;align-items:start;margin:0;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger {grid-area:ledger;display:block;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-history {grid-area:auto;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-sidebar {grid-area:rail;display:grid;gap:16px;min-width:0;margin:0;}
+.tj-finance-v2 .tj-finance-history {display:grid;gap:16px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-card-title {display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0;}
+.tj-finance-v2 .tj-finance-card-title > div {display:grid;gap:3px;}
+.tj-finance-v2 .tj-finance-card-title small {font-size:12px;font-weight:800;color:var(--tj-muted);letter-spacing:.08em;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-card-title strong {font-size:18px;font-weight:700;line-height:1.3;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger-filters {display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0;border:0;margin:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger-filters button {
+  border:1px solid transparent;border-radius:20px;min-height:30px;padding:5px 12px;background:var(--tj-panel-alt);color:var(--tj-muted);font:600 12px var(--font-sans);
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger-filters button[aria-pressed="true"] {background:color-mix(in srgb,var(--tj-accent) 14%,var(--tj-panel));border-color:color-mix(in srgb,var(--tj-accent) 28%,var(--tj-border));color:var(--tj-accent);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement-list {max-height:none;overflow:visible;display:grid;gap:0;}
+.tj-finance-v2 .tj-finance-year {display:flex;align-items:center;justify-content:space-between;padding:14px 0 8px;color:var(--tj-muted);font-size:12px;letter-spacing:.06em;border-bottom:1px solid var(--tj-border);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement {
+  display:grid;grid-template-columns:34px 34px minmax(0,1fr) minmax(80px,auto) 30px;align-items:center;gap:12px;padding:14px 0;border:0;border-bottom:1px solid var(--tj-border);border-radius:0;background:transparent;
+}
+.tj-finance-v2 .tj-finance-movement time {display:grid;gap:2px;grid-column:auto;grid-row:auto;text-align:center;color:var(--tj-muted);}
+.tj-finance-v2 .tj-finance-movement time strong {font-size:15px;color:var(--tj-text);}
+.tj-finance-v2 .tj-finance-movement time span {font-size:12px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement > i {display:grid;place-items:center;width:34px;height:34px;grid-row:auto;border-radius:10px;background:color-mix(in srgb,var(--tj-accent) 12%,transparent);color:var(--tj-accent);}
+.tj-finance-v2 .tj-finance-movement > i svg {width:18px;height:18px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement > div {display:grid;gap:4px;grid-column:auto;min-width:0;}
+.tj-finance-v2 .tj-finance-movement > div strong {font-size:14px;font-weight:700;overflow-wrap:anywhere;}
+.tj-finance-v2 .tj-finance-movement > div span {font-size:12px;line-height:1.45;color:var(--tj-muted);overflow-wrap:anywhere;white-space:normal;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement > b {grid-column:auto;white-space:normal;overflow-wrap:anywhere;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-delete {grid-column:auto;width:30px;height:30px;border:1px solid var(--tj-border);border-radius:50%;background:transparent;color:var(--tj-muted);padding:0;}
+.tj-finance-v2 .tj-finance-older {justify-self:center;background:none;border:0;padding:12px;color:var(--tj-accent);font:700 12px var(--font-sans);cursor:pointer;}
+.tj-finance-v2 .tj-finance-entry {display:grid;gap:16px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-type-tabs {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:0;margin:0;border:1px solid var(--tj-border);border-radius:8px;overflow:hidden;background:var(--tj-input-bg);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-type-tabs button {min-width:0;min-height:36px;padding:8px 4px;border:0;border-radius:0;font:600 12px var(--font-sans);background:transparent;color:var(--tj-muted);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-type-tabs button[aria-selected="true"] {color:var(--tj-accent);background:color-mix(in srgb,var(--tj-accent) 14%,var(--tj-input-bg));box-shadow:inset 0 -2px var(--tj-accent);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-field {min-width:0;grid-column:auto;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-field:has(.tj-choice-grid),
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-field:has(.tj-picker),
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-field:has(.tj-control-account-card),
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-field:last-child {grid-column:1/-1;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-picker {width:100%;max-width:none;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form .tj-themed-control {width:100%;max-width:none;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger-filters .tj-themed-control {width:150px;max-width:100%;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-ledger-filters .tj-picker-trigger {width:100%;max-width:none;}
+.tj-finance-v2 .tj-finance-form .tj-field:last-child {grid-column:1/-1;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form :is(input,.tj-picker-trigger) {width:100%;min-width:0;height:42px;min-height:42px;border-radius:8px;font-size:15px;padding:8px 10px;box-sizing:border-box;}
+.tj-finance-v2 .tj-finance-form label {font-size:13px;font-weight:700;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-record {width:100%;height:42px;min-height:42px;font-size:14px;border-radius:8px;justify-content:center;margin:0;}
+.tj-finance-v2 .tj-finance-savings {display:grid;gap:14px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving {
+  position:relative;display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-areas:"name name" "ring value" "allocation allocation";gap:14px 12px;padding:16px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-input-bg);margin:0;
+}
+.tj-finance-v2 .tj-finance-saving-name {grid-area:name;display:grid;gap:4px;min-width:0;padding-right:0;}
+.tj-finance-v2 .tj-finance-saving-name strong {font-size:15px;overflow-wrap:anywhere;}
+.tj-finance-v2 .tj-finance-saving-name span {font-size:12px;line-height:1.4;color:var(--tj-muted);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-ring {grid-area:ring;width:48px;height:48px;display:grid;place-items:center;align-self:center;margin:0;}
+.tj-finance-v2 .tj-finance-saving-ring strong {font-size:12px;}
+.tj-finance-v2 .tj-finance-saving > div:nth-child(3) {grid-area:value;display:grid;gap:3px;min-width:0;}
+.tj-finance-v2 .tj-finance-saving > div:nth-child(3) strong {font-size:22px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-finance-v2 .tj-finance-saving > div:nth-child(3) span {font-size:12px;color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-progress {display:none;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-transfer {grid-area:allocation;justify-self:stretch;text-align:left;display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--tj-border);}
+.tj-finance-v2 .tj-finance-saving-transfer > strong {font-size:13px;font-weight:700;}
+.tj-finance-v2 .tj-finance-saving-transfer > span {font-size:12px;line-height:1.45;color:var(--tj-muted);overflow-wrap:anywhere;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-transfer button {justify-self:start;min-height:30px;padding:6px 10px;font-size:12px;border-radius:18px;margin:0;}
+.tj-finance-v2 button:focus-visible {outline:2px solid var(--tj-accent);outline-offset:3px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving > div {padding:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-transfer > :is(strong,span) {padding:0;background:none;border:0;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-transfer {padding-top:12px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview .tj-finance-cycle-summary span {font-weight:400;letter-spacing:normal;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-name strong {font-size:15px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving > div:nth-child(3) strong {font-size:22px;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-name {grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;}
+.tj-finance-v2 .tj-finance-saving-name span {grid-column:1/-1;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-saving-name button {grid-column:2;grid-row:1;justify-self:end;align-self:start;min-height:28px;padding:5px 8px;font-size:12px;border-radius:18px;white-space:normal;}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement > i.tj-finance-movement-out {color:var(--tj-red);background:color-mix(in srgb,var(--tj-red) 12%,transparent);}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-finance-v2 :is(.tj-card,.tj-finance-entry,.tj-finance-savings) {background:var(--tj-panel);}
+@container (max-width:900px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-layout {grid-template-columns:minmax(0,1fr) minmax(280px,.8fr);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-form {grid-template-columns:minmax(0,1fr);}
+}
+@container (max-width:700px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-layout {grid-template-columns:minmax(0,1fr);grid-template-areas:"ledger" "rail";}
+  .tj-finance-toolbar {flex-wrap:wrap;}
+}
+@container (max-width:480px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-overview {grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement {grid-template-columns:28px 30px minmax(0,1fr) 30px;gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-movement > b {grid-column:3;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-finance-v2 .tj-finance-delete {grid-column:4;grid-row:1 / span 2;}
+}

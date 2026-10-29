@@ -1,0 +1,205 @@
+/* Account settings reference. Scoped so creation and other modals stay intact. */
+.tj-root .tj-account-settings-redesign {
+  --tj-panel:var(--card);--tj-panel-alt:var(--card-alt);--tj-input-bg:var(--bg);
+  --tj-border:var(--border);--tj-text:var(--text);--tj-muted:var(--muted);
+  --tj-accent:var(--accent);--tj-green:var(--green);
+}
+.tj-root.tj-root .tj-modal.tj-modal-wide.tj-account-settings-redesign {width:min(820px,calc(100vw - 32px));height:auto;max-height:calc(100dvh - 32px);border:1px solid var(--tj-border);border-radius:18px;background:var(--tj-panel);}
+.tj-root.tj-theme-light .tj-account-settings-redesign {--tj-panel:var(--color-white);}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-account-hero {display:flex;align-items:center;justify-content:space-between;gap:28px;margin:0;padding:24px;background:color-mix(in srgb,var(--tj-accent) 17%,var(--tj-panel));border:0;border-bottom:1px solid color-mix(in srgb,var(--tj-accent) 28%,var(--tj-border));border-radius:0;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hero-copy {display:grid;gap:6px;min-width:0;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-hero-badge {justify-self:start;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,var(--tj-text) 10%,transparent);color:var(--tj-accent);font-size:11px;font-weight:800;line-height:1.1;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-heading h2 {margin:0;color:var(--tj-text);font-size:32px;font-weight:800;letter-spacing:-.05em;line-height:1.02;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-heading p {margin:0;color:var(--tj-muted);font-size:12px;line-height:1.4;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-summary {display:grid;justify-items:end;gap:4px;min-width:190px;padding:4px 0;background:transparent;border:0;border-radius:0;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-summary small {color:var(--tj-muted);font-size:11px;line-height:1.2;}
+.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-summary b {color:var(--tj-accent);font-size:32px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+@media(max-width:700px){.tj-root.tj-root .tj-account-settings-redesign .tj-settings-account-hero{align-items:flex-start;flex-direction:column;gap:18px;padding:18px;}.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-heading h2{font-size:27px;}.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-summary{justify-items:start;min-width:0;}.tj-root.tj-root .tj-account-settings-redesign .tj-settings-workspace-summary b{font-size:27px;}}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav {padding:0 22px;min-height:42px;background:var(--tj-panel);gap:4px;flex-wrap:wrap;overflow:visible;}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button {min-height:42px;padding:0 12px;font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button.is-danger {min-height:27px;margin-left:auto;padding:5px 12px;border:1px solid color-mix(in srgb,var(--red) 32%,var(--tj-border));border-radius:999px;color:var(--red);}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-nav button.is-danger::after {display:none;}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-content {padding:18px 22px;background:var(--tj-panel);}
+.tj-root .tj-account-settings-redesign :is(.tj-reference-accounts-card,.tj-reference-details-card,.tj-reference-position-card,.tj-reference-challenge-card,.tj-settings-section,.tj-reference-finance-toggle,.tj-finance-settings-account) {padding:15px;border:1px solid var(--tj-border);border-radius:14px;background:var(--tj-input-bg);}
+.tj-root .tj-account-settings-redesign :is(.tj-reference-accounts-card,.tj-reference-details-row,.tj-reference-challenge-card) {margin-bottom:14px;}
+.tj-root .tj-account-settings-redesign .tj-reference-details-row {grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.tj-root .tj-account-settings-redesign :is(h4,.tj-account-picker-heading strong,.tj-finance-settings-account-head > strong) {font-size:12px;line-height:1.4;font-weight:800;margin:0 0 10px;}
+.tj-root .tj-account-settings-redesign .tj-account-picker-heading {display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-account-picker-heading strong {margin:0;}
+.tj-root .tj-account-settings-redesign :is(.tj-account-picker-heading p,.tj-reference-challenge-card header p,.tj-reference-position-card p,.tj-reference-finance-toggle p) {font-size:var(--text-min);line-height:1.5;margin:3px 0 0;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-account-context-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;}
+.tj-root .tj-account-settings-redesign :is(.tj-balance-context-card,.tj-balance-context-add) {min-height:74px;padding:11px;border:1px solid var(--tj-border);border-radius:11px;background:var(--tj-panel-alt);text-align:left;min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-balance-context-card-active {border-color:var(--tj-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tj-accent) 55%,transparent);background:var(--tj-panel-alt);}
+.tj-root .tj-account-settings-redesign .tj-balance-context-card small {font-size:var(--text-min);letter-spacing:.3px;}
+.tj-root .tj-account-settings-redesign .tj-balance-context-card strong {font-size:12px;overflow-wrap:anywhere;}
+.tj-root .tj-account-settings-redesign .tj-balance-context-card span {font-size:var(--text-min);color:var(--tj-green);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.tj-root .tj-account-settings-redesign .tj-balance-context-add {text-align:center;}
+.tj-root .tj-account-settings-redesign .tj-account-mode-toggle {border-radius:8px;padding:0;background:var(--tj-panel-alt);}
+.tj-root .tj-account-settings-redesign .tj-account-mode-option {min-height:28px;padding:5px 12px;font-size:var(--text-min);border-radius:7px;}
+.tj-root .tj-account-settings-redesign .tj-reference-position-card header {margin-bottom:14px;align-items:flex-start;}
+.tj-root .tj-account-settings-redesign .tj-reference-position-card header h4 {margin:0;}
+.tj-root .tj-account-settings-redesign .tj-field {min-width:0;margin-bottom:10px;}
+.tj-root .tj-account-settings-redesign .tj-field-label {font-size:var(--text-min);line-height:1.4;letter-spacing:.3px;margin-bottom:5px;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-input {width:100%;height:36px;min-height:36px;padding:8px 10px;border:1px solid var(--tj-border);border-radius:8px;background:var(--tj-input-bg);font-size:12px;color:var(--tj-text);box-sizing:border-box;}
+.tj-root .tj-account-settings-redesign .tj-picker-trigger {font-size:12px;min-height:36px;border-radius:8px;}
+.tj-root .tj-account-settings-redesign .tj-grid2 {gap:12px;}
+.tj-root .tj-account-settings-redesign .tj-settings-switch {width:34px;min-width:34px;height:20px;min-height:20px;flex:0 0 34px;}
+.tj-root .tj-account-settings-redesign .tj-settings-switch i {width:14px;height:14px;top:2px;left:2px;}
+.tj-root .tj-account-settings-redesign .tj-settings-switch-on {background:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-settings-switch-on i {transform:translateX(14px);background:var(--tj-input-bg);}
+.tj-root .tj-account-settings-redesign .tj-reference-challenge-card {border-color:color-mix(in srgb,var(--tj-accent) 35%,var(--tj-border));}
+.tj-root .tj-account-settings-redesign .tj-reference-challenge-card > header {margin-bottom:13px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-settings {margin:0;padding:0;border:0;border-radius:0;background:transparent;}
+.tj-root .tj-account-settings-redesign .tj-challenge-settings-layout {display:grid;grid-template-columns:minmax(200px,.88fr) minmax(0,1.42fr);gap:16px;align-items:start;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons {display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:0;border:0;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button {position:relative;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:10px;min-width:0;padding:13px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-panel-alt);color:var(--tj-text);text-align:left;font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button>span:last-child {display:grid;gap:2px;min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button small {margin:0;color:var(--tj-muted);font-size:10px;line-height:1.25;font-weight:800;letter-spacing:.06em;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button strong {font-size:14px;line-height:1.2;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button em {color:var(--tj-muted);font-size:11px;line-height:1.35;font-style:normal;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-choice-dot {width:18px;height:18px;border:1px solid var(--tj-border);border-radius:50%;background:var(--tj-input-bg);}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed=true] {background:color-mix(in srgb,var(--tj-accent) 12%,var(--tj-input-bg));border-color:var(--tj-accent);color:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed=true] .tj-challenge-mode-choice-dot {border-color:var(--tj-accent);background:radial-gradient(circle,var(--tj-accent) 0 4px,transparent 4.6px);}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed=true] small,.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed=true] em {color:color-mix(in srgb,var(--tj-accent) 72%,var(--tj-muted));}
+.tj-root .tj-account-settings-redesign .tj-challenge-settings-controls {display:grid;gap:12px;min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-challenge-control-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.tj-root .tj-account-settings-redesign :is(.tj-challenge-ratio-control,.tj-challenge-select-control,.tj-challenge-adaptive-controls label) {display:grid;gap:6px;min-width:0;color:var(--tj-muted);font-size:11px;font-weight:800;letter-spacing:.03em;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control>div {display:grid;grid-template-columns:38px minmax(0,1fr) 38px;align-items:center;min-height:40px;border:1px solid var(--tj-border);border-radius:10px;background:var(--tj-panel-alt);overflow:hidden;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control button {height:100%;border:0;background:transparent;color:var(--tj-accent);font:700 18px/1 inherit;cursor:pointer;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control button:first-child {border-right:1px solid var(--tj-border);}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control button:last-child {border-left:1px solid var(--tj-border);}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control button:disabled {opacity:.45;cursor:not-allowed;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control .tj-input {height:38px;min-height:38px;padding:6px;border:0!important;border-radius:0;background:transparent;text-align:center;font-weight:800;font-size:14px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control .tj-input:focus {outline:0;box-shadow:inset 0 0 0 1px var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-challenge-select-control .tj-themed-control,.tj-root .tj-account-settings-redesign .tj-challenge-select-control .tj-picker-trigger {width:100%;}
+.tj-root .tj-account-settings-redesign .tj-challenge-adaptive-controls {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-current-level-card {display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:10px 16px;padding:14px 15px;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-panel-alt);}
+.tj-root .tj-account-settings-redesign .tj-challenge-current-level-card>div:first-child {display:grid;gap:4px;align-content:start;}
+.tj-root .tj-account-settings-redesign .tj-challenge-current-level-card small {font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-challenge-current-level-card strong {font-size:23px;line-height:1.1;}
+.tj-root .tj-account-settings-redesign .tj-challenge-current-level-card>.tj-themed-control {align-self:center;min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-progress {grid-column:1/-1;display:grid;grid-template-columns:repeat(var(--challenge-level-count),minmax(0,1fr));gap:3px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-progress button {min-width:0;height:13px;padding:0;border:0;border-radius:3px;background:color-mix(in srgb,var(--tj-border) 82%,var(--tj-panel));cursor:pointer;}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-progress button.is-passed {background:var(--tj-green);}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-progress button.is-current {outline:1px solid var(--tj-accent);outline-offset:1px;background:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-progress button:disabled {cursor:not-allowed;opacity:.82;}
+.tj-root .tj-account-settings-redesign .tj-challenge-level-labels {grid-column:1/-1;display:flex;justify-content:space-between;color:var(--tj-muted);font-size:11px;}
+/* Compact challenge layout: choose a mode, set the three controls, then read progress. */
+.tj-root .tj-account-settings-redesign .tj-challenge-settings-layout {grid-template-columns:minmax(0,1fr);gap:14px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button {min-height:100px;align-items:start;}
+.tj-root .tj-account-settings-redesign .tj-challenge-control-grid {grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-ratio-control>.tj-input {height:40px;min-height:40px;padding:8px 12px;border:1px solid var(--tj-border)!important;border-radius:10px;background:var(--tj-panel-alt)!important;font-weight:800;font-size:13px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress {display:grid;gap:8px;padding-top:2px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress>div {display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress small {font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress span {font-size:11px;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress ol {display:grid;grid-template-columns:repeat(var(--challenge-level-count,30),minmax(0,1fr));gap:3px;margin:0;padding:0;list-style:none;}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li {height:16px;min-width:0;border-radius:4px;background:color-mix(in srgb,var(--tj-border) 76%,var(--tj-panel));}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li.is-passed {background:var(--tj-green);}
+.tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li.is-current {border:1px solid var(--tj-accent);outline:1px solid color-mix(in srgb,var(--tj-accent) 30%,transparent);outline-offset:1px;background:color-mix(in srgb,var(--tj-accent) 42%,var(--tj-panel));}
+.tj-root .tj-account-settings-redesign .tj-challenge-activation-message {margin:12px 0 0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 45%,var(--tj-border));border-radius:10px;background:color-mix(in srgb,var(--red) 8%,var(--tj-panel));color:var(--red);font-size:var(--text-min);line-height:1.45;}
+@media(min-width:768px) {
+  .tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+}
+.tj-root .tj-account-settings-redesign .tj-settings-section {padding:0;margin-bottom:14px;}
+.tj-root .tj-account-settings-redesign .tj-settings-section-head {padding:15px 15px 10px;align-items:center;}
+.tj-root .tj-account-settings-redesign .tj-settings-section-title {align-items:flex-start;gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-settings-section-title > i {width:30px;height:30px;min-width:30px;border:1px solid color-mix(in srgb,var(--tj-accent) 30%,var(--tj-border));border-radius:8px;background:color-mix(in srgb,var(--tj-accent) 10%,transparent);color:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-settings-section-title strong {font-size:12px;line-height:1.5;}
+.tj-root .tj-account-settings-redesign .tj-settings-section-title small {display:block;margin-top:3px;font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);font-weight:500;}
+.tj-root .tj-account-settings-redesign .tj-settings-section-body {padding:0 15px 15px;border-top:0;}
+.tj-root .tj-account-settings-redesign .tj-settings-linked-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.tj-root .tj-account-settings-redesign .tj-settings-linked-pair {min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-settings-linked-pair > .tj-field-label {display:block;}
+.tj-root .tj-account-settings-redesign .tj-settings-linked-inputs {display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1.15fr);align-items:center;gap:7px;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-input {position:relative;min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-input .tj-input {padding-right:23px;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-input > span {position:absolute;right:9px;top:0;bottom:0;display:flex;align-items:center;transform:none;font-size:var(--text-min);font-weight:700;color:var(--tj-muted);pointer-events:none;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-prefix .tj-input {padding-left:22px;padding-right:7px;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-prefix > span {right:auto;left:9px;}
+.tj-root .tj-account-settings-redesign .tj-settings-unit-input input::-webkit-inner-spin-button {appearance:none;}
+.tj-root .tj-account-settings-redesign .tj-settings-link-indicator {display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--tj-border);border-radius:50%;font-size:12px;color:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-settings-linked-note {margin:13px 0 0;font-size:var(--text-min);line-height:1.5;color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-settings-reset-grid {gap:10px;margin:15px 0 0;}
+.tj-root .tj-account-settings-redesign .tj-settings-reset-grid > div {padding:11px;border-radius:10px;background:var(--tj-panel-alt);border:1px solid var(--tj-border);}
+.tj-root .tj-account-settings-redesign .tj-settings-reset-grid small {font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-settings-reset-grid strong {font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-settings-reset-grid span {font-size:var(--text-min);line-height:1.4;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance-toggle {margin-bottom:12px;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance-toggle h4 {margin:0;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance .tj-settings-switch-row {min-height:30px;margin-bottom:12px;gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance .tj-settings-switch-row strong {font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-reference-finance .tj-settings-switch-row .tj-btn-outline {min-height:26px;padding:4px 11px;font-size:var(--text-min);border-radius:999px;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance .tj-finance-settings-list {gap:14px;margin-bottom:12px;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance .tj-finance-settings-account {grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.2fr) minmax(0,.8fr);gap:12px 10px;}
+.tj-root .tj-account-settings-redesign .tj-finance-settings-account-head > strong {margin:0;}
+.tj-root .tj-account-settings-redesign .tj-finance-settings-account-head .tj-btn-danger-outline {min-height:26px;padding:4px 10px;font-size:var(--text-min);border-radius:999px;}
+.tj-root .tj-account-settings-redesign .tj-finance-settings-account .tj-picker-trigger {width:100%;max-width:100%;}
+.tj-root .tj-account-settings-redesign .tj-reference-finance > .tj-btn-outline {min-height:42px;border-radius:11px;font-size:var(--text-min);background:transparent;}
+.tj-root .tj-account-settings-redesign .tj-settings-import-field {min-width:0;}
+.tj-root .tj-account-settings-redesign .tj-settings-import-drop {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:96px;padding:12px;border:1px dashed var(--tj-border);border-radius:11px;cursor:pointer;text-align:center;}
+.tj-root .tj-account-settings-redesign .tj-settings-import-drop input {position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.tj-root .tj-account-settings-redesign .tj-settings-import-drop strong {font-size:var(--text-min);color:var(--tj-accent);}
+.tj-root .tj-account-settings-redesign .tj-settings-import-drop span {font-size:var(--text-min);color:var(--tj-muted);}
+.tj-root .tj-account-settings-redesign .tj-settings-import-drop:focus-within {outline:2px solid var(--tj-accent);outline-offset:2px;}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-footer {padding:14px 22px;background:var(--tj-panel);gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-footer > span {font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-settings-hub-footer button {min-height:34px;min-width:0;padding:8px 17px;border-radius:999px;font-size:var(--text-min);}
+.tj-root .tj-account-settings-redesign .tj-btn-primary {background:var(--tj-accent);color:var(--on-accent);}
+/* The create-workspace dialog uses the same semantic palette as Account Settings.
+   It used to retain the retired fixed dark surface variables, so it did not
+   follow the currently selected light/dark mood. */
+.tj-root.tj-root .tj-account-settings-hub-modal {
+  --tj-panel:var(--surface);
+  --tj-panel-alt:var(--raised);
+  --tj-input-bg:var(--raised);
+  --tj-border:var(--border);
+  --tj-text:var(--text);
+  --tj-muted:var(--muted);
+  --tj-accent:var(--accent);
+  --tj-green:var(--profit);
+  --tj-chrome:var(--raised);
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--border);
+}
+.tj-root.tj-root .tj-account-settings-hub-modal :is(
+  .tj-settings-account-hero,
+  .tj-settings-hub-nav,
+  .tj-settings-hub-content,
+  .tj-settings-hub-footer
+) {background:var(--surface);}
+.tj-root.tj-root .tj-account-settings-hub-modal :is(
+  .tj-settings-workspace-summary>div,
+  .tj-settings-section,
+  .tj-reference-finance-toggle,
+  .tj-finance-settings-account,
+  .tj-reference-accounts-card,
+  .tj-reference-details-card,
+  .tj-reference-position-card,
+  .tj-reference-challenge-card,
+  .tj-single-account-reference-card,
+  .tj-settings-trade-defaults-card
+) {background:var(--raised);border-color:var(--border);}
+.tj-root.tj-root .tj-account-settings-hub-modal :is(
+  .tj-input,
+  .tj-challenge-reference-layout .tj-challenge-mode-buttons button,
+  .tj-balance-context-card,
+  .tj-balance-context-add
+) {background:var(--surface);border-color:var(--border);color:var(--text);}
+.tj-root.tj-root .tj-account-settings-hub-modal .tj-settings-workspace-summary>div.tj-settings-current-account,
+.tj-root.tj-root .tj-account-settings-hub-modal .tj-balance-context-card-active {background:var(--accent-soft);border-color:var(--accent);}
+.tj-root.tj-root .tj-account-settings-hub-modal .tj-btn-primary {background:var(--accent);color:var(--on-accent);}
+@media(max-width:600px) {
+  .tj-root.tj-root .tj-modal.tj-modal-wide.tj-account-settings-redesign {width:calc(100vw - 16px);max-height:calc(100dvh - 16px);}
+  .tj-root .tj-account-settings-redesign .tj-settings-account-hero {flex-wrap:wrap;padding:14px;}
+  .tj-root .tj-account-settings-redesign .tj-settings-workspace-summary {justify-content:flex-start;}
+  .tj-root .tj-account-settings-redesign .tj-settings-hub-nav {padding:0 10px;}
+  .tj-root .tj-account-settings-redesign .tj-settings-hub-nav button {padding:0 8px;}
+  .tj-root .tj-account-settings-redesign .tj-settings-hub-content {padding:14px;}
+  .tj-root .tj-account-settings-redesign :is(.tj-reference-details-row,.tj-settings-linked-grid) {grid-template-columns:1fr;}
+  .tj-root .tj-account-settings-redesign .tj-reference-finance .tj-finance-settings-account {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tj-root .tj-account-settings-redesign .tj-account-context-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tj-root .tj-account-settings-redesign .tj-input {font-size:16px;min-height:40px;height:40px;}
+}

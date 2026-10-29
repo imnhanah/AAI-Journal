@@ -1,0 +1,77 @@
+/* Final theme contract for the Trade Log review controls.
+   This file is intentionally loaded after the legacy workspace styles. */
+.tj-root .tj-tradelog-card-grid .tj-review-status.tj-review-pending {
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+
+.tj-root .tj-tradelog-card-grid .tj-review-status.tj-review-reviewed {
+  border: 1px solid color-mix(in srgb, var(--profit) 38%, var(--border)) !important;
+  background: var(--profit-soft) !important;
+  color: var(--profit) !important;
+}
+
+.tj-root .tj-tradelog-card-grid .tj-review-status.tj-review-pending:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface)) !important;
+}
+
+.tj-root .tj-tradelog-card-grid .tj-trade-expand-toggle {
+  display: inline-grid;
+  flex: 0 0 32px;
+  place-items: center;
+  padding: 0;
+  line-height: 0;
+}
+
+.tj-root .tj-tradelog-card-grid .tj-trade-expand-toggle svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  transition: transform .16s ease;
+}
+
+.tj-root .tj-tradelog-card-grid .tj-trade-expand-toggle.is-open svg { transform: rotate(180deg); }
+
+/* Trade Log filters and date controls must read the active theme contract,
+   rather than the legacy blue-grey toolbar palette. */
+.tj-root .tj-tradelog-compact-toolbar :is(.tj-tradelog-filter-popover, .tj-tradelog-month-controls) {
+  background: var(--raised) !important;
+  border-color: var(--border) !important;
+}
+
+.tj-root .tj-tradelog-compact-toolbar :is(.tj-toolbar-search, .tj-picker-trigger, .tj-markup-sort-option, .tj-tradelog-year-nav .tj-icon-btn) {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.tj-root .tj-tradelog-compact-toolbar :is(.tj-markup-sort-option-active, .tj-markup-sort-option[aria-pressed="true"], .tj-icon-btn-active) {
+  background: var(--accent-soft) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+.tj-root .tj-tradelog-compact-toolbar .tj-markup-sort-option:disabled {
+  background: color-mix(in srgb, var(--raised) 75%, var(--surface)) !important;
+  color: var(--muted) !important;
+}
+
+.tj-root .tj-floating-picker {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.tj-root .tj-floating-picker .tj-picker-options button {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.tj-root .tj-floating-picker .tj-picker-options button[aria-checked="true"] {
+  background: var(--accent-soft) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+  color: var(--accent) !important;
+}

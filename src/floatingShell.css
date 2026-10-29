@@ -1,0 +1,93 @@
+/* Floating desktop shell. Loaded after legacy shell layers so only the outer
+ * application chrome changes; page content, dialogs, controls, and board
+ * geometry retain their component-owned styles. */
+:root { --floating-shell-gap:12px; --floating-shell-radius:24px; }
+
+@media (min-width:901px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {
+    gap:var(--floating-shell-gap);
+    padding:var(--floating-shell-gap);
+    background-color:var(--bg);
+    background-image:radial-gradient(circle at 7% 8%,color-mix(in srgb,var(--accent) 7%,transparent),transparent 32%),radial-gradient(circle at 94% 7%,color-mix(in srgb,var(--accent) 4%,transparent),transparent 40%);
+  }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {
+    width:252px !important;
+    min-width:252px;
+    flex-basis:252px;
+    height:calc(100dvh - (var(--floating-shell-gap) * 2)) !important;
+    margin:0 !important;
+    padding:14px 12px !important;
+    border:0 !important;
+    border-radius:var(--floating-shell-radius) !important;
+    background:var(--surface) !important;
+    box-shadow:0 10px 26px color-mix(in srgb,var(--border) 48%,transparent) !important;
+    z-index:10;
+  }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed {
+    width:78px !important;
+    min-width:78px;
+    flex-basis:78px;
+    padding-inline:10px !important;
+  }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {
+    height:calc(100dvh - (var(--floating-shell-gap) * 2));
+    min-height:0;
+  }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+    height:70px;
+    min-height:70px;
+    max-height:70px;
+    margin:0;
+    padding:0 18px;
+    border:0 !important;
+    border-radius:var(--floating-shell-radius) !important;
+    background:var(--surface) !important;
+    box-shadow:0 10px 26px color-mix(in srgb,var(--border) 48%,transparent) !important;
+    z-index:10;
+  }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-left { gap:14px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-sidebar-toggle { width:38px; height:38px; border-radius:11px; background:var(--raised); }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content { margin:0; padding:8px 0 0; border:0; border-radius:0; background:transparent; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content-inner { padding:0 6px 24px; }
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-header { height:72px; min-height:72px; flex-basis:72px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-profile { display:flex; align-items:center; justify-content:flex-start; gap:12px; min-height:72px; margin:0; padding:0 5px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-profile-identity { display:block; min-width:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-profile-avatar { width:48px; height:48px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile { justify-content:center; gap:0; padding-inline:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile-identity { display:none !important; visibility:hidden; width:0; min-width:0; margin:0; padding:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile-avatar { width:46px; height:46px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-label { padding-top:13px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item { min-height:42px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-footer { margin-top:8px; padding-top:10px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-scroll-cue-top { background:linear-gradient(to bottom,var(--surface),transparent); }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-scroll-cue-bottom { background:linear-gradient(to top,var(--surface),transparent); }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-active { background:color-mix(in srgb,var(--accent) 14%,var(--surface)) !important; border-color:transparent !important; box-shadow:none !important; color:var(--accent) !important; }
+
+  /* ChartViewer is a dedicated workspace but remains inside the normal shell.
+   * It receives the content region's remaining height rather than 100dvh. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) { overflow:hidden; padding:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) :is(.tj-content-inner, .tj-page-transition) { height:100%; min-height:0; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) .tj-page-transition { display:flex; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.cv-board) .cv-board { height:100%; min-height:0; }
+}
+
+/* Modals must always cover the floating panels and their account popover. */
+.tj-root .tj-modal-overlay { z-index:400; }
+
+@media (min-width:901px) and (max-width:1180px) {
+  :root { --floating-shell-gap:10px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 { width:228px !important; min-width:228px; flex-basis:228px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed { width:72px !important; min-width:72px; flex-basis:72px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-actions { gap:7px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-switcher { min-width:0; max-width:132px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tj-root .tj-sidebar-v2 { transition:none !important; }
+}

@@ -1,0 +1,27 @@
+/* Theme picker cards. themeTokens.css supplies the colour tokens first. */
+.tg { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+@media (max-width:560px) { .tg { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.tg-card { position:relative; display:flex; flex-direction:column; gap:2px; min-width:0; padding:8px; text-align:left; cursor:pointer; font:inherit; color:var(--text); background:var(--surface); border:2px solid var(--border); border-radius:16px; }
+.tg-card:hover { border-color:var(--muted); }
+.tg-card[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); }
+.tg-card:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.tg-mini { display:grid; grid-template-columns:22% 1fr; aspect-ratio:16 / 10; overflow:hidden; border-radius:10px; border:1px solid var(--border); background:var(--bg); }
+.tg-side { display:flex; flex-direction:column; align-items:center; gap:7%; padding-top:14%; background:var(--raised); }
+.tg-side i { width:36%; aspect-ratio:1; border-radius:25%; background:var(--border); }
+.tg-side i:first-child { background:var(--accent); }
+.tg-page { display:flex; min-width:0; padding:9%; }
+.tg-panel { display:flex; flex:1; flex-direction:column; justify-content:space-between; min-width:0; padding:9%; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
+.tg-lines { display:flex; flex-direction:column; gap:14%; }
+.tg-lines i { display:block; height:4px; border-radius:2px; background:var(--muted); opacity:.45; }
+.tg-lines i:first-child { width:62%; }
+.tg-lines i:last-child { width:38%; }
+.tg-pills { display:flex; gap:6%; height:20%; min-height:8px; }
+.tg-pills i { display:block; border-radius:999px; }
+.tg-pills i:nth-child(1) { flex:1.3; background:var(--accent); }
+.tg-pills i:nth-child(2) { flex:.8; background:var(--profit); }
+.tg-pills i:nth-child(3) { flex:.6; background:var(--loss); }
+.tg-name,.tg-sub { display:block; min-width:0; padding:0 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tg-name { padding-top:8px; font-size:14px; font-weight:600; }
+.tg-sub { padding-bottom:4px; color:var(--muted); font-size:12px; }
+.tg-tick { position:absolute; top:14px; right:14px; display:none; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; color:var(--on-accent); background:var(--accent); font-size:12px; font-weight:700; }
+.tg-card[aria-pressed="true"] .tg-tick { display:flex; }

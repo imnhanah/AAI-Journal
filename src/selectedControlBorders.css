@@ -1,0 +1,108 @@
+/* The sidebar toggle and account pickers keep their normal neutral edge even
+   on hover or open; the account mark itself can still use the theme accent. */
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-profile-avatar,
+.tj-root.tj-root.tj-root .tj-sidebar .tj-sidebar-profile:is(:hover,:focus-visible) .tj-sidebar-profile-avatar,
+.tj-root.tj-root.tj-root :is(.tj-control-account-card,.tj-control-analytics-account,.tj-control-calendar-account) .tj-picker-trigger:hover,
+.tj-root.tj-root.tj-root :is(.tj-control-account-card,.tj-control-analytics-account,.tj-control-calendar-account) .tj-picker-trigger[aria-expanded="true"] {
+  border-color:var(--border) !important;
+  background:var(--raised) !important;
+  color:var(--text) !important;
+  box-shadow:none !important;
+}
+
+
+.tj-root.tj-root.tj-root :is(
+  .tj-sidebar .tj-nav-active,
+  .tj-tab-active,
+  .tj-engine-tab-active,
+  .tj-performance-view-active,
+  .tj-analytics-deck-tab-active,
+  .tj-markup-sort-option-active,
+  .tj-icon-btn-active,
+  .tj-finance-ledger-filters > button[aria-pressed="true"],
+  .tj-challenge-range-tools button[aria-pressed="true"],
+  .tj-reference-analytics .tj-monthly-ranges > button.is-active,
+  .tj-day-trade-chips button[aria-pressed="true"],
+  .tj-management-nav > button[aria-pressed="true"],
+  .tj-account-center-section-head .tj-btn-outline[aria-pressed="true"],
+  .tj-appearance-live-strip button[aria-pressed="true"],
+  .tj-account-settings-redesign .tj-account-mode-option.is-active,
+  .tj-account-settings-redesign .tj-challenge-mode-buttons button[aria-pressed="true"],
+  .tj-account-settings-hub-modal .tj-challenge-reference-layout .tj-challenge-mode-buttons button[aria-pressed="true"],
+  .tj-profile-redesign .tj-accent-option[aria-pressed="true"],
+  .tj-profile-studio-modal .tj-accent-option[aria-pressed="true"],
+  .tj-account-center-head .tj-icon-btn[aria-pressed="true"],
+  .tj-picker-options button[aria-checked="true"],
+  .tj-date-days button[aria-pressed="true"],
+  .tj-phone-log-pills button[aria-pressed="true"],
+  .tj-phone-finance-filters button[aria-pressed="true"],
+  .tj-phone-challenge-status-sheet button[aria-pressed="true"],
+  .tj-phone-news-alert-options button[aria-pressed="true"],
+  .tj-mobile-more-grid button[aria-current="page"],
+  .tj-mobile-journals button[aria-current="true"]
+) {
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Log Trade must follow the selected theme too; earlier dark-mode rules pinned
+   the whole composer to a legacy charcoal palette. */
+.tj-root.tj-root .tj-trade-composer-modal {
+  --tj-panel:var(--surface);
+  --tj-panel-alt:var(--raised);
+  --tj-input-bg:var(--surface);
+  --tj-border:var(--border);
+  --tj-text:var(--text);
+  --tj-muted:var(--muted);
+  --tj-accent:var(--accent);
+  --tj-green:var(--profit);
+  --tj-primary:var(--accent);
+  background:var(--surface) !important;
+  color:var(--text);
+}
+.tj-root.tj-root .tj-trade-composer-modal :is(
+  .tj-modal-head,
+  .tj-entry-identity,
+  .tj-entry-composer-scroll,
+  .tj-entry-composer-footer
+) {background:var(--surface) !important;}
+.tj-root.tj-root .tj-trade-composer-modal :is(
+  .tj-trade-reference-card,
+  .tj-account-target-result
+) {background:var(--raised) !important;border-color:var(--border);}
+.tj-root.tj-root .tj-trade-composer-modal :is(
+  .tj-input,
+  .tj-picker-trigger,
+  textarea,
+  .tj-trade-direction-toggle
+) {background:var(--surface) !important;border-color:var(--border);color:var(--text);}
+.tj-root.tj-root .tj-trade-composer-modal .tj-position-suggestion {background:linear-gradient(120deg,color-mix(in srgb,var(--profit) 13%,var(--raised)),color-mix(in srgb,var(--accent) 8%,var(--raised)));border-color:color-mix(in srgb,var(--profit) 52%,var(--border));}
+.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer .tj-btn-primary {border-color:var(--accent);background:var(--accent);color:var(--on-accent);}
+
+/* Calendar controls use the selected mood accent, not the legacy green alias. */
+.tj-root.tj-root .tj-attached-calendar .tj-attached-month-controls > .tj-attached-this-month {
+  border-color:var(--border) !important;
+  background:var(--raised) !important;
+  color:var(--text) !important;
+}
+.tj-root.tj-root .tj-calendar-page .tj-calendar-insights-head nav .tj-calendar-insight-active {
+  background:var(--raised) !important;
+  color:var(--text) !important;
+  box-shadow:inset 0 0 0 1px var(--border) !important;
+}
+.tj-root.tj-root .tj-attached-calendar .tj-attached-month-controls > .tj-attached-this-month:hover,
+.tj-root.tj-root .tj-attached-calendar .tj-attached-month-controls > .tj-attached-this-month:focus-visible,
+.tj-root.tj-root .tj-calendar-page .tj-calendar-insights-head nav button:hover,
+.tj-root.tj-root .tj-calendar-page .tj-calendar-insights-head nav button:focus-visible {
+  border-color:var(--border) !important;
+  background:var(--raised) !important;
+  color:var(--text) !important;
+  box-shadow:none !important;
+}
+.tj-root.tj-root .tj-attached-month-controls > button:not(.tj-attached-this-month):hover,
+.tj-root.tj-root .tj-attached-month-controls > button:not(.tj-attached-this-month):focus-visible {
+  border-color:var(--border) !important;
+  background:var(--raised) !important;
+  color:var(--text) !important;
+  box-shadow:none !important;
+}

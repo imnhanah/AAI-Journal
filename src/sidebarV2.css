@@ -1,0 +1,117 @@
+/* Scoped overrides replace legacy sidebar sizing without changing app tokens. */
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {
+  position:relative;top:auto;left:auto;
+  width:244px !important;min-width:244px;flex:0 0 244px;
+  height:calc(100dvh - 20px) !important;margin:10px !important;
+  display:flex;flex-direction:column;padding:14px 12px !important;
+  overflow:visible;transition:width 220ms cubic-bezier(.4,0,.2,1),min-width 220ms cubic-bezier(.4,0,.2,1),flex-basis 220ms cubic-bezier(.4,0,.2,1),padding 220ms cubic-bezier(.4,0,.2,1);
+  background:var(--tj-chrome);box-shadow:none;border-radius:26px;
+}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed {
+  width:82px !important;min-width:82px;flex-basis:82px;padding:12px 8px !important;
+}
+.tj-root .tj-sidebar-v2 .tj-sidebar-header {flex:0 0 auto;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-profile {
+  width:100%;display:flex;justify-content:center;min-height:78px;margin:0 0 10px;padding:0 0 10px;border:0;
+}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-profile-avatar {width:62px;height:62px;border:2px solid var(--tj-accent);box-shadow:none;background:transparent;color:var(--tj-accent);}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile-avatar {width:54px;height:54px;}
+.tj-root .tj-sidebar-v2 .tj-sidebar-list-wrap {position:relative;flex:1;min-height:0;display:flex;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-scroll {
+  width:100%;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:transparent transparent;
+  display:block;
+}
+.tj-root .tj-sidebar-v2 .tj-sidebar-scroll::-webkit-scrollbar {display:none;width:0;height:0;}
+.tj-root .tj-sidebar-v2 .tj-sidebar-scroll::-webkit-scrollbar-thumb {display:none;background:transparent;}
+.tj-root .tj-sidebar-v2 .tj-sidebar-scroll-cue {position:absolute;left:0;right:0;height:26px;z-index:2;pointer-events:none;display:none;}
+.tj-root .tj-sidebar-v2 .tj-sidebar-scroll-cue-top {top:0;background:linear-gradient(to bottom,var(--tj-chrome),transparent);}
+.tj-root .tj-sidebar-v2 .tj-sidebar-scroll-cue-bottom {bottom:0;background:linear-gradient(to top,var(--tj-chrome),transparent);}
+.tj-root .tj-sidebar-v2[data-scroll-top=true] .tj-sidebar-scroll-cue-top,
+.tj-root .tj-sidebar-v2[data-scroll-bottom=true] .tj-sidebar-scroll-cue-bottom {display:block;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav {display:grid;width:100%;gap:3px;padding:0;margin:0;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-nav-group {padding:0;margin:0 0 10px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-label {font-size:12px;font-weight:800;letter-spacing:.1em;padding:8px 12px;margin:0;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item {
+  width:100%;height:40px;min-height:40px;display:flex;align-items:center;justify-content:flex-start;
+  gap:12px;padding:0 12px;font-size:15px;font-weight:600;line-height:1.3;
+  border:1px solid transparent;border-radius:10px;position:relative;
+}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item>span {font-size:inherit;font-weight:inherit;max-width:none;white-space:normal;overflow:visible;opacity:1;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item>svg {width:20px;height:20px;flex:0 0 20px;stroke-width:1.8;color:currentColor;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-active {
+  background-image:none !important;box-shadow:none !important;
+  background:color-mix(in srgb,var(--tj-accent) 14%,var(--tj-chrome)) !important;
+  border-color:color-mix(in srgb,var(--tj-accent) 45%,var(--tj-border)) !important;color:var(--tj-accent);font-weight:700;
+}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-active::before {content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;background:var(--tj-accent);border-radius:4px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-footer {flex:0 0 auto;width:100%;align-self:stretch;padding:8px 0 0;margin:0;border-top:1px solid var(--border);}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-settings {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 8px;padding:0;border-top:0;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-settings .tj-nav-item {
+  height:38px;min-height:38px;padding:0 10px;gap:8px;font-size:13px;border-radius:12px;border-color:var(--border);background:var(--bg);background-image:none !important;box-shadow:none;
+}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-settings .tj-nav-item>svg {width:18px;height:18px;flex-basis:18px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-danger {color:var(--tj-red);background:color-mix(in srgb,var(--tj-red) 10%,var(--bg)) !important;border-color:color-mix(in srgb,var(--tj-red) 30%,var(--border)) !important;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-sidebar-user {width:100%;height:54px;min-height:54px;margin:0;gap:12px;padding:8px 12px;border:1px solid var(--border);border-radius:16px;background:var(--bg);background-image:none !important;box-shadow:none;}
+/* Keep the expanded dark sidebar footer on one continuous surface. */
+.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-settings .tj-nav-item:not(.tj-nav-danger),
+.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-user {background:transparent !important;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-nav-label {display:none;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile {min-height:56px;margin-bottom:28px;padding-bottom:0;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-nav {gap:2px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-nav-group {width:64px;padding:2px 0;border-bottom:1px solid var(--tj-border);margin:0;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-nav-group:last-child {border-bottom:0;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-scroll {width:calc(100% + 8px);flex:none;margin-right:-8px;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-nav-item {
+  width:54px;height:48px;min-height:48px;padding:0;justify-content:center;gap:0;margin:0 auto;
+}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-nav-item>span {display:none !important;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-nav-item>svg {width:24px;height:24px;flex-basis:24px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-settings {grid-template-columns:1fr;gap:4px;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-footer {display:flex;flex-direction:column;align-items:center;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-user {width:54px;height:54px;min-height:54px;box-sizing:border-box;align-self:center;margin:0 auto;padding:0;justify-content:center;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-user>div:nth-child(2),
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-user-chevron {display:none;}
+.tj-root .tj-sidebar-v2 button:focus-visible {outline:2px solid var(--tj-accent);outline-offset:2px;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item:not(.tj-nav-active):not(.tj-nav-danger) {color:var(--tj-muted);}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-nav-item>svg {filter:none;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-settings .tj-nav-item {background:transparent !important;border-color:transparent !important;border-radius:10px;}
+.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-settings .tj-nav-danger {color:var(--tj-red);}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-account-initial {width:36px;height:36px;border-radius:10px;font-size:16px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));box-shadow:none;}
+.tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-account-name {font-size:15px;font-weight:800;}
+.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 {background:var(--color-white) !important;}
+.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-settings .tj-nav-item:not(.tj-nav-danger),
+.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 .tj-sidebar-user {background:var(--card);}
+.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 .tj-nav-danger {background:color-mix(in srgb,var(--tj-red) 8%,var(--color-white)) !important;}
+.tj-root.tj-theme-light .tj-sidebar-v2 .tj-sidebar-scroll-cue-top {background:linear-gradient(to bottom,var(--color-white),transparent);}
+.tj-root.tj-theme-light .tj-sidebar-v2 .tj-sidebar-scroll-cue-bottom {background:linear-gradient(to top,var(--color-white),transparent);}
+@media (min-height:1000px) {
+  .tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-profile {margin-bottom:4px;}
+}
+
+/* A selected profile palette owns the whole sidebar, including its utility
+   controls. The legacy light rule above intentionally keeps the default
+   sidebar white, but custom palettes should not leave a white footer behind. */
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-sidebar-v2 {
+  background:var(--card) !important;
+}
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-settings .tj-nav-item:not(.tj-nav-danger),
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-user {
+  background:var(--card-alt) !important;
+  border-color:var(--border-strong) !important;
+}
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-sidebar-v2 .tj-sidebar-scroll-cue-top {
+  background:linear-gradient(to bottom,var(--card),transparent);
+}
+.tj-root[data-profile-theme]:not([data-profile-theme="default"]) .tj-sidebar-v2 .tj-sidebar-scroll-cue-bottom {
+  background:linear-gradient(to top,var(--card),transparent);
+}
+
+/* Utility controls should read as part of the rail in every palette. The
+   logout treatment remains semantic red on purpose. */
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-settings .tj-nav-item:not(.tj-nav-danger),
+.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-user {
+  background:var(--card-alt) !important;
+  border-color:var(--border-strong) !important;
+}
+

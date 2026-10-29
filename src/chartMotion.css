@@ -1,0 +1,58 @@
+/* Replay on mount: page/account/subview keys already remount chart content. */
+.recharts-area {
+  /* ResponsiveContainer can perform an initial resize that skips Recharts'
+     own first-draw clip. This guarantees the left-to-right reveal. */
+  animation: tj-chart-line-reveal .7s ease-out both;
+}
+@keyframes tj-chart-line-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+[data-chart-fill="horizontal"] {
+  transform-origin: left center;
+  animation: tj-chart-fill-x .5s ease-out backwards;
+}
+@keyframes tj-chart-fill-x {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+.tj-chart-ring { transform-origin: center; animation: tj-chart-ring-turn .7s ease-out backwards; }
+@keyframes tj-chart-ring-turn {
+  from { transform: rotate(-360deg); }
+  to { transform: none; }
+}
+/* Animate only the coloured ring; the centre labels never rotate. */
+.tj-live-donut::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--tj-allocation-gradient);
+  z-index: 0;
+  animation: tj-chart-ring-turn .7s ease-out backwards;
+}
+.tj-live-donut::before { z-index: 1; }
+.tj-live-donut > div { z-index: 2; }
+.tj-instrument-performance-card .tj-instrument-ring { position: relative; background: none; }
+.tj-instrument-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(var(--tj-green) var(--instrument-win-rate),color-mix(in srgb,var(--tj-border) 78%,transparent) 0);
+  animation: tj-chart-ring-turn .7s ease-out backwards;
+}
+.tj-instrument-ring > div { position: relative; }
+.tj-challenge progress::-webkit-progress-value {
+  transform-origin: left center;
+  animation: tj-chart-fill-x .5s ease-out backwards;
+}
+.tj-challenge progress::-moz-progress-bar {
+  transform-origin: left center;
+  animation: tj-chart-fill-x .5s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .recharts-area, [data-chart-fill="horizontal"], .tj-chart-ring, .tj-live-donut::after, .tj-instrument-ring::before,
+  .tj-challenge progress::-webkit-progress-value { animation: none; }
+  .tj-challenge progress::-moz-progress-bar { animation: none; }
+}

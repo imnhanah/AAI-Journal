@@ -1,0 +1,75 @@
+/*
+ * Writing fields are intentionally quiet. This list is explicit so pickers,
+ * dates, numeric inputs, dialogs, and ChartViewer continue to own their
+ * functional affordances.
+ */
+.tj-root :is(
+  textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
+  input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
+  .rv-editorial-field input:not([aria-invalid="true"]),
+  .rv-editorial-field textarea:not([aria-invalid="true"]),
+  .cse-writing textarea:not([aria-invalid="true"]),
+  .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
+  .cse-validation textarea:not([aria-invalid="true"]),
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
+  .rde-content[contenteditable="true"]
+) {
+  border:0 !important;
+  box-shadow:none !important;
+  color:var(--text);
+  outline:0;
+}
+
+/* Brief text inputs retain a quiet surface; long-form writing stays on canvas. */
+.tj-root :is(
+  textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
+  input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
+  .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
+  .cse-validation textarea:not([aria-invalid="true"]),
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
+) { background:color-mix(in srgb,var(--surface) 72%,var(--bg)) !important; }
+
+.tj-root :is(.rv-editorial-field :is(input,textarea),.cse-writing textarea,.rde-content[contenteditable="true"]) {
+  background:transparent !important;
+  background-image:none !important;
+}
+
+.tj-root :is(
+  textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
+  input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
+  .rv-editorial-field input:not([aria-invalid="true"]),
+  .rv-editorial-field textarea:not([aria-invalid="true"]),
+  .cse-writing textarea:not([aria-invalid="true"]),
+  .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
+  .cse-validation textarea:not([aria-invalid="true"]),
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
+  .rde-content[contenteditable="true"]
+):hover { border-color:transparent !important; box-shadow:none !important; }
+
+.tj-root :is(
+  textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
+  input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
+  .rv-editorial-field input:not([aria-invalid="true"]),
+  .rv-editorial-field textarea:not([aria-invalid="true"]),
+  .cse-writing textarea:not([aria-invalid="true"]),
+  .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
+  .cse-validation textarea:not([aria-invalid="true"]),
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
+  .rde-content[contenteditable="true"]
+):focus { border-color:transparent !important; box-shadow:none !important; outline:0 !important; }
+
+/* Keyboard users retain a subtle, theme-aware location indicator. */
+.tj-root :is(
+  textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
+  input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
+  .rv-editorial-field input:not([aria-invalid="true"]),
+  .rv-editorial-field textarea:not([aria-invalid="true"]),
+  .cse-writing textarea:not([aria-invalid="true"]),
+  .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
+  .cse-validation textarea:not([aria-invalid="true"]),
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
+  .rde-content[contenteditable="true"]
+):focus-visible {
+  outline:1px solid color-mix(in srgb,var(--text) 42%,transparent) !important;
+  outline-offset:2px;
+}

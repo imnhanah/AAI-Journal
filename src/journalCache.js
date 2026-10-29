@@ -5,10 +5,12 @@ const keyFor = (userId) => `tj:journal-cache:${VERSION}:${userId}`;
 // deliberately leave image payloads out so localStorage stays small.
 const withoutImages = (items = []) => items.map((item) => {
   if (!item || typeof item !== "object") return item;
-  if (Array.isArray(item.screenshots)) return { ...item, screenshots: [] };
+  const compactShots = shots => shots.filter(shot => !String(typeof shot === "string" ? shot : shot?.src || "").startsWith("data:image/"));
+  if (Array.isArray(item.screenshots)) { const screenshots = compactShots(item.screenshots); return { ...item, _cachedImagePayload: screenshots.length !== item.screenshots.length, screenshots }; }
   if (item.screenshots && typeof item.screenshots === "object") {
-    const screenshots = Object.fromEntries(Object.entries(item.screenshots).map(([key, value]) => [key, Array.isArray(value) ? [] : value]));
-    return { ...item, screenshots };
+    const screenshots = Object.fromEntries(Object.entries(item.screenshots).map(([key, value]) => [key, Array.isArray(value) ? compactShots(value) : value]));
+    const omitted = Object.entries(item.screenshots).some(([key, value]) => Array.isArray(value) && value.length !== screenshots[key].length);
+    return { ...item, _cachedImagePayload: omitted, screenshots };
   }
   return item;
 });

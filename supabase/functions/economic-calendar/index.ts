@@ -41,6 +41,7 @@ Deno.serve(async (request) => {
   let body: Record<string, unknown> = {};
   try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { return reply({ error: "Request body must be JSON." }, 400); }
   const requestedOffset = new URL(request.url).searchParams.get("weekOffset") ?? body?.weekOffset ?? 0;
+  const refresh = new URL(request.url).searchParams.get("refresh") === "1";
   const weekOffset = validOffset(requestedOffset);
   if (weekOffset === null) return reply({ error: "weekOffset must be -1, 0, or 1." }, 400);
 
@@ -52,7 +53,7 @@ Deno.serve(async (request) => {
     .maybeSingle();
 
   const cachedAt = cached?.fetched_at ? new Date(cached.fetched_at).getTime() : 0;
-  if (cached && Number.isFinite(cachedAt) && Date.now() - cachedAt < CACHE_TTL_MS) {
+  if (!refresh && cached && Number.isFinite(cachedAt) && Date.now() - cachedAt < CACHE_TTL_MS) {
     return reply({ events: cached.events, source: "cache", fetchedAt: cached.fetched_at });
   }
 

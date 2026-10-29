@@ -1,0 +1,19 @@
+node_modules
+dist
+.DS_Store
+.env
+.env.local
+.env.*
+build/
+coverage/
+*.log
+logs/
+*.pem
+*.key
+.supabase/
+.netlify
+artifacts/
+.cache/
+# Preserved recovery copies; never delete them as part of this task.
+src/* 2.*
+scripts/* 2.*
