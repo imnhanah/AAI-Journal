@@ -44,7 +44,7 @@ function friendlyAuthError(error) {
   return error.message || "Something went wrong. Please try again.";
 }
 
-export async function signUp({ name, email, password, financialDisclaimerAcknowledged = false }) {
+export async function signUp({ name, email, password, financialDisclaimerAcknowledged = false, captchaToken }) {
   const cleanEmail = email.trim().toLowerCase();
   if (!name || !name.trim()) return { error: "Please enter your name." };
   if (!cleanEmail || !cleanEmail.includes("@")) return { error: "Please enter a valid email address." };
@@ -61,6 +61,7 @@ export async function signUp({ name, email, password, financialDisclaimerAcknowl
       options: {
         data: { display_name: name.trim(), financial_disclaimer_signup_acknowledged: true },
         emailRedirectTo: currentAppUrl(),
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
     if (error) return { error: friendlyAuthError(error) };
@@ -87,12 +88,12 @@ export async function signUp({ name, email, password, financialDisclaimerAcknowl
   }
 }
 
-export async function signIn({ email, password }) {
+export async function signIn({ email, password, captchaToken }) {
   const cleanEmail = (email || "").trim().toLowerCase();
   if (!cleanEmail) return { error: "Please enter your email." };
   if (!password) return { error: "Please enter your password." };
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password, ...(captchaToken ? { captchaToken } : {}) });
     if (error) return { error: friendlyAuthError(error) };
     return { user: data.user, session: data.session };
   } catch (e) {
@@ -124,12 +125,13 @@ export async function signOut() {
   }
 }
 
-export async function requestPasswordReset(email) {
+export async function requestPasswordReset(email, captchaToken) {
   const cleanEmail = (email || "").trim().toLowerCase();
   if (!cleanEmail || !cleanEmail.includes("@")) return { error: "Please enter a valid email address." };
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: window.location.origin + "?reset=1",
+      ...(captchaToken ? { captchaToken } : {}),
     });
     if (error) return { error: friendlyAuthError(error) };
     // Supabase intentionally doesn't reveal whether the email exists (to
