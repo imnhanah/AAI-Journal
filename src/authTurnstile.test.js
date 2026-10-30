@@ -13,6 +13,12 @@ test('email auth operations forward the optional Supabase CAPTCHA token', () => 
   assert.ok((auth.match(/captchaToken/g) || []).length >= 6);
 });
 
+test('password login sends CAPTCHA in Supabase options, never as a top-level credential', () => {
+  assert.match(auth, /signInWithPassword\(\{\s*email: cleanEmail,\s*password,\s*options: \{ \.\.\.\(captchaToken \? \{ captchaToken \} : \{\}\) \},\s*\}\)/s);
+  assert.doesNotMatch(auth, /signInWithPassword\(\{ email: cleanEmail, password, \.\.\.\(captchaToken \? \{ captchaToken \}/);
+  assert.match(auth, /Security verification failed or expired/);
+});
+
 test('auth page requires a Turnstile token only when a public site key is configured', () => {
   assert.match(page, /import\.meta\.env\.VITE_TURNSTILE_SITE_KEY/);
   assert.match(page, /turnstileEnabled && !captchaToken/);

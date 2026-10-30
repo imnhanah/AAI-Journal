@@ -35,6 +35,9 @@ function friendlyAuthError(error) {
   if (msg.includes("rate limit")) {
     return "Too many attempts — please wait a moment and try again.";
   }
+  if (msg.includes("captcha") || msg.includes("captcha_token")) {
+    return "Security verification failed or expired. Complete it again and retry.";
+  }
   if (msg.includes("failed to fetch") || msg.includes("network")) {
     return "Network error — check your connection and try again.";
   }
@@ -93,7 +96,13 @@ export async function signIn({ email, password, captchaToken }) {
   if (!cleanEmail) return { error: "Please enter your email." };
   if (!password) return { error: "Please enter your password." };
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password, ...(captchaToken ? { captchaToken } : {}) });
+    // Supabase serializes CAPTCHA only from this nested `options` object.
+    // A top-level captchaToken is ignored and becomes `no captcha_token found`.
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+      options: { ...(captchaToken ? { captchaToken } : {}) },
+    });
     if (error) return { error: friendlyAuthError(error) };
     return { user: data.user, session: data.session };
   } catch (e) {
