@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {displayMetadata, normaliseDisplayPreferences} from './displayPreferences.js';
+const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
+const styles = readFileSync(new URL('./entryComposer.css', import.meta.url), 'utf8');
+test('Side View is the default shared desktop trade-entry preference', () => { assert.equal(normaliseDisplayPreferences().tradeEntryLayout, 'side'); assert.equal(normaliseDisplayPreferences({trade_entry_layout:'center'}).tradeEntryLayout, 'center'); assert.equal(displayMetadata({weekStart:'monday',startPage:'dashboard',hideBalances:false,tradeEntryLayout:'center'}).trade_entry_layout, 'center'); });
+test('trade and markup forms share the same persisted layout preference', () => { assert.match(journal, /entryLayout=\{tradeEntryLayout\}[\s\S]*NewTradeModal/); assert.match(journal, /MarkupModal[^\n]*entryLayout=\{tradeEntryLayout\}/); assert.match(journal, /Trade Entry Layout/); });
+test('Side View preserves sidebar preference while its temporary collapse is active', () => { assert.match(journal, /sideEntrySidebar\.current = \{ active:true, previous:sidebarOpen, manual:false \}/); assert.match(journal, /if \(!session\.manual\) setSidebarOpen\(session\.previous\)/); assert.match(journal, /sideEntrySidebar\.current\?\.active && resolved !== current/); });
+test('entry panels keep draft data on failures and ask before discarding changes', () => { assert.match(journal, /Discard unsaved trade changes\?/); assert.match(journal, /Discard unsaved markup changes\?/); assert.match(journal, /if \(res\.error\).*return false/); assert.match(journal, /setModal\(null\); setEditingTrade\(null\); setNewTradeDraft\(null\);[\s\S]*return true/); });
+test('Side View has a responsive, reduced-motion-safe workspace animation', () => { assert.match(styles, /tj-entry-side-active/); assert.match(styles, /tj-entry-side-panel/); assert.match(styles, /@media \(prefers-reduced-motion:reduce\)/); assert.match(styles, /@media \(max-width:900px\)/); });

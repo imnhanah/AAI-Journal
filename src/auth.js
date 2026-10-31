@@ -183,7 +183,7 @@ export async function deleteProfilePermanently() {
   }
 }
 
-export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled, privacyScreenTimeoutMinutes, theme, themePreference, accentColor, themePalettes, timezone, dateFormat, timeFormat, language, week_start, start_page, hide_balances }) {
+export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled, privacyScreenTimeoutMinutes, theme, themePreference, accentColor, themePalettes, timezone, dateFormat, timeFormat, language, week_start, start_page, hide_balances, trade_entry_layout }) {
   const cleanName = (fullName || displayName || "").trim();
   const cleanDisplayName = (displayName || cleanName).trim();
   if (!cleanName) return { error: "Please enter your full name." };
@@ -194,6 +194,7 @@ export async function updateProfile({ fullName, displayName, avatarUrl, sessionT
     if (week_start !== undefined) displayData.week_start = week_start === 'sunday' ? 'sunday' : 'monday';
     if (start_page !== undefined) displayData.start_page = START_PAGES.includes(start_page) ? start_page : 'dashboard';
     if (hide_balances !== undefined) displayData.hide_balances = hide_balances === true;
+    if (trade_entry_layout !== undefined) displayData.trade_entry_layout = trade_entry_layout === 'center' ? 'center' : 'side';
     const { data, error } = await supabase.auth.updateUser({
       data: { ...displayData, ...(language !== undefined ? { language } : {}), display_name: cleanDisplayName, full_name: cleanName, ...(avatarUrl !== undefined && (avatarUrl || null) !== currentAvatar ? {avatar_url:avatarUrl || null} : {}), session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, privacy_screen_enabled: !!privacyScreenEnabled, privacy_screen_timeout_minutes: [5, 15, 60].includes(Number(privacyScreenTimeoutMinutes)) ? Number(privacyScreenTimeoutMinutes) : 15, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", ...(themePalettes && typeof themePalettes === 'object' ? { theme_palettes: themePalettes } : {}), timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
     });

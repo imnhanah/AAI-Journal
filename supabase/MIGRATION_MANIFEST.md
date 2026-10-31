@@ -37,6 +37,9 @@ Do **not** add these to a new-install sequence:
   only for historical, incremental upgrades.
 - `seed_two_account_demo.sql` is **development-only**. It deletes/recreates
   Demo data and must never be run against production data.
+- `seed_demostration_simulation.sql` is **development-only**. It iterates
+  every profile and deletes/recreates a demonstration workspace; it must never
+  be run against production data.
 
 `journal_egress_hardening.sql` and `trade_risk_calculation_migration.sql`
 intentionally replace `tj_bootstrap_metadata`; this is not a conflict when

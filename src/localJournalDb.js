@@ -1,5 +1,4 @@
 import { normaliseBalance, WORKSPACE_TYPES } from './balanceModel.js';
-import { buildDemoHistory } from './demoData.js';
 
 const DATABASE = 'aaicorefx-local-journal';
 const STORE = 'journals';
@@ -36,21 +35,17 @@ async function write(data, userId = localUserId) {
   await new Promise((resolve, reject) => { transaction.oncomplete = resolve; transaction.onerror = () => reject(transaction.error); });
   database.close();
 }
-function demo(userId) {
-  const accountId = id();
-  const balance = normaliseBalance({ id:id(), workspaceId:accountId, name:'Primary balance', startingBalance:1000, baseCurrency:'USD' }, { baseCurrency:'USD', balance:1000 });
-  const history = buildDemoHistory();
-  const trades = history.trades.map((trade) => ({ ...trade, id:id(), accountId, grossPnl:trade.pnl, commission:0, swap:0, entrySession:trade.session, confluence:trade.types || [], mistakes:[], rating:0, screenshots:{entry:[],exit:[]}, balanceResults:[], createdAt:now(), updatedAt:now() }));
-  const periodReviews = history.periods.map((review) => ({ ...review, id:id(), accountId, updatedAt:now() }));
+function emptyJournal() {
   return {
-    accounts: [{ id:accountId, name:'Demo', icon:'USD', profileImage:'', balance:1000, breakevenCap:0, ratingStyle:'stars', theme:'dark', defaultCommission:0, monthlyGoalPct:0, yearlyGoalPct:0, monthlyGoalAmount:0, yearlyGoalAmount:0, monthlyGoalSource:'percentage', yearlyGoalSource:'percentage', dailyLossLimitPct:0, monthlyLossLimitPct:0, positionSizeEnabled:false, baseCurrency:'USD', platform:'Manual', defaultRiskPct:1, defaultStopLossPips:20, workspaceType:WORKSPACE_TYPES.STANDARD, challengeEnabled:false, challengeStartingBalance:0, financeEnabled:false, typeTags:[], mistakeTags:[], confluenceSessions:[], rewardPresets:[3.1,3.2], trades, rules:[], checkins:{}, balances:[balance], finance:{enabled:false,tradingTarget:0}, savingsAccounts:[], financeMovements:[], createdAt:now(), userId }],
-    typeTags: [], mistakeTags: [], confluenceSessions: [], customInstruments: [], markups: [], reviews: [], periodReviews, financeReady:true, balancesReady:true,
+    accounts: [], typeTags: [], mistakeTags: [], confluenceSessions: [], customInstruments: [],
+    markups: [], reviews: [], periodReviews: [], financeReady:true, balancesReady:true,
   };
 }
 async function dataFor(userId = localUserId) {
   let data = await read(userId);
-  if (!data || !data.accounts?.length || (Number(data.version || 0) < 2 && data.accounts?.length === 1 && data.accounts[0]?.name === 'Demo' && !(data.accounts[0]?.trades || []).length)) { data = demo(userId); await write(data, userId); }
-  return data;
+  // A fresh device starts empty. Do not write a synthetic journal or any
+  // account data until the person explicitly creates or imports it.
+  return data || emptyJournal();
 }
 const pendingChanges = new Map();
 function change(mutator) {

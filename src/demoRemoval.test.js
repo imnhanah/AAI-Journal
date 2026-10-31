@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = name => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
+test('journal startup has no automatic cloud demo workspace path', () => { const journal = read('TradingJournal.jsx'); assert.doesNotMatch(journal, /ensureDemoAccount/); assert.match(journal, /Start your trading journal/); assert.match(journal, /Create your first journal/); assert.match(journal, /if \(loaded && !account\)/); });
+test('device storage starts empty and does not import synthetic history', () => { const local = read('localJournalDb.js'); assert.doesNotMatch(local, /buildDemoHistory/); assert.doesNotMatch(local, /name:'Demo'/); assert.match(local, /accounts: \[\]/); assert.match(local, /return data \|\| emptyJournal\(\)/); });
+test('trade logs and backtests cannot fall back to generated sample records', () => { const logs=read('TradeLogsReference.jsx'), backtests=read('BacktestAccounts.jsx'); assert.doesNotMatch(logs, /October 2026/); assert.doesNotMatch(logs, /Sample data/); assert.match(logs, /const source = trades;/); assert.doesNotMatch(backtests, /eurusdSample/); assert.doesNotMatch(backtests, /requestedSample/); });
+test('demonstration SQL scripts remain excluded from the installation manifest', () => { const manifest=readFileSync(new URL('../supabase/MIGRATION_MANIFEST.md', import.meta.url),'utf8'); assert.match(manifest,/seed_two_account_demo\.sql[\s\S]*must never be run against production data/); assert.match(manifest,/seed_demostration_simulation\.sql[\s\S]*must never[\s\S]*production data/); assert.doesNotMatch(manifest,/\|\s*\d+\s*\|\s*`seed_/); });

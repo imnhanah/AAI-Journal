@@ -1,6 +1,6 @@
 export const START_PAGES = ['last', 'dashboard', 'markups', 'tradelog', 'reviews', 'analytics', 'calendar', 'psychology', 'news', 'challenge', 'finance', 'backtest', 'management'];
 export function normaliseDisplayPreferences(metadata = {}) {
-  return { weekStart: metadata.week_start === 'sunday' ? 'sunday' : 'monday', startPage: START_PAGES.includes(metadata.start_page) ? metadata.start_page : 'dashboard', hideBalances: metadata.hide_balances === true };
+  return { weekStart: metadata.week_start === 'sunday' ? 'sunday' : 'monday', startPage: START_PAGES.includes(metadata.start_page) ? metadata.start_page : 'dashboard', hideBalances: metadata.hide_balances === true, tradeEntryLayout: metadata.trade_entry_layout === 'center' ? 'center' : 'side' };
 }
 // The journal already uses render-scoped regional and currency configuration.
 // This configuration is presentation-only; savings windows never read it.
@@ -17,6 +17,6 @@ export function resolveStartPage(metadata, lastPage, available = START_PAGES) {
   const selected = preference === 'last' ? (lastPage === 'insights' ? 'psychology' : lastPage) : preference;
   return selected !== 'last' && available.includes(selected) ? selected : 'dashboard';
 }
-export function displayMetadata(preferences) { return {week_start: preferences.weekStart, start_page: preferences.startPage, hide_balances: preferences.hideBalances}; }
+export function displayMetadata(preferences) { return {week_start: preferences.weekStart, start_page: preferences.startPage, hide_balances: preferences.hideBalances, trade_entry_layout: preferences.tradeEntryLayout === 'center' ? 'center' : 'side'}; }
 const moneyPattern = /[+−-]?(?:US\$|CA\$|A\$|NZ\$|HK\$|S\$|[$€£¥₵₹₦₩₽₺]|(?:USD|EUR|GBP|JPY|CAD|AUD|NZD|CHF|GHS|NGN|INR|ZAR|AED)\s+)[\s\u00a0]*[+−-]?\d(?:[\d,.]|[ \u00a0\u202f](?=\d{3}(?:[^\d]|$)))*(?:[kKmMbB](?!\w))?/g;
 export function maskMoneyText(text) { return String(text).replace(moneyPattern, match => `${match.match(/(?:US\$|CA\$|A\$|NZ\$|HK\$|S\$|[$€£¥₵₹₦₩₽₺]|[A-Z]{3})/)?.[0] || ''}••••`); }

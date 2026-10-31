@@ -43,10 +43,25 @@ const payload = (scope, id, userId, activeLevel = 4) => ({
 const noCloud = { from() { throw new Error('Local mode contacted Supabase'); } };
 const db = createChallengeStorage({ isLocal:local.isLocalJournal, local, cloud:noCloud });
 
+async function createLocalAccount(userId) {
+  const created = await local.createAccount(userId, { name:'Test account', balance:1000, baseCurrency:'USD' });
+  assert.equal(created.error, undefined);
+  const balance = await local.createWorkspaceBalance(userId, created.data.id, { name:'Primary balance', startingBalance:1000, baseCurrency:'USD' });
+  assert.equal(balance.error, undefined);
+  return (await local.fetchAllUserData(userId)).data.accounts[0];
+}
+
+test('a new device-only journal has no generated account, trade, or review', async () => {
+  local.configureLocalJournal('empty-device-user', true);
+  const { data } = await local.fetchAllUserData('empty-device-user');
+  assert.deepEqual(data.accounts, []);
+  assert.deepEqual(data.reviews, []);
+  assert.deepEqual(data.periodReviews, []);
+});
+
 test('free challenges persist for account and balance, survive reload, and restore from backup', async () => {
   local.configureLocalJournal('free-user', true);
-  const {data} = await local.fetchAllUserData('free-user');
-  const account = data.accounts[0];
+  const account = await createLocalAccount('free-user');
   for (const [scope, id] of [['account',account.id],['balance',account.balances[0].id]]) {
     assert.equal((await db.read(scope,id,'free-user')).data, null);
     assert.equal((await db.probe(scope,id)).error,null);
@@ -66,11 +81,11 @@ test('free challenges persist for account and balance, survive reload, and resto
 
 test('concurrent trade and challenge saves do not overwrite each other',async () => {
   local.configureLocalJournal('concurrent-user',true);
-  const {data} = await local.fetchAllUserData('concurrent-user');
-  const account = data.accounts[0];
+  const account = await createLocalAccount('concurrent-user');
+  const trade = await local.createTrade('concurrent-user', account.id, { asset:'EUR/USD', context:'Original', pnl:0 });
   await Promise.all([
     db.save('account',payload('account',account.id,'concurrent-user',5)),
-    local.updateTrade(account.trades[0].id,{context:'Updated concurrently'}),
+    local.updateTrade(trade.data.id,{context:'Updated concurrently'}),
     db.save('balance',payload('balance',account.balances[0].id,'concurrent-user',6)),
   ]);
   const backup = await local.exportLocalJournal('concurrent-user');

@@ -4,9 +4,9 @@ import {readFileSync} from 'node:fs';
 import {normaliseDisplayPreferences, displayMetadata, startOfDisplayWeek, weekStartOffset, displayWeekdays, resolveStartPage, maskMoneyText} from './displayPreferences.js';
 import {ownedStoragePaths} from '../supabase/functions/_shared/deleteProfileStorage.js';
 
-test('safe defaults and round-trip metadata for all three controls', () => {
-  assert.deepEqual(normaliseDisplayPreferences(), {weekStart:'monday',startPage:'dashboard',hideBalances:false});
-  const saved = {weekStart:'sunday',startPage:'last',hideBalances:true};
+test('safe defaults and round-trip metadata for all display controls', () => {
+  assert.deepEqual(normaliseDisplayPreferences(), {weekStart:'monday',startPage:'dashboard',hideBalances:false,tradeEntryLayout:'side'});
+  const saved = {weekStart:'sunday',startPage:'last',hideBalances:true,tradeEntryLayout:'center'};
   assert.deepEqual(normaliseDisplayPreferences(displayMetadata(saved)), saved);
   assert.equal(resolveStartPage({start_page:'untrusted'},'finance'),'dashboard');
 });
