@@ -1,0 +1,87 @@
+/* Container-aware workspace rules.  These react to the remaining journal
+   workspace (including the entry panel), never to panel state or animation. */
+.tj-root .tj-main { container-type:inline-size; container-name:journal-workspace; min-width:0; }
+.tj-root .tj-content,.tj-root .tj-content-inner,.tj-root .tj-page-transition { min-width:0; max-width:100%; }
+.tj-root .tj-page-transition > * { min-width:0; }
+.tj-root :is(.recharts-responsive-container,.recharts-wrapper,.recharts-surface) { max-width:100%; }
+.tj-root :is(.tj-tradelog-table-wrap,.tj-tradelog-table-scroll,.tj-backtest-table-scroll,.tj-reference-table-scroll,.tj-challenge-scroll) { max-width:100%; overscroll-behavior-inline:contain; }
+
+@container journal-workspace (max-width:1180px) {
+  .tj-root .tj-topbar { grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+  .tj-root .tj-topbar-actions { flex-wrap:wrap; justify-content:flex-end; }
+  .tj-root .tj-header-search { display:none; }
+  .tj-root :is(.tj-reference-hero-grid,.tj-dashboard-analytics-grid,.tj-reference-analytics-overview>.tj-view-transition,.tj-live-analytics-grid,.tj-performance-workspace,.tj-execution-workspace,.tj-risk-workspace) { grid-template-columns:minmax(0,1fr); }
+  .tj-root :is(.tj-reference-flow,.tj-dashboard-calendar,.tj-dashboard-analytics-grid>.tj-panel,.tj-reference-analytics .tj-live-panel) { min-width:0; }
+  .tj-root .tj-reference-flow { grid-row:auto; }
+  .tj-root .tj-engine-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root :is(.tj-analytics-equity-chart,.tj-live-daily-chart,.tj-execution-weekly-chart) { min-height:220px; }
+  .tj-root .tj-attached-calendar-grid { grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .tj-root .tj-attached-calendar .tj-attached-week { grid-column:1 / -1; }
+  .tj-root .tj-tradelog-compact-toolbar .tj-tradelog-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-reference-markups .tj-markup-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .tj-root .tj-tradelog-reference-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-management-layout { grid-template-columns:180px minmax(0,1fr); gap:24px; }
+  .tj-root .tj-management-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-challenge-metrics { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .tj-root :is(.tj-finance-summary,.tj-finance-layout,.tj-finance-hero,.tj-finance-saving) { min-width:0; }
+  .case-library-layout { grid-template-columns:210px minmax(0,1fr); gap:16px; }
+  .case-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cse-layout { grid-template-columns:190px minmax(0,1fr); }
+  .cse-layout:not(.cse-layout--no-panel) .cse-panel { grid-column:1 / -1; }
+}
+
+@container journal-workspace (max-width:860px) {
+  .tj-root .tj-topbar { align-items:flex-start; }
+  .tj-root .tj-topbar-left { min-width:0; }
+  .tj-root .tj-page-heading { min-width:0; }
+  .tj-root .tj-page-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tj-root .tj-topbar-actions .tj-start-day-action { display:none; }
+  .tj-root :is(.tj-reference-flow-head,.tj-analytics-equity-head,.tj-engine-wide-head,.tj-engine-tabs) { flex-wrap:wrap; }
+  .tj-root .tj-reference-flow-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-dashboard-analytics-grid { grid-template-columns:1fr; }
+  .tj-root .tj-attached-calendar { overflow-x:auto; overscroll-behavior-inline:contain; }
+  .tj-root .tj-attached-calendar-grid { min-width:560px; }
+  .tj-root .tj-tradelog-card-grid { grid-template-columns:1fr; }
+  .tj-root .tj-tradelog-compact-toolbar { grid-template-columns:1fr; }
+  .tj-root .tj-tradelog-month-controls .tj-tradelog-month-options { grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .tj-root .tj-reference-markups .tj-markup-sort-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .tj-root :is(.tj-markup-card-grid .tj-markup-reference-chart-row,.tj-tradelog-card-grid .tj-reference-trade-main-grid,.tj-reference-analytics .tj-engine-wide-value,.tj-reference-analytics .tj-engine-drilldown-hero) { grid-template-columns:1fr; }
+  .tj-root .tj-management-layout { grid-template-columns:1fr; gap:18px; }
+  .tj-root .tj-management-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-management-nav>small { grid-column:1 / -1; }
+  .tj-root .tj-challenge-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-challenge-setup-cards { grid-template-columns:1fr; }
+  .tj-root .tj-news-alert-controls { grid-template-columns:1fr; }
+  .tj-root .tj-reference-finance .tj-finance-settings-account { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-backtest-reference .bt-reference-charts,.tj-root .bt-reference-library .bt-reference-charts,.tj-root .bt-reference-library .bt-plans,.tj-root .bt-edge-row { grid-template-columns:1fr; }
+  .case-library__header,.case-shelf__heading,.case-library-all__heading { flex-wrap:wrap; }
+  .case-library-layout { grid-template-columns:1fr; }
+  .case-library-sidebar { position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .case-library-sidebar .case-sidebar-label { grid-column:1 / -1; }
+  .cse-layout,.cse-layout--no-outline,.cse-layout--no-panel { grid-template-columns:1fr; }
+  .cse-outline { max-height:250px; }
+  .cse-panel { grid-column:auto; min-height:230px; }
+  .cse-split-workspace { grid-template-columns:1fr; }
+  .cse-split-evidence { border-right:0; border-bottom:1px solid var(--border); }
+}
+
+@container journal-workspace (max-width:620px) {
+  .tj-root .tj-topbar { grid-template-columns:minmax(0,1fr) auto; padding-inline:12px; }
+  .tj-root .tj-page-group { display:none; }
+  .tj-root .tj-topbar-actions .tj-header-account-control { display:none; }
+  .tj-root .tj-topbar-actions .tj-btn-primary { min-width:0; padding-inline:10px; }
+  .tj-root .tj-content-inner { padding-inline:14px; }
+  .tj-root .tj-reference-flow-metrics,.tj-root .tj-engine-metrics,.tj-root .tj-tradelog-reference-summary,.tj-root .tj-reference-markups .tj-markup-filter-grid { grid-template-columns:1fr; }
+  .tj-root .tj-reference-flow-head .tj-tabs { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+  .tj-root .tj-tradelog-compact-toolbar .tj-tradelog-filter-grid,.tj-root .tj-reference-markups .tj-markup-sort-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-tradelog-month-controls .tj-tradelog-month-options { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .tj-root .tj-management-tiles,.tj-root .tj-news-release-values,.tj-root .tj-reference-finance .tj-finance-settings-account { grid-template-columns:1fr; }
+  .tj-root .tj-challenge-metrics { grid-template-columns:1fr; }
+  .tj-root .tj-challenge-current { flex-wrap:wrap; }
+  .tj-root .tj-challenge-current>div { min-width:0; }
+  .tj-root .tj-backtest-reference .bt-six-stats,.tj-root .bt-six-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .case-metrics { grid-template-columns:1fr; }
+  .case-library-sidebar { grid-template-columns:1fr; }
+  .cse-header { grid-template-columns:auto minmax(0,1fr) auto; }
+  .cse-mode-switch { grid-column:1 / -1; }
+}

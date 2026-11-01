@@ -5,7 +5,8 @@ import ReactDOM from "react-dom/client";
 import './themeTokens.css?theme-tokens=4';
 import './typographyTokens.css';
 import './analyticsLayout.css';
-import TradingJournal from "./TradingJournal.jsx?header-controls=98";
+import TradingJournal from "./TradingJournal.jsx?header-controls=156";
+import {ConfirmationProvider} from './ConfirmationDialog.jsx';
 import './shellAlignment.css';
 import './financeRedesign.css';
 import './backtestRedesign.css';
@@ -14,7 +15,7 @@ import './reviewLibraryRedesign.css';
 import './mobileFrame.css';
 import './mobileCalendar.css';
 import './mobileReview.css';
-import './mobileProfile.css';
+import './mobileProfile.css?profile-region-layout=1';
 import './mobileLogTrade.css';
 import './mobileMarkups.css';
 import './mobileDashboard.css';
@@ -35,9 +36,22 @@ import './writingFields.css?writing-fields=1';
 import { useLanguage } from './LanguageSelector';
 import { loadAccent } from './siteTheme';
 
+const LocalTradeValidationHarness = import.meta.env.DEV
+  ? React.lazy(() => import('./LocalTradeValidationHarness.jsx'))
+  : null;
+const LocalOnboardingHarness = import.meta.env.DEV
+  ? React.lazy(() => import('./LocalOnboardingHarness.jsx'))
+  : null;
+
 function LocalizedApp() {
   const [language] = useLanguage();
-  return <TradingJournal language={language}/>;
+  return <ConfirmationProvider><TradingJournal language={language}/></ConfirmationProvider>;
+}
+
+function AppEntry() {
+  if (LocalTradeValidationHarness && window.location.pathname === '/__local-validation') return <LocalTradeValidationHarness />;
+  if (LocalOnboardingHarness && window.location.pathname === '/__local-onboarding') return <LocalOnboardingHarness />;
+  return <LocalizedApp />;
 }
 
 loadAccent();
@@ -47,7 +61,7 @@ if (import.meta.hot) import.meta.hot.data.root = appRoot;
 appRoot.render(
   <React.StrictMode>
     <React.Suspense fallback={<div role="status" style={{padding: '24px', color: 'var(--text)', background: 'var(--bg)'}}>Loading…</div>}>
-      <LocalizedApp />
+      <AppEntry />
     </React.Suspense>
   </React.StrictMode>
 );

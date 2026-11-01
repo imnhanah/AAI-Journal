@@ -27,3 +27,13 @@ test('backtest filter rail has scroll-aware fades and momentum uses short amount
   assert.equal(compactBacktestMoney(300), '$300');
   assert.equal(compactBacktestMoney(15000), '$15K');
 });
+test('phone Strategy Testing keeps a compact accessible summary and moves configuration into secondary details',()=>{
+  const css=read('./mobileBacktest.css'),source=read('./BacktestAccounts.jsx');
+  assert.match(css,/\.bt-phone-library \.bt-reference-summary>\.bt-reference-setup \{display:none/);
+  assert.match(css,/\.bt-phone-library \.bt-run-disclosure \{display:grid;grid-template-rows:0fr/);
+  assert.match(css,/\.bt-run-disclosure-open \{grid-template-rows:1fr/);
+  assert.match(css,/prefers-reduced-motion:reduce/);
+  assert.match(source,/aria-expanded=\{open\} aria-controls=\{contentId\}/);
+  assert.match(source,/<MobileRunDetails run=\{run\}\/>/);
+  assert.match(source,/writeBacktestMobileDisclosure\(user.id,disclosurePreference.current\)/);
+});

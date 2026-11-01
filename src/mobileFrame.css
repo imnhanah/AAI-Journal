@@ -1,17 +1,25 @@
 .tj-mobile-search-trigger,.tj-mobile-calendar-summary {display:none;}
 /* Desktop rules are untouched; the phone frame starts below 768px. */
 @media (max-width:767px) {
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root { --mobile-top:calc(60px + env(safe-area-inset-top,0px)); --mobile-bottom:calc(64px + max(22px,env(safe-area-inset-bottom,0px))); display:block;width:100%;height:100dvh;min-height:0;padding:0;gap:0;overflow:hidden; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root { --mobile-top:calc(82px + env(safe-area-inset-top,0px)); --mobile-bottom:calc(64px + max(22px,env(safe-area-inset-bottom,0px))); display:block;width:100%;height:100dvh;min-height:0;padding:0;gap:0;overflow:hidden; }
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {display:none!important;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {width:100%;height:100%;min-width:0;gap:0;margin:0;padding:var(--mobile-top) 0 var(--mobile-bottom);}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {top:0;left:0;right:0;height:var(--mobile-top);min-height:var(--mobile-top);max-height:var(--mobile-top);padding:env(safe-area-inset-top,0px) 16px 0;gap:12px;border-radius:0!important;border:0!important;border-bottom:1px solid var(--tj-border)!important;box-shadow:none!important;transition:none;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-left {min-width:0;padding:0;border:0;gap:0;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar :is(.tj-sidebar-toggle,.tj-header-search,.tj-btn-primary) {display:none;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-heading {min-width:0;border:0;padding:0;}
+  /* The phone shell has one explicit height budget.  The header consumes its
+     own flex row and the content is the only remaining, scrollable row.  This
+     avoids mixing the desktop 100% shell with phone padding while Chrome is
+     crossing the breakpoint during a live resize. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {display:flex;flex-direction:column;width:100%;height:100dvh;min-height:0;max-height:100dvh;min-width:0;gap:0;margin:0;padding:0;box-sizing:border-box;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {top:0;left:0;right:0;height:var(--mobile-top);min-height:var(--mobile-top);max-height:var(--mobile-top);display:flex;flex-wrap:nowrap;align-items:center;padding:env(safe-area-inset-top,0px) 16px 0;gap:10px;border-radius:0!important;border:0!important;border-bottom:1px solid var(--tj-border)!important;box-shadow:none!important;transition:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-left {display:flex;flex:1 1 auto;min-width:0;padding:0;border:0;gap:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar :is(.tj-sidebar-toggle,.tj-header-search,.tj-btn-primary,.tj-start-day-action) {display:none!important;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-heading {display:block;flex:1;min-width:0;border:0;padding:0;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-group {font-size:12px;line-height:1.2;letter-spacing:.1em;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-title {font-size:22px;line-height:1.2;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-title {display:block;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;font-size:22px;line-height:1.2;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-actions {display:flex;flex:0 1 auto;min-width:0;margin-left:auto;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-control {display:block!important;min-width:0;max-width:min(44vw,220px);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-switcher {display:flex;align-items:center;min-width:0;max-width:100%;padding-inline:8px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-switcher>span:not(.tj-account-initial) {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-search-trigger {display:grid;place-items:center;width:44px;height:44px;min-width:44px;margin-left:auto;padding:0;border:1px solid var(--tj-border);border-radius:12px;background:var(--tj-panel-alt);color:var(--tj-text);}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {min-width:0;padding:12px 16px 24px;margin:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-width:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {flex:1 1 auto;min-height:0;min-width:0;padding:12px 16px calc(24px + var(--mobile-bottom));margin:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-width:none;scroll-padding-bottom:calc(24px + var(--mobile-bottom));}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content::-webkit-scrollbar {display:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content-inner {width:100%;min-width:0;padding:0;}
   .tj-root.tj-root .tj-signal-page-dashboard {display:block;margin:0 0 12px;min-height:0;padding:0;}
@@ -117,6 +125,11 @@
   .tj-root.tj-root .tj-modal button {min-height:44px;}
   .tj-root.tj-root .tj-modal :is(input,textarea,.tj-picker-trigger) {font-size:15px!important;}
   .tj-root .tj-content :is(.tj-btn-primary,.tj-btn-secondary,.tj-btn-outline,.tj-icon-btn,.tj-picker-trigger) {min-height:44px;}
+}
+@media (max-width:375px) {
+  .tj-root .tj-header-account-control {max-width:56px;}
+  .tj-root .tj-header-account-switcher>span:not(.tj-account-initial) {display:none;}
+  .tj-root .tj-header-account-switcher {gap:5px;padding-inline:7px;}
 }
 @keyframes tj-mobile-sheet-enter {from {bottom:-20px;opacity:0;}to {bottom:0;opacity:1;}}
 @media (prefers-reduced-motion:reduce) {.tj-root .tj-mobile-sheet {animation:none;}}

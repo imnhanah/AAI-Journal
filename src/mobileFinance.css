@@ -34,7 +34,7 @@
   .tj-phone-finance-movement:last-child {border-bottom:0;}
   .tj-phone-finance-movement>i {grid-column:1;grid-row:1/3;display:grid;place-items:center;width:34px;height:34px;border:1px solid color-mix(in srgb,var(--red) 25%,var(--border));border-radius:10px;color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent);}
   .tj-phone-finance-movement>strong {grid-column:2;grid-row:1;font-size:14px;line-height:1.35;overflow-wrap:anywhere;}
-  .tj-phone-finance-movement>b {grid-column:3;grid-row:1;max-width:128px;font-size:14px;text-align:right;color:var(--red);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+  .tj-phone-finance-movement>b {grid-column:3;grid-row:1;min-width:0;max-width:42vw;font-size:14px;text-align:right;color:var(--red);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
   .tj-phone-finance-movement.is-transfer :is(i,b) {color:var(--tj-purple);}
   .tj-phone-finance-movement.is-transfer>i {background:color-mix(in srgb,var(--tj-purple) 12%,transparent);border-color:color-mix(in srgb,var(--tj-purple) 30%,var(--border));}
   .tj-phone-finance-movement.is-deposit :is(i,b) {color:var(--green);}
@@ -65,12 +65,13 @@
   .tj-phone-finance-sheet>header {display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;flex-shrink:0;}
   .tj-phone-finance-sheet h2 {font-size:22px;margin:0;font-weight:800;}
   .tj-phone-finance-close {display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:12px;background:var(--card-alt);color:var(--muted);}
-  .tj-phone-finance-sheet-body {display:grid;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:14px;}
+  .tj-phone-finance-sheet-body {display:grid;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scroll-padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));padding-bottom:14px;}
   .tj-phone-finance-tabs {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .tj-phone-finance-tabs button {min-height:44px;min-width:0;border:0;background:var(--card-alt);color:var(--muted);font:700 13px var(--font-sans);padding:8px 4px;}
   .tj-phone-finance-tabs button[aria-selected=true] {background:var(--tj-accent-muted);color:var(--accent);}
   .tj-phone-finance-sheet label {display:grid;gap:8px;min-width:0;}
   .tj-phone-finance-sheet label>span {font-size:12px;letter-spacing:.06em;font-weight:800;color:var(--muted);text-transform:uppercase;}
+  .tj-phone-finance-sheet [role="alert"] {min-width:0;overflow-wrap:anywhere;}
   .tj-root.tj-root.tj-root.tj-root .tj-phone-finance-sheet .tj-themed-control {width:100%;min-width:0;}
   .tj-root.tj-root.tj-root.tj-root .tj-phone-finance-sheet :is(input,.tj-picker-trigger) {width:100%;min-width:0;height:46px;min-height:46px!important;font-size:15px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--card-alt);color:var(--text);box-sizing:border-box;}
   .tj-root.tj-root.tj-root .tj-phone-finance-sheet .tj-picker-account-name {white-space:normal;}

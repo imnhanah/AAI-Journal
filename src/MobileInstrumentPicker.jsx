@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import {ChevronDown,X} from 'lucide-react';
 import {instrumentGroup} from './instrumentCatalog';
 
-export default function MobileInstrumentPicker({value,onChange,options}) {
+export default function MobileInstrumentPicker({value,onChange,options,...accessibility}) {
   const [open,setOpen]=useState(false),[query,setQuery]=useState('');
   const trigger=useRef(null),sheet=useRef(null),dragStart=useRef(null);
   const compact=text=>String(text||'').replace(/[^a-z0-9]/gi,'').toUpperCase();
@@ -27,7 +27,7 @@ export default function MobileInstrumentPicker({value,onChange,options}) {
     const panel=sheet.current;panel.addEventListener('keydown',key);
     return()=>{panel.removeEventListener('keydown',key);nodes.forEach(([node,inert])=>{node.inert=inert;});requestAnimationFrame(()=>trigger.current?.focus());};
   },[open]);
-  return <><button ref={trigger} type="button" className="tj-input tj-picker-trigger tj-phone-instrument-trigger" aria-label="Instrument" aria-expanded={open} onClick={()=>setOpen(true)}>{value||'Select'}<ChevronDown size={18}/></button>
+  return <><button ref={trigger} type="button" className="tj-input tj-picker-trigger tj-phone-instrument-trigger" aria-label="Instrument" aria-expanded={open} {...accessibility} onClick={()=>setOpen(true)}>{value||'Select'}<ChevronDown size={18}/></button>
     {open&&createPortal(<div className="tj-phone-instrument-overlay"><div className="tj-phone-instrument-backdrop" aria-hidden="true" onClick={close}/><section ref={sheet} className="tj-phone-instrument-sheet" role="dialog" aria-modal="true" aria-label="Instrument">
       <button type="button" className="tj-phone-picker-handle" aria-label="Close menu" onClick={close}
         onPointerDown={event=>{dragStart.current=event.clientY;event.currentTarget.setPointerCapture(event.pointerId);}}

@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-test('phone profile is full-height with stacked regional fields and pinned footer',()=>{
+test('phone profile keeps the Region & display controls in a compact row and pins its footer',()=>{
   const css=readFileSync(new URL('./mobileProfile.css',import.meta.url),'utf8');
   for(const size of css.matchAll(/font-size:([\d.]+)px/g))assert.ok(Number(size[1])>=12);
   assert.match(css,/height:100dvh!important/);
-  assert.match(css,/tj-regional-fields[^}]*grid-template-columns:1fr/);
+  assert.match(css,/tj-regional-fields[^}]*repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css,/tj-accent-row[^}]*repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css,/tj-profile-studio-footer[^}]*flex-shrink:0/);
   assert.doesNotMatch(css,/(?:^|[;{])\s*(?:transform|filter|will-change)\s*:/m);

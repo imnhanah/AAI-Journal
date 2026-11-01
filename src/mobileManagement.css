@@ -11,6 +11,7 @@
  .tj-root.tj-root.tj-root.tj-root .tj-management-nav {display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-height:0;padding:0;border:0;background:none;border-radius:0;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-nav>small {font-size:12px;margin:8px 0 2px;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-nav>button {display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:10px;min-height:52px;padding:12px;border-radius:12px;background:var(--tj-panel);border:1px solid var(--tj-border);font-size:15px;color:var(--tj-text);}
+ .tj-management-nav>button>* {min-width:0;overflow-wrap:anywhere;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-nav>button[aria-pressed="true"] {background:var(--tj-panel);border-color:var(--tj-border);color:var(--tj-text);}
  .tj-root.tj-root.tj-root.tj-root .tj-management-nav em {font-size:12px;min-width:30px;}
  .tj-management-phone-chevron {display:block;}
@@ -34,7 +35,8 @@
  .tj-root.tj-root.tj-root.tj-root .tj-management-tiles,.tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-rule-list {display:grid;grid-template-columns:minmax(0,1fr);gap:8px;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-rule-row {display:flex;align-items:center;gap:10px;min-height:52px;padding:10px 12px;border-radius:12px;background:var(--tj-panel);border:1px solid var(--tj-border);font-size:15px;}
  .tj-management-reference .tj-rule-row>span:first-child {flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.4;}
- .tj-root.tj-root.tj-root.tj-root .tj-management-row-actions,.tj-root.tj-root.tj-root.tj-root .tj-rule-actions {display:flex;flex:none;align-items:center;gap:8px;}
+ .tj-root.tj-root.tj-root.tj-root .tj-management-row-actions,.tj-root.tj-root.tj-root.tj-root .tj-rule-actions {display:flex;flex:none;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+ .tj-management-reference :is(.tj-management-collection h2,.tj-management-phone-back strong) {min-width:0;overflow-wrap:anywhere;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-icon-btn {width:44px;min-width:44px;height:44px;min-height:44px;padding:10px;border-radius:10px;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-default {font-size:12px;letter-spacing:.02em;}
  .tj-root.tj-root.tj-root.tj-root .tj-management-more {width:100%;min-height:44px;font-size:13px;}

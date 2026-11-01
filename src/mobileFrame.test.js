@@ -29,7 +29,7 @@ test('mobile CSS stays scoped, safe-area aware and readable without text transfo
   const css=readFileSync(new URL('./mobileFrame.css',import.meta.url),'utf8');
   assert.match(css,/@media \(max-width:767px\)/);assert.match(css,/safe-area-inset-bottom/);
   assert.match(css,/grid-template-columns:repeat\(3,minmax/);assert.match(css,/grid-template-columns:repeat\(2,minmax/);
-  assert.match(css,/padding:12px 16px 24px/);assert.match(css,/min-height:44px/);
+  assert.match(css,/padding:12px 16px calc\(24px \+ var\(--mobile-bottom\)\)/);assert.match(css,/min-height:44px/);
   assert.doesNotMatch(css,/(?:^|[;{])\s*(?:transform|will-change|filter)\s*:|#[\da-f]{3,8}\b/m);
   for(const size of css.matchAll(/font-size:\s*([\d.]+)px/g))assert.ok(Number(size[1])>=12);
   assert.match(css,/\.tj-mobile-sheet-backdrop \{[^}]*backdrop-filter:blur/);
@@ -42,4 +42,27 @@ test('mobile sheets keep close, keyboard trapping, inert background and existing
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   assert.match(source,/onStartDay=\{openNewMarkup\} onNewMarkup=\{openNewMarkup\} onLogTrade=\{openNewTrade\}/);
   assert.match(source,/onSelectAccount=\{setActiveId\}/);
+});
+
+test('mobile header keeps the account chooser, hides only duplicate entry actions, and permits full titles',()=>{
+  const css=readFileSync(new URL('./mobileFrame.css',import.meta.url),'utf8');
+  assert.match(css,/\.tj-topbar :is\(\.tj-sidebar-toggle,\.tj-header-search,\.tj-btn-primary,\.tj-start-day-action\) \{display:none!important;/);
+  assert.match(css,/\.tj-header-account-control \{display:block!important;min-width:0;max-width:min\(44vw,220px\);/);
+  assert.match(css,/\.tj-page-title \{display:block;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;/);
+  assert.match(css,/scroll-padding-bottom:calc\(24px \+ var\(--mobile-bottom\)\)/);
+  assert.match(css,/@media \(max-width:375px\)[\s\S]*?\.tj-header-account-switcher>span:not\(\.tj-account-initial\) \{display:none;/);
+});
+
+test('phone shell has a self-contained flex height budget when crossing the breakpoint',()=>{
+  const css=readFileSync(new URL('./mobileFrame.css',import.meta.url),'utf8');
+  const main=css.match(/\.tj-main \{([^}]+)\}/)?.[1] || '';
+  const content=css.match(/\.tj-content \{([^}]+)\}/)?.[1] || '';
+  assert.match(main,/display:flex;flex-direction:column/);
+  assert.match(main,/height:100dvh;min-height:0;max-height:100dvh/);
+  assert.match(main,/padding:0/);
+  assert.match(main,/overflow:hidden/);
+  assert.match(content,/flex:1 1 auto;min-height:0/);
+  assert.match(content,/overflow-y:auto;overflow-x:hidden/);
+  const rules=readFileSync(new URL('./mobileRules.css',import.meta.url),'utf8');
+  assert.doesNotMatch(rules,/\.tj-main \{padding:0 0 var\(--mobile-bottom\);\}/);
 });

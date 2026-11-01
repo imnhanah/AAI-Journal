@@ -11,10 +11,10 @@ import * as cloud from './backtestCloud';
 import {privateCache} from './privateCacheRuntime';
 import './backtest.css';
 import JournalSignalHeader from './JournalSignalHeader';
-import {eurusdSample,sampleRandom} from './backtestSample';
 import {followAnalyticsPointer} from './analyticsTooltip.js';
 import {compactBacktestMoney} from './mobileBacktest.js';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
+import {readBacktestMobileDisclosure,writeBacktestMobileDisclosure,mobileDefaultExpandedRunId} from './backtestMobileDisclosure.js';
 function usePhoneBacktest() {
  const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
  useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>setPhone(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
@@ -34,6 +34,13 @@ function RunDisclosure({open,id,children}) {
  const [visited,setVisited]=useState(open);
  useEffect(()=>{if(open)setVisited(true);},[open]);
  return <div id={id} className={`bt-run-disclosure ${open?'bt-run-disclosure-open':''}`} aria-hidden={!open} inert={!open?'':undefined}><div className="bt-run-disclosure-inner">{(open||visited)&&<div className="bt-run-disclosure-content">{children}</div>}</div></div>;
+}
+function MobileRunDetails({run}) {
+ const [open,setOpen]=useState(false),id=`backtest-additional-${run.id}`;
+ return <section className="bt-mobile-run-details">
+   <button type="button" aria-expanded={open} aria-controls={id} onClick={()=>setOpen(value=>!value)}><span>Additional details</span>{open?<ChevronUp size={16}/>:<ChevronDown size={16}/>}</button>
+   <div id={id} hidden={!open}><dl><div><dt>Strategy</dt><dd>{run.strategy||run.name||'Not set'}</dd></div><div><dt>Instrument</dt><dd>{run.instrument} · {run.timeframe}</dd></div><div><dt>Target</dt><dd>{run.tradeTarget} trades</dd></div><div><dt>Risk per trade</dt><dd>{Number(run.riskPct).toFixed(1)}%</dd></div>{(run.rules||[]).length>0&&<div><dt>Testing rules</dt><dd>{run.rules.map(rule=>rule.text||rule.name).filter(Boolean).join(' · ')}</dd></div>}</dl></div>
+ </section>;
 }
 function ChartTooltip({active,payload,label,currency,kind}) {
  if(!active||!payload?.length)return null;
@@ -64,8 +71,8 @@ function Setup({run,hasTrades,onClose,onSave,busy,instruments,defaultRules=[]}) 
  const save=()=>{const {sequence,__chooseTestType,...runToSave}=form;onSave({...runToSave,startingBalance:Number(form.startingBalance),tradeTarget:Number(form.tradeTarget)});};
  return <div className="tj-modal-overlay" onMouseDown={e=>e.target===e.currentTarget&&!busy&&onClose()}><div className="tj-modal bt-setup"><div className="tj-modal-head"><strong>{typeLabel} settings</strong><div className="tj-modal-head-actions"><button className="tj-btn-primary" disabled={!valid||busy} onClick={save}>Save test</button><button className="tj-btn-outline" disabled={busy} onClick={onClose}>Cancel</button></div></div><div className="tj-modal-body"><p>These settings only affect this {typeLabel.toLowerCase()} and never change your live journal.</p><div className="bt-grid bt-two"><label>Test type<input className="tj-input" readOnly value={typeLabel}/></label><label>Account name<input className="tj-input" value={form.name} onChange={e=>set('name',e.target.value)}/></label><label>Strategy / idea<input className="tj-input" value={form.strategy} onChange={e=>set('strategy',e.target.value)}/></label><label>Instrument{hasTrades?<input className="tj-input" readOnly value={form.instrument}/>:<ThemeInstrument value={form.instrument} onChange={v=>set('instrument',v)} options={instruments}/>}</label><label>Timeframe<ThemeSelect label="Timeframe" value={form.timeframe} onChange={e=>set('timeframe',e.target.value)}>{['M1','M5','M15','M30','H1','H4','D1','W1'].map(value=><option key={value} value={value}>{value}</option>)}</ThemeSelect></label><label>Starting balance<input className="tj-input" type="number" min="0.01" step="0.01" value={form.startingBalance} onChange={e=>set('startingBalance',e.target.value)}/></label><label>Currency<ThemeSelect label="Currency" value={form.currency} onChange={e=>set('currency',e.target.value)}>{['USD','EUR','GBP','JPY','AUD','CAD','CHF','NZD','GHS'].map(value=><option key={value} value={value}>{value}</option>)}</ThemeSelect></label><label>Trade target<input className="tj-input" type="number" min="1" step="1" value={form.tradeTarget} onChange={e=>set('tradeTarget',e.target.value)}/></label><label>Default risk %<input className="tj-input" type="number" min="0" max="100" step="0.1" value={form.riskPct} onChange={e=>set('riskPct',e.target.value)}/></label></div>{availableRules.length>0&&<fieldset className="bt-linked-rules"><legend>Trading rules</legend>{availableRules.map(rule=><label key={rule.id}><input type="checkbox" checked={(form.rules||[]).some(item=>item.id===rule.id)} onChange={event=>set("rules",event.target.checked?[...(form.rules||[]),{...rule}]:(form.rules||[]).filter(item=>item.id!==rule.id))}/><span>{rule.text||rule.name}</span></label>)}</fieldset>}<label>Pre-run plan<textarea className="tj-input" value={form.plan||''} onChange={e=>set('plan',e.target.value)}/></label><label>Run conclusion<textarea className="tj-input" value={form.conclusion||''} onChange={e=>set('conclusion',e.target.value)}/></label>{hasTrades&&<small>The instrument is locked because this test already has trades.</small>}</div></div></div>;
 }
-import {workspaceImportKey} from './backtestWorkspace.js';
-export default function BacktestAccounts({user,initialData=null,legacyTrades=[],onClearLegacy=null,defaultRules=[],instruments=['EUR/USD','GBP/USD','XAU/USD','USD/JPY','AUD/USD','NZD/USD','USD/CAD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY'],renderTradeForm,renderLog,api=cloud}) {
+export default function BacktestAccounts({user,initialData=null,legacyTrades=[],onClearLegacy: _onClearLegacy=null,defaultRules=[],instruments=['EUR/USD','GBP/USD','XAU/USD','USD/JPY','AUD/USD','NZD/USD','USD/CAD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY'],renderTradeForm,renderLog,api=cloud}) {
+ const onClearLegacy=null;
  const readBacktestCache=owner=>api.readBacktestCache(owner);
  const syncBacktests=owner=>api.syncBacktests(owner);
  const refreshTestCache=owner=>api.refreshTestCache(owner);
@@ -75,12 +82,14 @@ export default function BacktestAccounts({user,initialData=null,legacyTrades=[],
  const views=useContext(BacktestViewContext);
  const profileScope='profile'; const retained=useRef(views?.read(user.id,profileScope));
  const initial=retained.current;
- const [data,setData]=useState(()=>initial?.data || initialData || {runs:[],trades:[]}),[loaded,setLoaded]=useState(!!initial?.loaded || !!initialData),[error,setError]=useState(''),[busy,setBusy]=useState(false),[setup,setSetup]=useState(null),[active,setActive]=useState(initial?.active || null),[expanded,setExpanded]=useState(initial?.expanded || {}),[editor,setEditor]=useState(null),[media,setMedia]=useState({});
+ const disclosurePreference=useRef(readBacktestMobileDisclosure(user.id));
+ const [data,setData]=useState(()=>initial?.data || initialData || {runs:[],trades:[]}),[loaded,setLoaded]=useState(!!initial?.loaded || !!initialData),[error,setError]=useState(''),[busy,setBusy]=useState(false),[setup,setSetup]=useState(null),[active,setActive]=useState(initial?.active || null),[expanded,setExpanded]=useState(()=>initial?.expanded || disclosurePreference.current.expanded),[editor,setEditor]=useState(null),[media,setMedia]=useState({});
  const sequence=useRef(0),mounted=useRef(true),busyRef=useRef(false);
  const library=useRef(null);
  const [phoneLog,setPhoneLog]=useState(!!initial?.phoneLog);
  const previousActive=useRef(active),previousScreen=useRef({active,phoneLog});
  useEffect(()=>{if(previousActive.current!==active){previousActive.current=active;setPhoneLog(false);}},[active]);
+ useEffect(()=>{if(!loaded||!window.matchMedia(MOBILE_MEDIA).matches||disclosurePreference.current.manual)return;setExpanded(current=>{if(Object.keys(current).length)return current;const id=mobileDefaultExpandedRunId(data.runs,run=>backtestStats(run,tradesFor(run.id)),disclosurePreference.current.lastOpenedId);return id?{[id]:true}:current;});},[loaded,data]);
  useEffect(()=>{const previous=previousScreen.current;previousScreen.current={active,phoneLog};if((previous.active!==active || previous.phoneLog!==phoneLog)&&window.matchMedia(MOBILE_MEDIA).matches)library.current?.closest('.tj-content')?.scrollTo({top:0});},[active,phoneLog]);
  const latestView=useRef(null);
  latestView.current={data,loaded,active,expanded,phoneLog};
@@ -99,25 +108,6 @@ export default function BacktestAccounts({user,initialData=null,legacyTrades=[],
  useEffect(()=>{mounted.current=true;let cancel=false;const load=async()=>{if(!retained.current?.loaded){try{const cached=initialData || await readBacktestCache(user.id);if(!cancel&&cached){setData(cached);setLoaded(true);return;}}catch(e){if(!cancel)setError(e.message);}if(!cancel)await refresh();}};void load();const focus=()=>{if(!document.hidden&&!busyRef.current)void refresh();};const storage=e=>{if(e.key==='tj:journal-change'){try{const m=JSON.parse(e.newValue);if(m?.user===user.id&&m.table==='backtest')void refresh();}catch{}}};window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);window.addEventListener('storage',storage);return()=>{cancel=true;sequence.current++;window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus);window.removeEventListener('storage',storage);};},[user.id,initialData]);
  const mutate=async(action,done)=>{if(busyRef.current)return;busyRef.current=true;setBusy(true);setError('');const ticket=privateCache.token();sequence.current++;try{await action();if(!mounted.current||privateCache.token().owner!==ticket.owner)return;const next=await refreshTestCache(user.id);if(privateCache.token().owner!==ticket.owner)return;if(mounted.current){setData(next);setMedia({});done?.();}}catch(e){if(mounted.current)setError(e.message);}finally{busyRef.current=false;if(mounted.current)setBusy(false);}};
  const create=()=>setSetup({__chooseTestType:true,sequence:data.runs.length+1,id:crypto.randomUUID(),strategy:'',instrument:'EUR/USD',timeframe:'M15',startingBalance:10000,currency:'USD',tradeTarget:20,riskPct:1,rules:defaultRules.map(r=>({...r})),plan:'',conclusion:''});
- const requestedSample=useRef(null);
- const replaceLegacy=()=>{
-   mutate(async()=>{
-     const ticket=privateCache.token(),id=await legacyTestId(user.id,'requested-sample',workspaceImportKey('profile','EURUSD-40pct-3R'));
-     const run={id,name:'EUR/USD · 40% win rate · 3R sample',instrument:'EUR/USD',strategy:'Generated sample',timeframe:'M15',startingBalance:10000,currency:'USD',tradeTarget:10,riskPct:1,rules:[],plan:'Illustrative sample: 4 wins at +3R and 6 losses at −1R. Fixed $100 risk, no costs.',conclusion:'Sample only — not historical performance.'};
-     const current=await syncBacktests(user.id);
-     if(!current.runs.some(r=>r.id===id))await saveTestRun(run);
-     if(!requestedSample.current){requestedSample.current=eurusdSample(id,sampleRandom(id));for(let i=0;i<10;i++)requestedSample.current[i].id=await legacyTestId(user.id,'sample-trade',`${id}:${i}`);}
-     // Retry resumes the same sample. Never duplicate an already-saved sequence.
-     const existing=current.trades.filter(t=>t.runId===id);
-     for(const trade of requestedSample.current){if(existing.some(t=>t.id===trade.id))continue;if(privateCache.token().owner!==ticket.owner||!mounted.current)throw new Error('Session changed during sample creation.');await saveTestTrade(run,trade);}
-     const saved=(await syncBacktests(user.id)).trades.filter(t=>t.runId===id);
-     if(saved.length!==10||saved.filter(t=>t.rr===3&&t.pnl===300).length!==4||saved.filter(t=>t.rr===-1&&t.pnl===-100).length!==6)throw new Error('The sample was changed or did not finish saving. Old local trades have not been deleted.');
-     if(privateCache.token().owner!==ticket.owner||!mounted.current)throw new Error('Session changed before clearing old trades.');
-     // Keep the old local trades if ANY cloud save fails.
-     onClearLegacy?.();
-     setActive(id);
-   });
- };
  const importLegacy=()=>mutate(async()=>{for(const instrument of [...new Set(legacyTrades.map(t=>t.asset||'EUR/USD'))]){const id=await legacyTestId(user.id,'run',['profile',instrument].join(':')),run={id,name:`Imported ${instrument}`,instrument,strategy:'Legacy backtest',timeframe:'M15',startingBalance:10000,currency:'USD',tradeTarget:20,riskPct:1};if(!data.runs.some(x=>x.id===id))await saveTestRun(run);for(const t of legacyTrades.filter(t=>(t.asset||'EUR/USD')===instrument)){const tradeId=await legacyTestId(user.id,'trade',['profile',t.id].join(':'));if(!data.trades.some(x=>x.id===tradeId))await saveTestTrade(run,{...t,id:tradeId,updatedAt:null,asset:instrument,_mediaLoaded:true,mediaEdited:true});}}});
  const tradesFor=id=>data.trades.filter(t=>t.runId===id).map(t=>media[t.id]?.version===t.updatedAt?{...t,screenshots:media[t.id].screenshots,_mediaLoaded:true}:t);
  const openTrade=async(run,t=null)=>{try{if(t){const screenshots=await loadTestMedia(user.id,t);if(!mounted.current)return;setEditor({run,trade:{...t,screenshots,_mediaLoaded:true}});}else setEditor({run,trade:null});}catch(e){setError(e.message);}};
@@ -137,7 +127,7 @@ export default function BacktestAccounts({user,initialData=null,legacyTrades=[],
    const contentId=`backtest-details-${run.id}`;
    const toggle=event=>{
      if(open)preserveRunScroll(event.currentTarget.closest('.bt-run'));
-     setExpanded(current=>({...current,[run.id]:!open}));
+     setExpanded(current=>{const next={...current,[run.id]:!open};if(window.matchMedia(MOBILE_MEDIA).matches){disclosurePreference.current={...disclosurePreference.current,manual:true,expanded:next};writeBacktestMobileDisclosure(user.id,disclosurePreference.current);}return next;});
    };
    return <section className={`bt-run ${open?'bt-run-expanded':''}`} key={run.id}>
      <div className="bt-reference-run-head">{actions(run)}
@@ -152,11 +142,12 @@ export default function BacktestAccounts({user,initialData=null,legacyTrades=[],
        <div className="bt-grid bt-two bt-plans"><Metric label="PRE-RUN PLAN" value={run.plan||'Add your hypothesis in test settings'}/><Metric label="RUN CONCLUSION" value={run.conclusion||'Record what this test proved or disproved'}/></div>
        <div className="bt-grid bt-two bt-reference-charts"><Equity stats={stats} currency={run.currency} preview/><Outcomes s={stats} currency={run.currency}/></div>
        <Analysis run={run} s={stats} onSettings={()=>setSetup(run)}/>
+       <MobileRunDetails run={run}/>
        <div className="bt-log">{runLog(run)}</div>
      </RunDisclosure>
    </section>;
  };
- const actions=run=><div className="bt-actions"><button className="tj-btn-outline" disabled={busy} onClick={()=>setSetup(run)}><Settings size={14}/> Edit setup</button><button className="tj-btn-primary" onClick={()=>{setActive(run.id);}}>Open test</button><ConfirmDeleteButton className="tj-btn-danger-outline" disabled={busy} aria-label={`Delete ${run.name}`} title={`Delete ${run.name} and all its ${testTypeLabel(run).toLowerCase()} trades. Your live journal is not affected.`} onClick={()=>mutate(()=>saveTestRun(run,true),()=>{if(active===run.id)setActive(null);})}>Delete</ConfirmDeleteButton></div>;
+ const actions=run=><div className="bt-actions"><button className="tj-btn-outline" disabled={busy} onClick={()=>setSetup(run)}><Settings size={14}/> Edit setup</button><button className="tj-btn-primary" onClick={()=>{if(window.matchMedia(MOBILE_MEDIA).matches){disclosurePreference.current={...disclosurePreference.current,lastOpenedId:run.id};writeBacktestMobileDisclosure(user.id,disclosurePreference.current);}setActive(run.id);}}>Open test</button><ConfirmDeleteButton className="tj-btn-danger-outline" disabled={busy} aria-label={`Delete ${run.name}`} title={`Delete ${run.name} and all its ${testTypeLabel(run).toLowerCase()} trades. Your live journal is not affected.`} onClick={()=>mutate(()=>saveTestRun(run,true),()=>{if(active===run.id)setActive(null);})}>Delete</ConfirmDeleteButton></div>;
  const summary=(run,s)=><div className="bt-reference-summary">
  <section className="bt-reference-results"><Metric label="NET PROFIT" value={money(s.net,run.currency)} color={s.net>=0?'tj-green':'tj-red'}/><div className="bt-reference-balance"><span>Balance</span><strong>{money(run.startingBalance,run.currency)} → {money(s.balance,run.currency)}</strong></div><div className="bt-track"><i style={{width:'100%'}}/></div></section>
  <section className="bt-six-stats"><Metric label="WIN RATE" value={pct(s.winRate)}/><Metric label="AVG R:R" value={r(s.averageR)}/><Metric label="EXPECTANCY" value={s.expectancy==null?'—':money(s.expectancy,run.currency)} color={s.expectancy>=0?'tj-green':'tj-red'} note="Per closed trade"/><Metric label="PROFIT FACTOR" value={s.profitFactor==null?'—':s.profitFactor===Infinity?'∞':s.profitFactor.toFixed(2)}/><Metric label="MAX DRAWDOWN" value={money(-s.drawdown,run.currency)} color="tj-red" note="Peak to trough"/><Metric label="BEST DAY" value={s.bestDay?money(s.bestDay[1],run.currency):'—'} note={s.bestDay?.[0]}/></section>

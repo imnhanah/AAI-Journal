@@ -121,7 +121,8 @@ test('both new-markup triggers are gated; editing and markup form stay unchanged
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   assert.match(source,/onClick=\{openNewMarkup\}/);assert.match(source,/onNew=\{openNewMarkup\}/);
   assert.match(source,/loadRoutine: \(\) => routineStore.refresh\(\)/);
-  assert.match(source,/const openNewMarkup = \(\) => routineGate.current.request\('markup'\)/);
+  assert.match(source,/const openNewMarkup = \(\) => \{/);
+  assert.match(source,/routineGate\.current\.request\('markup'\)/);
   assert.match(source,/completeRoutine\(latest, tickedIds, new Date\(\)\)/);
   assert.match(source,/onClose=\{closeDailyRoutine\}/);
   assert.match(source,/const closeDailyRoutine = \(\) => routineGate.current.cancel\(\)/);

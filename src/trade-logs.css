@@ -2,7 +2,7 @@
 
 /* ---------- Theme tokens ---------- */
 .trade-logs {
-  --bg: var(--tj-bg); --pane: var(--tj-panel); --card: var(--tj-panel-alt); --bd: var(--tj-border); --tx: var(--tj-text); --mu: var(--tj-muted); --gr: var(--tj-green); --gr-bg: color-mix(in srgb,var(--tj-green) 14%,transparent); --rd: var(--tj-red); --rd-bg: color-mix(in srgb,var(--tj-red) 14%,transparent); --btn: var(--tj-accent); --on: var(--tj-on-accent); --sel: color-mix(in srgb,var(--tj-accent) 14%,transparent); --head-1: color-mix(in srgb,var(--tj-red) 14%,var(--tj-panel)); --head-2: var(--tj-panel); --star: var(--tj-amber);
+  --bg: var(--tj-bg); --pane: var(--tj-panel); --card: var(--tj-panel-alt); --bd: var(--tj-border); --tx: var(--tj-text); --mu: var(--tj-muted); --gr: var(--tj-green); --gr-bg: color-mix(in srgb,var(--tj-green) 14%,transparent); --rd: var(--tj-red); --rd-bg: color-mix(in srgb,var(--tj-red) 14%,transparent); --btn: var(--tj-accent); --on: var(--on-accent); --sel: color-mix(in srgb,var(--tj-accent) 14%,transparent); --head-1: color-mix(in srgb,var(--tj-red) 14%,var(--tj-panel)); --head-2: var(--tj-panel); --star: var(--tj-amber);
 }
 
 .trade-logs[data-theme='dark'] {
@@ -25,7 +25,7 @@
 }
 
 /* Always inherit the journal's active theme rather than a fixed sample palette. */
-.trade-logs[data-theme='dark'] { --bg:var(--tj-bg);--pane:var(--tj-panel);--card:var(--tj-panel-alt);--bd:var(--tj-border);--tx:var(--tj-text);--mu:var(--tj-muted);--gr:var(--tj-green);--gr-bg:color-mix(in srgb,var(--tj-green) 14%,transparent);--rd:var(--tj-red);--rd-bg:color-mix(in srgb,var(--tj-red) 14%,transparent);--btn:var(--tj-accent);--on:var(--tj-on-accent);--sel:color-mix(in srgb,var(--tj-accent) 14%,transparent);--head-1:color-mix(in srgb,var(--tj-red) 14%,var(--tj-panel));--head-2:var(--tj-panel);--star:var(--tj-amber); }
+.trade-logs[data-theme='dark'] { --bg:var(--tj-bg);--pane:var(--tj-panel);--card:var(--tj-panel-alt);--bd:var(--tj-border);--tx:var(--tj-text);--mu:var(--tj-muted);--gr:var(--tj-green);--gr-bg:color-mix(in srgb,var(--tj-green) 14%,transparent);--rd:var(--tj-red);--rd-bg:color-mix(in srgb,var(--tj-red) 14%,transparent);--btn:var(--tj-accent);--on:var(--on-accent);--sel:color-mix(in srgb,var(--tj-accent) 14%,transparent);--head-1:color-mix(in srgb,var(--tj-red) 14%,var(--tj-panel));--head-2:var(--tj-panel);--star:var(--tj-amber); }
 
 /* ---------- Layout ---------- */
 .trade-logs {

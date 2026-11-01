@@ -16,8 +16,8 @@
   .tj-phone-log-toolbar {display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:6px;align-items:center;margin-bottom:12px;}
   .tj-phone-log-toolbar button {display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:700;}
   .tj-phone-log-toolbar>span {font-size:12px;font-weight:800;color:var(--accent);padding:0 3px;white-space:nowrap;}
-  .tj-phone-log-list {display:grid;gap:12px;}
-  .tj-phone-log-card {min-width:0;padding:14px;border:1px solid var(--border);border-left:4px solid var(--green);border-radius:16px;background:var(--card);}
+  .tj-phone-log-list {display:grid;gap:10px;}
+  .tj-phone-log-card {min-width:0;padding:12px;border:1px solid var(--border);border-left:4px solid var(--green);border-radius:14px;background:var(--card);}
   .tj-phone-log-card.is-loss {border-left-color:var(--red);}
   .tj-phone-log-card.is-be {border-left-color:var(--tj-blue);}
   .tj-phone-log-card.is-running {border-left-color:var(--tj-amber);}
@@ -28,9 +28,10 @@
   .tj-phone-log-direction {display:block;width:max-content;font-size:12px;font-weight:700;border:1px solid currentColor;background:color-mix(in srgb,currentColor 8%,transparent);border-radius:5px;padding:2px 8px;margin-top:5px;}
   .tj-phone-log-pnl {text-align:right;max-width:60%;min-width:0;font-variant-numeric:tabular-nums;}
   .tj-phone-log-card-head .tj-phone-log-pnl>strong {font-size:21px;}
-  .tj-phone-log-meta {display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;color:var(--muted);font-size:12px;}
+  .tj-phone-log-meta {display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:10px;color:var(--muted);font-size:12px;min-width:0;}
+  .tj-phone-log-meta>span {max-width:100%;overflow-wrap:anywhere;}
   .tj-phone-log-meta>span:not(:first-child) {padding:3px 6px;border:1px solid var(--border);border-radius:99px;}
-  .tj-phone-log-card-footer {display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:10px;}
+  .tj-phone-log-card-footer {display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;min-width:0;}
   .tj-phone-log-card-footer>button {min-height:44px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;}
   .tj-phone-log-review {padding:7px 12px;border:1px solid color-mix(in srgb,var(--tj-amber) 30%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--tj-amber) 12%,var(--card));color:var(--tj-amber);}
   .tj-phone-log-card-footer>button:last-child {width:44px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);}

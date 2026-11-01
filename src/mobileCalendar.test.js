@@ -40,12 +40,24 @@ test('day sheets bound their height and expose exact figures, while weeks share 
   assert.match(script,/includeSheets&&route==='calendar'/);
   assert.match(script,/2026-10-02.*2026-10-06.*2026-10-08/);
 });
-test('calendar cells fit seven 44px targets at the smallest supported phone width',()=>{
+test('calendar keeps seven shrinkable columns while retaining a 44px-tall touch target on phone widths',()=>{
  const css=readFileSync(new URL('./mobileCalendar.css',import.meta.url),'utf8');
- assert.ok((360-32-2-4-12)/7>=44);
+ // At 320px, horizontal cells may be narrower than the ideal 44px target;
+ // they must shrink instead of forcing horizontal page overflow.
+ assert.ok((320-32-2-4-12)/7>36);
  assert.match(css,/\.tj-attached-calendar-scroll \{[^}]*padding:2px/);
  assert.match(css,/\.tj-attached-calendar-grid \{[^}]*gap:2px/);
+ assert.match(css,/\.tj-attached-day \{[^}]*height:44px; min-height:44px;[^}]*min-width:0/);
  const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
  assert.match(source,/className="tj-day-trade-chips" data-scroll-row="true"/);
  assert.match(source,/className="tj-day-trade-shots" data-scroll-row="true"/);
+});
+
+test('phone month controls reserve a separate quick-jump row and never restore the desktop overflow width',()=>{
+ const css=readFileSync(new URL('./mobileCalendar.css',import.meta.url),'utf8');
+ assert.match(css,/grid-template-rows:44px auto/);
+ assert.match(css,/tj-attached-this-month \{ grid-column:1 \/ -1; grid-row:2;[^}]*min-height:36px/);
+ assert.match(css,/tj-attached-month-controls>strong \{[^}]*min-width:0;[^}]*text-overflow:ellipsis/);
+ assert.match(css,/tj-attached-calendar-scroll \{ min-width:0; max-width:100%; overflow:hidden/);
+ assert.match(css,/tj-attached-calendar-grid \{ min-width:0; grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
 });

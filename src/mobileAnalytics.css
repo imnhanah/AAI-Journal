@@ -18,6 +18,11 @@
   .tj-analytics-desktop-tab {display:none;}
   .tj-analytics-phone-tab {display:inline;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(.tj-analytics-equity-hero,.tj-analytics-engine,.tj-live-analytics,.tj-performance-surface,.tj-execution-weekly-card,.tj-execution-weekday-card,.tj-core-breakdown,.tj-risk-audit) {min-width:0;padding:16px;border-radius:16px;background:var(--tj-panel)!important;min-height:0;}
+  /* Keep chart internals contained by their card. Recharts measures its parent,
+     so the parent remains the sole responsive surface on narrow phones. */
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(.recharts-responsive-container,.recharts-wrapper,.recharts-surface) {min-width:0!important;max-width:100%!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics .recharts-wrapper {touch-action:pan-y;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics .recharts-tooltip-wrapper {max-width:calc(100vw - 48px)!important;pointer-events:none;}
   .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-head {display:grid;grid-template-columns:minmax(0,1fr);gap:8px;}
   .tj-root.tj-root.tj-root.tj-root .tj-analytics-equity-head h2 {font-size:28px;overflow-wrap:anywhere;}
   .tj-analytics-equity-head h2 span {display:none;}
@@ -84,4 +89,5 @@
   .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(small,.tj-pill,.tj-section-label,.tj-muted-txt) {font-size:12px!important;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(strong,span,small,p,em) {text-overflow:clip;}
   .tj-reference-analytics .tj-analytics-period-popover {width:min(340px,calc(100vw - 32px));right:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-analytics :is(.tj-live-panel-head,.tj-performance-title,.tj-risk-title) {min-width:0;flex-wrap:wrap;}
 }

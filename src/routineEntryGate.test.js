@@ -118,7 +118,9 @@ test('trade guardrails are respected before loading, after loading and after rou
 });
 test('all live trade creation entry points use the shared gate; edits and backtests remain separate',()=>{
   const code=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(code,/const openNewTrade = \(draft = null\) => routineGate.current.request\('trade', draft\)/);
+  assert.match(code,/const openNewTrade = \(draft = null\) => \{/);
+  assert.match(code,/routineGate\.current\.request\('trade', draft\)/);
+  assert.match(code,/if \(entryPanelMode\)/);
   assert.match(code,/onLogTrade=\{openNewTrade\}/);
   assert.match(code,/onNewTrade=\{\(\) => openNewTrade\(\)\}/);
   assert.match(code,/onTrade=\{\(markup\)=>openNewTrade\(\{ premarketMarkupId/);

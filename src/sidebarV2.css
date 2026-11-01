@@ -79,6 +79,19 @@
 .tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed .tj-sidebar-settings .tj-nav-danger {color:var(--tj-red);}
 .tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-account-initial {width:36px;height:36px;border-radius:10px;font-size:16px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));box-shadow:none;}
 .tj-root.tj-root.tj-root .tj-sidebar-v2 .tj-account-name {font-size:15px;font-weight:800;}
+
+/* One neutral boundary for the navigation rail. A pseudo-element keeps the
+   divider out of layout, so the expanded and collapsed widths stay unchanged. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2::after {
+  content:"";
+  position:absolute;
+  inset-block:0;
+  inset-inline-end:0;
+  width:1px;
+  background:var(--border);
+  pointer-events:none;
+}
+
 .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 {background:var(--color-white) !important;}
 .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2.tj-sidebar-shown .tj-sidebar-settings .tj-nav-item:not(.tj-nav-danger),
 .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-sidebar-v2 .tj-sidebar-user {background:var(--card);}

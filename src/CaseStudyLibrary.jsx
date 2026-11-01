@@ -1,4 +1,5 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import {useConfirmation} from './ConfirmationDialog.jsx';
 import { Archive, ArrowLeft, AlertTriangle, BookOpen, Check, Copy, Download, FileText, Image as ImageIcon, Link2, Pin, Plus, Search, Star, Trash2, X, LayoutTemplate, LibraryBig, MoreHorizontal, NotebookTabs, SlidersHorizontal, FolderOpen, Clock3 } from 'lucide-react';
 import './caseStudyLibrary.css';
 import './caseStudyLibraryRedesign.css';
@@ -98,6 +99,7 @@ function CaseStudyRecoveryLibrary({ workspace: rawWorkspace, profileName, librar
 }
 
 function CaseStudyLibraryReady({ profileWorkspace, temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace }) {
+  const confirm=useConfirmation();
   const [workspace, setWorkspace] = useState(() => normalise(profileWorkspace));
   const [selectedId, setSelectedId] = useState(null);
   const [screen, setScreen] = useState('library');
@@ -172,8 +174,8 @@ function CaseStudyLibraryReady({ profileWorkspace, temporaryNotice = '', syncSta
     const nextStudy = { ...selected, ...partial, updatedAt:now(), revisionCount:(selected.revisionCount || 0)+1 };
     save({ ...workspace, studies:workspace.studies.map((item) => item.id === selected.id ? nextStudy : item) });
   };
-  const removeStudy = () => {
-    if (!selected || !window.confirm(`Delete “${studyTitle(selected)}”? This cannot be undone.`)) return;
+  const removeStudy = async () => {
+    if (!selected || !await confirm({title:'Delete study?',description:`Delete “${studyTitle(selected)}”? This cannot be undone.`,confirmLabel:'Delete study'})) return;
     save({ ...workspace, studies:workspace.studies.filter((item) => item.id !== selected.id) }, true);
     setSelectedId(null); setScreen('library');
   };
@@ -211,8 +213,8 @@ function CaseStudyLibraryReady({ profileWorkspace, temporaryNotice = '', syncSta
     link.href=url; link.download=`${studyTitle(selected).replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.json`; link.click(); URL.revokeObjectURL(url);
   };
   const patchEvidence = (id, partial) => save({ ...workspace, evidence:workspace.evidence.map((item) => item.id === id ? {...item, ...partial, updatedAt:now()} : item) }, true);
-  const removeEvidence = (id) => {
-    if (!window.confirm('Delete this evidence item? It will be unlinked from every study.')) return;
+  const removeEvidence = async (id) => {
+    if (!await confirm({title:'Delete evidence?',description:'Delete this evidence item? It will be unlinked from every study.',confirmLabel:'Delete evidence'})) return;
     save(unlinkEvidence(workspace, id), true);
   };
   const savePersonalTemplate = (fields, existingId = null) => {
@@ -221,7 +223,7 @@ function CaseStudyLibraryReady({ profileWorkspace, temporaryNotice = '', syncSta
     save({ ...workspace, personalTemplates:existingId ? workspace.personalTemplates.map((item) => item.id===existingId ? {...item,...template} : item) : [template,...workspace.personalTemplates] }, true);
   };
   const duplicateTemplate = (template) => save({ ...workspace, personalTemplates:[{...template,id:uid('template'),name:`${template.name} copy`,createdAt:now(),updatedAt:now()},...workspace.personalTemplates] }, true);
-  const removeTemplate = (id) => { if (window.confirm('Delete this personal template? Existing studies will not change.')) save({...workspace,personalTemplates:workspace.personalTemplates.filter((item)=>item.id!==id)},true); };
+  const removeTemplate = async (id) => { if (await confirm({title:'Delete template?',description:'Delete this personal template? Existing studies will not change.',confirmLabel:'Delete template'})) save({...workspace,personalTemplates:workspace.personalTemplates.filter((item)=>item.id!==id)},true); };
   const exportLibrary = () => {
     const blob = new Blob([JSON.stringify(caseStudyBackup(workspace), null, 2)], {type:'application/json'}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download=`case-study-library-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(url);
   };
@@ -257,7 +259,7 @@ function CaseStudyLibraryReady({ profileWorkspace, temporaryNotice = '', syncSta
         <section className="case-library-all"><div className="case-library-all__heading"><div><h2>{libraryView === 'favorites' ? 'Favorites' : libraryView === 'pinned' ? 'Pinned playbooks' : 'Your library'}</h2><p>{visibleStudies.length} study{visibleStudies.length===1?'':'ies'} shown</p></div></div>
         <section className="case-toolbar"><label className="case-search"><Search size={17}/><input value={workspace.settings.query} onChange={(event)=>updateSettings({query:event.target.value})} placeholder="Search studies, notes, and insights"/></label><select value={workspace.settings.status} onChange={(event)=>updateSettings({status:event.target.value})}><option>All</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select><select value={sort} onChange={event=>setSort(event.target.value)}><option value="recent">Recently updated</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select><div className="case-view-toggle"><button className={workspace.settings.view==='grid'?'is-active':''} onClick={()=>updateSettings({view:'grid'})}>Grid</button><button className={workspace.settings.view==='list'?'is-active':''} onClick={()=>updateSettings({view:'list'})}>List</button></div></section>
         <section className={`case-study-grid case-study-grid--${workspace.settings.view}`}>
-          {visibleStudies.filter(study => libraryView !== 'favorites' || study.favorite).filter(study => libraryView !== 'pinned' || study.pinned || study.templateId === 'playbook').map((study)=><StudyCard key={study.id} study={study} notebook={workspace.notebooks.find(n=>n.id===study.notebookId)} evidence={workspace.evidence} menuOpen={cardMenu===study.id} onMenu={()=>setCardMenu(cardMenu===study.id?null:study.id)} onOpen={()=>{setSelectedId(study.id);setScreen('editor')}} onPatch={(partial)=>patchStudy(study.id,partial)} onDuplicate={()=>{const copy={...study,id:uid('study'),title:`${studyTitle(study)} copy`,createdAt:now(),updatedAt:now(),revisionCount:1,pinned:false};save({...workspace,studies:[copy,...workspace.studies]},true);}} onDelete={()=>{if(window.confirm(`Delete “${studyTitle(study)}”? This cannot be undone.`)) save({...workspace,studies:workspace.studies.filter(item=>item.id!==study.id)},true)}}/>) }
+          {visibleStudies.filter(study => libraryView !== 'favorites' || study.favorite).filter(study => libraryView !== 'pinned' || study.pinned || study.templateId === 'playbook').map((study)=><StudyCard key={study.id} study={study} notebook={workspace.notebooks.find(n=>n.id===study.notebookId)} evidence={workspace.evidence} menuOpen={cardMenu===study.id} onMenu={()=>setCardMenu(cardMenu===study.id?null:study.id)} onOpen={()=>{setSelectedId(study.id);setScreen('editor')}} onPatch={(partial)=>patchStudy(study.id,partial)} onDuplicate={()=>{const copy={...study,id:uid('study'),title:`${studyTitle(study)} copy`,createdAt:now(),updatedAt:now(),revisionCount:1,pinned:false};save({...workspace,studies:[copy,...workspace.studies]},true);}} onDelete={async()=>{if(await confirm({title:'Delete study?',description:`Delete “${studyTitle(study)}”? This cannot be undone.`,confirmLabel:'Delete study'})) save({...workspace,studies:workspace.studies.filter(item=>item.id!==study.id)},true)}}/>) }
           {!visibleStudies.length && <div className="case-empty"><FileText size={30}/><h2>No studies here yet</h2><p>Start with a template, then attach trades, markups, and evidence as you learn.</p><button className="case-button case-button--primary" onClick={()=>setTemplateOpen(true)}><Plus size={17}/>Create a study</button></div>}
         </section></section>
       </>}

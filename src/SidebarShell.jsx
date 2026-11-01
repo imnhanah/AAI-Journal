@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {scrollEdges, SIDEBAR_SCROLL_OPTIONS} from './sidebarScroll';
-import './sidebarV2.css';
+import './sidebarV2.css?sidebar-divider=1';
 
 export default function SidebarShell({open,page,children}) {
   const ref=useRef(null);

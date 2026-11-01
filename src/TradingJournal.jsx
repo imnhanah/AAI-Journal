@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import {useConfirmation} from './ConfirmationDialog.jsx';
 import {netDayCashMovement} from './calendarDaySummary.js';
 import {MARKUP_STATUSES, markupStatus, expiredUnlinkedMarkups} from './markupLifecycle.js';
 import {applySessionRepairs, accountRemovalSnapshotMatches, STALE_ACCOUNT_MESSAGE, PARTIAL_SETTINGS_MESSAGE} from './tradeUpdateSafety.js';
@@ -12,7 +13,7 @@ import MarkupsRedesign from './MarkupsRedesign.jsx';
 import TradeLogsRedesign from './TradeLogsReference.jsx';
 import ReviewPage, { DEFAULT_QUESTIONS as REVIEW_DEFAULT_QUESTIONS } from './ReviewPage.jsx';
 import CaseStudyLibrary from './CaseStudyLibrary.jsx';
-import SidebarShell from './SidebarShell';
+import SidebarShell from './SidebarShell?sidebar-divider=2';
 import MobileShell from './MobileShell.jsx';
 import AnalyticsViewChips from './AnalyticsViewChips.jsx';
 import BacktestFilterRail from './BacktestFilterRail.jsx';
@@ -31,17 +32,19 @@ import { playAlertSound, unlockAlertSounds, stopAlertSound } from './alertSounds
 import SavingsSoundControls, { useSavingsSoundEnabled } from './SavingsSoundControls';
 import { getChartAnimation, CHART_MOTION_QUERY } from './chartMotion';
 import { useDisclosureScroll } from './useDisclosureScroll';
-import DailyRoutinePopup, { DailyRoutineManagement, DailyRoutineProfileCard } from './DailyRoutine.jsx';
+import DailyRoutinePopup, { DailyRoutineManagement } from './DailyRoutine.jsx';
 import {createRoutineEntryGate} from './routineEntryGate.js';
 import { useDailyRoutine } from './useDailyRoutine';
 import { activeRoutineItems, completeRoutine, isRoutineTradingDay, routineRequired } from './dailyRoutine';
 import { disclosurePair, disclosureColumns } from './disclosurePairs';
 import { summarizeClosedTrades } from './journalStats';
 import {financialValidationMessage, validateAccountFinancialData, validateFinanceMovement, validateTradeFinancialData} from './financialValidation.js';
+import { validateTradeForm } from './tradeFormValidation.js';
 import { monthlyPnlRange } from './monthlyPnl';
 import './chartMotion.css';
 import './tradeRuleCards.css';
-import './entryComposer.css';
+import './entryComposer.css?panel-scroll=17';
+import './workspaceAdaptive.css?workspace=1';
 import './challengePlannerOrder.css';
 import './accountPickerRedesign.css';
 import './newsCalendarRedesign.css';
@@ -54,7 +57,7 @@ import SingleAccountSwitchDialog from './SingleAccountSwitchDialog';
 import ProfileDeleteDialog from './ProfileDeleteDialog';
 import {useBalancePrivacy} from './BalancePrivacy';
 import {normaliseDisplayPreferences, setDisplayPreferences, displayMetadata, weekStartOffset, startOfDisplayWeek, displayWeekdays, resolveStartPage} from './displayPreferences';
-import './profileSettingsRedesign.css';
+import './profileSettingsRedesign.css?panel-position=2';
 import './interactiveAccent.css';
 import LanguageSelector, { useLanguage } from './LanguageSelector';
 import { setLanguage, translate } from './localization';
@@ -113,7 +116,6 @@ import { getCalendarWindow } from "./forexFactory";
 import { newsWeekKey, archivedNewsEvents, readNewsArchive } from "./newsArchive";
 import { NewsAlertsProvider, NewsAlertControls } from "./NewsAlerts";
 import { NEWS_FILTER_KEY, NEWS_CURRENCIES, readNewsFilters, toggleNewsCurrency, matchesNewsFilters } from "./newsPreferences";
-import { ensureDemoAccount } from "./demoAccount";
 import { readJournalCache, writeJournalCache } from "./journalCache";
 import { hydrateJournalImages, writeJournalImageCache } from "./journalImageCache";
 import { loadJournalImage, loadPeriodReviewContent } from "./journalCloudCache";
@@ -678,33 +680,177 @@ function StatCard({ label, children }) {
   );
 }
 
-function Modal({ title, onClose, children, wide, className = "", centered = false, headerActions = null, headerNote = null, closeLabel = "Cancel", sheet = false }) {
-  return (
-    <div className={`tj-modal-overlay ${centered ? "tj-modal-overlay-centered" : ""}`} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`tj-modal ${wide ? "tj-modal-wide" : ""} ${className}`} role={sheet ? 'dialog' : undefined} aria-modal={sheet ? true : undefined} aria-label={sheet ? 'Day details' : undefined}>
-        {sheet && <button type="button" className="tj-day-sheet-handle" aria-label="Close day details" onClick={onClose} onTouchStart={event => {event.currentTarget.dataset.startY=event.touches[0].clientY;}} onTouchEnd={event => {if(event.changedTouches[0].clientY-Number(event.currentTarget.dataset.startY)>60)onClose();}}><span/></button>}
-        <div className="tj-modal-head">
-          <div className="tj-modal-title">{title}</div>
-          {headerNote && <span className="tj-modal-header-note">{headerNote}</span>}
-          <div className="tj-modal-head-actions">{headerActions}<button type="button" className="tj-icon-btn tj-modal-close" title={closeLabel} aria-label={closeLabel} onClick={onClose}><X size={18} /></button></div>
-        </div>
-        <ThemedFields.Provider value={true}><div className="tj-modal-body">{children}</div></ThemedFields.Provider>
+let tradeEntryValidation = { active:false, errors:{} };
+const tradeEntryValidationListeners = new Set();
+const publishTradeEntryValidation = (next) => {
+  tradeEntryValidation = next;
+  tradeEntryValidationListeners.forEach(listener => listener());
+};
+const useTradeEntryValidation = () => {
+  const [state, setState] = useState(tradeEntryValidation);
+  useEffect(() => {
+    const listener = () => setState(tradeEntryValidation);
+    tradeEntryValidationListeners.add(listener);
+    return () => tradeEntryValidationListeners.delete(listener);
+  }, []);
+  return state;
+};
+const tradeValidationKeyForLabel = (label) => {
+  const normalized = String(label || '').replace(' *', '');
+  if (normalized === 'Instrument') return 'asset';
+  if (normalized === 'Direction') return 'direction';
+  if (normalized === 'Open date') return 'date';
+  if (normalized === 'Open time') return 'time';
+  if (normalized === 'Close date') return 'closeDate';
+  if (normalized === 'Close time') return 'closeTime';
+  if (normalized === 'Gross P&L') return 'grossPnl';
+  if (normalized === 'Commission') return 'commission';
+  if (normalized === 'Swap') return 'swap';
+  if (normalized.startsWith('Entry Price')) return 'entryPrice';
+  if (normalized.startsWith('Stop Loss Price')) return 'stopLossPrice';
+  if (normalized.startsWith('Actual Exit Price')) return 'exitPrice';
+  if (normalized.startsWith('Stop Loss (')) return 'stopLossPips';
+  if (normalized.startsWith('Actual Closed ')) return 'exitPips';
+  return '';
+};
+function TradeValidationSummary({ validation }) {
+  const entries = [...new Set(Object.values(validation.errors || {}))];
+  if (!validation.active || !entries.length) return null;
+  return <div className="tj-trade-validation-summary" role="alert" tabIndex="-1"><strong>Complete the highlighted fields before saving.</strong><ul>{entries.map(message => <li key={message}>{message}</li>)}</ul></div>;
+}
+
+// The panel opens after the rail collapses, but its maximum must be based on
+// the rail's expanded desktop footprint so it never consumes more than half
+// of the original application workspace.
+function entryPanelMaximumWidth() {
+  const root = document.querySelector('.tj-root');
+  const expandedRail = Number.parseFloat(getComputedStyle(root || document.documentElement).getPropertyValue('--tj-expanded-sidebar-width')) || 252;
+  return Math.max(360, Math.floor((window.innerWidth - expandedRail) * .5));
+}
+
+function Modal({ title, onClose, children, wide, className = "", centered = false, headerActions = null, headerNote = null, closeLabel = "Cancel", sheet = false, entryPanel = false, entryPanelOpen = true, entryMode = null, onEntryModeChange }) {
+  const validation = useTradeEntryValidation();
+  const dialogRef = useRef(null);
+  // Form drafts create fresh close callbacks as fields change. Keep the modal's
+  // focus lifecycle independent from those callback identities so a keystroke
+  // cannot run the cleanup that restores focus to the original opener.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const panelDrag = useRef(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    try { return Math.max(360, Math.min(entryPanelMaximumWidth(), Number(window.localStorage.getItem('aai-entry-panel-width')) || 480)); } catch { return 480; }
+  });
+  const setEntryPanelWidth = useCallback((next, persist = false) => {
+    const maximum = entryPanelMaximumWidth();
+    const width = Math.max(360, Math.min(maximum, next));
+    setPanelWidth(width);
+    if (persist) try { window.localStorage.setItem('aai-entry-panel-width', String(width)); } catch {}
+  }, []);
+  const trackPanelDrag = useCallback(event => {
+    if (panelDrag.current !== event.pointerId) return;
+    const panelBounds = dialogRef.current?.getBoundingClientRect();
+    setEntryPanelWidth((panelBounds?.right || window.innerWidth) - event.clientX);
+  }, [setEntryPanelWidth]);
+  const finishPanelDrag = useCallback((event, persist = true) => {
+    if (panelDrag.current === null || (event && panelDrag.current !== event.pointerId)) return;
+    if (event) {
+      const panelBounds = dialogRef.current?.getBoundingClientRect();
+      setEntryPanelWidth((panelBounds?.right || window.innerWidth) - event.clientX, persist);
+    }
+    panelDrag.current = null;
+    document.removeEventListener('pointermove', trackPanelDrag);
+    document.removeEventListener('pointerup', finishPanelDrag);
+    document.removeEventListener('pointercancel', finishPanelDrag);
+    requestAnimationFrame(() => document.body.classList.remove('tj-entry-panel-dragging'));
+  }, [setEntryPanelWidth, trackPanelDrag]);
+  const beginPanelDrag = useCallback(event => {
+    if (event.button !== 0 && event.pointerType !== 'touch') return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    panelDrag.current = event.pointerId;
+    document.body.classList.add('tj-entry-panel-dragging');
+    document.addEventListener('pointermove', trackPanelDrag);
+    document.addEventListener('pointerup', finishPanelDrag);
+    document.addEventListener('pointercancel', finishPanelDrag);
+  }, [finishPanelDrag, trackPanelDrag]);
+  useEffect(() => () => {
+    document.removeEventListener('pointermove', trackPanelDrag);
+    document.removeEventListener('pointerup', finishPanelDrag);
+    document.removeEventListener('pointercancel', finishPanelDrag);
+    document.body.classList.remove('tj-entry-panel-dragging');
+  }, [finishPanelDrag, trackPanelDrag]);
+  useEffect(() => {
+    if (!entryPanel) return undefined;
+    const clampPanelToViewport = () => setEntryPanelWidth(panelWidth, true);
+    window.addEventListener('resize', clampPanelToViewport);
+    return () => window.removeEventListener('resize', clampPanelToViewport);
+  }, [entryPanel, panelWidth, setEntryPanelWidth]);
+  useEffect(() => {
+    if (!entryPanel) return undefined;
+    if (!entryPanelOpen) {
+      setPanelOpen(false);
+      return undefined;
+    }
+    setPanelOpen(false);
+    const frame = requestAnimationFrame(() => setPanelOpen(true));
+    return () => cancelAnimationFrame(frame);
+  }, [entryPanel, entryPanelOpen]);
+  useEffect(() => {
+    const closeWithEscape = event => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      onCloseRef.current();
+    };
+    document.addEventListener("keydown", closeWithEscape);
+    const opener = document.activeElement;
+    const frame = requestAnimationFrame(() => dialogRef.current?.querySelector('.tj-modal-close')?.focus());
+    return () => { cancelAnimationFrame(frame); document.removeEventListener("keydown", closeWithEscape); opener?.isConnected && opener.focus?.(); };
+  }, []);
+  const Dialog = 'div';
+  const dialog = (
+    <Dialog ref={dialogRef} className={`tj-modal ${wide ? "tj-modal-wide" : ""} ${className} ${entryPanel ? "tj-entry-panel" : ""}`} role="dialog" aria-modal={entryPanel ? undefined : "true"} aria-label={typeof title === 'string' ? title : sheet ? 'Day details' : undefined} tabIndex="-1">
+      {entryPanel && <div className="tj-entry-panel-grip" role="separator" aria-orientation="vertical" aria-label="Resize entry panel" aria-valuemin={360} aria-valuenow={panelWidth} tabIndex="0" onPointerDown={beginPanelDrag} onDoubleClick={() => setEntryPanelWidth(480, true)} onKeyDown={event => { if (event.key === 'ArrowLeft') { setEntryPanelWidth(panelWidth + 24, true); event.preventDefault(); } if (event.key === 'ArrowRight') { setEntryPanelWidth(panelWidth - 24, true); event.preventDefault(); } }} />}
+      {sheet && <button type="button" className="tj-day-sheet-handle" aria-label="Close day details" onClick={onClose} onTouchStart={event => {event.currentTarget.dataset.startY=event.touches[0].clientY;}} onTouchEnd={event => {if(event.changedTouches[0].clientY-Number(event.currentTarget.dataset.startY)>60)onClose();}}><span/></button>}
+      <div className="tj-modal-head">
+        <div className="tj-modal-title">{title}</div>
+        {headerNote && <span className="tj-modal-header-note">{headerNote}</span>}
+        <div className="tj-modal-head-actions">{headerActions}<button type="button" className="tj-icon-btn tj-modal-close" title={closeLabel} aria-label={closeLabel} onClick={onClose}><X size={18} /></button></div>
       </div>
+      <TradeValidationSummary validation={validation} />
+      <ThemedFields.Provider value={true}><div className="tj-modal-body">{children}</div></ThemedFields.Provider>
+    </Dialog>
+  );
+  if (entryPanel) return (
+    <aside className={`tj-entry-panel-outer ${panelOpen && entryPanelOpen ? 'tj-entry-panel-open' : ''}`} style={{'--tj-entry-panel-width': `${panelWidth}px`}} aria-label="Trade entry panel">
+      <div className="tj-entry-panel-inner">{dialog}</div>
+    </aside>
+  );
+  return (
+    <div className={`tj-modal-overlay ${centered ? "tj-modal-overlay-centered" : ""} ${entryPanel ? "tj-entry-panel-overlay" : ""}`} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      {dialog}
     </div>
   );
 }
 
-function InstrumentPicker({value, onChange, options = DEFAULT_INSTRUMENTS}) { return <ThemeInstrument value={value} onChange={onChange} options={options}/>; }
+function InstrumentPicker({value, onChange, options = DEFAULT_INSTRUMENTS, ...accessibility}) { return <ThemeInstrument value={value} onChange={onChange} options={options} {...accessibility}/>; }
 
-function Field({ label, children, className = "" }) {
+function Field({ label, children, className = "", error = "", id = "" }) {
+  const validation = useTradeEntryValidation();
+  const key = tradeValidationKeyForLabel(label);
+  const resolvedError = error || (validation.active && key ? validation.errors[key] || '' : '');
+  const resolvedId = id || (key ? `trade-field-${key}` : '');
+  const errorId = React.useId();
   const content = React.Children.map(children, child => {
     if (!React.isValidElement(child)) return child;
-    if (child.type === 'select' || child.type === ThemeSelect) return <ThemeSelect {...child.props} label={child.props.label || label}/>;
-    if (child.type === 'input' && child.props.type === 'time') return <ThemeTime {...child.props} format={activeRegionalPreferences.timeFormat} label={label}/>;
-    if (child.type === 'input' && child.props.type === 'date') return <ThemeDate {...child.props} label={label}/>;
-    return child;
+    const accessibility = resolvedError ? { 'aria-invalid':true, 'aria-describedby':errorId } : {};
+    if (child.type === 'select' || child.type === ThemeSelect) return <ThemeSelect {...child.props} {...accessibility} label={child.props.label || label}/>;
+    if (child.type === 'input' && child.props.type === 'time') return <ThemeTime {...child.props} {...accessibility} format={activeRegionalPreferences.timeFormat} label={label}/>;
+    if (child.type === 'input' && child.props.type === 'date') return <ThemeDate {...child.props} {...accessibility} label={label}/>;
+    return React.cloneElement(child, accessibility);
   });
-  return <div className={`tj-field ${className}`}><div className="tj-field-label">{label}</div>{content}</div>;
+  return <div id={resolvedId} className={`tj-field ${className} ${resolvedError ? 'tj-field-error' : ''}`} aria-invalid={resolvedError ? true : undefined}><div className="tj-field-label">{label}</div>{content}{resolvedError && <small id={errorId} className="tj-field-error-message" role="alert">{resolvedError}</small>}</div>;
 }
 
 function TagPicker({ options, selected, onToggle, color = "purple" }) {
@@ -997,21 +1143,25 @@ const tradeScreenshotItems = (screenshots) => {
 
 /* ============================== NEW TRADE MODAL ========================= */
 
-function JournalEntryLayout({ children, initialPanel = 0, label = "Entry sections", compactNumbers = false, stacked = false }) {
+function JournalEntryLayout({ children, initialPanel = 0, activePanel, onPanelChange, label = "Entry sections", compactNumbers = false, stacked = false }) {
   const panels = React.Children.toArray(children);
-  const [active, setActive] = useState(initialPanel);
+  const [internalActive, setInternalActive] = useState(initialPanel);
+  const active = activePanel ?? internalActive;
+  const selectPanel = index => { setInternalActive(index); onPanelChange?.(index); };
   const layoutId = React.useId();
   return <div className={`tj-entry-composer ${stacked ? "tj-entry-composer-stacked" : ""}`}>
-    {!stacked && <div className="tj-entry-composer-tabs" role="tablist" aria-label={label}>{panels.map((panel,index) => <button key={panel.props.title} type="button" role="tab" aria-selected={active===index} id={`${layoutId}-tab-${index}`} aria-controls={`${layoutId}-panel-${index}`} onClick={()=>setActive(index)}><i>{compactNumbers ? `${index+1} ·` : String(index+1).padStart(2,"0")}</i>{panel.props.title}</button>)}</div>}
+    {!stacked && <div className="tj-entry-composer-tabs" role="tablist" aria-label={label}>{panels.map((panel,index) => <button key={panel.props.title} type="button" role="tab" aria-selected={active===index} id={`${layoutId}-tab-${index}`} aria-controls={`${layoutId}-panel-${index}`} onClick={()=>selectPanel(index)}><i>{compactNumbers ? `${index+1} ·` : String(index+1).padStart(2,"0")}</i>{panel.props.title}</button>)}</div>}
     <div className="tj-entry-composer-scroll">{panels.map((panel,index) => <div key={panel.props.title} role="tabpanel" id={`${layoutId}-panel-${index}`} aria-labelledby={`${layoutId}-tab-${index}`} hidden={!stacked && active!==index}>{panel.props.children}</div>)}</div>
   </div>;
 }
 
-export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, backtest = false, testType = "backtest", lockedInstrument = null, saving = false }) {
+export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, panelStep, onPanelStepChange, onModeChange, onRequestCloseChange, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, backtest = false, testType = "backtest", lockedInstrument = null, saving = false, embedded = false }) {
+  const confirm=useConfirmation();
   const {phone,summary}=usePhoneTradeDialog(onClose);
   const testLabel = testType === "forward" ? "Forward Test" : "Backtest";
   const testTradeLabel = testType === "forward" ? "forward-test" : "simulated";
   const [confluenceOpen,setConfluenceOpen]=useState(false);
+  const [saveAttempted,setSaveAttempted]=useState(false);
   const [form, setForm] = useState(() => {
     const currentTime = nowTime();
     const base = { id: uid(), date: todayISO(), time: currentTime, closeDate: "", closeTime: "", asset: "", direction: "BUY", calculationMethod: account?.defaultRiskMethod || "price", riskPreset: "", riskPct: account?.defaultRiskPct || 1, stopLossPips: account?.defaultStopLossPips || "", takeProfitPips: "", exitPips: "", entryPrice: "", exitPrice: "", stopLossPrice: "", takeProfitPrice: "", plannedRr: null, realizedRr: null, grossPnl: "", commission: defaultCommission || 0, swap: 0, pnl: "", rr: "", entryType: "", entrySession: entrySessionFromOpenTime(currentTime, todayISO()), session: entrySessionFromOpenTime(currentTime, todayISO()), confluence: [], types: [], mistakes: [], moodBefore: "Neutral", moodAfter: "Neutral", context: "", screenshots: { entry: [], exit: [] }, premarketMarkupId: null, ruleEvaluations: [], strategy: "", timeframe: "", manualConversionRates:{} };
@@ -1021,6 +1171,17 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
     const openTime = editing ? (source.time || "") : (source.time || currentTime);
     return { ...base, ...source, calculationMethod: editing ? (source.calculationMethod || "legacy") : (source.calculationMethod || base.calculationMethod), balanceResults: Array.isArray(source.balanceResults) && source.balanceResults.length ? source.balanceResults : defaultBalanceResults, grossPnl: isRunningTrade(source) ? "" : source.grossPnl, time: openTime, entryType: source.entryType || source.confluenceSession || "", entrySession: entrySessionFromOpenTime(openTime, source.date) || normalizeSession(source.entrySession || source.session || SESSIONS[2]), confluence: source.confluence || source.types || [], ruleEvaluations: source.ruleEvaluations || [] };
   });
+  useEffect(() => { if (!backtest) onDraftChange?.(form); }, [backtest, form, onDraftChange]);
+  const initialForm = useRef(null);
+  useEffect(() => { if (initialForm.current === null) initialForm.current = JSON.stringify(form); }, []);
+  const requestClose = useCallback(async () => {
+    if (initialForm.current !== null && JSON.stringify(form) !== initialForm.current && !await confirm({title:'Discard unsaved changes?',description:'You have unsaved trade changes. Closing now will discard them.',confirmLabel:'Discard Changes',cancelLabel:'Keep Editing'})) return;
+    onClose();
+  }, [form, onClose,confirm]);
+  useEffect(() => {
+    onRequestCloseChange?.(requestClose);
+    return () => onRequestCloseChange?.(null);
+  }, [onRequestCloseChange, requestClose]);
   const multiBalance = isMultiBalanceWorkspace(account);
   const balanceTargets = targetableBalances(account);
   const selectedBalanceIdsForTrade = (form.balanceResults || []).map((result) => result.balanceId);
@@ -1142,6 +1303,22 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   const markupRating = backtest ? 0 : (form.premarketMarkupId ? 2 : 0);
   const mistakePenalty = form.mistakes.length;
   const calculatedRating = clamp(ruleRating + resultRating + markupRating - mistakePenalty, 0, 5);
+  const tradeValidation = useMemo(() => validateTradeForm({
+    form,
+    accountId:account?.id,
+    multiBalance,
+    validBalanceIds:balanceTargets.map(balance=>balance.id),
+    isRunning,
+    realizedR:riskCalculation.realized,
+  }), [account?.id, balanceTargets, form, isRunning, multiBalance, riskCalculation.realized]);
+  useEffect(() => {
+    publishTradeEntryValidation({ active:saveAttempted, errors:tradeValidation.errors });
+    return () => publishTradeEntryValidation({ active:false, errors:{} });
+  }, [saveAttempted, tradeValidation.errors]);
+  const focusFirstValidationError = () => {
+    const target = tradeValidation.firstField && (document.getElementById(`trade-field-${tradeValidation.firstField}`) || document.querySelector('.tj-balance-target-picks'));
+    window.setTimeout(() => { target?.scrollIntoView?.({block:'center',behavior:'smooth'}); target?.querySelector?.('input, select, button')?.focus?.(); }, 0);
+  };
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const applyRiskPreset = (name) => {
     const preset = riskPresets.find((item) => item.name === name);
@@ -1182,7 +1359,8 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   }));
   const save = () => {
     if (saving) return;
-    if (!form.asset.trim() || !form.time || timingError) return;
+    setSaveAttempted(true);
+    if (!tradeValidation.valid) { focusFirstValidationError(); return; }
     if (positionSizingError) return;
     const grossPnl = isRunning ? null : Number(form.grossPnl), commission = Number(form.commission) || 0, swap = Number(form.swap) || 0;
     if (!multiBalance && !isRunning && !Number.isFinite(grossPnl)) return;
@@ -1216,9 +1394,9 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   // Position sizing blocks saving until a valid entry and stop are supplied.
   // Keep the visual required indicator aligned with that validation rule.
   const positionSizeRequired = account?.positionSizeEnabled && !backtest && !editing;
-  return <Modal title={editing ? (backtest ? `Edit ${testTradeLabel} trade` : "Edit trade") : (backtest ? `Log ${testTradeLabel} trade` : "Log trade")} onClose={onClose} centered wide className="tj-entry-composer-modal tj-trade-composer-modal" headerNote="Fields marked * are required">
+  const content = <>
     <div className="tj-entry-identity" ref={summary}><div><small>INSTRUMENT</small><strong>{form.asset || "New trade"}</strong></div><div><small>DIRECTION</small><strong className={form.direction === "BUY" ? "tj-green" : "tj-red"}>{form.direction}</strong></div><div><small>STATUS</small><strong className={isRunning ? 'tj-amber' : ''}>{isRunning ? "Running" : "Closed"}</strong></div></div>
-    <JournalEntryLayout compactNumbers>
+    <JournalEntryLayout compactNumbers activePanel={panelStep} onPanelChange={onPanelStepChange}>
     <section title="Execution">
     <section className={`tj-trade-reference-card tj-trade-reference-setup ${backtest ? "tj-trade-reference-setup-backtest" : ""}`}>{account?.positionSizeEnabled && <h4>Position size</h4>}
     {account?.positionSizeEnabled && (multiChallengeSizing.length > 1 ? <div className="tj-position-multi-challenge"><div className="tj-multi-challenge-sizing-grid">{multiChallengeSizing.map(({ balance, row, mode, currency, pips, lots, supported, sizing }) => <div key={balance.id} className="tj-position-suggestion tj-multi-challenge-sizing-card"><header><strong>{balance.name}</strong><span>Level {row.level} · Mode {mode === "streak" ? "2" : "1"}</span></header><div className="tj-multi-challenge-account-metrics"><div><span>MONEY AT RISK</span><b>{fmtMoney(row.risk, currency)}</b><small>{row.riskPct.toFixed(2)}% at risk</small></div><div><span>SUGGESTED SIZE</span><b>{supported && lots > 0 ? `${lots.toFixed(3)} ${sizing.spec.volumeUnit || 'lots'}` : "—"}</b><small>{supported && lots > 0 ? `${pips.toFixed(1)} ${sizing.spec.pipSize ? 'pip' : 'tick'} stop` : sizing?.error || "Add a valid stop loss"}</small></div></div>{sizing?.conversionRequired && <div className="tj-conversion-prompt"><strong>Currency Conversion Required</strong><p>{balance.name} is {currency}; {form.asset || 'this instrument'} settles in {sizing.profitCurrency}. Enter {sizing.conversionRequired} to continue.</p><input type="number" min="0" step="any" className="tj-input" aria-label={`${sizing.conversionRequired} manual conversion rate for ${balance.name}`} placeholder={`${sizing.conversionRequired} rate`} value={form.manualConversionRates?.[sizing.conversionRequired.replace('/','')] || ''} onChange={(event) => setManualConversionRate(sizing.conversionRequired.replace('/',''), event.target.value)} /></div>}<em>{supported ? `${sizing.estimated ? 'Journal default — confirm broker specification.' : 'Broker specification.'} Actual risk ${fmtMoney(sizing.actualRisk, currency)}.` : 'No sizing recommendation.'}</em></div>)}</div></div> : <div className={`tj-position-suggestion ${positionSuggestion?.supported && positionSuggestion.lots > 0 ? "has-lot-size" : ""}`}>
@@ -1298,8 +1476,10 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
     </section>
     </JournalEntryLayout>
     {positionSizingError && <p role="alert" className="tj-trade-timing-error">{positionSizingError}</p>}
-    <div className="tj-modal-actions tj-entry-composer-footer"><button className="tj-btn-outline" onClick={onClose}>Cancel</button><button className="tj-btn-primary" disabled={saving || !form.asset.trim() || !form.time || !!timingError || !!positionSizingError || (multiBalance && !(form.balanceResults || []).length)} onClick={save}>{saving ? "Saving…" : "Save Trade"}</button></div>
-  </Modal>;
+    <div className="tj-modal-actions tj-entry-composer-footer"><button className="tj-btn-outline" onClick={requestClose}>Cancel</button><button className="tj-btn-primary" disabled={saving || !form.asset.trim() || !form.time || !!timingError || !!positionSizingError || (multiBalance && !(form.balanceResults || []).length)} onClick={save}>{saving ? "Saving…" : "Save Trade"}</button></div>
+  </>;
+  if (embedded) return content;
+  return <Modal title={editing ? (backtest ? `Edit ${testTradeLabel} trade` : "Edit trade") : (backtest ? `Log ${testTradeLabel} trade` : "Log trade")} onClose={requestClose} centered wide entryPanel={!phone && !backtest} entryMode="trade" onEntryModeChange={onModeChange} className="tj-entry-composer-modal tj-trade-composer-modal" headerNote="Fields marked * are required">{content}</Modal>;
 }
 
 /* ============================ ACCOUNT MODALS =========================== */
@@ -1620,7 +1800,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   return (
     <Modal title={phone?<span className="tj-phone-account-title"><strong>{name}</strong><small>Account settings</small></span>:<span className="tj-symbol-title"><WalletCards size={18} />Account Settings</span>} className="tj-account-settings-hub-modal tj-account-settings-redesign" centered onClose={() => { if (!savingSettings) onClose(); }} wide headerActions={<button className="tj-icon-btn tj-modal-save" title="Save Settings" aria-label="Save Settings" disabled={!name.trim() || !baseCurrency || savingSettings || !!challengeActivationIssue || (challengeEnabled && challenge.loading && !challenge.error)} onClick={saveSettings}><CheckCircle2 size={18}/></button>}>
       <div ref={summary} className="tj-settings-account-hero tj-settings-account-hero-no-avatar">
-        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span className="tj-settings-hero-badge">Demo workspace</span><h2>Account settings</h2></div>
+        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span className="tj-settings-hero-badge">Your workspace</span><h2>Account settings</h2></div>
         <div className="tj-settings-workspace-summary"><small>{multiBalanceWorkspace ? selectedBalance?.name || "Selected account" : name || "Account 1"} balance</small><b>{settingsLiveBalance == null ? "—" : fmtMoney(settingsLiveBalance, baseCurrency)}</b></div>
       </div>
       <AccountSettingsLayout initialPane={initialPane} multiBalanceWorkspace={multiBalanceWorkspace} selectedBalance={selectedBalance} onSelectAccount={() => setOpen(current => ({...current, identity:true}))}>
@@ -1669,7 +1849,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   );
 }
 
-function ProfilePreferencesLayout({ children, routineCard, onDelete, onClose }) {
+function ProfilePreferencesLayout({ children, onDelete, onClose }) {
   const [phone,setPhone]=useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   const studio=useRef(null),closeRef=useRef(onClose);closeRef.current=onClose;
   useEffect(() => { const media=window.matchMedia(MOBILE_MEDIA); const update=()=>setPhone(media.matches);media.addEventListener('change',update);return()=>media.removeEventListener('change',update); },[]);
@@ -1693,10 +1873,7 @@ function ProfilePreferencesLayout({ children, routineCard, onDelete, onClose }) 
   const has = name => sections.find(child => child.props?.className?.includes(name));
   const appearance = sections.find(child => child.props?.className?.includes("tj-profile-appearance-redesign"));
   return <>{!phone&&has("tj-personal-profile-card")}<div className="tj-profile-studio" ref={studio}><div className="tj-profile-studio-scroll">{phone&&has("tj-personal-profile-card")}<div className="tj-profile-reference-grid">
-    <div className="tj-profile-reference-top">
-      <div className="tj-profile-reference-column tj-profile-reference-left">{appearance}</div>
-      <div className="tj-profile-reference-column tj-profile-reference-right">{has("tj-profile-regional-card")}{has("tj-profile-display-card")}{routineCard}</div>
-    </div>
+    <div className="tj-profile-reference-top">{appearance}{has("tj-profile-region-display-card")}</div>
     {has("tj-personal-security-card")}
     <section className="tj-personal-appearance-card tj-profile-security-combined"><div className="tj-personal-section-title"><strong>Security &amp; sync</strong><em>Cloud &amp; device</em></div><div className="tj-profile-security-grid">{has("tj-profile-sync")}{has("tj-profile-account-security")}</div></section>
   </div>{phone&&<button type="button" className="tj-danger-button tj-phone-profile-delete" onClick={onDelete}>Delete profile</button>}</div></div></>;
@@ -1793,24 +1970,20 @@ function ProfileSettingsModal({ user, account, themeValue, themePreference, pale
   const openDelete = () => {setDeleteOpen(true);setPasswordOpen(false);setNewPassword('');setConfirmPassword('');setPasswordStatus(null);setDeleteConfirmation('');setDeleteError('');};
   return (
     <Modal title={<span className="tj-symbol-title"><span className="tj-profile-desktop-title"><UserRound size={18} />Profile</span><span className="tj-profile-phone-title">Profile settings</span></span>} onClose={close} className="tj-profile-modal tj-profile-modal-editing tj-profile-studio-modal tj-profile-redesign" centered wide headerActions={<button className="tj-icon-btn tj-modal-save" title="Save Profile" aria-label="Save Profile" disabled={!displayName.trim() || saving} onClick={save}><CheckCircle2 size={18}/></button>}>
-      <ProfilePreferencesLayout onClose={close} onDelete={openDelete} routineCard={<DailyRoutineProfileCard routine={routine} onUpdate={onUpdateRoutine} onManagement={() => { close(); onOpenRoutine(); }}/>}>
+      <ProfilePreferencesLayout onClose={close} onDelete={openDelete}>
       <div className="tj-personal-profile-card">
         {profilePhotoMessage && <small role="status">{profilePhotoMessage}</small>}
         <div className="tj-profile-reference-head"><div className="tj-profile-avatar-tools"><button type="button" className="tj-personal-profile-avatar" onClick={() => photoRef.current?.click()} aria-label="Change profile photo">{profileImage ? <img src={profileImage} alt="Profile" /> : <span>{initials}</span>}</button><button type="button" className="tj-profile-avatar-tool" onClick={() => photoRef.current?.click()} title="Upload photo" aria-label="Upload photo"><ImagePlus size={14}/></button><input ref={photoRef} type="file" accept="image/*" style={{display:"none"}} onChange={(event) => { uploadProfile(event.target.files); event.target.value = ""; }} /></div><div className="tj-profile-reference-identity"><div>{editingDisplayName ? <input className="tj-profile-name-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && setEditingDisplayName(false)} autoFocus aria-label="Display name" /> : <strong>{displayName.trim() || "Your name"}</strong>}{!editingDisplayName && user.email_confirmed_at && <em>Verified</em>}</div><span>{user.email || "No email address"}</span></div><div className="tj-profile-reference-stats"><div><small>MEMBER SINCE</small><strong>{user.created_at ? formatDate(user.created_at) : "—"}</strong></div><div><small>LAST SIGN IN</small><strong>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : "—"}</strong></div></div><button type="button" className="tj-profile-reference-edit" onClick={() => setEditingDisplayName((open) => !open)}><Pencil size={14}/>{editingDisplayName ? "Done" : "Edit"}</button></div>
       </div>
       <section className="tj-personal-appearance-card tj-profile-appearance-redesign">
-        <div className="tj-appearance-head"><div><strong>Appearance</strong></div><span className="tj-appearance-status"><i/>{appearanceStatus}</span></div>
+        <div className="tj-profile-card-heading"><div><strong>Appearance</strong><span>Pick a palette. Hover a card to preview it, click to keep it.</span></div><em>9 palettes</em></div>
         <div className="tj-theme-choice-row tj-theme-choice-three">{[["light","Light",Sun],["dark","Dark",Moon],["system","System",Monitor]].map(([value,label,Icon]) => <button key={value} type="button" aria-pressed={theme === value} className={`tj-theme-choice ${theme === value ? "tj-chip-active" : ""}`} onClick={() => { setTheme(value); preview(value); }}><Icon size={17}/><span>{label}</span></button>)}</div>
-        <ProfileThemePicker mode={appearanceMode} palettes={palettes} onChange={(mode, id) => { const next = { ...palettes, [mode]: id }; setPalettes(next); preview(theme, next); }} />
+        <ProfileThemePicker mode={appearanceMode} palettes={palettes} showHeading={false} onPreview={id => preview(theme, id ? { ...palettes, [appearanceMode]: id } : palettes)} onChange={(mode, id) => { const next = { ...palettes, [mode]: id }; setPalettes(next); preview(theme, next); }} />
       </section>
-      <section className="tj-personal-appearance-card tj-profile-regional-card">
-        <div className="tj-personal-section-title"><div><strong>Regional Preferences</strong></div></div>
-        <div className="tj-personal-profile-fields tj-regional-fields"><Field label="Language"><LanguageSelector value={language} onChange={changeLanguage}/></Field><Field label="Timezone"><ThemeSelect className="tj-input" value={timezone} onChange={(event) => setTimezone(event.target.value)}><option value="Africa/Accra">Africa/Accra (UTC+0)</option><option value="Europe/London">Europe/London</option><option value="America/New_York">America/New_York</option><option value="America/Chicago">America/Chicago</option><option value="America/Los_Angeles">America/Los_Angeles</option><option value="Asia/Dubai">Asia/Dubai</option></ThemeSelect></Field><Field label="Date Format"><ThemeSelect className="tj-input" value={dateFormat} onChange={(event) => setDateFormat(event.target.value)}><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></ThemeSelect></Field><Field label="Time Format"><ThemeSelect className="tj-input" value={timeFormat} onChange={(event) => setTimeFormat(event.target.value)}><option value="12">12-hour (AM/PM)</option><option value="24">24-hour</option></ThemeSelect></Field></div>
-      </section>
-      <section className="tj-personal-appearance-card tj-profile-display-card">
-        <div className="tj-personal-section-title"><strong>Display preferences</strong><em>App-wide</em></div>
+      <section className="tj-personal-appearance-card tj-profile-region-display-card">
+        <div className="tj-profile-card-heading"><div><strong>Region &amp; display</strong><span>Applies across the whole app.</span></div><em>App-wide</em></div>
+        <div className="tj-personal-profile-fields tj-regional-fields"><Field label="Time zone"><ThemeSelect className="tj-input" value={timezone} onChange={(event) => setTimezone(event.target.value)}><option value="Africa/Accra">Africa/Accra</option><option value="Europe/London">Europe/London</option><option value="America/New_York">America/New_York</option><option value="America/Chicago">America/Chicago</option><option value="America/Los_Angeles">America/Los_Angeles</option><option value="Asia/Dubai">Asia/Dubai</option></ThemeSelect></Field><Field label="Date format"><ThemeSelect className="tj-input" value={dateFormat} onChange={(event) => setDateFormat(event.target.value)}><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></ThemeSelect></Field><Field label="Time format"><ThemeSelect className="tj-input" value={timeFormat} onChange={(event) => setTimeFormat(event.target.value)}><option value="12">12-hour (AM/PM)</option><option value="24">24-hour</option></ThemeSelect></Field></div>
         <div className="tj-profile-display-row"><div><strong>Week starts on</strong></div><div className="tj-theme-choice-row"><button type="button" aria-pressed={displayDraft.weekStart === "monday"} className={displayDraft.weekStart === "monday" ? "tj-chip-active" : ""} onClick={() => setDisplayDraft(p => ({...p, weekStart:"monday"}))}>Monday</button><button type="button" aria-pressed={displayDraft.weekStart === "sunday"} className={displayDraft.weekStart === "sunday" ? "tj-chip-active" : ""} onClick={() => setDisplayDraft(p => ({...p, weekStart:"sunday"}))}>Sunday</button></div></div>
-        <div className="tj-profile-display-row"><div><strong>Start page</strong></div><ThemeSelect label="Start page" value={displayDraft.startPage} onChange={event => setDisplayDraft(p => ({...p, startPage:event.target.value}))}><option value="last">Last page I visited</option><option value="dashboard">Dashboard</option><option value="markups">Markups</option><option value="tradelog">Trade Logs</option><option value="reviews">Review</option><option value="analytics">Analytics</option></ThemeSelect></div>
       </section>
       <section className="tj-personal-appearance-card tj-personal-security-card">
         <div className="tj-personal-section-title"><div><strong>Session &amp; privacy</strong></div><em>{sessionTimeoutMinutes === 90 ? "1h 30m" : "No timeout"}</em></div>
@@ -2117,24 +2290,39 @@ function ManagementPage({ userId, account, typeTags, mistakeTags, confluenceSess
   </div></Card>;
 }
 
-function MarkupModal({ onClose, onSave, editing, instruments = [] }) {
+function MarkupModal({ onClose, onSave, editing, draft, onDraftChange, onModeChange, onRequestCloseChange, instruments = [], embedded = false }) {
+  const confirm=useConfirmation();
   const {phone,summary}=usePhoneTradeDialog(onClose);
   const [f,setF]=useState(() => {
     const base = { id: uid(), date:todayISO(), time:nowTime(), market:"", instrument:"", bias:"", status:"Planned", levels:"", structure:"", notes:"", sessionReview:{marketOutcome:"",waitedForConditions:"",outsidePlanReason:""}, screenshots:{preHTF:[],preH4:[],preM15:[],postH4:[],postM15:[]} };
-    if (!editing) return base;
-    return { ...base, ...editing, status: markupStatus(editing.status), market: normalizeSession(editing.market || ""), time: editing.time || nowTime(), sessionReview:{...base.sessionReview,...(editing.sessionReview||{})}, screenshots: { ...base.screenshots, ...(editing.screenshots && !Array.isArray(editing.screenshots) ? editing.screenshots : {}) } };
+    const source = editing || draft;
+    if (!source) return base;
+    return { ...base, ...source, status: markupStatus(source.status), market: normalizeSession(source.market || ""), time: source.time || nowTime(), sessionReview:{...base.sessionReview,...(source.sessionReview||{})}, screenshots: { ...base.screenshots, ...(source.screenshots && !Array.isArray(source.screenshots) ? source.screenshots : {}) } };
   });
+  useEffect(() => { onDraftChange?.(f); }, [f, onDraftChange]);
+  const initialForm = useRef(null);
+  useEffect(() => { if (initialForm.current === null) initialForm.current = JSON.stringify(f); }, []);
+  const requestClose = useCallback(async () => {
+    if (initialForm.current !== null && JSON.stringify(f) !== initialForm.current && !await confirm({title:'Discard unsaved changes?',description:'You have unsaved markup changes. Closing now will discard them.',confirmLabel:'Discard Changes',cancelLabel:'Keep Editing'})) return;
+    onClose();
+  }, [f, onClose,confirm]);
+  useEffect(() => {
+    onRequestCloseChange?.(requestClose);
+    return () => onRequestCloseChange?.(null);
+  }, [onRequestCloseChange, requestClose]);
   const [sessionReviewOpen,setSessionReviewOpen]=useState(true);
   const set=(k,v)=>setF(x=>({...x,[k]:v}));
   const setReview=(k,v)=>setF(x=>({...x,mediaEdited:true,sessionReview:{...(x.sessionReview||{}),[k]:v}}));
   const setShots=(slot)=>(updater)=>setF(x=>({...x,mediaEdited:true,screenshots:{...x.screenshots,[slot]:updater(x.screenshots[slot])}}));
   const markupSession = entrySessionFromOpenTime(f.time, f.date);
   const save = () => { if (f.time) onSave({...f, market:markupSession}); };
-  if(phone)return <Modal title={editing ? "Edit premarket markup" : "New premarket markup"} onClose={onClose} centered wide className="tj-entry-composer-modal tj-markup-composer-modal" headerNote="Fields marked * are required"><MobileMarkupForm form={f} session={markupSession} summaryRef={summary} Field={Field} onChange={set} onReview={setReview} renderUpload={slot=><ScreenshotUploader max={2} screenshots={f.screenshots[slot]} onChange={setShots(slot)} emptyLabel="+ Add image"/>} instruments={[...new Set([...DEFAULT_INSTRUMENTS,...instruments])]} reviewOpen={sessionReviewOpen} onToggleReview={()=>setSessionReviewOpen(open=>!open)} onClose={onClose} onSave={save} editing={editing}/></Modal>;
-  return <Modal title={editing ? "Edit premarket markup" : "New premarket markup"} onClose={onClose} centered wide className="tj-entry-composer-modal tj-markup-composer-modal" headerNote="Fields marked * are required">
+  if(phone && !embedded)return <Modal title={editing ? "Edit premarket markup" : "New premarket markup"} onClose={requestClose} centered wide className="tj-entry-composer-modal tj-markup-composer-modal" headerNote="Fields marked * are required"><MobileMarkupForm form={f} session={markupSession} summaryRef={summary} Field={Field} onChange={set} onReview={setReview} renderUpload={slot=><ScreenshotUploader max={2} screenshots={f.screenshots[slot]} onChange={setShots(slot)} emptyLabel="+ Add image"/>} instruments={[...new Set([...DEFAULT_INSTRUMENTS,...instruments])]} reviewOpen={sessionReviewOpen} onToggleReview={()=>setSessionReviewOpen(open=>!open)} onClose={requestClose} onSave={save} editing={editing}/></Modal>;
+  const content = <>
     <div className="tj-entry-identity"><div><small>INSTRUMENT</small><strong>{f.instrument || "New markup"}</strong></div><div><small>SESSION</small><strong>{markupSession || "Set a time"}</strong></div><div><small>BIAS</small><strong>{f.bias || "Not set"}</strong></div></div>
-    <JournalEntryLayout compactNumbers>
-    <section title="Setup & analysis">
+    <div className="tj-entry-composer tj-markup-continuous-form">
+    <div className="tj-entry-composer-scroll">
+    <section className="tj-markup-continuous-section" aria-labelledby="markup-setup-heading">
+    <header className="tj-markup-continuous-heading"><h3 id="markup-setup-heading">Setup &amp; analysis</h3><p>Plan the session before execution.</p></header>
     <div className="tj-markup-reference-meta">
     <div className="tj-markup-meta-row"><Field label="Date"><input type="date" className="tj-input" value={f.date} onChange={e=>set("date",e.target.value)}/></Field><Field label="Time *"><input type="time" required className="tj-input" value={f.time} onChange={e=>set("time",e.target.value)}/></Field><Field label="Session"><input className="tj-input" aria-label="Automatic markup session" readOnly value={markupSession} placeholder="Set a time"/></Field></div>
     <div className="tj-markup-pair-row"><Field label="Status"><ThemeSelect className={`tj-input tj-markup-status-trigger tj-markup-status-${f.status.toLowerCase().replace(/\s+/g, '-')}`} variant="markup-status" value={f.status} onChange={e=>set("status",e.target.value)}>{MARKUP_STATUSES.map((status)=><option key={status} value={status} className={`tj-markup-status-option tj-markup-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>{status}</option>)}</ThemeSelect></Field><Field label="Instrument"><InstrumentPicker value={f.instrument} onChange={(value) => set("instrument", value)} options={instruments} /></Field></div>
@@ -2142,14 +2330,39 @@ function MarkupModal({ onClose, onSave, editing, instruments = [] }) {
     <div className="tj-markup-section tj-markup-reference-analysis"><h4>Pre-session analysis</h4><div className="tj-markup-pair-row"><Field label="Bias"><div className="tj-markup-bias-toggle">{MARKUP_BIASES.map(bias => <button key={bias} type="button" aria-pressed={f.bias === bias} onClick={() => set("bias",bias)}>{bias}</button>)}</div></Field><Field label="Key levels, liquidity & zones"><input className="tj-input" value={f.levels} onChange={e=>set("levels",e.target.value)}/></Field></div><Field label="Market structure / narrative"><textarea className="tj-input tj-textarea" placeholder="HTF context, structure and key areas..." value={f.structure} onChange={e=>set("structure",e.target.value)}/></Field><div className="tj-grid3"><div><div className="tj-field-label">HTF chart</div><ScreenshotUploader max={2} screenshots={f.screenshots.preHTF} onChange={setShots("preHTF")} emptyLabel="+ Add image"/></div><div><div className="tj-field-label">MTF chart</div><ScreenshotUploader max={2} screenshots={f.screenshots.preH4} onChange={setShots("preH4")} emptyLabel="+ Add image"/></div><div><div className="tj-field-label">LTF chart</div><ScreenshotUploader max={2} screenshots={f.screenshots.preM15} onChange={setShots("preM15")} emptyLabel="+ Add image"/></div></div></div>
     <div className="tj-markup-section tj-markup-reference-expectations"><h4>Expectations</h4><Field label="Core narrative: what am I expecting?"><textarea className="tj-input tj-textarea" value={f.notes} onChange={e=>set("notes",e.target.value)} placeholder="What needs to happen for the idea to be valid? Include entry conditions and invalidation."/></Field></div>
     </section>
-    <section title="Review">
+    <section className="tj-markup-continuous-section tj-markup-continuous-review" aria-labelledby="markup-review-heading">
+    <header className="tj-markup-continuous-heading"><h3 id="markup-review-heading">Review</h3><p>Capture the outcome and the session review.</p></header>
     <div className="tj-markup-section"><h4>Post-session markup</h4><div className="tj-grid2"><div><div className="tj-field-label">MTF chart</div><ScreenshotUploader max={2} screenshots={f.screenshots.postH4} onChange={setShots("postH4")} emptyLabel="+ Add image"/></div><div><div className="tj-field-label">LTF chart</div><ScreenshotUploader max={2} screenshots={f.screenshots.postM15} onChange={setShots("postM15")} emptyLabel="+ Add image"/></div></div></div>
     <div className="tj-markup-session-review"><button type="button" className="tj-markup-session-review-toggle" aria-expanded={sessionReviewOpen} aria-controls="markup-session-review-fields" onClick={()=>setSessionReviewOpen(open=>!open)}><strong>Session review</strong><span><ChevronDown size={12} style={{transform:sessionReviewOpen?"rotate(0deg)":"rotate(-90deg)"}}/>{sessionReviewOpen ? "Collapse" : "Expand"}</span></button>{sessionReviewOpen&&<div id="markup-session-review-fields" className="tj-markup-session-review-body"><Field label="Did the market play out as expected? If not, how did it differ?"><textarea className="tj-input tj-textarea" value={f.sessionReview?.marketOutcome||""} onChange={e=>setReview("marketOutcome",e.target.value)}/></Field><Field label="Did I wait for my key conditions before entering?"><textarea className="tj-input tj-textarea" value={f.sessionReview?.waitedForConditions||""} onChange={e=>setReview("waitedForConditions",e.target.value)}/></Field><Field label="If I took trades outside the plan, what drove that decision?"><textarea className="tj-input tj-textarea" value={f.sessionReview?.outsidePlanReason||""} onChange={e=>setReview("outsidePlanReason",e.target.value)}/></Field></div>}</div>
     </section>
-    </JournalEntryLayout>
-    <div className="tj-modal-actions tj-entry-composer-footer"><button className="tj-btn-outline" onClick={onClose}>Cancel</button><button className="tj-btn-primary" disabled={!f.time} onClick={save}>{editing ? "Save changes" : "Save markup"}</button></div>
+    </div>
+    </div>
+    <div className="tj-modal-actions tj-entry-composer-footer"><button className="tj-btn-outline" onClick={requestClose}>Cancel</button><button className="tj-btn-primary" disabled={!f.time} onClick={save}>{editing ? "Save changes" : "Save markup"}</button></div>
+  </>;
+  if (embedded) return content;
+  return <Modal title={editing ? "Edit premarket markup" : "New premarket markup"} onClose={requestClose} centered wide entryPanel={!phone} entryMode="markup" onEntryModeChange={onModeChange} className="tj-entry-composer-modal tj-markup-composer-modal" headerNote="Fields marked * are required">{content}</Modal>;
+}
+
+function PersistentEntryPanel({ mode, open, closing, tradeProps, markupProps }) {
+  const closeHandlers = useRef({ trade: null, markup: null });
+  const showingTrade = mode === 'trade';
+  const title = showingTrade
+    ? (tradeProps.editing ? 'Edit trade' : 'Log trade')
+    : (markupProps.editing ? 'Edit premarket markup' : 'New premarket markup');
+  const close = useCallback(() => {
+    const fallback = mode === 'trade' ? tradeProps.onClose : markupProps.onClose;
+    (closeHandlers.current[mode] || fallback)();
+  }, [mode, tradeProps.onClose, markupProps.onClose]);
+  return <Modal title={title} onClose={close} centered wide entryPanel entryPanelOpen={open && !closing} entryMode={mode} className={`tj-entry-composer-modal ${showingTrade ? 'tj-trade-composer-modal' : 'tj-markup-composer-modal'}`} headerNote="Fields marked * are required">
+    <div className="tj-entry-panel-form tj-trade-composer-modal" hidden={!showingTrade} aria-hidden={!showingTrade}>
+      <NewTradeModal {...tradeProps} embedded onRequestCloseChange={(handler) => { closeHandlers.current.trade = handler; }} />
+    </div>
+    <div className="tj-entry-panel-form tj-markup-composer-modal" hidden={showingTrade} aria-hidden={showingTrade}>
+      <MarkupModal {...markupProps} embedded onRequestCloseChange={(handler) => { closeHandlers.current.markup = handler; }} />
+    </div>
   </Modal>;
 }
+
 function MarkupsPage({ markups, trades, onNew, onEdit, onDelete }) {
   const [open,setOpen]=useState({});
   const slots = [["preHTF", "HTF"], ["preH4", "MTF"], ["preM15", "LTF"], ["postH4", "Post Market MTF"], ["postM15", "Post Market LTF"]];
@@ -2958,7 +3171,7 @@ function LegacyReviewLibraryPage({ account: workspace, trades: workspaceTrades, 
   </div>;
 }
 
-function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = false, multiBalanceUnavailableReason = "" }) {
+export function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = false, multiBalanceUnavailableReason = "", allowImport = true }) {
   const [challengeEnabled, setChallengeEnabled] = useState(false);
   const [name, setName] = useState("");
   const [balance, setBalance] = useState(0);
@@ -3032,10 +3245,10 @@ function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = false, mul
     setCreating(true);
     setImportProgress(0); setImportingTrades(!!importPreview.trades?.length);
     const challengeBalance = Number(preparedBalances[0]?.startingBalance) || 0;
-    const created = await onCreate({ challengeEnabled: !multiBalance && challengeEnabled && challengeBalance > 0, challengeStartingBalance: !multiBalance && challengeEnabled ? challengeBalance : 0, id: accountId, name: name.trim(), icon: baseCurrency, profileImage: "", platform, workspaceType, balances: preparedBalances.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0, riskSettings:{ defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0 }, goals:{ monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0 }, guardrails:{ dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0 } })), balance: accountBase, breakevenCap: parseFloat(breakevenCap) || 0, ratingStyle: "stars", theme: "dark", defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, trades: [], rules: [], checkins: {} }, importPreview, setImportProgress);
+    const created = await onCreate({ challengeEnabled: !multiBalance && challengeEnabled && challengeBalance > 0, challengeStartingBalance: !multiBalance && challengeEnabled ? challengeBalance : 0, id: accountId, name: name.trim(), icon: baseCurrency, profileImage: "", platform, workspaceType, balances: preparedBalances.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0, riskSettings:{ defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0 }, goals:{ monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0 }, guardrails:{ dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0 } })), balance: accountBase, breakevenCap: parseFloat(breakevenCap) || 0, ratingStyle: "stars", theme: "dark", defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, trades: [], rules: [], checkins: {} }, allowImport ? importPreview : { trades: [], cashMovements: [] }, setImportProgress);
     if (!created) { setCreating(false); setImportingTrades(false); }
   };
-  const importTradeField = <Field label="Import trade"><input className="tj-input" type="file" accept=".html,.htm,.csv,.txt,.tsv" disabled={creating} onChange={async (event) => { const file = event.target.files?.[0] || null; setImportFile(file); setImportPreview([]); setImportError(""); setImportProgress(0); if (!file) return; const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); }} />{importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movement${importPreview.cashMovements.length === 1 ? "" : "s"}` : ""} will import when you create this account` : ""}</div>}{importingTrades && <div className="tj-settings-hint tj-import-live"><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing {platform} trades…</div>}{importError && <div className="tj-import-error">{importError}</div>}</Field>;
+  const importTradeField = allowImport ? <Field label="Import trade"><input className="tj-input" type="file" accept=".html,.htm,.csv,.txt,.tsv" disabled={creating} onChange={async (event) => { const file = event.target.files?.[0] || null; setImportFile(file); setImportPreview([]); setImportError(""); setImportProgress(0); if (!file) return; const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); }} />{importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movement${importPreview.cashMovements.length === 1 ? "" : "s"}` : ""} will import when you create this account` : ""}</div>}{importingTrades && <div className="tj-settings-hint tj-import-live"><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing {platform} trades…</div>}{importError && <div className="tj-import-error">{importError}</div>}</Field> : null;
   return (
     <Modal title={<span className="tj-symbol-title"><WalletCards size={18}/>Create Account Workspace</span>} onClose={onClose} className="tj-new-account-modal tj-account-settings-hub-modal" centered wide headerActions={<button className="tj-icon-btn tj-modal-save" title="Create Account" aria-label="Create Account" disabled={!name.trim() || !baseCurrency || (workspaceType === WORKSPACE_TYPES.MULTI_BALANCE && (balanceDrafts.length < 2 || balanceDrafts.some((item) => !String(item.name || "").trim() || !(Number(item.startingBalance) > 0)))) || creating || !!importError} onClick={create}><CheckCircle2 size={18}/></button>}>
       <div className="tj-settings-account-hero tj-new-account-hero tj-settings-account-hero-no-avatar">
@@ -5819,6 +6032,15 @@ function MigrationPromptModal({ count, onImport, onSkip, busy }) {
   );
 }
 
+export function EmptyJournalOnboarding({ onCreate }) {
+  return <section className="tj-load-error-card tj-empty-journal-onboarding" aria-labelledby="empty-journal-title">
+    <WalletCards size={28} aria-hidden="true" />
+    <strong id="empty-journal-title">Start your trading journal</strong>
+    <span>Your journal is empty. Create your first account to begin logging your own trades, plans, and reviews.</span>
+    <button className="tj-btn-primary" type="button" onClick={onCreate}><Plus size={16} />Create your first journal</button>
+  </section>;
+}
+
 export function TradingJournalApp({ user, onLogout }) {
   // Keep native chart animations aligned with preference changes, not just reloads.
   const [, refreshChartMotion] = useState(0);
@@ -5912,7 +6134,7 @@ export function TradingJournalApp({ user, onLogout }) {
   const [routineTriggerBusy, setRoutineTriggerBusy] = useState(false);
   const [routineRequest, setRoutineRequest] = useState(0);
   const [displaySettings, setDisplaySettings] = useState(() => normaliseDisplayPreferences(user.user_metadata));
-  useEffect(() => {setDisplaySettings(normaliseDisplayPreferences(user.user_metadata));}, [user.user_metadata?.week_start, user.user_metadata?.start_page, user.user_metadata?.hide_balances]);
+  useEffect(() => {setDisplaySettings(normaliseDisplayPreferences(user.user_metadata));}, [user.user_metadata?.week_start, user.user_metadata?.start_page, user.user_metadata?.hide_balances, user.user_metadata?.trade_entry_layout]);
   setDisplayPreferences(displaySettings);
   const moneyPrivacyRoot = useRef(null);
   useBalancePrivacy(displaySettings.hideBalances, moneyPrivacyRoot);
@@ -5995,10 +6217,36 @@ export function TradingJournalApp({ user, onLogout }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [showAccountMenu]);
   const [modal, setModalState] = useState(null);
+  const [entryPanelMode, setEntryPanelMode] = useState(null);
+  const [entryPanelClosing, setEntryPanelClosing] = useState(false);
   const [accountSettingsPane, setAccountSettingsPane] = useState("account");
   const modalCloseTimer = useRef(null);
+  const entryPanelCloseTimer = useRef(null);
   const setModal = useCallback((nextModal) => {
     window.clearTimeout(modalCloseTimer.current);
+    window.clearTimeout(entryPanelCloseTimer.current);
+    if (nextModal === 'newtrade' || nextModal === 'markup') {
+      setEntryPanelClosing(false);
+      setEntryPanelMode(nextModal === 'newtrade' ? 'trade' : 'markup');
+      return;
+    }
+    if (nextModal === null && entryPanelMode) {
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) {
+        setEntryPanelMode(null);
+      } else {
+        setEntryPanelClosing(true);
+        entryPanelCloseTimer.current = window.setTimeout(() => {
+          setEntryPanelMode(null);
+          setEntryPanelClosing(false);
+        }, 260);
+      }
+      return;
+    }
+    if (entryPanelMode) {
+      setEntryPanelMode(null);
+      setEntryPanelClosing(false);
+    }
     if (nextModal === null) {
       const overlay = document.querySelector(".tj-modal-overlay:not(.tj-modal-closing)");
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -6009,8 +6257,11 @@ export function TradingJournalApp({ user, onLogout }) {
       }
     }
     setModalState(nextModal);
+  }, [entryPanelMode]);
+  useEffect(() => () => {
+    window.clearTimeout(modalCloseTimer.current);
+    window.clearTimeout(entryPanelCloseTimer.current);
   }, []);
-  useEffect(() => () => window.clearTimeout(modalCloseTimer.current), []);
   const [dayModalDate, setDayModalDate] = useState(null);
   const [financeReminder, setFinanceReminder] = useState([]);
   const financeReminderTimes = useRef(new Map());
@@ -6019,6 +6270,8 @@ export function TradingJournalApp({ user, onLogout }) {
   const [editingTrade, setEditingTrade] = useState(null);
   const [editingBacktestTrade, setEditingBacktestTrade] = useState(null);
   const [newTradeDraft, setNewTradeDraft] = useState(null);
+  const [newMarkupDraft, setNewMarkupDraft] = useState(null);
+  const [tradePanelStep, setTradePanelStep] = useState(0);
   const [backtestTrades, setBacktestTrades] = useState([]);
   const [editingMarkup, setEditingMarkup] = useState(null);
   const [imageViewerSrc, setImageViewerSrc] = useState(null);
@@ -6051,6 +6304,12 @@ export function TradingJournalApp({ user, onLogout }) {
       return resolved;
     });
   }, [user.id]);
+  // Entry panels need the horizontal space of the collapsed rail.  Deliberately
+  // bypass updateSidebarOpen here so opening a form never overwrites the user's
+  // stored sidebar preference.
+  useEffect(() => {
+    if (entryPanelMode && window.matchMedia('(min-width: 901px)').matches) setSidebarOpen(false);
+  }, [entryPanelMode]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 901px)');
@@ -6108,7 +6367,7 @@ export function TradingJournalApp({ user, onLogout }) {
     return () => { cancelled = true; localJournal.configureLocalJournal(null, false); };
   }, [user.id]);
   useEffect(() => {
-    if (!modal || !sidebarOpen) return undefined;
+    if (!modal || !sidebarOpen || modal === 'newtrade' || modal === 'markup') return undefined;
 
     const frame = window.requestAnimationFrame(() => {
       const sidebar = document.querySelector(".tj-sidebar.tj-sidebar-shown");
@@ -6194,12 +6453,6 @@ export function TradingJournalApp({ user, onLogout }) {
     }
     let requestTicket = privateCache.token();
     setLoadError("");
-    // Existing accounts should render immediately. Demo setup is only needed once
-    // and used to block Safari behind several extra network requests on every load.
-    if (Number(user.user_metadata?.demo_history_version) < 6) {
-      try { await ensureDemoAccount(user); }
-      catch (error) { setLoadError(error.message || "Journal setup could not finish. Please retry."); setLoaded(true); return false; }
-    }
     const isSessionFailure = error => /jwt|token|session|unauthori[sz]ed|401|403/i.test(String(error?.message || error || ""));
     requestTicket = privateCache.token();
     const pause = milliseconds => new Promise(resolve => window.setTimeout(resolve, milliseconds));
@@ -6650,6 +6903,25 @@ export function TradingJournalApp({ user, onLogout }) {
     [backtestSnapshot, backtestSnapshotReady]
   );
 
+  const createFirstAccount = async (fields) => {
+    const result = await createAccount(user.id, fields);
+    if (result.error) { showError(result.error); return false; }
+    const drafts = fields.balances?.length
+      ? fields.balances
+      : [{ name:"Primary account", startingBalance:fields.balance, baseCurrency:fields.baseCurrency }];
+    const balances = [];
+    for (const draft of drafts) {
+      const saved = await createWorkspaceBalance(user.id, result.data.id, normaliseBalance(draft, result.data));
+      if (saved.error) { showError(saved.error); return false; }
+      balances.push(saved.data);
+    }
+    const workspace = { ...result.data, workspaceType:fields.workspaceType || WORKSPACE_TYPES.STANDARD, balances };
+    setAccounts((current) => [...(current || []), workspace]);
+    setActiveId(workspace.id);
+    setModal(null);
+    return true;
+  };
+
   if (loaded && loadError && !account) {
     return (
       <div className={`tj-root tj-loading ${profileTheme === "light" ? "tj-theme-light" : "tj-theme-dark"}`}>
@@ -6664,7 +6936,17 @@ export function TradingJournalApp({ user, onLogout }) {
     );
   }
 
-  if (!introFinished || !loaded || !account || !stats) {
+  if (loaded && !account) {
+    return (
+      <div className={`tj-root tj-loading ${profileTheme === "light" ? "tj-theme-light" : "tj-theme-dark"}`}>
+        <style>{CSS}</style>
+        <EmptyJournalOnboarding onCreate={() => setModal("addaccount")} />
+        {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={createFirstAccount} canCreateMultiBalance allowImport={false} />}
+      </div>
+    );
+  }
+
+  if (!introFinished || !loaded || !stats) {
     return (
       <JournalPreloader theme={profileTheme} waiting={introFinished} />
     );
@@ -6722,22 +7004,20 @@ export function TradingJournalApp({ user, onLogout }) {
       setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((t) => (t.id === trade.id ? trade : t)) })));
       const res = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: account.id });
       if (res.error) { setAccounts(items => items.map(item => item.id !== account.id ? item : {...item,trades:item.trades.map(row => row.id === trade.id ? previousTrade : row)})); showError(res.error); return false; }
-      setModal(null); setEditingTrade(null); setNewTradeDraft(null);
       persistedTrade = res.data || trade;
       setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((t) => (t.id === trade.id ? { ...persistedTrade, balanceResults: trade.balanceResults || t.balanceResults || [] } : t)) })));
     } else {
       setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: [...a.trades, trade] })));
       const res = await createTrade(user.id, account.id, trade);
-      if (res.error) { setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.filter((item) => item.id !== trade.id) }))); showError(res.error); return; }
+      if (res.error) { setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.filter((item) => item.id !== trade.id) }))); showError(res.error); return false; }
       persistedTrade = res.data || trade;
-      setModal(null); setEditingTrade(null); setNewTradeDraft(null);
       setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((item) => item.id === trade.id ? { ...persistedTrade, balanceResults: trade.balanceResults || [] } : item) })));
     }
     if (isMultiBalanceWorkspace(account)) {
       const resultSave = await saveTradeBalanceResults(user.id, persistedTrade.id, trade.balanceResults || []);
-      if (resultSave.error) { showError(`${resultSave.error} Apply supabase/multi_balance_workspaces_migration.sql before saving multi-balance trades.`); return; }
+      if (resultSave.error) { showError(`${resultSave.error} Apply supabase/multi_balance_workspaces_migration.sql before saving multi-balance trades.`); return false; }
       const deleteUnselected = await deleteTradeBalanceResultsNotIn(user.id, persistedTrade.id, (trade.balanceResults || []).map((result) => result.balanceId));
-      if (deleteUnselected.error) { showError(deleteUnselected.error); return; }
+      if (deleteUnselected.error) { showError(deleteUnselected.error); return false; }
       // The parent trade mirrors only the accounts currently checked in the
       // editor. Unchecking Account 2 therefore removes its P&L from the log.
       const selectedResults = resultSave.data || [];
@@ -6746,7 +7026,7 @@ export function TradingJournalApp({ user, onLogout }) {
       const swap = selectedResults.reduce((sum, result) => sum + (Number(result.swap) || 0), 0);
       const pnl = selectedResults.reduce((sum, result) => sum + Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))), 0);
       const parentSave = await updateTrade(persistedTrade.id, { ...persistedTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
-      if (parentSave.error) { showError(parentSave.error); return; }
+      if (parentSave.error) { showError(parentSave.error); return false; }
       persistedTrade = parentSave.data || { ...persistedTrade, grossPnl, commission, swap, pnl };
       setAccounts((accs) => accs.map((item) => item.id !== account.id ? item : { ...item, trades: item.trades.map((itemTrade) => itemTrade.id === persistedTrade.id ? { ...persistedTrade, balanceResults:selectedResults } : itemTrade) }));
     }
@@ -6765,6 +7045,8 @@ export function TradingJournalApp({ user, onLogout }) {
     }
     await markMarkupExecuted(trade.premarketMarkupId);
     await persistCustomInstrument(trade.asset);
+    setModal(null); setEditingTrade(null); setNewTradeDraft(null); setTradePanelStep(0);
+    return true;
   };
 
   const importTradesToAccount = async (targetAccount, plan, onProgress, targetBalanceId = null) => {
@@ -7009,16 +7291,19 @@ export function TradingJournalApp({ user, onLogout }) {
       else openMarkupEntry();
     },
   };
-  const openNewMarkup = () => routineGate.current.request('markup');
+  const openNewMarkup = () => {
+    if (entryPanelMode) { setModal('markup'); return; }
+    routineGate.current.request('markup');
+  };
   const saveDailyRoutine = tickedIds => routineGate.current.complete(tickedIds);
   const handleSaveMarkup = async (markup) => {
     const exists = markups.some((item) => item.id === markup.id);
-    setMarkups((items) => exists ? items.map((item) => item.id === markup.id ? markup : item) : [markup, ...items]);
-    setModal(null); setEditingMarkup(null);
     const res = exists ? await updateMarkup(markup.id, markup) : await createMarkup(user.id, account.id, markup);
-    if (res.error) { if (!exists) setMarkups((items) => items.filter((item) => item.id !== markup.id)); return showError(res.error); }
-    setMarkups((items) => items.map((item) => item.id === markup.id ? res.data : item));
+    if (res.error) { showError(res.error); return false; }
+    setMarkups((items) => exists ? items.map((item) => item.id === markup.id ? res.data : item) : [res.data, ...items]);
     await persistCustomInstrument(markup.instrument);
+    setModal(null); setEditingMarkup(null); setNewMarkupDraft(null);
+    return true;
   };
   const handleDeleteMarkup = async (id) => {  const res=await deleteMarkup(id); if(res.error)return showError(res.error); setMarkups(x=>x.filter(m=>m.id!==id)); };
   const handleSaveReview = async (r) => { const res=await saveTradeReview(user.id,account.id,r); if(res.error){showError(res.error);return false;}setReviews(x=>{const i=x.findIndex(v=>v.id===res.data.id);return i<0?[res.data,...x]:x.map(v=>v.id===res.data.id?res.data:v);}); return true; };
@@ -7374,8 +7659,8 @@ export function TradingJournalApp({ user, onLogout }) {
     return true;
   };
 
-  const handleSaveProfileSettings = async ({ fullName, displayName: nextName, avatarUrl, themePreference, themePalettes, timezone, dateFormat, timeFormat, language, sessionTimeoutMinutes: nextTimeout, privacyScreenEnabled, privacyScreenTimeoutMinutes, week_start, start_page, hide_balances }) => {
-    const nextDisplay = normaliseDisplayPreferences({week_start,start_page,hide_balances});
+  const handleSaveProfileSettings = async ({ fullName, displayName: nextName, avatarUrl, themePreference, themePalettes, timezone, dateFormat, timeFormat, language, sessionTimeoutMinutes: nextTimeout, privacyScreenEnabled, privacyScreenTimeoutMinutes, week_start, start_page, hide_balances, trade_entry_layout }) => {
+    const nextDisplay = normaliseDisplayPreferences({week_start,start_page,hide_balances,trade_entry_layout});
     const previous = { profileTheme, profilePalettes, profileDetails, privacySettings, displaySettings };
     setProfileTheme(themePreference); setProfilePalettes(themePalettes);
     setDisplaySettings(nextDisplay);
@@ -7440,7 +7725,14 @@ export function TradingJournalApp({ user, onLogout }) {
     return { pnl, total: accountTrades.length, wins, losses, breakeven: accountTrades.length - wins - losses, pct: candidate.balance ? pnl / candidate.balance * 100 : 0 };
   };
   const activeAccountSummary = accountCenterSummary(account);
-  const openNewTrade = (draft = null) => routineGate.current.request('trade', draft);
+  const openNewTrade = (draft = null) => {
+    if (entryPanelMode) {
+      if (draft) { setEditingTrade(null); setNewTradeDraft(draft); }
+      setModal('newtrade');
+      return;
+    }
+    routineGate.current.request('trade', draft);
+  };
   const openBacktestTrade = (trade = null) => {
     setEditingBacktestTrade(trade);
     setModal("backtesttrade");
@@ -7484,6 +7776,13 @@ export function TradingJournalApp({ user, onLogout }) {
   };
   const startDayNeeded = routineRequired(routineStore.routine);
   const pageMeta = NAV.find((item) => item.id === page);
+  const entryPanel = <PersistentEntryPanel
+    mode={entryPanelMode || 'trade'}
+    open={Boolean(entryPanelMode)}
+    closing={entryPanelClosing}
+    tradeProps={{ editing:editingTrade, draft:newTradeDraft, onDraftChange:setNewTradeDraft, panelStep:tradePanelStep, onPanelStepChange:setTradePanelStep, typeTags, mistakeTags:allMistakeTags(mistakeTags), confluenceSessions, instruments:knownInstruments, markups:markups.filter((markup)=>markup.accountId===account.id), rules:account.rules, defaultCommission:account.defaultCommission, account:tradeFormAccount, riskPresets, challengeState:challenge.state, onClose:() => { setModal(null); setEditingTrade(null); setNewTradeDraft(null); setTradePanelStep(0); }, onSave:saveTrade }}
+    markupProps={{ editing:editingMarkup, draft:newMarkupDraft, onDraftChange:setNewMarkupDraft, instruments:knownInstruments, onClose:() => { setModal(null); setEditingMarkup(null); setNewMarkupDraft(null); }, onSave:handleSaveMarkup }}
+  />;
 
   return (
     <NewsAlertsProvider activePage={page}><ImageViewerContext.Provider value={setImageViewerSrc}>
@@ -7559,13 +7858,12 @@ export function TradingJournalApp({ user, onLogout }) {
           </div>
         </div>
       </div>
-      {modal === "newtrade" && <NewTradeModal editing={editingTrade} draft={newTradeDraft} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={knownInstruments} markups={markups.filter((markup)=>markup.accountId===account.id)} rules={account.rules} defaultCommission={account.defaultCommission} account={tradeFormAccount} riskPresets={riskPresets} challengeState={challenge.state} onClose={() => { setModal(null); setEditingTrade(null); setNewTradeDraft(null); }} onSave={saveTrade} />}
+      {entryPanel}
       {modal === "backtesttrade" && <NewTradeModal backtest editing={editingBacktestTrade} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={knownInstruments} markups={[]} rules={account.rules || []} defaultCommission={account.defaultCommission} account={backtestFormAccount} onClose={() => { setModal(null); setEditingBacktestTrade(null); }} onSave={saveBacktestTrade} />}
       {modal === "account" && (!guardrails.tradeEntryLocked || !financialValidation.valid) && <AccountSettingsModal key={`${account.id}-${accountSettingsPane}`} initialPane={accountSettingsPane} account={account} challenge={challenge} userId={user.id} canUseMultiBalance onClose={() => setModal(null)} onSave={handleSaveAccountSettings} onImport={(trades, onProgress, balanceId) => importTradesToAccount(account, trades, onProgress, balanceId)} onDelete={handleDeleteAccount} onReset={handleResetData} />}
       {modal === "import" && !guardrails.tradeEntryLocked && <ImportTradesModal account={account} onClose={() => setModal(null)} onImport={(plan, onProgress, balanceId) => importTradesToAccount(account, plan, onProgress, balanceId)} />}
       {modal === "profile" && <ProfileSettingsModal routine={routineStore.routine} onUpdateRoutine={routineStore.update} onOpenRoutine={openRoutineManagement} user={{ ...user, user_metadata: { ...user.user_metadata, full_name: profileDetails.fullName, display_name: displayName, avatar_url: personalProfileImage, timezone: profileDetails.timezone, date_format: profileDetails.dateFormat, time_format: profileDetails.timeFormat, privacy_screen_enabled: privacySettings.enabled, privacy_screen_timeout_minutes: privacySettings.timeoutMinutes, theme_palettes: profilePalettes, ...displayMetadata(displaySettings) } }} account={account} themeValue={profileTheme} themePreference={profileThemePreference} paletteValue={profilePalettes} onPreviewAppearance={(nextTheme, nextPalettes) => { const resolvedTheme = nextTheme === "system" ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") : nextTheme; applyProfilePalettes(nextPalettes, resolvedTheme); setProfileTheme(nextTheme); setProfilePalettes(nextPalettes); }} onClose={() => setModal(null)} onSave={handleSaveProfileSettings} onDeleteProfile={handleDeleteProfile} onSync={syncJournal} syncing={syncing} lastSyncedAt={lastSyncedAt} cloudSyncAccess={cloudSyncAccess} cloudSyncEntitled={cloudSyncEntitled} onOpenPricing={() => window.location.assign('/pricing')} onToggleCloudSync={toggleCloudSync} />}
       {routinePrompt && isRoutineTradingDay() && <DailyRoutinePopup entryKind={routineEntryKind} routine={routineStore.routine} firstName={(displayName || "Trader").split(/\s+/)[0]} sessionFor={now => entrySessionFromOpenTime(now.toISOString().slice(11,16), now.toISOString().slice(0,10))} accountSummary={{name:routineBalance?.name || account.name,balance:fmtMoney(routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance),cap:guardrails.dailyLossHit ? "Daily cap reached" : "Daily cap open",level:Math.min(routineChallenge.state?.activeLevel || challenge.state?.activeLevel || 1, routineBalance?.challengeLevelCount || account.challengeLevelCount || 30)}} onClose={closeDailyRoutine} onSave={saveDailyRoutine} onEdit={openRoutineManagement} onNews={() => {closeDailyRoutine();setPage("news");}} onGuardrails={() => {closeDailyRoutine();setPage("analytics");}}/>}
-      {modal === "markup" && <MarkupModal editing={editingMarkup} instruments={knownInstruments} onClose={()=>{setModal(null);setEditingMarkup(null);}} onSave={handleSaveMarkup} />}
       {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={handleCreateAccount} canCreateMultiBalance />}
       {dayModalDate && (
         <DayTradesModal
@@ -10460,6 +10758,41 @@ html { font-size: 15px; }
 .tj-appearance-live-strip .tj-appearance-loss { background:var(--loss-soft); color:var(--loss); }
 .tj-appearance-memory { margin:16px 0 0; color:var(--tj-muted); font-size:.75rem; }
 @media (max-width:600px) { .tj-profile-appearance-redesign { padding:16px !important; }.tj-appearance-head { display:grid; }.tj-appearance-status { justify-self:start; }.tj-profile-appearance-redesign .tj-theme-studio-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }.tj-profile-appearance-redesign .tj-theme-studio-preview { height:72px; }.tj-appearance-live-strip { gap:7px; } }
+
+/* Profile Settings uses its own final composition. This block lives here
+   because this inline sheet is rendered after imported component styles. */
+.tj-profile-studio-modal.tj-profile-redesign { display:flex!important; flex-direction:column!important; width:min(760px,calc(100vw - 32px))!important; height:min(816px,calc(100dvh - 32px))!important; max-height:calc(100dvh - 32px)!important; overflow:hidden!important; }
+.tj-profile-studio-modal.tj-profile-redesign>.tj-modal-head { display:none!important; }
+.tj-profile-studio-modal .tj-personal-profile-card { margin:0!important; padding:16px 20px!important; border:0!important; border-bottom:1px solid var(--border)!important; border-radius:0!important; background:var(--surface)!important; }
+.tj-profile-studio-modal .tj-profile-studio { flex:1 1 auto!important; min-height:0!important; overflow:hidden!important; }
+.tj-profile-studio-modal .tj-profile-studio-scroll { height:100%!important; padding:16px 20px!important; overflow-y:auto!important; }
+.tj-profile-studio-modal .tj-profile-reference-grid { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:14px!important; }
+.tj-profile-studio-modal .tj-profile-reference-top { grid-column:1/-1!important; display:grid!important; grid-template-columns:minmax(0,1fr)!important; gap:14px!important; }
+.tj-profile-studio-modal :is(.tj-profile-appearance-redesign,.tj-profile-region-display-card,.tj-personal-security-card,.tj-profile-security-combined) { width:auto!important; margin:0!important; padding:14px!important; border:1px solid var(--border)!important; border-radius:12px!important; background:var(--raised)!important; }
+.tj-profile-studio-modal .tj-profile-card-heading { display:flex!important; align-items:flex-start!important; justify-content:space-between!important; gap:12px!important; margin-bottom:12px!important; }
+.tj-profile-studio-modal .tj-profile-card-heading>div { display:grid!important; gap:3px!important; }
+.tj-profile-studio-modal .tj-profile-card-heading span { display:block!important; color:var(--muted)!important; font-size:var(--text-min)!important; line-height:1.35!important; }
+.tj-profile-studio-modal .tj-profile-card-heading em { padding:3px 8px!important; border:1px solid var(--border)!important; border-radius:999px!important; color:var(--muted)!important; font-size:var(--text-min)!important; font-style:normal!important; }
+.tj-profile-studio-modal .tj-theme-choice-three { width:100%!important; max-width:none!important; margin:0 0 12px!important; overflow:hidden!important; border:1px solid var(--border)!important; border-radius:8px!important; }
+.tj-profile-studio-modal .tj-profile-appearance-redesign .tj-theme-choice-three { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; box-sizing:border-box!important; }
+.tj-profile-studio-modal .tj-profile-appearance-redesign .tj-theme-choice-three>.tj-theme-choice { display:flex!important; align-items:center!important; justify-content:center!important; min-width:0!important; padding:0 8px!important; text-align:center!important; white-space:nowrap!important; }
+.tj-profile-studio-modal .tj-theme-gallery .tg { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:8px!important; }
+.tj-profile-studio-modal .tj-theme-gallery .tg-card { min-height:0!important; padding:6px!important; border:1px solid var(--border)!important; border-radius:9px!important; background:var(--surface)!important; }
+.tj-profile-studio-modal .tj-theme-gallery .tg-mini { aspect-ratio:16/5!important; border-radius:5px!important; }
+.tj-profile-studio-modal .tj-profile-region-display-card { container-type:inline-size; }
+.tj-profile-studio-modal .tj-profile-region-display-card .tj-regional-fields { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:10px!important; min-width:0!important; width:100%!important; }
+.tj-profile-studio-modal .tj-profile-region-display-card .tj-regional-fields>.tj-field { grid-column:auto!important; grid-row:auto!important; min-width:0!important; width:auto!important; }
+.tj-profile-studio-modal .tj-profile-region-display-card .tj-regional-fields :is(.tj-input,.tj-picker-trigger) { width:100%!important; min-width:0!important; }
+.tj-profile-studio-modal .tj-profile-region-display-card .tj-profile-display-row { display:grid!important; justify-content:start!important; gap:6px!important; padding:12px 0 0!important; margin-top:12px!important; border-top:1px solid var(--border)!important; }
+.tj-profile-studio-modal .tj-profile-region-display-card .tj-theme-choice-row { width:218px!important; overflow:hidden!important; border:1px solid var(--border)!important; border-radius:8px!important; }
+.tj-root.tj-theme-light .tj-psychology-mistake-grid header span { border:1px solid color-mix(in srgb,var(--tj-red) 30%,var(--tj-border)); background:color-mix(in srgb,var(--tj-red) 12%,var(--tj-panel)); color:var(--tj-red); }
+.tj-profile-studio-modal .tj-profile-security-combined { align-self:stretch!important; }
+.tj-profile-studio-modal .tj-profile-security-grid { display:grid!important; grid-template-columns:1fr!important; width:100%!important; border-top:1px solid var(--border)!important; }
+.tj-profile-studio-modal .tj-profile-security-grid>.tj-personal-appearance-card { display:block!important; min-height:0!important; padding:11px 0 0!important; margin:11px 0 0!important; border:0!important; border-top:1px solid var(--border)!important; border-radius:0!important; background:transparent!important; }
+.tj-profile-studio-modal .tj-profile-security-grid>.tj-personal-appearance-card:first-child { padding-top:0!important; margin-top:0!important; border-top:0!important; }
+.tj-profile-studio-modal .tj-profile-studio-footer { position:relative!important; z-index:1!important; margin:0!important; padding:12px 20px!important; border-top:1px solid var(--border)!important; background:var(--surface)!important; }
+@media(max-width:640px) { .tj-profile-studio-modal.tj-profile-redesign { width:calc(100vw - 16px)!important; height:calc(100dvh - 16px)!important; }.tj-profile-studio-modal .tj-profile-reference-grid { grid-template-columns:1fr!important; }.tj-profile-studio-modal .tj-theme-gallery .tg { grid-template-columns:repeat(2,minmax(0,1fr))!important; } }
+@container (max-width:360px) { .tj-profile-studio-modal .tj-profile-region-display-card .tj-regional-fields { grid-template-columns:1fr!important; } }
 
 `;
 

@@ -28,12 +28,22 @@ test('the late writing layer is borderless for ordinary writing and preserves a 
   assert.match(writing,/:focus-visible \{[\s\S]*?outline:1px solid color-mix\(in srgb,var\(--text\) 42%,transparent\) !important/);
 });
 
-test('utility controls, validation states, dialogs, and the Freeform Board remain outside the writing presentation',()=>{
+test('specialized controls remain outside the minimal underline input system',()=>{
   assert.match(writing,/input\.tj-input:is\(:not\(\[type\]\),\[type="text"\],\[type="email"\],\[type="password"\],\[type="url"\],\[type="tel"\]\)/);
   assert.match(writing,/:not\(\.tj-modal textarea\):not\(\.cv textarea\)/);
   assert.match(writing,/:not\(\[aria-invalid="true"\]\)/);
-  assert.doesNotMatch(writing,/input\[type="number"\].*border:0/);
+  assert.match(writing,/input\[type="number"\]/);
   assert.doesNotMatch(writing,/select\.tj-input.*border:0/);
+});
+
+test('ordinary text and numeric inputs share token-based underline states',()=>{
+  assert.match(writing,/Minimal underline input system/);
+  assert.match(writing,/border-bottom:1px solid var\(--tj-input-underline\) !important/);
+  assert.match(writing,/border-bottom:2px solid var\(--accent\) !important/);
+  assert.match(writing,/\[aria-invalid="true"\].*border-bottom-color:var\(--red\)/);
+  assert.match(writing,/input\[type="number"\]::-webkit-inner-spin-button/);
+  assert.match(writing,/-moz-appearance:textfield/);
+  assert.match(writing,/\.case-search\) input/);
 });
 
 test('every registered light and dark theme inherits the same token-based writing treatment',()=>{

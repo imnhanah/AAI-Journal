@@ -165,6 +165,7 @@
 .tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
 @media(max-width:900px) { .tj-root .tj-trade-composer-modal .tj-trade-price-basics,.tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } }
 @media(max-width:480px) { .tj-root .tj-trade-composer-modal .tj-trade-price-basics,.tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:minmax(0,1fr) !important; } }
+
 .tj-root .tj-news-workspace .tj-news-event-board { display:grid; gap:10px; align-items:start; overflow-x:auto; padding-bottom:8px; }
 .tj-root .tj-news-workspace .tj-news-day-block { margin:0; padding:10px; background:color-mix(in srgb,var(--tj-panel-alt) 86%,var(--tj-panel)); border:1px solid var(--tj-border); border-radius:14px; min-width:0; }
 .tj-root .tj-news-workspace .tj-news-day-today { border-color:var(--color-border-173); }
@@ -3028,5 +3029,353 @@
 .tj-cs-nodes button:focus-visible{
   outline:2px solid var(--focus);
   outline-offset:3px;
+}
+
+.tj-root .tj-entry-composer-modal .tj-trade-validation-summary{
+  margin:0 24px;
+  padding:10px 12px;
+  border:1px solid var(--tj-red);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--tj-red) 9%,var(--tj-panel));
+  color:var(--tj-text);
+  font-size:var(--text-min);
+}
+.tj-root .tj-trade-validation-summary strong{color:var(--tj-red);}
+.tj-root .tj-trade-validation-summary ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px;}
+.tj-root .tj-entry-composer-modal .tj-field-error :is(input,select,textarea,button.tj-picker-trigger){border-color:var(--tj-red)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--tj-red) 35%,transparent);}
+.tj-root .tj-entry-composer-modal .tj-field-error-message{display:block;margin-top:5px;color:var(--tj-red);font-size:var(--text-min);line-height:1.35;}
+@media(max-width:600px){.tj-root .tj-entry-composer-modal .tj-trade-validation-summary{margin:0 14px;}}
+
+/* The entry panel is a real flex sibling of the workspace. Only this outer
+   rail changes width; its inner form always retains the saved pixel width. */
+.tj-root .tj-entry-panel-outer { flex:0 0 auto; width:0; height:100dvh; min-height:0; overflow:hidden; position:relative; transition:width 240ms cubic-bezier(.2,.8,.2,1); }
+.tj-root .tj-entry-panel-outer.tj-entry-panel-open { width:var(--tj-entry-panel-width); }
+.tj-root .tj-entry-panel-inner { width:var(--tj-entry-panel-width); min-width:var(--tj-entry-panel-width); box-sizing:border-box; height:100%; display:flex; flex-direction:column; background:var(--tj-panel); }
+@media (min-width:901px) {
+  .tj-root .tj-entry-panel-inner .tj-modal.tj-entry-panel { position:relative; width:100%!important; min-width:100%!important; max-width:none!important; height:100dvh!important; max-height:100dvh!important; margin:0; border:0; border-left:1px solid var(--tj-border); border-radius:0; animation:none; overflow:hidden; will-change:auto; }
+  .tj-entry-panel-grip { position:absolute; left:-7px; top:0; bottom:0; z-index:8; width:14px; cursor:col-resize; touch-action:none; display:grid; place-items:center; }
+  .tj-entry-panel-grip::before { content:""; width:5px; height:48px; border-radius:999px; background:var(--tj-accent); transition:filter .14s ease,box-shadow .14s ease; }
+  /* The grip is deliberately the only visible resize affordance. */
+  .tj-entry-panel-grip:hover::before,.tj-entry-panel-grip:focus-visible::before,body.tj-entry-panel-dragging .tj-entry-panel-grip::before { filter:brightness(1.12); box-shadow:0 0 0 3px color-mix(in srgb,var(--tj-accent) 20%,transparent); }
+  .tj-root .tj-entry-panel,.tj-root .tj-entry-panel:focus,.tj-root .tj-entry-panel:focus-visible,
+  .tj-root .tj-entry-panel-grip,.tj-root .tj-entry-panel-grip:focus,.tj-root .tj-entry-panel-grip:focus-visible { outline:none!important; box-shadow:none!important; }
+  .tj-entry-panel .tj-modal-head,.tj-root .tj-entry-panel.tj-trade-composer-modal>.tj-modal-head { display:flex; padding-left:24px; }
+  .tj-entry-panel .tj-modal-body { min-width:0; padding:0; display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+  .tj-entry-panel-form { display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+  .tj-entry-panel-form[hidden] { display:none; }
+  .tj-entry-panel.tj-markup-composer-modal .tj-modal-head-actions { display:flex; }
+  .tj-entry-panel .tj-entry-composer-scroll { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scroll-behavior:auto; scrollbar-width:none; -ms-overflow-style:none; scrollbar-gutter:auto; padding:12px 20px 10px; }
+  .tj-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar { display:none; width:0; height:0; }
+  .tj-entry-panel .tj-trade-reference-card { margin-bottom:10px; padding:14px; }
+  .tj-entry-panel .tj-trade-reference-card>h4 { margin-bottom:10px; }
+  .tj-entry-panel .tj-trade-reference-plan .tj-trade-risk-results,.tj-entry-panel .tj-trade-reference-plan .tj-trade-timing-row { margin-top:10px; padding-top:10px; }
+  .tj-entry-panel .tj-trade-reference-accounts,.tj-entry-panel .tj-trade-reference-psychology { display:block; }
+  .tj-entry-panel .tj-trade-reference-accounts>.tj-balance-target-picks { margin:0 0 10px; }
+  .tj-entry-panel .tj-trade-reference-accounts>.tj-account-target-result { margin:0; }
+  .tj-entry-panel .tj-trade-reference-psychology { padding-bottom:10px; }
+  .tj-entry-panel .tj-trade-reference-psychology-grid { display:grid; gap:10px; }
+  .tj-entry-panel .tj-trade-reference-psychology-grid>.tj-grid2,.tj-entry-panel .tj-trade-reference-psychology-grid>.tj-trade-image-sessions { grid-column:auto; }
+  .tj-entry-panel .tj-entry-composer-footer { flex-shrink:0; }
+  .tj-entry-panel .tj-markup-continuous-form { min-height:0; }
+  .tj-entry-panel .tj-markup-continuous-form .tj-entry-composer-scroll { padding-top:0; }
+  .tj-entry-panel .tj-markup-continuous-section { padding:18px 0 4px; }
+  .tj-entry-panel .tj-markup-continuous-section + .tj-markup-continuous-section { margin-top:16px; padding-top:22px; border-top:1px solid var(--tj-border); }
+  .tj-entry-panel .tj-markup-continuous-heading { margin:0 0 16px; }
+  .tj-entry-panel .tj-markup-continuous-heading h3 { margin:0; color:var(--tj-text); font-size:.95rem; }
+  .tj-entry-panel .tj-markup-continuous-heading p { margin:4px 0 0; color:var(--tj-muted); font-size:var(--text-min); line-height:1.4; }
+  body.tj-entry-panel-dragging { user-select:none; cursor:col-resize; }
+  body.tj-entry-panel-dragging .tj-entry-panel-outer { transition:none!important; }
+}
+@media (max-width:900px) { .tj-root .tj-entry-panel-outer { position:fixed; inset:0 0 0 auto; z-index:80; height:100dvh; }.tj-root .tj-entry-panel-outer.tj-entry-panel-open { width:min(100vw,var(--tj-entry-panel-width)); }.tj-root .tj-entry-panel-inner { width:min(100vw,var(--tj-entry-panel-width)); min-width:min(100vw,var(--tj-entry-panel-width)); }.tj-entry-panel-grip { display:none; } }
+@media (prefers-reduced-motion:reduce) { .tj-root .tj-entry-panel-outer { transition:none; } }
+
+/* Aperture — refined execution and research workspace.
+   Scoped to the shared entry panel so the rest of the journal keeps its own
+   page language while all existing form behaviour remains untouched. */
+.tj-root .tj-entry-panel.tj-aperture-entry-panel {
+  container-type:inline-size;
+  background:
+    radial-gradient(ellipse 82% 250px at 66% -75px,color-mix(in srgb,var(--accent) 17%,transparent),transparent 76%),
+    var(--tj-panel);
+}
+.tj-root .tj-aperture-entry-panel>.tj-modal-head {
+  display:flex!important;
+  align-items:flex-start;
+  gap:14px;
+  min-height:94px;
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--tj-border);
+  background:transparent;
+}
+.tj-root .tj-aperture-entry-panel>.tj-modal-head::before {
+  content:"EXECUTION WORKSPACE";
+  position:absolute;
+  top:20px;
+  left:24px;
+  color:var(--accent);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.16em;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal>.tj-modal-head::before { content:"RESEARCH WORKSPACE"; }
+.tj-root .tj-aperture-entry-panel .tj-modal-title {
+  align-self:end;
+  color:var(--tj-text);
+  font-family:ui-serif,Georgia,serif;
+  font-size:clamp(1.75rem,6cqw,2.25rem);
+  font-style:italic;
+  font-weight:400;
+  letter-spacing:-.055em;
+  line-height:1;
+}
+.tj-root .tj-aperture-entry-panel .tj-modal-header-note {
+  align-self:start;
+  margin-left:auto;
+  padding:5px 9px;
+  border:1px solid color-mix(in srgb,var(--accent) 46%,var(--tj-border));
+  border-radius:999px;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
+  font-size:var(--text-min);
+}
+.tj-root .tj-aperture-entry-panel .tj-modal-head-actions { align-self:start; }
+.tj-root .tj-aperture-entry-panel .tj-entry-identity {
+  padding:12px 24px;
+  border-bottom:1px solid var(--tj-border);
+  background:color-mix(in srgb,var(--accent) 3%,transparent);
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-identity>div { text-align:left; }
+.tj-root .tj-aperture-entry-panel .tj-entry-identity small,
+.tj-root .tj-aperture-entry-panel .tj-field-label,
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading h3 {
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-identity strong {
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.025em;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-scroll {
+  padding:22px 24px 18px;
+  background:transparent;
+  scrollbar-width:none;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar { display:none; }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-stacked .tj-trade-reference-card,
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-section {
+  padding:0 0 22px;
+  margin:0 0 22px;
+  border:0;
+  border-bottom:1px solid var(--tj-border);
+  border-radius:0;
+  background:transparent;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-stacked .tj-trade-reference-card>h4,
+.tj-root .tj-aperture-entry-panel .tj-markup-section>h4 {
+  margin:0 0 15px;
+  color:var(--tj-text);
+  font-size:.84rem;
+  font-weight:750;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan,
+.tj-root .tj-aperture-entry-panel .tj-markup-reference-analysis { padding-top:4px!important; }
+.tj-root .tj-aperture-entry-panel .tj-trade-direction-toggle,
+.tj-root .tj-aperture-entry-panel .tj-calculation-method-toggle,
+.tj-root .tj-aperture-entry-panel .tj-markup-bias-toggle {
+  gap:4px;
+  padding:4px;
+  border:1px solid var(--tj-border);
+  border-radius:11px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 76%,transparent);
+}
+.tj-root .tj-aperture-entry-panel :is(.tj-trade-direction-toggle,.tj-calculation-method-toggle,.tj-markup-bias-toggle)>button {
+  min-height:34px;
+  border:0!important;
+  border-radius:8px;
+  background:transparent;
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  font-weight:750;
+}
+.tj-root .tj-aperture-entry-panel :is(.tj-trade-direction-toggle,.tj-calculation-method-toggle,.tj-markup-bias-toggle)>button[aria-pressed="true"] {
+  background:var(--accent)!important;
+  color:var(--on-accent)!important;
+}
+.tj-root .tj-aperture-entry-panel :is(input[type="number"],.tj-position-risk-summary strong,.tj-position-lot-summary strong,.tj-trade-risk-results input,.tj-trade-pnl-grid input) {
+  font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums;
+}
+.tj-root .tj-aperture-entry-panel .tj-position-suggestion {
+  margin:0 0 22px;
+  padding:17px;
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--tj-border));
+  border-radius:15px;
+  background:linear-gradient(125deg,color-mix(in srgb,var(--accent) 11%,transparent),transparent 74%);
+}
+.tj-root .tj-aperture-entry-panel .tj-position-risk-summary>span,
+.tj-root .tj-aperture-entry-panel .tj-position-lot-summary>span { letter-spacing:.12em; font-size:var(--text-min); }
+.tj-root .tj-aperture-entry-panel .tj-position-risk-summary strong,
+.tj-root .tj-aperture-entry-panel .tj-position-lot-summary strong { color:var(--accent); }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure {
+  margin:0 0 22px;
+  border:1px solid var(--tj-border);
+  border-radius:13px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 58%,transparent);
+  overflow:hidden;
+}
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:50px;
+  padding:0 15px;
+  color:var(--tj-text);
+  cursor:pointer;
+  font-size:.84rem;
+  font-weight:750;
+  list-style:none;
+}
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary::-webkit-details-marker { display:none; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary::after { content:"+"; color:var(--accent); font-size:1.2rem; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure[open]>summary { border-bottom:1px solid var(--tj-border); }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure[open]>summary::after { content:"−"; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary small { color:var(--tj-muted); font-size:var(--text-min); font-weight:500; margin-left:auto; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure-content { padding:18px; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure-content .tj-trade-reference-card:last-child { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer {
+  padding:14px 24px;
+  border-top:1px solid var(--tj-border);
+  background:var(--tj-panel);
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer .tj-btn-primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer .tj-btn-outline { background:transparent; border-color:var(--tj-border); }
+@container (max-width:580px) {
+  .tj-root .tj-aperture-entry-panel .tj-grid4,
+  .tj-root .tj-aperture-entry-panel .tj-trade-timing-row,
+  .tj-root .tj-aperture-entry-panel .tj-markup-meta-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-aperture-entry-panel .tj-grid3 { grid-template-columns:1fr; }
+}
+@container (max-width:430px) {
+  .tj-root .tj-aperture-entry-panel :is(.tj-grid4,.tj-grid3,.tj-grid2,.tj-trade-timing-row,.tj-markup-meta-row,.tj-markup-pair-row) { grid-template-columns:1fr; }
+  .tj-root .tj-aperture-entry-panel .tj-entry-identity { grid-template-columns:1fr; gap:8px; }
+  .tj-root .tj-aperture-entry-panel .tj-entry-identity>div+div { border-left:0; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .tj-root .tj-aperture-entry-panel * { transition:none!important; animation:none!important; }
+}
+.tj-confirm-overlay{position:fixed;inset:0;z-index:400000;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--tj-bg) 32%,transparent)}.tj-confirm-dialog{width:min(460px,calc(100vw - 32px));padding:20px;border:1px solid var(--tj-border);border-radius:16px;background:var(--tj-panel);color:var(--tj-text);box-shadow:var(--tj-shadow);animation:tj-confirm-in .18s ease-out}.tj-confirm-dialog header{display:flex;gap:12px}.tj-confirm-dialog svg{color:var(--tj-red);flex:0 0 auto}.tj-confirm-dialog h2{margin:0;font-size:1rem}.tj-confirm-dialog p{margin:6px 0 0;color:var(--tj-muted);line-height:1.45}.tj-confirm-dialog footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.tj-confirm-dialog button{min-height:36px;padding:7px 14px;border:1px solid var(--tj-border);border-radius:8px;background:var(--tj-panel-alt);color:var(--tj-text);font:inherit;font-weight:700;cursor:pointer}.tj-confirm-dialog .tj-confirm-danger{border-color:var(--tj-red);background:var(--tj-red);color:var(--tj-primary-contrast)}@keyframes tj-confirm-in{from{opacity:0;scale:.98}to{opacity:1;scale:1}}@media(prefers-reduced-motion:reduce){.tj-confirm-dialog{animation:none}}
+
+/* The app header belongs to the workspace canvas, rather than introducing a
+   second chrome surface. These are the same opaque canvas tokens used by the
+   shared page layout, so content can never show through a sticky header. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+  background:var(--bg) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light:not([data-profile-theme]) .tj-topbar,
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light[data-profile-theme="default"] .tj-topbar {
+  background:var(--journal-light-bg) !important;
+}
+
+/* In dark mode the workspace canvas must be opaque too. Otherwise the root's
+   decorative glow shows through the transparent main region and makes an
+   already-matching solid header look like a separate surface. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-main,
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-topbar {
+  background-color:var(--tj-bg) !important;
+  background-image:none !important;
+}
+
+/* Aperture finishing pass — deliberately scoped to the persistent journal
+   composer, so the regular modal and review forms retain their own layouts. */
+.tj-root .tj-aperture-entry-panel .tj-modal-title::after {
+  content:"Capture the execution. Understand the outcome.";
+  display:block;
+  max-width:36rem;
+  margin-top:5px;
+  color:var(--tj-muted);
+  font-family:var(--font-sans);
+  font-size:var(--text-min);
+  font-style:normal;
+  font-weight:500;
+  letter-spacing:0;
+  line-height:1.35;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-modal-title::after {
+  content:"Build the thesis. Review the session.";
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-setup::before,
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan::before,
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts::before {
+  display:block;
+  margin:0 0 8px;
+  color:var(--accent);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.13em;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-setup::before { content:"01 / TRADE SETUP"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan::before { content:"02 / EXECUTION & RISK"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts::before { content:"03 / RESULTS & ACCOUNTS"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts {
+  display:block;
+  padding-top:0!important;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>h4 {
+  margin:0 0 10px;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-balance-target-picks {
+  position:static;
+  margin:0 0 12px;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-account-target-result {
+  margin:0;
+  padding:13px;
+  border:1px solid var(--tj-border);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 74%,transparent);
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-account-target-result + .tj-account-target-result { margin-top:10px; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts .tj-trade-pnl-grid { gap:8px; }
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  margin:0 0 14px;
+}
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading::after {
+  content:"Research workspace";
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  white-space:nowrap;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-markup-reference-analysis textarea { min-height:116px; }
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-markup-reference-expectations textarea { min-height:148px; }
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-dropzone {
+  min-height:122px;
+  padding:0;
+  border:1px dashed color-mix(in srgb,var(--tj-border) 75%,var(--accent));
+  border-radius:13px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 68%);
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-trade-add-image {
+  display:grid;
+  min-height:120px;
+  place-items:center;
+  color:var(--tj-text);
+  font-size:var(--text-min);
+  font-weight:700;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-shot-grid {
+  width:100%;
+  gap:12px;
+}
+@container (max-width:430px) {
+  .tj-root .tj-aperture-entry-panel .tj-modal-title::after { display:none; }
+  .tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading::after { display:none; }
 }
 

@@ -1,66 +1,6 @@
 import { useState } from 'react';
+import { useConfirmation } from './ConfirmationDialog.jsx';
 import './trade-logs.css';
-
-/* ---------- Sample data (replace with your API data) ---------- */
-const months = [
-  {
-    label: 'October 2026',
-    total: '+$4,298.66',
-    trades: [
-      { id: 't1', pair: 'EUR/USD', side: 'BUY', when: '15/10/2026 · 11:05 AM', session: 'London', result: '-1.00R', loss: true },
-      { id: 't2', pair: 'EUR/USD', side: 'BUY', when: '08/10/2026 · 2:52 PM', session: 'NYC AM', result: '—' },
-      { id: 't3', pair: 'EURUSD', side: 'SELL', when: '07/10/2026 · 2:57 PM', session: '—', result: '-1.00R', loss: true },
-      { id: 't4', pair: 'EUR/USD', side: 'BUY', when: '06/10/2026 · 1:26 PM', session: 'NYC AM', result: '—' },
-      { id: 't5', pair: 'EUR/USD', side: 'BUY', when: '02/10/2026 · 11:53 AM', session: 'London', result: '-1.00R', loss: true },
-      { id: 't6', pair: 'EUR/USD', side: 'BUY', when: '02/10/2026 · 9:57 AM', session: 'London', result: '-1.00R', loss: true },
-      { id: 't7', pair: 'EUR/USD', side: 'BUY', when: '02/10/2026 · 9:54 AM', session: 'London', result: '-1.00R', loss: true },
-      { id: 't8', pair: 'EUR/USD', side: 'BUY', when: '02/10/2026 · 9:53 AM', session: 'London', result: '—' },
-      { id: 't9', pair: 'EUR/USD', side: 'SELL', when: '02/10/2026 · 8:49 AM', session: 'London', result: '—' },
-    ],
-  },
-  {
-    label: 'September 2026',
-    total: '+$45,515.80',
-    trades: [
-      { id: 't10', pair: 'EUR/USD', side: 'BUY', when: '30/09/2026 · 8:45 AM', session: 'London', result: '3.10R' },
-    ],
-  },
-];
-
-const details = {
-  t1: {
-    pair: 'EUR/USD',
-    side: 'BUY',
-    pnl: '-$11.54',
-    isLoss: true,
-    netReturn: '-11.90% net return',
-    entry: '1.12176',
-    exit: '1.12316',
-    held: '16h 43m',
-    closed: 'Closed 16/10/2026 · 3:48 AM',
-    stats: [
-      { label: 'Gross return', value: '-11.67%', tone: 'loss' },
-      { label: 'Costs', value: '-$0.22', sub: '-0.23%' },
-      { label: 'Rules checked', value: '7/7' },
-      { label: 'Held for', value: '16h 43m' },
-    ],
-    execution: [
-      ['Entry model', 'Counter Trend'],
-      ['Mood shift', 'Neutral → Neutral'],
-      ['Mistakes', 'No mistakes logged'],
-    ],
-    rating: 1,
-    accounts: [
-      { name: 'Exness', pnl: '-$5.60', share: 48 },
-      { name: 'Pepperstone', pnl: '-$5.94', share: 52 },
-    ],
-    confluences: ['HTF Bearish Trend', 'LTF Fractal Choch', 'PDH Break'],
-    screenshots: [{ src: '', alt: 'Exit chart screenshot', tag: 'EXIT' }],
-    note:
-      "I'm expecting more bearish structures, if not I will look out for a switch and buy the pullback. Its bank US Bank Holiday so I will not be expecting much.",
-    linkedMarkup: null,
-  },
-};
 
 /* ---------- Icons ---------- */
 const paths = {
@@ -132,7 +72,7 @@ function TradeRow({ trade, selected, onSelect }) {
   );
 }
 
-function TradeList({ selectedId, onSelect, rows = months }) {
+function TradeList({ selectedId, onSelect, rows = [] }) {
   return (
     <nav className="tl-list" aria-label="Trades">
       {rows.map((m) => (
@@ -157,6 +97,7 @@ function markupLabel(markup) {
 
 function TradeDetail({ d, markups = [], renderScreenshot, onWriteReview, onEditTrade, onDeleteTrade, onLinkMarkup }) {
   const [linkDrafts, setLinkDrafts] = useState({});
+  const confirm = useConfirmation();
   if (!d) {
     return <section className="tl-detail"><p className="tl-count">No details saved for this trade.</p></section>;
   }
@@ -178,7 +119,7 @@ function TradeDetail({ d, markups = [], renderScreenshot, onWriteReview, onEditT
             <button type="button" className="tl-btn-icon" aria-label="Edit trade" onClick={() => onEditTrade?.(d.trade)}><Icon name="pen" size={16} /></button>
             <details className="tl-actions-menu">
               <summary className="tl-btn-icon" aria-label="More actions"><Icon name="dots" /></summary>
-              <button type="button" onClick={() => { if (window.confirm('Delete this trade?')) onDeleteTrade?.(d.trade); }}>Delete trade</button>
+              <button type="button" onClick={async () => { if (await confirm({title:'Delete trade?',description:'Delete this trade? This cannot be undone.',confirmLabel:'Delete trade'})) onDeleteTrade?.(d.trade); }}>Delete trade</button>
             </details>
           </div>
         </div>
@@ -273,9 +214,8 @@ function TradeDetail({ d, markups = [], renderScreenshot, onWriteReview, onEditT
 
 /* ---------- Page ---------- */
 export default function TradeLogs({ theme = 'light', trades = [], markups = [], renderScreenshot, onWriteReview, onEditTrade, onDeleteTrade, onLinkMarkup }) {
-  const source = trades.length ? trades : months.flatMap(month => month.trades);
-  const rows = trades.length
-    ? Array.from(source.reduce((groups, trade) => {
+  const source = trades;
+  const rows = Array.from(source.reduce((groups, trade) => {
         const date = String(trade.date || '');
         const monthKey = date.slice(0, 7) || 'unknown';
         if (!groups.has(monthKey)) groups.set(monthKey, []);
@@ -291,8 +231,7 @@ export default function TradeLogs({ theme = 'light', trades = [], markups = [], 
           total: `${total < 0 ? '-' : '+'}$${Math.abs(total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
           trades: monthTrades.map(trade => ({ id: trade.id, pair: trade.asset || trade.pair, side: trade.direction || trade.side, when: trade.date ? `${trade.date} · ${trade.time || ''}` : trade.when, session: trade.entrySession || trade.session || '—', result: trade.rr ? `${Number(trade.rr).toFixed(2)}R` : '—', loss: Number(trade.pnl) < 0 }))
         };
-      })
-    : months;
+      });
   const liveDetails = Object.fromEntries(source.map((trade) => {
     const pnl = Number(trade.pnl || 0);
     const results = trade.balanceResults || [];
@@ -328,7 +267,7 @@ export default function TradeLogs({ theme = 'light', trades = [], markups = [], 
   return (
     <div className="trade-logs" data-theme={theme}>
       <TradeList selectedId={selectedId} onSelect={setSelectedId} rows={rows} />
-      <TradeDetail d={liveDetails[selectedId] || details[selectedId]} markups={markups} renderScreenshot={renderScreenshot} onWriteReview={onWriteReview} onEditTrade={onEditTrade} onDeleteTrade={onDeleteTrade} onLinkMarkup={onLinkMarkup} />
+      <TradeDetail d={liveDetails[selectedId]} markups={markups} renderScreenshot={renderScreenshot} onWriteReview={onWriteReview} onEditTrade={onEditTrade} onDeleteTrade={onDeleteTrade} onLinkMarkup={onLinkMarkup} />
     </div>
   );
 }
