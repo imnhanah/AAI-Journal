@@ -1,8 +1,13 @@
-import React, {useEffect,useRef,useState} from 'react';
+import React, {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState} from 'react';
 import {usePageState} from './NavigationSession.jsx';
+import {initializeChallengeExpansion,normalizeChallengeExpansion,setChallengeExpanded} from './challengeExpansionState.js';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
 import {MobileChallengePlan} from './MobileChallengePlan.jsx';
-import {Trophy,Trash2,ArrowDown,Target,Settings,X,Save} from 'lucide-react';
+import MobileChallengesV6 from './MobileChallengesV6.jsx';
+import DesktopChallengeCard, {ChallengeHero} from './DesktopChallenge.jsx';
+
+const CHALLENGE_V2 = true;
+import {Trophy,Trash2,ArrowDown,Target,Settings,X,Save,ChevronDown} from 'lucide-react';
 import {ThemeSelect} from './JournalControls';
 import {targetAmount,changeSetupTarget} from './challengeSetupTargets';
 import {activeBalances,isMultiBalanceWorkspace} from './balanceModel';
@@ -11,7 +16,8 @@ import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challenge
 import {accountLossGuardrails} from './accountRisk';
 import useBalanceChallenge from './useBalanceChallenge';
 import JournalSignalHeader from './JournalSignalHeader';
-import ChallengeCelebration, {useCompletionCelebration} from './ChallengeCelebration';
+import ChallengeCelebration, {useCompletionCelebration, TraderNameContext} from './ChallengeCelebration';
+import ChallengeCompletePopup from './ChallengeCompletePopup.jsx';
 
 const symbols={USD:'$',EUR:'€',GBP:'£',GHS:'₵'};
 const money=(value,currency='USD')=>`${symbols[currency] || currency+' '}${Number(value || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -55,17 +61,67 @@ function ChallengeRules({id,mode}) {
     <ol>{rules.items.map(([label,description],index)=><li key={label}><span>{index+1}</span><p><strong>{label}</strong>{description}</p></li>)}</ol>
   </section>;
 }
+function ChallengeRulesPopover({mode,onClose}) {
+  const rules=challengeRules[mode] || challengeRules.risk;
+  return <section className="tj-cs-rules-popover" role="dialog" aria-label={rules.title}>
+    <header><strong>{rules.title}</strong><button type="button" aria-label="Close challenge rules" onClick={onClose}><X size={14}/></button></header>
+    <ol>{rules.items.map(([label,description])=><li key={label}><strong>{label}</strong><span>{description}</span></li>)}</ol>
+  </section>;
+}
+// Phone layout: every challenge card shares one swipe row, and the plan below follows the selected card.
+const PhoneChallengeRail=createContext(null);
 export default function ChallengeLifecyclePage({account,challenge,userId,loginQuote,onDelete,onSaveSetup,challengeProgress,progressReady=false}) {
   const multi=isMultiBalanceWorkspace(account);
-  const firstBalance=multi?activeBalances(account).find(balance=>balance.challengeEnabled):null;
+  const challengeBalances=multi?activeBalances(account).filter(balance=>balance.challengeEnabled):[];
+  const firstBalance=challengeBalances[0] || null;
   const firstChallenge=useBalanceChallenge(firstBalance?{...firstBalance,trades:account.trades,balances:account.balances,financeMovements:account.financeMovements}:null,userId,firstBalance ? challengeProgress?.balance?.[firstBalance.id] : null,progressReady);
-  return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><div className="tj-balance-challenge-stack">{multi?activeBalances(account).filter(balance=>balance.challengeEnabled).map(balance=><BalanceCard key={balance.id} workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} onDelete={onDelete} onSaveSetup={onSaveSetup}/>):<ChallengeCard account={account} challenge={challenge} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)}/>}</div></section>;
+  const cardIds=multi?challengeBalances.map(balance=>balance.id):[account.id];
+  const cardKey=cardIds.join('|');
+  const [expansion,setExpansion]=usePageState('challenge','tj-challenge-expandedCards',()=>({initialized:false,ids:[]}));
+  const [activity,setActivity]=useState({});
+  const reportActivity=useCallback((id,next)=>setActivity(current=>current[id]?.ready===next.ready&&current[id]?.active===next.active&&current[id]?.planned===next.planned&&current[id]?.level===next.level&&current[id]?.total===next.total&&current[id]?.name===next.name?current:{...current,[id]:next}),[]);
+  useEffect(()=>{setExpansion(current=>{
+    const next=normalizeChallengeExpansion(current,cardIds);
+    return next.initialized===current?.initialized&&next.ids.length===(current?.ids||[]).length&&next.ids.every((id,index)=>id===current.ids[index])?current:next;
+  });},[cardKey,setExpansion]);
+  const challengeCards=cardIds.map(id=>({id,ready:activity[id]?.ready===true,active:activity[id]?.active===true}));
+  useEffect(()=>{
+    const next=initializeChallengeExpansion(expansion,challengeCards);
+    if(next.initialized!==expansion?.initialized||next.ids.length!==(expansion?.ids||[]).length||next.ids.some((id,index)=>id!==expansion.ids[index]))setExpansion(next);
+  },[challengeCards,expansion,cardKey,setExpansion]);
+  const expanded=id=>normalizeChallengeExpansion(expansion,cardIds).ids.includes(id);
+  const setExpanded=(id,next)=>setExpansion(current=>setChallengeExpanded(current,cardIds,id,next));
+  const [phonePage,setPhonePage]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
+  useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>setPhonePage(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
+  const [railEl,setRailEl]=useState(null);
+  const [lowerEl,setLowerEl]=useState(null);
+  const [swipedId,setSwipedId]=useState(null);
+  const userMoved=useRef(false),swipeTimer=useRef(0);
+  const railIds=cardIds.filter(id=>activity[id]?.planned!==false);
+  const selectedId=railIds.includes(swipedId)?swipedId:normalizeChallengeExpansion(expansion,cardIds).ids.find(id=>railIds.includes(id))||railIds[0];
+  const onRailScroll=()=>{clearTimeout(swipeTimer.current);swipeTimer.current=setTimeout(()=>{
+    if(!railEl)return;
+    const middle=railEl.getBoundingClientRect().left+railEl.clientWidth/2;
+    let closest=null,distance=Infinity;
+    [...railEl.children].forEach(card=>{const box=card.getBoundingClientRect(),gap=Math.abs(box.left+box.width/2-middle);if(gap<distance){distance=gap;closest=card.dataset.cardId;}});
+    if(closest&&closest!==selectedId){userMoved.current=true;setSwipedId(closest);}
+  },90);};
+  useEffect(()=>()=>clearTimeout(swipeTimer.current),[]);
+  const [deskSel,setDeskSel]=useState(null);
+  const deskV2=CHALLENGE_V2&&!phonePage;
+  const deskId=railIds.includes(deskSel)?deskSel:railIds[0];
+  const deskCards=railIds.map(id=>({id,name:activity[id]?.name || '',level:activity[id]?.level || 0,total:activity[id]?.total || 0}));
+  const railValue=useMemo(()=>phonePage?{railEl,lowerEl,selectedId,userMoved,orderOf:id=>Math.max(0,cardIds.indexOf(id))}:null,[phonePage,railEl,lowerEl,selectedId,cardKey]);
+  if(deskV2) return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><div className="ch2-page"><ChallengeHero cards={deskCards} selectedId={deskId} onSelect={setDeskSel}/>{multi?challengeBalances.map(balance=><div key={balance.id} hidden={balance.id!==deskId}><BalanceCard workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup}/></div>):<ChallengeCard account={account} challenge={challenge} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)}/>}</div></section>;
+  return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><PhoneChallengeRail.Provider value={railValue}><div className="tj-balance-challenge-stack">{phonePage&&<><div className="tj-mc6-rail" ref={setRailEl} data-scroll-row="true" onScroll={onRailScroll}/>{railIds.length>1&&<div className="tj-mc6-rail-dots" aria-hidden="true">{railIds.map(id=><i key={id} className={id===selectedId?'is-on':''}/>)}</div>}<div ref={setLowerEl}/></>}{multi?challengeBalances.map(balance=><BalanceCard key={balance.id} workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={expanded(balance.id)} setExpanded={next=>setExpanded(balance.id,next)} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup}/>):<ChallengeCard account={account} challenge={challenge} expanded={expanded(account.id)} setExpanded={next=>setExpanded(account.id,next)} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)}/>}</div></PhoneChallengeRail.Provider></section>;
 }
-function BalanceCard({workspace,balance,userId,startupProgress,progressReady,onDelete,onSaveSetup}) {
+function BalanceCard({workspace,balance,userId,startupProgress,progressReady,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup}) {
   const challenge=useBalanceChallenge({...balance,trades:workspace.trades,balances:workspace.balances,financeMovements:workspace.financeMovements},userId,startupProgress,progressReady);
-  return <ChallengeCard account={scopeChallengeAccount(workspace,balance)} challenge={challenge} onDelete={()=>onDelete(balance.id,challenge.state)} onSaveSetup={patch=>onSaveSetup(balance.id,challenge.state,patch)}/>;
+  return <ChallengeCard account={scopeChallengeAccount(workspace,balance)} challenge={challenge} expanded={expanded} setExpanded={setExpanded} onActivityChange={onActivityChange} onDelete={()=>onDelete(balance.id,challenge.state)} onSaveSetup={patch=>onSaveSetup(balance.id,challenge.state,patch)}/>;
 }
-function ChallengeCard({account,challenge,onDelete,onSaveSetup}) {
+function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup}) {
+  const rail=useContext(PhoneChallengeRail);
+  const traderName=useContext(TraderNameContext);
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>setPhone(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const {state,loading,saving,error}=challenge;
@@ -80,7 +136,6 @@ function ChallengeCard({account,challenge,onDelete,onSaveSetup}) {
   const adaptive=isAdaptiveBalanceMode(mode);
   const failureFloor=challengeFailureFloor(challengeBalance,mode,state.automation);
   const [details,setDetails]=usePageState('challenge',`tj-challenge-${account.id}:details`,false);
-  const [expanded,setExpanded]=usePageState('challenge',`tj-challenge-${account.id}:expanded`,false);
   const [planRange,setPlanRange]=usePageState('challenge',`tj-challenge-${account.id}:planRange`,()=>window.matchMedia(MOBILE_MEDIA).matches?0:null);
   const [setup,setSetup]=useState(null);
   const [savingSetup,setSavingSetup]=useState(false);
@@ -88,6 +143,7 @@ function ChallengeCard({account,challenge,onDelete,onSaveSetup}) {
   const complete=!failed && (state.activeLevel===plan.length+1 || Object.values(state.statuses || {}).filter(status=>status==='Pass').length===plan.length);
   const [celebrating,setCelebrating]=useCompletionCelebration(!loading && complete && plan.length>0);
   const activeRow=useRef(null);
+  useEffect(()=>{onActivityChange?.(account.id,{ready:!loading,active:!loading&&plan.length>0&&!failed&&!complete,planned:plan.length>0,level:loading||!plan.length?0:Math.min(Math.max(state.activeLevel || 1,1),plan.length),total:plan.length,name:account.name});},[account.id,account.name,complete,failed,loading,onActivityChange,plan.length,state.activeLevel]);
   if(!plan.length)return null;
   // Do not render a made-up Level 1 while the saved challenge state is still
   // arriving. A stable loading card is preferable to a visible level jump.
@@ -102,43 +158,33 @@ function ChallengeCard({account,challenge,onDelete,onSaveSetup}) {
   const visiblePlan=rangeStart==='all'?plan:plan.slice(rangeStart,rangeStart+10);
   const modeName=adaptive?'Mode 3 — Adaptive Balance':mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit';
   const rewardLabel=adaptive?`${state.automation?.adaptiveRiskPct ?? 1}% risk · ${reward}R`:reward?`1:${reward}`:'';
+  // Facts for the desktop celebration and certificate, all from this challenge's own record.
+  const celebrationFacts=()=>{
+    const trades=linkedChallengeTrades(state,account);
+    const lastClose=trades.map(trade=>Date.parse(trade.closeDate||trade.date)).filter(Number.isFinite).sort((a,b)=>b-a)[0];
+    const started=Date.parse(state.automation?.startedAt);
+    const completedAt=lastClose || Date.now();
+    return {traderName, accountName:account.name, totalLevels:plan.length, modeName, rewardLabel,
+      finalTarget:plan.at(-1)?.end ?? life.liveBalance, trades:trades.length,
+      daysTaken:Number.isFinite(started)?Math.max(1,Math.ceil((completedAt-started)/864e5)):null,
+      stepBacks:state.stepBacks ?? Object.values(state.statuses || {}).filter(status=>status==='Step back').length,
+      growth:challengeBalance>0?life.liveBalance/challengeBalance:null, completedAt,
+      certificateId:`AF-${String(account.id || account.name || '').replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase()}-${plan.length}`};
+  };
   const jumpToActive=()=>{setExpanded(true);setPlanRange(Math.floor((current.level-1)/10)*10);setTimeout(()=>activeRow.current?.scrollIntoView({behavior:'smooth',block:'center'}),0);};
   const openSetup=()=>setSetup({name:account.name || '',startingBalance:challengeBalance || account.balance || '',mode,levelCount:plan.length,reward:reward ?? (mode==='streak'?3.1:3),adaptiveRiskPct:state.automation?.adaptiveRiskPct ?? 1,adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct ?? 10,monthlyGoalPct:account.monthlyGoalPct || 0,yearlyGoalPct:account.yearlyGoalPct || 0,dailyLossLimitPct:account.dailyLossLimitPct || 0,monthlyLossLimitPct:account.monthlyLossLimitPct || 0,...(!isMultiBalanceWorkspace(account)&&account.monthlyGoalSource==='amount'?{monthlyGoalPctAmount:account.monthlyGoalAmount || 0}:{}),...(!isMultiBalanceWorkspace(account)&&account.yearlyGoalSource==='amount'?{yearlyGoalPctAmount:account.yearlyGoalAmount || 0}:{})});
   const saveSetup=async()=>{setSavingSetup(true);try{if(await onSaveSetup({...setup,startingBalance:Number(setup.startingBalance),levelCount:Number(setup.levelCount)}))setSetup(null);}finally{setSavingSetup(false);}};
   // The split component deliberately owns the visual composition only.  The
   // plan, lifecycle, status and persistence handlers above remain the single
   // source of truth for challenge calculations.
-  return <ChallengeSplitVisual
-    account={account}
-    plan={plan}
-    current={current}
-    state={state}
-    life={life}
-    failed={failed}
-    complete={complete}
-    mode={mode}
-    modeName={modeName}
-    rewardLabel={rewardLabel}
-    reward={reward}
-    adaptive={adaptive}
-    failureFloor={failureFloor}
-    linked={linked}
-    fmt={fmt}
-    expanded={expanded}
-    setExpanded={setExpanded}
-    challenge={challenge}
-    openSetup={openSetup}
-    setup={setup}
-    setSetup={setSetup}
-    saveSetup={saveSetup}
-    savingSetup={savingSetup}
-    deleting={deleting}
-    setDeleting={setDeleting}
-    onDelete={onDelete}
-    onSaveSetup={onSaveSetup}
-    locked={locked}
-    settingsLocked={state.settingsLocked}
-  />;
+  const viewProps = {
+    account, plan, current, state, life, failed, complete, mode, modeName,
+    rewardLabel, reward, adaptive, failureFloor, linked, fmt, expanded,
+    setExpanded, challenge, openSetup, setup, setSetup, saveSetup,
+    savingSetup, deleting, setDeleting, onDelete, onSaveSetup, locked,
+    settingsLocked:state.settingsLocked,
+  };
+  return phone ? <><MobileChallengesV6 {...viewProps} rules={challengeRules[mode] || challengeRules.risk} rail={rail} order={rail?.orderOf(account.id) ?? 0} onOpenSettings={openSetup} saving={saving} error={error} onRetry={challenge.retry}/>{setup&&<ChallengeSplitSettingsModal setup={setup} setSetup={setSetup} account={account} locked={state.settingsLocked} saving={savingSetup} deleting={deleting} onCancel={()=>setSetup(null)} onSave={saveSetup} onDelete={async()=>{setDeleting(true);try{if(await onDelete())setSetup(null);}finally{setDeleting(false);}}}/>}</> : CHALLENGE_V2 ? <><DesktopChallengeCard {...viewProps} rules={challengeRules[mode] || challengeRules.risk} saving={saving} error={error}/>{celebrating&&<ChallengeCompletePopup facts={celebrationFacts()} money={fmt} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}</> : <ChallengeSplitVisual {...viewProps}/>;
   /* Legacy layout retained below as a reference during the migration. */
   return <article className={`tj-panel tj-balance-challenge-panel tj-challenge-reference ${expanded?'':'tj-balance-challenge-collapsed'}`}>
     <header role="button" tabIndex={0} aria-expanded={expanded} aria-label={`${expanded?'Collapse':'Expand'} ${account.name} challenge`} onClick={()=>setExpanded(value=>!value)} onKeyDown={event=>{if(event.target===event.currentTarget && (event.key==='Enter'||event.key===' ')){event.preventDefault();setExpanded(value=>!value);}}}><div className="tj-challenge-card-title"><h3>{account.name}</h3><span>{modeName}</span>{rewardLabel&&<span>{rewardLabel}</span>}<span>{plan.length} levels</span></div><div className="tj-challenge-header-actions"><span className={`tj-challenge-state-badge ${failed?'failed':complete?'passed':'active'}`} aria-label={`${account.name} challenge ${failed?'Failed':complete?'Passed':'Active'}`}>{failed?'Failed':complete?'Passed':'Active'}</span><button type="button" className="tj-icon-btn" aria-label={`Settings for ${account.name}`} title="Challenge settings" onClick={event=>{event.stopPropagation();openSetup();}} disabled={loading}><Settings size={12}/> Settings</button></div></header>
@@ -200,6 +246,8 @@ function ChallengeSplitVisual({account,plan,current,state,life,failed,complete,m
   const [tab,setTab]=useState('plan');
   const [range,setRange]=useState('1-10');
   const [selected,setSelected]=useState(current.level);
+  const [rulesOpen,setRulesOpen]=useState(false);
+  const rulesMenuRef=useRef(null);
   const [showSizing,setShowSizing]=useState(true);
   useEffect(()=>{if(expanded)setSelected(current.level);},[expanded,current.level]);
   const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass').length;
@@ -220,6 +268,14 @@ function ChallengeSplitVisual({account,plan,current,state,life,failed,complete,m
   const levelRiskRate=row=>row.start?row.risk/row.start:0;
   const close=()=>setExpanded(false);
   const open=()=>setExpanded(true);
+  useEffect(()=>{
+    if(!rulesOpen)return undefined;
+    const dismiss=event=>{if(!rulesMenuRef.current?.contains(event.target))setRulesOpen(false);};
+    const escape=event=>{if(event.key==='Escape')setRulesOpen(false);};
+    document.addEventListener('pointerdown',dismiss);
+    document.addEventListener('keydown',escape);
+    return()=>{document.removeEventListener('pointerdown',dismiss);document.removeEventListener('keydown',escape);};
+  },[rulesOpen]);
   return <article className={`tj-challenge-split ${expanded?'is-open':''}`}>
     <header
       className="tj-cs-header tj-cs-card"
@@ -236,7 +292,7 @@ function ChallengeSplitVisual({account,plan,current,state,life,failed,complete,m
       }}
     >
       <div className="tj-cs-header-main"><h2>{account.name}</h2><span>{modeName}</span>{rewardLabel&&<span>{rewardLabel}</span>}<span>{plan.length} levels</span></div>
-      <div className="tj-cs-header-actions"><b className={failed?'is-failed':complete?'is-complete':'is-active'}>{failed?'Failed':complete?'Complete':'Active'}</b><button type="button" className="tj-cs-settings" onClick={event=>{event.stopPropagation();openSetup();}}><Settings size={15}/>Settings</button></div>
+      <div className="tj-cs-header-actions"><div className="tj-cs-rules-menu" ref={rulesMenuRef} onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><button type="button" className="tj-cs-rule-link" aria-expanded={rulesOpen} aria-haspopup="dialog" onClick={()=>setRulesOpen(value=>!value)}>Rules <ChevronDown size={14} aria-hidden="true"/></button>{rulesOpen&&<ChallengeRulesPopover mode={mode} onClose={()=>setRulesOpen(false)}/>}</div><b className={failed?'is-failed':complete?'is-complete':'is-active'}>{failed?'Failed':complete?'Complete':'Active'}</b><button type="button" className="tj-cs-settings" onClick={event=>{event.stopPropagation();openSetup();}}><Settings size={15}/>Settings</button></div>
     </header>
     {failed&&<p className="tj-cs-alert">Challenge is paused. Live capital is below {fmt(failureFloor)}.</p>}
     <div className="tj-cs-layout">

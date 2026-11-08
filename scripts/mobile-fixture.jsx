@@ -2,9 +2,11 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {TradingJournalApp,FinanceReminderModal} from '../src/TradingJournal.jsx';
+import {ConfirmationProvider} from '../src/ConfirmationDialog.jsx';
 import {createPortal} from 'react-dom';
 import ChallengeCompletionCelebration from '../src/ChallengeCelebration.jsx';
 import * as local from '../src/localJournalDb.js';
+import {buildDemoHistory} from '../src/demoData.js';
 import {supabase} from '../src/supabaseClient.js';
 import {loadAccent} from '../src/siteTheme.js';
 import {activatePrivateUser} from '../src/privateCacheRuntime.js';
@@ -28,8 +30,11 @@ import '../src/mobileReview.css';
 import '../src/mobileProfile.css';
 import '../src/mobileLogTrade.css';
 import '../src/mobileMarkups.css';
+import '../src/mobileMarkupsV2.css';
 import '../src/mobileDashboard.css';
 import '../src/mobileAnalytics.css';
+import '../src/mobileAnalyticsV5.css';
+import '../src/mobileJournalHubV2.css';
 import '../src/mobileBacktest.css';
 import '../src/mobilePsychology.css';
 import '../src/mobileNews.css';
@@ -39,6 +44,12 @@ import '../src/mobileAccountSettings.css';
 import '../src/mobilePopups.css';
 const params=new URLSearchParams(location.search);
 if(params.get('desktopBaseline')!=='1')await import('../src/mobileRules.css');
+await import('../src/unifiedCardSurfaces.css');
+await import('../src/tradeLogThemeFix.css');
+await import('../src/selectedControlBorders.css');
+await import('../src/borderlessInterface.css');
+await import('../src/writingFields.css');
+await import('../src/mobileApp.css');
 const nativeFetch=window.fetch.bind(window);
 // Stable quote selection makes before/after desktop screenshots comparable.
 Math.random=()=>0.5;
@@ -56,7 +67,7 @@ for(const offset of [-1,0,1]){
   localStorage.setItem(`ff-cache:${newsWeekKey(offset)}`,JSON.stringify({events,source:'cache',fetchedAt:fixed}));
 }
 const theme=params.get('theme')||'dark',accent=params.get('accent')||'default';
-const user={id:params.get('longFigures')==='1'?'00000000-0000-4000-8000-000000000002':'00000000-0000-4000-8000-000000000001',email:'fixture@example.invalid',created_at:'2026-01-01',email_confirmed_at:'2026-01-01',user_metadata:{display_name:'Nana',theme_preference:theme,accent_color:accent,demo_history_version:6,dailyRoutine:{customItems:[{id:'affirmations',label:'Read my affirmations',group:'before',enabled:true}]}}};
+const user={id:params.get('longFigures')==='1'?'00000000-0000-4000-8000-000000000002':'00000000-0000-4000-8000-000000000001',email:'fixture@example.invalid',created_at:'2026-01-01',email_confirmed_at:'2026-01-01',user_metadata:{display_name:'Nana',theme_preference:theme,accent_color:accent,demo_history_version:6,...(params.get('panelSide')?{trade_panel_position:params.get('panelSide')}:{}),...(params.get('panelBehavior')?{trade_panel_behavior:params.get('panelBehavior')}:{}),dailyRoutine:{customItems:[{id:'affirmations',label:'Read my affirmations',group:'before',enabled:true}]}}};
 supabase.auth.getUser=async()=>({data:{user},error:null});
 supabase.auth.updateUser=async({data})=>{Object.assign(user.user_metadata,data);return {data:{user},error:null};};
 const testRun={id:'fixture-run',name:'EUR/USD · M15',instrument:'EUR/USD',timeframe:'M15',strategy:'Generated sample',startingBalance:10000,riskPct:1,tradeTarget:20,currency:'USD',plan:'Illustrative sample: 4 wins at +3R and 6 losses at -1R. Fixed $100 risk, no costs.',conclusion:'Sample only — not historical performance.',sample:true,rules:[],updatedAt:'2026-10-12T09:00:00Z'};
@@ -81,7 +92,12 @@ supabase.rpc=(function createBacktestFixtureRpc(run,trades,demoId='fixture-works
 })(testRun,testTrades,"fixture-workspace",backtestFixtureAudit);
 local.configureLocalJournal(user.id,true);
 await activatePrivateUser(user.id);
-const loaded=await local.fetchAllUserData(user.id),data=loaded.data,account=data.accounts[0];
+const loaded=await local.fetchAllUserData(user.id),data=loaded.data;
+// Device storage now starts empty, so the fixture seeds its own synthetic journal.
+if(!data.accounts.length)data.accounts.push({id:'fixture-workspace',name:'Demo',baseCurrency:'USD',balance:1000,balances:[{id:'fixture-balance-0',workspaceId:'fixture-workspace',name:'Account 1',startingBalance:1000,currency:'USD'}],trades:buildDemoHistory().trades.map((trade,index)=>({...trade,id:`fixture-trade-${index}`,instrument:trade.asset,status:'closed',grossPnl:trade.pnl,netPnl:trade.pnl,commission:0,swap:0})),rules:[],checkins:{},savingsAccounts:[],financeMovements:[]});
+const account=data.accounts[0];
+// Side panel checks: turn the position calculator on (positionSize=1).
+if(params.get('positionSize')==='1'){account.positionSizeEnabled=true;data.customInstruments=[...(data.customInstruments||[]),'TESTIDX'];}
 account.id='fixture-workspace';account.name='Demo';account.financeEnabled=true;account.finance={enabled:true,tradingTarget:50000};account.challengeEnabled=true;account.challengeStartingBalance=1000;account.challengeLevelCount=10;
 account.workspaceType='multi_balance';
 account.balances=[1000,40000,12310].map((balance,index)=>({...account.balances[0],id:`fixture-balance-${index}`,workspaceId:account.id,name:`Account ${index+1}`,startingBalance:balance,challengeEnabled:true,challengeStartingBalance:balance,challengeLevelCount:10}));
@@ -130,6 +146,28 @@ if(params.get('financeLong')==='1')(function configureFinanceLong(account) {
     savingsAccountId:saving.id,note:'Synthetic partial savings transfer',
   }));
 })(account);
+// Case Studies checks (caseStudies=1): a small synthetic research library.
+if(params.get('caseStudies')==='1'){
+  const chart=(seed,up,label)=>'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#0b1126"/>${Array.from({length:60},(_,i)=>{const x=30+i*19,base=up?560-i*7:180+i*6,o=base+((i*seed)%40)-20,c=o+(((i+seed)%2)?-26:22),col=c<o?'#2fd6a0':'#f26d78';return `<line x1="${x}" x2="${x}" y1="${Math.min(o,c)-12}" y2="${Math.max(o,c)+12}" stroke="${col}" stroke-width="2"/><rect x="${x-6}" y="${Math.min(o,c)}" width="12" height="${Math.max(3,Math.abs(c-o))}" fill="${col}"/>`;}).join('')}<text x="40" y="70" font-size="34" font-weight="800" fill="#f2f0ff" font-family="Inter,sans-serif">${label}</text></svg>`);
+  const stamp='2026-10-11T10:00:00.000Z';
+  data.profileCaseStudyLibrary={
+    studies:[
+      {id:'fixture-study-1',title:'Market Structure Shift and Order-Block Study',notebookId:'structure',templateId:'market-structure-study',instrument:'USD/JPY',sections:['Research Objective','Higher-Timeframe Context','Market Structure Observations','Liquidity Analysis','Evidence & Examples','Limitations','Conclusion'],sectionNotes:{'Research Objective':'Objective: determine whether a confirmed break of a protected swing, followed by a retest of the displacement origin, produces a reliable continuation setup on USD/JPY. The study separates a genuine change in order flow from an ordinary pullback inside a prevailing trend.','Higher-Timeframe Context':'Daily structure is bullish; the four-hour chart printed a lower high after the sweep.'},status:'Researching',evidenceIds:['fixture-evidence-1'],evidencePlacements:{'fixture-evidence-1':{caption:'Break of structure and order-block retracement',observation:'',annotations:[]}},tradeIds:['fixture-trade-0'],markupIds:['fixture-markup'],relatedStudyIds:[],favorite:false,pinned:true,archived:false,createdAt:stamp,updatedAt:'2026-10-12T09:00:00.000Z',revisionCount:3},
+      {id:'fixture-study-2',title:'London Open Range Breakout Playbook',notebookId:'playbook',templateId:'playbook',instrument:'GBP/USD',sections:['Setup','Conditions','Risk','Execution','Review'],sectionNotes:{Setup:'Trade the first confirmed expansion from the London 08:00–08:15 opening range. A breakout is not chased; execution occurs only on a controlled retest.',Conditions:'Close outside the range, then a retest that holds the broken boundary.',Risk:'Stop beyond the opposite side of the range; 1% risk.',Execution:'Enter on the retest candle close.',Review:'Twelve examples reviewed; the retest filter removed most failed breaks.'},status:'Validated',validation:{validatedAt:'2026-10-10T12:00:00.000Z',summary:'Trade only the controlled retest.'},review:{assessment:'Supported',reasoning:'The range gives an objective reference for entry and invalidation.',conclusion:'Trade only the controlled retest.'},evidenceIds:['fixture-evidence-2'],evidencePlacements:{'fixture-evidence-2':{caption:'London range, breakout and retest',observation:'',annotations:[]}},tradeIds:[],markupIds:[],relatedStudyIds:[],favorite:true,pinned:false,archived:false,createdAt:stamp,updatedAt:'2026-10-10T12:00:00.000Z',revisionCount:5},
+      {id:'fixture-study-3',title:'Liquidity Sweep Reversal Framework',notebookId:'liquidity',templateId:'research',instrument:'EUR/USD',sections:['Research question','Hypothesis','Market context','Conclusion'],sectionNotes:{'Research question':'Does a raid of the prior-day high or low create a repeatable reversal when followed by confirmed displacement?'},status:'Needs validation',evidenceIds:['fixture-evidence-3'],evidencePlacements:{'fixture-evidence-3':{caption:'Sweep, supply zone and displacement',observation:'',annotations:[]}},tradeIds:[],markupIds:[],relatedStudyIds:[],favorite:false,pinned:false,archived:false,createdAt:stamp,updatedAt:'2026-10-09T08:00:00.000Z',revisionCount:2},
+      {id:'fixture-study-4',title:'Untitled study',notebookId:'notes',templateId:'blank',instrument:'',sections:['Overview','Notes','Conclusion'],sectionNotes:{},status:'Draft',evidenceIds:[],tradeIds:[],markupIds:[],relatedStudyIds:[],favorite:false,pinned:false,archived:true,createdAt:stamp,updatedAt:'2026-10-05T08:00:00.000Z',revisionCount:1},
+    ],
+    evidence:[
+      {id:'fixture-evidence-1',title:'USD/JPY Structure Shift and Bearish Order Block',source:'Synthetic fixture chart',url:chart(7,false,'USD/JPY 1H'),notes:'Break beneath the protected higher low, then a retracement into the order block.',tags:['market structure','USDJPY','order block'],kind:'Chart',createdAt:stamp},
+      {id:'fixture-evidence-2',title:'GBP/USD London Open Range Breakout',source:'Synthetic fixture chart',url:chart(11,true,'GBP/USD 5m'),notes:'Opening range 08:00–08:15 with a controlled retest.',tags:['ORB','GBPUSD','London open'],kind:'Chart',createdAt:stamp},
+      {id:'fixture-evidence-3',title:'EUR/USD Prior-Day High Liquidity Sweep',source:'Synthetic fixture chart',url:chart(5,false,'EUR/USD 15m'),notes:'Raid of the prior-day high followed by displacement.',tags:['liquidity','EURUSD','sweep'],kind:'Chart',createdAt:stamp},
+    ],
+    personalTemplates:[{id:'fixture-template-1',name:'My pre-session checklist',description:'A personal study structure.',sections:['Context','Levels','Plan'],createdAt:stamp,updatedAt:stamp}],
+    connections:[{id:'fixture-connection-1',source:{type:'case-study',id:'fixture-study-2'},target:{type:'case-study',id:'fixture-study-1'},relationship:'supports',explanation:'The same setup viewed on different pairs.',createdAt:stamp}],
+    notebooks:[['structure','Market Structure'],['liquidity','Liquidity'],['entries','Entries & Setups'],['risk','Risk Management'],['psychology','Trading Psychology'],['playbook','My Strategy Playbook'],['lessons','Trade Lessons'],['notes','Personal Notes']].map(([id,name])=>({id,name,builtIn:true})),
+    settings:{view:'grid',query:'',status:'All',notebook:'All'},
+  };
+}
 await local.importLocalJournal(user.id,{version:1,data});
 localStorage.setItem('tj:site-theme',theme);localStorage.setItem('tj:profile-accent',accent);
 localStorage.setItem('tj-savings-alert-sound','off');
@@ -141,4 +179,4 @@ function FixturePopup(){
   return createPortal(params.get('popup')==='challenge'?<ChallengeCompletionCelebration accountName="Account 3" totalLevels={10} startingBalance={500} finalBalance={64205000.5} soundEnabled={false} onClose={()=>setOpen(false)}/>:<FinanceReminderModal account={account} savingsPlans={account.savingsAccounts} onClose={()=>setOpen(false)} onOpenFinance={()=>setOpen(false)}/>,host);
 }
 await Promise.all(['Inter Variable','JetBrains Mono Variable'].map(font=>document.fonts.load(`14px "${font}"`)));
-createRoot(document.getElementById('root')).render(<React.Suspense fallback={<p>Loading fixture…</p>}><style>{`*,*::before,*::after{animation:none!important;transition:none!important;}`}</style><TradingJournalApp user={user} onLogout={()=>{}}/><FixturePopup/></React.Suspense>);
+createRoot(document.getElementById('root')).render(<React.Suspense fallback={<p>Loading fixture…</p>}><style>{`*,*::before,*::after{animation:none!important;transition:none!important;}`}</style><ConfirmationProvider><TradingJournalApp user={user} onLogout={()=>{}}/></ConfirmationProvider><FixturePopup/></React.Suspense>);

@@ -43,10 +43,25 @@ const payload = (scope, id, userId, activeLevel = 4) => ({
 const noCloud = { from() { throw new Error('Local mode contacted Supabase'); } };
 const db = createChallengeStorage({ isLocal:local.isLocalJournal, local, cloud:noCloud });
 
+async function createLocalAccount(userId) {
+  const created = await local.createAccount(userId, { name:'Test account', balance:1000, baseCurrency:'USD' });
+  assert.equal(created.error, undefined);
+  const balance = await local.createWorkspaceBalance(userId, created.data.id, { name:'Primary balance', startingBalance:1000, baseCurrency:'USD' });
+  assert.equal(balance.error, undefined);
+  return (await local.fetchAllUserData(userId)).data.accounts[0];
+}
+
+test('a new device-only journal has no generated account, trade, or review', async () => {
+  local.configureLocalJournal('empty-device-user', true);
+  const { data } = await local.fetchAllUserData('empty-device-user');
+  assert.deepEqual(data.accounts, []);
+  assert.deepEqual(data.reviews, []);
+  assert.deepEqual(data.periodReviews, []);
+});
+
 test('free challenges persist for account and balance, survive reload, and restore from backup', async () => {
   local.configureLocalJournal('free-user', true);
-  const {data} = await local.fetchAllUserData('free-user');
-  const account = data.accounts[0];
+  const account = await createLocalAccount('free-user');
   for (const [scope, id] of [['account',account.id],['balance',account.balances[0].id]]) {
     assert.equal((await db.read(scope,id,'free-user')).data, null);
     assert.equal((await db.probe(scope,id)).error,null);
@@ -66,17 +81,37 @@ test('free challenges persist for account and balance, survive reload, and resto
 
 test('concurrent trade and challenge saves do not overwrite each other',async () => {
   local.configureLocalJournal('concurrent-user',true);
-  const {data} = await local.fetchAllUserData('concurrent-user');
-  const account = data.accounts[0];
+  const account = await createLocalAccount('concurrent-user');
+  const trade = await local.createTrade('concurrent-user', account.id, { asset:'EUR/USD', context:'Original', pnl:0 });
   await Promise.all([
     db.save('account',payload('account',account.id,'concurrent-user',5)),
-    local.updateTrade(account.trades[0].id,{context:'Updated concurrently'}),
+    local.updateTrade(trade.data.id,{context:'Updated concurrently'}),
     db.save('balance',payload('balance',account.balances[0].id,'concurrent-user',6)),
   ]);
   const backup = await local.exportLocalJournal('concurrent-user');
   assert.equal(backup.data.accounts[0].trades[0].context,'Updated concurrently');
   assert.equal(backup.data.challengeProgress.account[account.id].active_level,5);
   assert.equal(backup.data.challengeProgress.balance[account.balances[0].id].active_level,6);
+});
+
+test('retrying a create with the same stable trade or markup id is idempotent', async () => {
+  local.configureLocalJournal('idempotent-save-user', true);
+  const account = await createLocalAccount('idempotent-save-user');
+  const trade = { id:'retry-safe-trade', asset:'EUR/USD', pnl:12 };
+  const markup = { id:'retry-safe-markup', instrument:'EUR/USD', status:'Planned' };
+  const [firstTrade, secondTrade, firstMarkup, secondMarkup] = await Promise.all([
+    local.createTrade('idempotent-save-user', account.id, trade),
+    local.createTrade('idempotent-save-user', account.id, trade),
+    local.createMarkup('idempotent-save-user', account.id, markup),
+    local.createMarkup('idempotent-save-user', account.id, markup),
+  ]);
+  assert.equal(firstTrade.data.id, trade.id);
+  assert.equal(secondTrade.data.id, trade.id);
+  assert.equal(firstMarkup.data.id, markup.id);
+  assert.equal(secondMarkup.data.id, markup.id);
+  const saved = await local.fetchAllUserData('idempotent-save-user');
+  assert.equal(saved.data.accounts[0].trades.filter(item => item.id === trade.id).length, 1);
+  assert.equal(saved.data.markups.filter(item => item.id === markup.id).length, 1);
 });
 
 test('local challenges are user-isolated and legacy backups remain supported',async () => {

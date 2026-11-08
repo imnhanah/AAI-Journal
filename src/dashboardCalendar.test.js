@@ -22,7 +22,10 @@ test('Dashboard visual refinement scopes calendar treatment and reports chart sa
   assert.match(journal, /className="tj-dashboard-sample"/);
   assert.match(journal, /recorded trade(?:s)? this month/);
   assert.match(journal, /trading day(?:s)?/);
-  assert.match(journal, /@media \(max-width:1460px\) \{ \.tj-reference-dashboard \.tj-reference-kpis \{ grid-template-columns:repeat\(3/);
+  // KPIs reflow by workspace width (beside the side panel), not by window width.
+  const workspace = readFileSync(new URL('./workspaceAdaptive.css', import.meta.url), 'utf8');
+  assert.match(workspace, /@container journal-workspace \(max-width:1180px\) \{[^@]*\.tj-reference-dashboard \.tj-reference-kpis \{ grid-template-columns:repeat\(3,minmax\(0,1fr\)\); \}/);
+  assert.match(workspace, /@container journal-workspace \(max-width:1080px\) \{[^@]*\.tj-reference-dashboard \.tj-reference-kpis \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\); \}/);
 });
 
 test('Dashboard account-base returns preserve their denominator and formatting without extra presentation copy', () => {

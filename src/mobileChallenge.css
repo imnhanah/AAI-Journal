@@ -82,7 +82,7 @@
  .tj-root.tj-root.tj-root.tj-root .tj-challenge-lock-message {font-size:13px;line-height:1.5;}
 }
 .tj-root.tj-root.tj-root.tj-phone-challenge-status-overlay {position:fixed;inset:0;z-index:3000;display:flex!important;align-items:flex-end;justify-content:center;background:transparent!important;}
-.tj-phone-challenge-status-blur {position:absolute;inset:0;backdrop-filter:blur(6px);background:color-mix(in srgb,var(--tj-bg) 45%,transparent);}
+.tj-phone-challenge-status-blur {position:absolute;inset:0;background:color-mix(in srgb,var(--tj-bg) 45%,transparent);}
 .tj-phone-challenge-status-dismiss {position:absolute;inset:0;border:0;background:none;}
 .tj-phone-challenge-status-sheet {position:relative;z-index:1;display:grid;gap:12px;width:100%;max-width:640px;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px calc(16px + env(safe-area-inset-bottom));border:1px solid var(--tj-border);border-radius:24px 24px 0 0;background:var(--tj-panel);color:var(--tj-text);}
 .tj-phone-challenge-handle {justify-self:center;width:40px;height:4px;background:var(--tj-border);border-radius:8px;}

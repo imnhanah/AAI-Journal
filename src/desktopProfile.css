@@ -1,0 +1,112 @@
+/* Desktop Profile in the side panel (DesktopProfilePanel.jsx), after aaicorefx-desktop-shell.html.
+   Builds on the side panel form tokens (sidePanelForm.css). Theme tokens only. Reflows by the
+   panel's own width (container sp-panel). Prefix: pf2-. */
+@media (min-width:768px) {
+  /* The panel replaces the dialog's own header. */
+  .tj-root .sp-body .tj-entry-panel.tj-profile-panel-modal>:is(.tj-modal-head,.tj-trade-validation-summary) {display:none!important;}
+  .tj-root .sp-body .tj-entry-panel.tj-profile-panel-modal .tj-modal-body {display:flex;flex:1;flex-direction:column;min-height:0;padding:0!important;overflow:hidden;}
+  .tj-root .sp-body .tj-entry-panel.tj-profile-panel-modal {display:flex;flex-direction:column;}
+
+  .pf2 {--pf2-loss:var(--loss);}
+  .tj-root .sp-panel .pf2 :is(button,input) {font:inherit;}
+  .pf2-head {display:flex;align-items:center;gap:14px;padding:22px var(--sp-pad) 16px;}
+  .pf2-av-wrap {position:relative;flex:none;}
+  .tj-root .sp-panel .pf2-av {display:grid;width:54px;height:54px;min-height:0;padding:0;place-items:center;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(145deg,var(--accent),color-mix(in oklab,var(--accent) 60%,var(--text)));color:var(--on-accent);font-size:22px!important;font-weight:700;line-height:1;box-shadow:0 10px 24px -10px var(--accent);cursor:pointer;}
+  .pf2-av img {width:100%;height:100%;object-fit:cover;}
+  .tj-root .sp-panel .pf2-av-tool {position:absolute;right:-5px;bottom:-5px;display:grid;width:24px;height:24px;min-height:0;padding:0;place-items:center;border:2px solid var(--surface);border-radius:8px;background:var(--raised);color:var(--text);cursor:pointer;}
+  .pf2-id {flex:1;min-width:0;}
+  .pf2-name {display:flex;align-items:center;gap:10px;min-width:0;}
+  .pf2-name h2 {overflow:hidden;font-size:22px;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap;}
+  .pf2-id > small {display:block;margin-top:3px;overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap;}
+  .pf2-vf {display:inline-flex;flex:none;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:99px;background:var(--sp-soft);color:var(--accent);font-size:12px;font-weight:700;}
+  .tj-root .sp-panel .pf2 .pf2-name-in {max-width:240px;height:38px!important;min-height:0;font-size:16px!important;font-weight:600;}
+  .pf2-note {margin:-6px var(--sp-pad) 10px!important;color:var(--muted);font-size:12px;}
+
+  /* Buttons */
+  .tj-root .sp-panel .pf2-btn {display:inline-flex;flex:none;align-items:center;justify-content:center;gap:8px;height:38px;min-height:0;padding:0 15px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;transition:background .18s,filter .18s;}
+  .tj-root .sp-panel .pf2-btn:hover:not(:disabled) {background:var(--raised);}
+  .tj-root .sp-panel .pf2-btn:disabled {opacity:.45;cursor:not-allowed;}
+  .tj-root .sp-panel .pf2-btn.is-pri {border-color:transparent;background:var(--accent);color:var(--on-accent);box-shadow:0 8px 20px -8px var(--accent);}
+  .tj-root .sp-panel .pf2-btn.is-pri:hover:not(:disabled) {background:var(--accent);filter:brightness(1.08);}
+  .tj-root .sp-panel .pf2-btn.is-dng {border-color:color-mix(in oklab,var(--pf2-loss) 40%,var(--border));color:var(--pf2-loss);}
+  .tj-root .sp-panel .pf2-btn.is-dng:hover {background:color-mix(in oklab,var(--pf2-loss) 9%,var(--surface));}
+  .tj-root .sp-panel .pf2-btn:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .tj-root .sp-panel .pf2 .sp-foot-msg.is-dirty {color:var(--sp-warn);font-weight:600;}
+  .pf2-scroll {padding-top:16px!important;}
+  .pf2-chip {display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:99px;background:var(--sp-soft);color:var(--accent);font-size:12px;font-weight:600;white-space:nowrap;}
+
+  /* Appearance */
+  .pf2-mode {grid-template-columns:repeat(3,minmax(0,1fr));width:230px;height:36px!important;}
+  .tj-root .sp-panel .pf2-mode button {display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px!important;}
+  .pf2-pal {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .tj-root .sp-panel .pf2-pc {display:flex;align-items:center;gap:11px;min-width:0;min-height:0;padding:9px 11px 9px 9px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);text-align:left;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;}
+  .tj-root .sp-panel .pf2-pc:hover {border-color:color-mix(in oklab,var(--accent) 45%,var(--border));transform:translateY(-2px);}
+  .tj-root .sp-panel .pf2-pc.is-on {border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in oklab,var(--accent) 28%,transparent);}
+  .pf2-pcv {display:grid;flex:none;width:38px;height:38px;place-items:center;border-radius:11px;color:var(--on-accent);background:linear-gradient(135deg,var(--accent) 55%,color-mix(in oklab,var(--accent) 35%,var(--surface)) 55%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--surface) 18%,transparent);}
+  .pf2-pcv svg {opacity:0;transform:scale(.5);transition:opacity .18s,transform .18s;}
+  .pf2-pc.is-on .pf2-pcv svg {opacity:1;transform:none;}
+  .pf2-pct {min-width:0;}
+  .pf2-pct b {display:block;font-size:13px;}
+  .pf2-pct small {display:block;margin-top:1px;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* Region preview */
+  .pf2-prv {display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-top:18px;padding:13px 16px;border-radius:14px;background:var(--raised);}
+  .pf2-prv small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+  .pf2-prv b {font-size:17px;letter-spacing:-.01em;}
+  .pf2-prv span {margin-left:auto;color:var(--muted);font-size:12.5px;}
+
+  /* Panels */
+  .pf2-sides {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .tj-root .sp-panel .pf2-sd {position:relative;display:flex;align-items:center;gap:12px;min-width:0;min-height:0;padding:10px 40px 10px 12px;border:1px solid var(--border);border-radius:16px;background:var(--surface);color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,background .18s;}
+  .tj-root .sp-panel .pf2-sd:hover {border-color:color-mix(in oklab,var(--accent) 40%,var(--border));}
+  .tj-root .sp-panel .pf2-sd.is-on {border-color:var(--accent);background:var(--sp-soft);}
+  .pf2-sd b {display:block;font-size:13.5px;}
+  .pf2-sd small {display:block;margin-top:2px;color:var(--muted);font-size:12px;line-height:1.4;}
+  .pf2-sd em {position:absolute;top:50%;right:12px;display:grid;width:20px;height:20px;margin-top:-10px;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent);opacity:0;transform:scale(.6);transition:opacity .18s,transform .18s;}
+  .pf2-sd.is-on em {opacity:1;transform:none;}
+  .pf2-sdv {position:relative;flex:none;width:64px;height:46px;overflow:hidden;border:1px solid var(--border);border-radius:10px;background:var(--raised);}
+  .pf2-sdv i {position:absolute;top:0;bottom:0;left:0;width:12px;background:color-mix(in oklab,var(--accent) 18%,var(--surface));}
+  .pf2-sdv u {position:absolute;top:8px;bottom:8px;width:44%;border-radius:7px;background:var(--accent);opacity:.9;}
+  .pf2-sdv.is-left u {left:18px;}
+  .pf2-sdv.is-right u {right:8px;}
+
+  /* Rows */
+  .pf2-row {display:flex;align-items:center;gap:16px;}
+  .pf2-row.is-line {margin-top:14px;padding-top:16px;border-top:1px solid var(--border);}
+  .pf2-row > div:first-child {flex:1;min-width:0;}
+  .pf2-row b {display:block;font-size:13.5px;}
+  .pf2-row p {margin-top:2px!important;color:var(--muted);font-size:12.5px;line-height:1.45;}
+  .pf2-r2 {display:flex;flex:none;align-items:center;gap:12px;}
+  .pf2-w190 {width:190px;}
+  .pf2-w230 {width:230px;}
+  .pf2-pto {width:150px;}
+  .pf2-pto.is-dim {opacity:.45;}
+  .tj-root .sp-panel .pf2-sw {position:relative;flex:none;width:42px;height:24px;min-height:0;padding:0;border:0;border-radius:99px;background:var(--border);cursor:pointer;transition:background .2s;}
+  .pf2-sw i {position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 2px 5px color-mix(in srgb,var(--text) 25%,transparent);transition:transform .2s;}
+  .tj-root .sp-panel .pf2-sw.is-on {background:var(--accent);}
+  .pf2-sw.is-on i {transform:translateX(18px);}
+  .pf2-sw:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .pf2-pw {display:grid;grid-template-columns:1fr 1fr auto;align-items:center;gap:10px;margin-top:14px;}
+  .pf2-pws {grid-column:1/-1;font-size:12.5px;font-weight:600;}
+  .pf2-pws.is-err {color:var(--pf2-loss);}
+  .pf2-pws.is-ok {color:var(--sp-gain);}
+  .pf2-danger {border-color:color-mix(in oklab,var(--pf2-loss) 30%,var(--border))!important;background:color-mix(in oklab,var(--pf2-loss) 3%,var(--surface))!important;}
+
+  /* Medium and narrow panels */
+  @container sp-panel (max-width:779px) {
+    .pf2-head {padding-inline:22px;}
+  }
+  @container sp-panel (max-width:540px) {
+    .pf2-pal {grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @container sp-panel (max-width:479px) {
+    .pf2-head {flex-wrap:wrap;padding-inline:16px;}
+    .pf2-pal,.pf2-sides,.pf2-region,.pf2-pw {grid-template-columns:minmax(0,1fr)!important;}
+    .pf2-row {flex-wrap:wrap;}
+    .pf2-r2 {flex-wrap:wrap;}
+    .pf2-w190,.pf2-w230,.pf2-mode,.pf2-pto {width:100%;}
+    .tj-root .sp-panel .pf2 .sp-card-head {flex-wrap:wrap;}
+    .tj-root .sp-panel .pf2 .sp-card-aside {width:100%;margin:8px 0 0;}
+    .pf2-prv span {margin-left:0;}
+  }
+}

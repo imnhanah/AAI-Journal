@@ -1,0 +1,122 @@
+/* Phone Calendar. Colours come from the --phone-* tokens set in mobileApp.css. */
+@media (max-width:767px) {
+  .tj-mobile-calendar-v2{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;padding:0 14px 8px;color:var(--text);font-size:14px;line-height:1.4;font-variant-numeric:tabular-nums}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.tj-mobile-calendar-v2){padding-inline:0}
+  .tj-mobile-calendar-v2 *{box-sizing:border-box}
+  .tj-mobile-calendar-v2 button{padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation}
+  .tj-mobile-calendar-v2 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .tj-mobile-calendar-v2 p{margin:0}
+  .tj-mobile-calendar-v2 b.pos,.tj-mobile-calendar-v2 strong.pos{color:var(--phone-profit)}
+  .tj-mobile-calendar-v2 b.neg,.tj-mobile-calendar-v2 strong.neg{color:var(--phone-loss)}
+  .tj-mcal-empty{padding:18px 4px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* Month card */
+  .tj-mcal-hero{--hero-tint:var(--muted);margin-bottom:12px;padding:18px 18px 12px;overflow:hidden;border:.5px solid color-mix(in srgb,var(--hero-tint) 30%,var(--border));border-radius:34px;background:radial-gradient(110% 100% at 100% -15%,color-mix(in srgb,var(--hero-tint) 30%,transparent),transparent 65%),var(--card)}
+  .tj-mcal-hero.pos{--hero-tint:var(--phone-gain)}
+  .tj-mcal-hero.neg{--hero-tint:var(--phone-drop)}
+  .tj-mcal-hero-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;margin:-10px 0}
+  .tj-mcal-hero-top small{color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+  .tj-mcal-hero-top button{display:flex;align-items:center;min-height:44px}
+  .tj-mcal-hero-top span{display:block;height:28px;padding:0 12px;border:.5px solid var(--border);border-radius:14px;background:var(--card);font-size:12px;font-weight:500;line-height:27px}
+  .tj-root .tj-mcal-hero>strong{display:block;margin:16px 0 12px;overflow:hidden;font-size:clamp(34px,11.8vw,46px);font-weight:500;letter-spacing:-.04em;line-height:1.05;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mcal-hero-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .tj-mcal-hero-chips span{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:.5px solid var(--border);border-radius:15px;background:var(--card);font-size:12px;font-weight:500;white-space:nowrap}
+  .tj-mcal-hero-chips i{display:block;width:8px;height:8px;border-radius:50%}
+  .tj-mcal-hero-chips i.is-win{background:var(--phone-gain)}
+  .tj-mcal-hero-chips i.is-loss{background:var(--phone-drop)}
+  .tj-mcal-hero-chips i.is-flat{background:var(--phone-purple)}
+
+  /* Month grid */
+  .tj-mcal-card-grid{margin-bottom:12px;padding:10px 6px;border:.5px solid var(--border);border-radius:30px;background:var(--card)}
+  .tj-mcal-v2-weekdays,.tj-mcal-v2-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+  .tj-mcal-v2-weekdays{padding-bottom:6px}
+  .tj-mcal-v2-weekdays span{color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.02em;text-align:center}
+  .tj-mcal-v2-grid>span{min-width:0;min-height:56px}
+  .tj-mobile-calendar-v2 .tj-mcal-v2-grid button{position:relative;display:flex;min-width:44px;min-height:56px;flex-direction:column;justify-content:space-between;padding:5px 4px;overflow:hidden;border-radius:14px;background:var(--phone-raised);color:var(--muted);text-align:left}
+  .tj-mcal-v2-grid button>span{font-size:12px;font-weight:500}
+  .tj-mobile-calendar-v2 .tj-mcal-v2-grid button.has-trades>span{color:var(--text)}
+  .tj-mcal-v2-grid button>b{color:var(--text);font-size:12px;font-weight:500;letter-spacing:-.04em;white-space:nowrap}
+  .tj-mcal-v2-grid button>b.tj-mcal-v2-cash{color:var(--phone-amber)}
+  .tj-mcal-v2-grid button>em{position:absolute;top:5px;right:5px;color:var(--text);font-size:12px;font-style:normal;line-height:1.2;opacity:.8}
+  .tj-mobile-calendar-v2 .tj-mcal-v2-grid button.is-today{box-shadow:inset 0 0 0 1.5px var(--phone-gain)}
+  .tj-mobile-calendar-v2 .tj-mcal-v2-grid button.is-selected{box-shadow:inset 0 0 0 2px var(--text)}
+
+  /* Week cards */
+  .tj-mcal-weeks{display:flex;gap:10px;max-width:none;margin:0 -14px 2px;padding:2px 14px 6px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:14px;scrollbar-width:none}
+  .tj-mcal-weeks::-webkit-scrollbar,.tj-mcal-notes::-webkit-scrollbar{display:none}
+  .tj-mobile-calendar-v2 .tj-mcal-week{--week-tint:var(--muted);display:block;flex:0 0 140px;padding:12px 14px;border:.5px solid color-mix(in srgb,var(--week-tint) 24%,var(--border));border-radius:24px;background:linear-gradient(160deg,color-mix(in srgb,var(--week-tint) 14%,var(--card)),var(--card) 75%);scroll-snap-align:start;text-align:left}
+  .tj-mobile-calendar-v2 .tj-mcal-week.pos{--week-tint:var(--phone-gain)}
+  .tj-mobile-calendar-v2 .tj-mcal-week.neg{--week-tint:var(--phone-drop)}
+  .tj-mobile-calendar-v2 .tj-mcal-week.is-on{box-shadow:inset 0 0 0 2px var(--text)}
+  .tj-mcal-week small{display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+  .tj-mcal-week b{display:block;margin:3px 0 2px;font-size:22px;font-weight:500;letter-spacing:-.02em}
+  .tj-mcal-week span{display:block;color:var(--muted);font-size:12px}
+
+  /* Insights */
+  .tj-mcal-section{margin:20px 6px 10px}
+  .tj-root .tj-mcal-section h2{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em}
+  .tj-mcal-seg{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px;border-radius:20px;background:var(--phone-raised)}
+  .tj-mcal-seg>i{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:17px;background:var(--phone-pill);transform:translateX(calc(var(--seg-index) * 100%));transition:transform .3s cubic-bezier(.3,.9,.3,1)}
+  .tj-mobile-calendar-v2 .tj-mcal-seg button{position:relative;z-index:1;min-height:44px;color:var(--muted);font-size:13px;font-weight:500;text-align:center;transition:color .2s}
+  .tj-mobile-calendar-v2 .tj-mcal-seg button[aria-selected=true]{color:var(--phone-on-pill)}
+  .tj-mcal-dow{margin-bottom:14px}
+  .tj-mcal-dow>div{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:14px}
+  .tj-mcal-dow b{font-weight:500}
+  .tj-mcal-dow p{margin-top:5px;color:var(--muted);font-size:12px}
+  .tj-mcal-track{display:block;flex:1;height:6px;overflow:hidden;border-radius:3px;background:var(--phone-track)}
+  .tj-mcal-track.is-thick{height:10px;border-radius:5px}
+  .tj-mcal-track u{display:block;height:100%;border-radius:inherit;background:var(--phone-gain);text-decoration:none}
+  .tj-mcal-track.is-thick u{background:linear-gradient(90deg,var(--phone-gain),color-mix(in srgb,var(--phone-gain) 60%,var(--phone-purple)))}
+  .tj-mcal-track.is-thick u.is-loss{background:linear-gradient(90deg,var(--phone-drop),color-mix(in srgb,var(--phone-drop) 60%,var(--phone-amber)))}
+  .tj-mcal-track u.is-low{background:var(--phone-amber)}
+  .tj-mcal-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:2px}
+  .tj-mcal-tiles.is-three{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}
+  .tj-mcal-tiles>div{min-width:0;padding:10px;border-radius:18px;background:var(--phone-raised);text-align:center}
+  .tj-mcal-tiles small{display:block;color:var(--muted);font-size:12px;font-weight:500;line-height:1.25}
+  .tj-mcal-tiles b{display:block;margin:3px 0 2px;overflow:hidden;font-size:16px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mcal-tiles.is-three b{font-size:clamp(13px,3.7vw,15px);letter-spacing:-.02em}
+  .tj-mcal-tiles span{display:block;color:var(--muted);font-size:12px;line-height:1.25}
+  .tj-mcal-periods{display:grid;gap:8px}
+  .tj-mcal-period{--period-tint:var(--muted);min-width:0;padding:14px;border-left:4px solid var(--period-tint);border-radius:24px;background:var(--phone-raised)}
+  .tj-mcal-period.pos{--period-tint:var(--phone-gain)}
+  .tj-mcal-period.neg{--period-tint:var(--phone-drop)}
+  .tj-mcal-period-top,.tj-mcal-period-mid,.tj-mcal-period-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tj-mcal-period-top{font-size:13px;font-weight:500}
+  .tj-mcal-period-mid{margin:8px 0}
+  .tj-mcal-period-mid b{overflow:hidden;font-size:24px;font-weight:500;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mcal-period em{display:inline-flex;flex:none;align-items:center;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-style:normal;font-weight:500}
+  .tj-mcal-period em.pos{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-mcal-period em.neg{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-mcal-period-foot{color:var(--muted);font-size:12px}
+  .tj-mobile-calendar-v2 button.tj-mcal-more{justify-self:center;min-height:44px;margin-top:6px}
+  .tj-mcal-more span{display:block;height:34px;padding:0 14px;border:.5px solid var(--border);border-radius:17px;background:var(--card);font-size:13px;font-weight:500;line-height:33px}
+
+  /* Readout */
+  .tj-mcal-readout{margin-top:16px;padding:18px;overflow:hidden;border:.5px solid var(--border);border-radius:34px;background:radial-gradient(110% 100% at 0 -20%,color-mix(in srgb,var(--phone-gain) 26%,transparent),transparent 62%),radial-gradient(90% 80% at 100% 110%,color-mix(in srgb,var(--phone-purple) 22%,transparent),transparent 60%),var(--card)}
+  .tj-root .tj-mcal-readout h2{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em}
+  .tj-mcal-readout-net{display:block;margin-top:8px;overflow:hidden;font-size:34px;font-weight:500;letter-spacing:-.03em;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mcal-readout-sub{color:var(--muted);font-size:12px}
+  .tj-mcal-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+  .tj-mcal-stats>div{min-width:0;padding:10px 12px;border:.5px solid var(--border);border-radius:18px;background:color-mix(in srgb,var(--card) 70%,transparent)}
+  .tj-mcal-stats small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+  .tj-mcal-stats b{display:block;margin-top:2px;overflow:hidden;font-size:18px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mcal-notes{display:flex;gap:10px;max-width:100%;padding:2px 0 4px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .tj-mcal-note{--note-tone:var(--phone-gain);flex:0 0 100%;min-width:0;padding:15px;border:.5px solid color-mix(in srgb,var(--note-tone) 30%,var(--border));border-radius:26px;background:var(--card);scroll-snap-align:center;scroll-snap-stop:always}
+  .tj-mcal-note.is-purple{--note-tone:var(--phone-purple)}
+  .tj-mcal-note.is-amber{--note-tone:var(--phone-amber)}
+  .tj-mcal-note>span{display:grid;width:32px;height:32px;place-items:center;border-radius:11px;background:color-mix(in srgb,var(--note-tone) 20%,var(--card));color:var(--note-tone)}
+  .tj-root .tj-mcal-note h3{margin:10px 0 6px;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+  .tj-mcal-note p{font-size:13px;font-weight:400;line-height:1.5}
+  .tj-mcal-note p b{font-weight:500}
+  .tj-mcal-dots{display:flex;justify-content:center;gap:5px;margin-top:10px}
+  .tj-mcal-dots i{display:block;width:6px;height:6px;border-radius:3px;background:var(--phone-track);transition:all .25s}
+  .tj-mcal-dots i.is-on{width:18px;background:var(--phone-pill)}
+  .tj-mcal-footnote{margin-top:12px;color:var(--muted);font-size:12px;text-align:center}
+}
+@media (max-width:375px) {
+  .tj-mcal-card-grid{padding-inline:4px}
+  .tj-mcal-v2-weekdays,.tj-mcal-v2-grid{gap:2px}
+}
+@media (max-width:767px) and (prefers-reduced-motion: reduce) {
+  .tj-mcal-seg>i,.tj-mobile-calendar-v2 .tj-mcal-seg button,.tj-mcal-dots i{transition:none}
+}

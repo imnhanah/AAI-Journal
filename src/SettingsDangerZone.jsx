@@ -5,7 +5,7 @@ import './settingsDangerZone.css';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
 import PhoneWorkspaceDangerSheet from './PhoneWorkspaceDangerSheet.jsx';
 
-export default function SettingsDangerZone({account, accountNames, onReset, onDelete}) {
+export default function SettingsDangerZone({account, accountNames, onReset, onDelete, inline = false}) {
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>{setPhone(media.matches);setOpen(false);};media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const [open, setOpen] = useState(false);
@@ -69,6 +69,13 @@ export default function SettingsDangerZone({account, accountNames, onReset, onDe
       {error && <p className="tj-settings-danger-error" role="alert">{error}</p>}
       <div className="tj-settings-danger-buttons"><button type="button" className="tj-btn-outline" disabled={busy} onClick={close}>Cancel</button><button type="button" className="tj-settings-danger-confirm" disabled={!allowed || busy} onClick={confirm}>{busy ? (action === 'reset' ? 'Resetting…' : 'Deleting…') : (action === 'reset' ? 'Reset data' : 'Delete workspace')}</button></div>
     </section>
+  </div>;
+  if (inline) return <div ref={container}>
+    <div className="tj-ma-danger">
+      <button ref={trigger} type="button" onClick={() => request('reset')}><span className="tj-ma-icon is-red"><RefreshCw size={18}/></span><span className="tj-ma-copy"><strong>Reset workspace data</strong><small>Erases trade history and check-ins for every account in {workspaceName}. Settings stay.</small></span></button>
+      <button type="button" className="is-delete" onClick={() => request('delete')}><span className="tj-ma-icon is-red"><Trash2 size={18}/></span><span className="tj-ma-copy"><strong>Delete workspace</strong><small>Permanently removes {workspaceName} and every account in it.</small></span></button>
+    </div>
+    {root && confirmation ? createPortal(confirmation, root) : confirmation}
   </div>;
   return <div className="tj-settings-danger-menu" ref={container} onKeyDown={event => {if (event.key === 'Escape' && open) {event.stopPropagation();setOpen(false);trigger.current?.focus();}}}>
     <button ref={trigger} type="button" className="is-danger" aria-expanded={open} aria-controls="settings-danger-popover" onClick={() => setOpen(value => !value)}>Danger Zone</button>

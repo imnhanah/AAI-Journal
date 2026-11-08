@@ -1,5 +1,6 @@
 import { activeBalances, isMultiBalanceWorkspace } from './balanceModel.js';
 import {invalidFinancialResult, validateAccountFinancialData, validateFinanceMovement} from './financialValidation.js';
+import {balanceResultNetPnl} from './balanceResultPnl.js';
 
 // Untargeted historical records belong to the original trading account.
 export function savingsOwner(account, saving) {
@@ -31,7 +32,7 @@ export function scopedFinanceProfitCycle(account, balanceId = null) {
     if (!trade.closeDate || trade.status === 'open') continue;
     const result = (trade.balanceResults || []).find(item => item.balanceId === balanceId);
     if (scoped && !result && (trade.balanceResults?.length || balances[0]?.id !== balanceId)) continue;
-    const value = scoped && result ? Number(result.netPnl ?? (Number(result.grossPnl || 0) - Number(result.commission || 0) - Number(result.swap || 0))) : Number(trade.pnl || 0);
+    const value = scoped && result ? balanceResultNetPnl(result) : Number(trade.pnl || 0);
     events.push({ date: trade.date, kind: 'trade', value });
   }
   for (const movement of account.financeMovements || []) {

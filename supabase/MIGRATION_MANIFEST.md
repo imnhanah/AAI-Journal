@@ -23,6 +23,21 @@ historical names; the numbers below are the supported version order.
 | 012 | `trade_risk_calculation_migration.sql` | 002, 010, 011 | Trade risk columns and the final metadata allow-list used by protocol 3. |
 | 013 | `adaptive_balance_mode_migration.sql` | 004 | Allows `adaptive` as the Mode 3 value for workspace-balance challenges. |
 | 014 | `profile_case_study_library_migration.sql` | 001, 010 preferred | Profile-owned Case Study Library, RLS, and safe legacy-source preservation. |
+| 016 | `trade_review_scores_migration.sql` | 001, 012 | Optional 1–5 execution, rule-adherence, and psychology scores for trade reviews. |
+
+## Pending initial installation — requires separate approval
+
+| Proposed version | File | Applies when | Purpose |
+| --- | --- | --- | --- |
+| 015 | `profile_case_study_library_concurrency_install.sql` | `public.profile_case_study_libraries` is confirmed absent | Creates the complete profile Case Study Library contract: JSONB storage, revision compare-and-swap RPC, timestamp trigger, read-only browser table access, and RLS. It includes Connections within the stored workspace payload. |
+
+For an **absent** Case Study Library table, apply proposed version 015 instead
+of versions 014 and the separate pending
+`profile_case_study_sync_concurrency.sql`. Do not run the older version 014
+after 015: it grants direct authenticated writes that bypass the revision guard.
+
+Version 015 is not part of any applied production sequence until its backup,
+staging, and production-verification procedures are explicitly approved.
 
 ## Replaced, bundled, and non-install files
 
@@ -37,6 +52,9 @@ Do **not** add these to a new-install sequence:
   only for historical, incremental upgrades.
 - `seed_two_account_demo.sql` is **development-only**. It deletes/recreates
   Demo data and must never be run against production data.
+- `seed_demostration_simulation.sql` is **development-only**. It iterates
+  every profile and deletes/recreates a demonstration workspace; it must never
+  be run against production data.
 
 `journal_egress_hardening.sql` and `trade_risk_calculation_migration.sql`
 intentionally replace `tj_bootstrap_metadata`; this is not a conflict when

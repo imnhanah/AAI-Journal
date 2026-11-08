@@ -1,0 +1,97 @@
+/* Mobile motion tokens. Phone only (same width as MOBILE_MEDIA), so desktop
+   never sees them. Motion animates transform and opacity only. */
+@media (max-width:767px) {
+  :root {
+    --ease-out:cubic-bezier(.32,.72,0,1);
+    --ease-spring:cubic-bezier(.22,1.1,.36,1);
+    --dur-page:420ms;
+    --dur-sheet:460ms;
+    --dur-fade:280ms;
+    --dur-press:180ms;
+    --motion-stagger:45ms;
+    --motion-parallax:-22%;
+    --motion-dim:.5;
+  }
+  /* will-change only while something is moving: add this class when an
+     animation or drag starts and remove it when it ends. */
+  .tj-motion-active {will-change:transform;}
+
+  /* Page moves (MobilePageStage.jsx). The page that was on screen is a still picture in
+     .tj-page-ghost, fixed over the scrolling area (the frame stays still; its sheet moves);
+     the live page moves in the page flow.
+     Both get the page background so nothing shows through. Header and bottom bar sit
+     above both and never move. Moves use translate (transform is locked on these
+     elements in mobileRules.css) and opacity only. */
+  .tj-page-ghost,.tj-page-dim {position:fixed;display:none;margin:0;overflow:hidden;pointer-events:none;}
+  .tj-page-ghost[data-move],.tj-page-dim[data-move=push],.tj-page-dim[data-move=pop] {display:block;}
+  .tj-page-ghost-sheet {position:absolute;inset:0;background:var(--stage-bg,var(--bg));}
+  .tj-page-dim {background:var(--motion-shade);opacity:0;}
+  .tj-page-stage-clip {overflow-x:hidden;}
+  .tj-page-stage-moving>.tj-page-transition {position:relative;margin:calc(-1 * var(--stage-pad-top,0px)) calc(-1 * var(--stage-pad-right,0px)) 0 calc(-1 * var(--stage-pad-left,0px));padding:var(--stage-pad-top,0px) var(--stage-pad-right,0px) 0 var(--stage-pad-left,0px);min-height:var(--stage-height,auto);background:var(--stage-bg,var(--bg));}
+
+  /* Push: the new page comes in from the right; the picture shifts left and dims. */
+  .tj-page-ghost[data-move=push] {z-index:1;}
+  .tj-page-ghost[data-move=push]>.tj-page-ghost-sheet {animation:tj-page-under var(--dur-page) var(--ease-out) forwards;}
+  .tj-page-dim[data-move=push] {z-index:2;animation:tj-page-dim-in var(--dur-page) var(--ease-out) forwards;}
+  .tj-page-stage-moving>.tj-page-live-push {z-index:3;box-shadow:-14px 0 40px var(--color-shadow-125);animation:tj-page-from-right var(--dur-page) var(--ease-out) both;}
+
+  /* Pop: the exact reverse. The picture leaves to the right; the page underneath returns. */
+  .tj-page-stage-moving>.tj-page-live-pop {z-index:1;animation:tj-page-from-under var(--dur-page) var(--ease-out) both;}
+  .tj-page-dim[data-move=pop] {z-index:2;animation:tj-page-dim-out var(--dur-page) var(--ease-out) forwards;}
+  .tj-page-ghost[data-move=pop] {z-index:3;}
+  .tj-page-ghost[data-move=pop]>.tj-page-ghost-sheet {box-shadow:-14px 0 40px var(--color-shadow-125);animation:tj-page-to-right var(--dur-page) var(--ease-out) forwards;}
+
+  /* Tab: crossfade, the new page settling 10px upward. No sideways slide. */
+  .tj-page-ghost[data-move=tab] {z-index:1;}
+  .tj-page-ghost[data-move=tab]>.tj-page-ghost-sheet {animation:tj-page-fade-out var(--dur-fade) ease forwards;}
+  .tj-page-stage-moving>.tj-page-live-tab {z-index:2;animation:tj-page-settle calc(var(--dur-fade) + 40ms) var(--ease-out) both;}
+
+  /* Screens on top (Account settings, Profile): the screen slides in from the right over
+     the page, and the whole page behind (header included) shifts and dims, as in a push.
+     Closing is the reverse; the close waits --dur-page before removing the screen
+     (setModal in TradingJournal.jsx). The overlay clips, so nothing reaches past the edge. */
+  .tj-root .tj-modal-overlay:has(>.tj-ma-modal) {overflow:clip;background:transparent;animation:none;}
+  .tj-root .tj-modal-overlay:has(>.tj-ma-modal)::after {content:'';position:absolute;inset:0;z-index:-1;background:var(--motion-shade);opacity:var(--motion-dim);pointer-events:none;animation:tj-page-shade-in var(--dur-page) var(--ease-out) both;}
+  .tj-root .tj-modal-overlay:is(.tj-modal-closing:has(>.tj-ma-modal),:has(>.tj-ma-modal.is-closing)) {pointer-events:none;animation:none;}
+  .tj-root .tj-modal-overlay:is(.tj-modal-closing:has(>.tj-ma-modal),:has(>.tj-ma-modal.is-closing))::after {animation:tj-page-dim-out var(--dur-page) var(--ease-out) forwards;}
+  .tj-root.tj-root .tj-modal-overlay>.tj-ma-modal {box-shadow:-14px 0 40px var(--color-shadow-125);animation:tj-page-from-right var(--dur-page) var(--ease-out) both;}
+  .tj-root.tj-root .tj-modal-overlay.tj-modal-closing>.tj-ma-modal,.tj-root.tj-root .tj-modal-overlay>.tj-ma-modal.is-closing {animation:tj-page-to-right var(--dur-page) var(--ease-out) forwards;}
+  .tj-root:has(>.tj-modal-overlay>.tj-ma-modal)>.tj-main {animation:tj-page-under var(--dur-page) var(--ease-out) forwards;}
+  .tj-root:has(>.tj-modal-overlay.tj-modal-closing>.tj-ma-modal,>.tj-modal-overlay>.tj-ma-modal.is-closing)>.tj-main {animation:tj-page-from-under var(--dur-page) var(--ease-out) both;}
+
+  /* The header stays still; its title and Back fade in. */
+  .tj-topbar-left.tj-motion-title>:is(.tj-back,.tj-page-heading) {animation:tj-page-fade-in var(--dur-fade) ease both;}
+
+  @keyframes tj-page-from-right {from {translate:100% 0;}}
+  @keyframes tj-page-to-right {to {translate:100% 0;}}
+  @keyframes tj-page-under {to {translate:var(--motion-parallax) 0;}}
+  @keyframes tj-page-from-under {from {translate:var(--motion-parallax) 0;}}
+  @keyframes tj-page-dim-in {to {opacity:var(--motion-dim);}}
+  @keyframes tj-page-shade-in {from {opacity:0;}}
+  @keyframes tj-page-dim-out {from {opacity:var(--motion-dim);} to {opacity:0;}}
+  @keyframes tj-page-fade-out {to {opacity:0;}}
+  @keyframes tj-page-fade-in {from {opacity:0;}}
+  @keyframes tj-page-settle {from {opacity:0;translate:0 10px;}}
+}
+
+/* Reduced motion: everything settles at once. 1ms rather than 0 so that
+   transitionend still fires for code waiting on it. */
+@media (max-width:767px) and (prefers-reduced-motion:reduce) {
+  :root {
+    --dur-page:1ms;
+    --dur-sheet:1ms;
+    --dur-fade:1ms;
+    --dur-press:1ms;
+    --motion-stagger:0ms;
+    --motion-parallax:0%;
+    --motion-dim:0;
+  }
+  *,*::before,*::after {
+    animation-duration:1ms !important;
+    animation-delay:0s !important;
+    animation-iteration-count:1 !important;
+    transition-duration:1ms !important;
+    transition-delay:0s !important;
+    scroll-behavior:auto !important;
+  }
+}

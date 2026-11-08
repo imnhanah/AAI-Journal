@@ -27,6 +27,17 @@
 :root {
   --font-sans: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  /* Phone page motion: the shade over the page underneath (mobileMotion.css). */
+  --motion-shade: #000;
+  /* Desktop side panel, Money at risk card (sidePanelForm.css): the one card allowed fixed
+     dark ink and light text in every theme. The accent is mixed in at use. */
+  --sp-risk-deep: #06110d;
+  --sp-risk-deeper: #050c09;
+  --sp-risk-light: #fff;
+  --sp-risk-ink: #eafaf3;
+  --sp-risk-gain: #5ff0b4;
+  --sp-risk-alert: #ef5a6f;
+  --sp-risk-alert-ink: #ffd4da;
   --accent-ocean-blue-light: #0b86c4;
   --accent-neon-light: #0f9f90;
   --accent-sunset-light: #d9690f;
@@ -1426,3 +1437,78 @@
 [data-theme="dark-fresh"]{color-scheme:dark;--bg:#0a1619;--surface:#112328;--raised:#1a3036;--border:#264148;--text:#e3f3f4;--muted:#8fb1b5;--accent:#4fd1d9;--on-accent:#04262a;--accent-soft:#11383d;--focus:#8ee6ec;--profit:#52d68e;--profit-soft:#12312a;--loss:#ff7d74;--loss-soft:#3a1c1f;--warn:#f0b64f;--warn-soft:#392e15}
 [data-theme="dark-neutral"]{color-scheme:dark;--bg:#121212;--surface:#1b1b1b;--raised:#262626;--border:#343434;--text:#ececec;--muted:#a0a0a0;--accent:#d4d4d4;--on-accent:#141414;--accent-soft:#2c2c2c;--focus:#bcd3ff;--profit:#4ed48e;--profit-soft:#12301f;--loss:#ff7d74;--loss-soft:#3a1b1a;--warn:#f0b64f;--warn-soft:#392e12}
 [data-theme="dark-signal"]{color-scheme:dark;--bg:#170e12;--surface:#21151a;--raised:#2d1e25;--border:#402c35;--text:#f6e8ed;--muted:#b79ba7;--accent:#f28bb5;--on-accent:#2e0718;--accent-soft:#44202f;--focus:#ffc0d9;--profit:#5ed59a;--profit-soft:#12302a;--loss:#ff7b6e;--loss-soft:#3f1a1a;--warn:#f0b64f;--warn-soft:#392d14}
+
+/* Phone app palette from the mobile design. Applied by mobileApp.css. */
+:root {
+  --phone-dark-bg: #101417;
+  --phone-dark-surface: #1a2024;
+  --phone-dark-surface-deep: #171c1f;
+  --phone-dark-raised: #222a30;
+  --phone-dark-track: #2b343a;
+  --phone-dark-line: #2a3238;
+  --phone-dark-text: #e8ecee;
+  --phone-dark-muted: #93a0a8;
+  --phone-dark-gain: #4fb594;
+  --phone-dark-profit: #6fcaa9;
+  --phone-dark-gain-bg: #1b3a30;
+  --phone-dark-drop: #d9747c;
+  --phone-dark-loss: #ef8f96;
+  --phone-dark-drop-bg: #3a2327;
+  --phone-dark-chart: #b3c0c8;
+  --phone-dark-chart-fill: rgba(179,192,200,.08);
+  --phone-dark-pill: #e3e8eb;
+  --phone-dark-on-pill: #14191c;
+  --phone-dark-hero: linear-gradient(165deg,#252d32 0%,#1c2327 55%,#171c1f 100%);
+  --phone-dark-hero-line: #2f383e;
+  --phone-dark-hero-chip: rgba(255,255,255,.08);
+  --phone-dark-bar: rgba(26,32,36,.7);
+  --phone-dark-bar-top: rgba(255,255,255,.1);
+  --phone-dark-sheet: rgba(26,32,36,.92);
+  --phone-dark-scrim: rgba(0,0,0,.45);
+  --phone-dark-plus: linear-gradient(160deg,#5a6b77,#3a4750);
+  --phone-light-bg: #efefef;
+  --phone-light-surface: #ffffff;
+  --phone-light-surface-deep: #f8f9fa;
+  --phone-light-raised: #f1f3f4;
+  --phone-light-track: #e4e7e9;
+  --phone-light-line: #dcdcdc;
+  --phone-light-text: #1d2327;
+  --phone-light-muted: #6b7378;
+  --phone-light-gain: #3f9d7f;
+  --phone-light-profit: #2f8a6c;
+  --phone-light-gain-bg: #dcefe8;
+  --phone-light-drop: #c9656d;
+  --phone-light-loss: #b5434d;
+  --phone-light-drop-bg: #f6dfe1;
+  --phone-light-chart: #44525c;
+  --phone-light-chart-fill: rgba(60,75,85,.09);
+  --phone-light-pill: #36424b;
+  --phone-light-on-pill: #ffffff;
+  --phone-light-hero: linear-gradient(165deg,#d7dbde 0%,#eceeef 55%,#fafafa 100%);
+  --phone-light-hero-line: #cdd1d4;
+  --phone-light-hero-chip: rgba(255,255,255,.75);
+  --phone-light-bar: rgba(255,255,255,.7);
+  --phone-light-bar-top: rgba(255,255,255,.95);
+  --phone-light-sheet: rgba(255,255,255,.9);
+  --phone-light-scrim: rgba(20,28,32,.28);
+  --phone-light-plus: linear-gradient(160deg,#4d5b66,#2a343b);
+  --phone-plus-icon: #ffffff;
+  --phone-dark-purple: #a597f0;
+  --phone-dark-purple-bg: #2a2650;
+  --phone-dark-purple-wash: #2d2760;
+  --phone-dark-purple-base: #1d2328;
+  --phone-dark-amber: #e0a24a;
+  --phone-dark-blue: #8fb0f5;
+  --phone-dark-blue-bg: #1f2c4d;
+  --phone-light-blue: #2f63c8;
+  --phone-light-blue-bg: #dfe8fb;
+  --phone-light-purple: #6d5bd0;
+  --phone-light-purple-bg: #ebe7fb;
+  --phone-light-purple-wash: #e6e0fa;
+  --phone-light-purple-base: #ffffff;
+  --phone-light-amber: #a86a14;
+}
+
+/* Celebration gold for the challenge-complete popup and certificate (desktopPopups.css). */
+[data-theme^="light-"], :root {--celebrate-gold:#e0a526;--celebrate-gold-hi:#ffe08a;--celebrate-gold-deep:#a96f08;--celebrate-on:#ffffff;}
+[data-theme^="dark-"] {--celebrate-gold:#f2bd45;--celebrate-gold-hi:#ffe08a;--celebrate-gold-deep:#b87a0b;--celebrate-on:#fff6cf;}

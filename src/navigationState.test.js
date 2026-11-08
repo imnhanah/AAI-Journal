@@ -51,12 +51,18 @@ test('Challenge retains only loaded or saved progress, rejects stale reads and s
   assert.match(code,/Could not load/);
   assert.match(code,/Could not save/);
   const page=readFileSync(new URL('./ChallengeLifecyclePage.jsx',import.meta.url),'utf8');
-  for(const field of ['details','expanded','planRange'])assert.ok(page.includes('`tj-challenge-${account.id}:'+field+'`'));
+  for(const field of ['details','planRange'])assert.ok(page.includes('`tj-challenge-${account.id}:'+field+'`'));
+  assert.match(page,/usePageState\('challenge','tj-challenge-expandedCards'/);
+  assert.match(page,/initializeChallengeExpansion/);
 });
 test('collapsed sidebar has no hover or focus tooltip artifact handlers', () => {
   const code=readFileSync(new URL('./SidebarShell.jsx',import.meta.url),'utf8');
   const styles=readFileSync(new URL('./sidebarV2.css',import.meta.url),'utf8');
-  assert.doesNotMatch(code,/onMouse(?:Enter|Leave)|onFocus|title=/);
+  // Shell v2 (the desktop shell mockup) names icons while collapsed. The handlers exist only for v2,
+  // and the name clears on leave, blur and toggle so nothing is left on screen.
+  assert.doesNotMatch(code.replace(/onMouseOver=\{v2\?showTip:undefined\} onFocus=\{v2\?showTip:undefined\} onMouseLeave=\{v2\?\(\)=>setTip\(null\):undefined\} onBlur=\{v2\?\(\)=>setTip\(null\):undefined\}/,''),/onMouse(?:Enter|Leave|Over)|onFocus|title=/);
+  assert.match(code,/if\(!v2\|\|open\)return;/);
+  assert.match(code,/setTip\(null\);setSweep/);
   assert.doesNotMatch(code,/setTooltip|tooltip/i);
   assert.match(styles,/tj-sidebar-collapsed[\s\S]*?\.tj-nav-label\s*\{\s*display:none/);
 });

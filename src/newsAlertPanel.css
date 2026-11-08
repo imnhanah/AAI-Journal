@@ -1,0 +1,102 @@
+/* Desktop news alert settings (NewsAlertPanel in NewsAlerts.jsx), after the alert popover in
+   aaicorefx-desktop-news.html. Phones keep PhoneNewsAlertSheet. Theme tokens only. Prefix: na2-. */
+@media (min-width:768px) {
+  .tj-root .tj-news-alert-controls .tj-news-alert-menu.na2 {
+    --na2-soft:color-mix(in oklab,var(--accent) 12%,transparent);
+    position:absolute;top:calc(100% + 10px);right:0;left:auto;z-index:40;display:flex;flex-direction:column;
+    width:392px;max-width:calc(100vw - 32px);max-height:min(720px,calc(100dvh - 120px));margin:0;padding:0;overflow:auto;
+    border:1px solid var(--border);border-radius:24px;background:color-mix(in oklab,var(--surface) 96%,transparent);
+    box-shadow:0 30px 70px -20px color-mix(in srgb,var(--text) 35%,transparent),0 0 0 1px color-mix(in oklab,var(--accent) 8%,transparent);
+    color:var(--text);text-align:left;backdrop-filter:blur(18px);animation:na2-in .35s cubic-bezier(.3,.8,.2,1);scrollbar-width:thin;
+  }
+  @keyframes na2-in {from {opacity:0;transform:translateY(-10px) scale(.97);}}
+  .na2 :is(b,small,p) {margin:0;}
+  .na2-h {display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:18px 18px 14px;background:radial-gradient(120% 140% at 0% 0%,color-mix(in oklab,var(--accent) 14%,transparent),transparent 70%);}
+  .na2-h b {display:block;font-size:15px;}
+  .na2-h small {display:block;color:var(--muted);font-size:12px;line-height:1.3;}
+  .na2-hi {display:grid;width:40px;height:40px;place-items:center;border-radius:13px;background:var(--na2-soft);color:var(--accent);}
+  .tj-root .na2 .na2-x {display:grid;width:30px;height:30px;min-height:0;place-items:center;padding:0;border:0;border-radius:10px;background:none;color:var(--muted);cursor:pointer;}
+  .tj-root .na2 .na2-x:hover {background:var(--raised);color:var(--text);}
+  .tj-root .na2 .na2-sw {position:relative;flex:none;width:40px;height:23px;min-height:0;padding:0;border:0;border-radius:99px;background:color-mix(in oklab,var(--text) 18%,transparent);cursor:pointer;transition:background .25s;}
+  .na2-sw i {position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px color-mix(in srgb,var(--text) 30%,transparent);transition:left .25s;}
+  .tj-root .na2 .na2-sw.is-on {background:var(--accent);}
+  .na2-sw.is-on i {left:20px;}
+  .na2 :is(button):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .na2-b {display:flex;flex-direction:column;gap:16px;padding:4px 18px 6px;transition:opacity .25s,filter .25s;}
+  .na2-b.is-off {opacity:.4;filter:saturate(.4);pointer-events:none;}
+  .na2-s {display:flex;flex-direction:column;gap:9px;}
+  .na2-s>small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+  .na2-s>p {color:var(--muted);font-size:12px;}
+  .na2-lead {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .tj-root .na2 .na2-lead button {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px;min-height:0;padding:0;border:1px solid var(--border);border-radius:15px;background:var(--surface);color:var(--muted);font:inherit;cursor:pointer;transition:border-color .2s,background .2s;}
+  .na2-lead b {font-size:19px;letter-spacing:-.03em;line-height:1;}
+  .na2-lead span {margin-top:3px;font-size:12px;}
+  .tj-root .na2 .na2-lead button:hover {border-color:var(--accent);}
+  .tj-root .na2 .na2-lead button.is-on {border-color:var(--accent);background:var(--na2-soft);color:var(--accent);box-shadow:0 8px 18px -12px var(--accent);}
+  .na2-lead button.is-on::after {content:"";position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  .na2-fol {display:flex;flex-wrap:wrap;gap:6px;}
+  .na2-fol span {display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 11px;border-radius:99px;background:var(--raised);font-size:12px;font-weight:600;}
+  .na2-dot {width:9px;height:9px;border-radius:50%;background:var(--loss);}
+  .na2-dl {display:flex;flex-direction:column;border-radius:16px;background:var(--raised);}
+  .na2-dl>div {display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:11px;padding:11px 12px;}
+  .na2-dl>div+div {border-top:1px solid var(--border);}
+  .na2-dl>div>span {display:grid;width:34px;height:34px;place-items:center;border-radius:11px;background:var(--surface);color:var(--accent);}
+  .na2-dl b,.na2-snd b {display:block;font-size:13px;}
+  .na2-dl small,.na2-snd small {color:var(--muted);font-size:12px;}
+  .na2-snd {display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:var(--raised);}
+  .na2-tone {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;transition:opacity .2s;}
+  .na2-tone.is-off {opacity:.4;}
+  .tj-root .na2 .na2-tone button {height:34px;min-height:0;padding:0;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:border-color .2s,background .2s,color .2s;}
+  .tj-root .na2 .na2-tone button.is-on {border-color:var(--accent);background:var(--na2-soft);color:var(--accent);}
+  .na2-tone button:disabled {cursor:not-allowed;}
+  .na2-warn {color:var(--warn)!important;font-weight:600;}
+  .na2-msg {padding:10px 12px;border-radius:12px;background:color-mix(in oklab,var(--warn) 12%,transparent);color:var(--text);font-size:12px;}
+  .na2-f {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:12px;padding:14px 18px 18px;border-top:1px solid var(--border);}
+  .tj-root .na2 .na2-test {display:flex;align-items:center;justify-content:center;gap:8px;height:42px;min-height:0;border:0;border-radius:13px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -12px var(--accent);}
+  .tj-root .na2 .na2-done {height:42px;min-height:0;padding:0 18px;border:1px solid var(--border);border-radius:13px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+  .tj-root .na2 .na2-done:hover {background:var(--raised);}
+
+  /* Desktop alert banner (the mockup's toast): impact bar, countdown ring, values and actions. */
+  .na2-toasts.na2-toasts {position:fixed;top:78px;right:22px;z-index:2200;display:flex;flex-direction:column;gap:12px;width:min(400px,calc(100vw - 32px));pointer-events:none;}
+  .na2-toast {--na2-tone:var(--warn);position:relative;display:grid;grid-template-columns:58px minmax(0,1fr);gap:14px;padding:16px 44px 20px 18px;overflow:hidden;border:1px solid var(--border);border-radius:22px;background:color-mix(in oklab,var(--surface) 95%,transparent);box-shadow:0 30px 60px -20px color-mix(in srgb,var(--text) 40%,transparent);color:var(--text);pointer-events:auto;backdrop-filter:blur(18px);animation:na2-toast-in .5s cubic-bezier(.2,.9,.2,1) both;}
+  .na2-toast.is-high {--na2-tone:var(--loss);}
+  .na2-toast.is-low {--na2-tone:var(--tj-green);}
+  .na2-toast::before {content:"";position:absolute;inset:0;background:radial-gradient(80% 90% at 0% 0%,color-mix(in oklab,var(--na2-tone) 11%,transparent),transparent 70%);pointer-events:none;}
+  @keyframes na2-toast-in {from {opacity:0;transform:translateX(60px) scale(.96);}}
+  .na2-tbar {position:absolute;top:0;bottom:0;left:0;width:5px;background:var(--na2-tone);}
+  .na2-tr {position:relative;display:grid;align-self:start;width:58px;height:58px;place-items:center;color:var(--na2-tone);}
+  .na2-tr svg {position:absolute;inset:0;width:100%;height:100%;}
+  .na2-tr circle {fill:none;stroke:currentColor;stroke-width:4;}
+  .na2-tr-track {stroke-opacity:.15;}
+  .na2-tc {stroke-dasharray:119.4;stroke-dashoffset:0;stroke-linecap:round;animation:na2-ring var(--na2-life,17s) linear forwards;}
+  .na2-toast.is-held .na2-tc,.na2-toast.is-held .na2-tp {animation-play-state:paused;}
+  @keyframes na2-ring {to {stroke-dashoffset:119.4;}}
+  .na2-tr b {position:relative;top:-3px;color:var(--text);font-size:19px;letter-spacing:-.03em;line-height:1;}
+  .na2-tr span {position:absolute;bottom:9px;color:var(--muted);font-size:12px;font-weight:700;line-height:1;text-transform:uppercase;transform:scale(.8);}
+  .na2-tb {position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .na2-tt {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:2px;}
+  .na2-tt em {color:var(--muted);font-size:12px;font-style:normal;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+  .na2-tt u {padding:3px 8px;border-radius:99px;background:color-mix(in oklab,var(--na2-tone) 15%,transparent);color:var(--na2-tone);font-size:12px;font-weight:800;letter-spacing:.06em;text-decoration:none;text-transform:uppercase;}
+  .na2-tb>b {overflow:hidden;font-size:16px;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap;}
+  .na2-tb>span {color:var(--muted);font-size:12px;}
+  .na2-tv {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
+  .na2-tv>div {padding:7px 11px;border-radius:11px;background:var(--raised);}
+  .na2-tv small {display:block;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .na2-tv b {font-size:14px;}
+  .na2-ta {display:flex;gap:8px;margin-top:10px;}
+  .na2-toasts .na2-toast .na2-ta button {height:32px;min-height:0;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+  .na2-toasts .na2-toast .na2-ta button:first-child {border-color:var(--accent);background:var(--accent);color:var(--on-accent);}
+  .na2-toasts .na2-toast .na2-ta button:hover {filter:brightness(.96);}
+  .na2-toasts .na2-toast .na2-ta button:disabled {cursor:not-allowed;opacity:.5;}
+  .na2-toasts .na2-toast .na2-tx {position:absolute;top:12px;right:12px;display:grid;width:28px;height:28px;min-height:0;place-items:center;padding:0;border:0;border-radius:9px;background:var(--raised);color:var(--muted);cursor:pointer;}
+  .na2-toasts .na2-toast .na2-tx:hover {background:color-mix(in oklab,var(--text) 12%,transparent);color:var(--text);}
+  .na2-toast :is(button):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .na2-tp {position:absolute;right:0;bottom:0;left:0;height:3px;background:var(--na2-tone);opacity:.7;transform-origin:left;animation:na2-life var(--na2-life,17s) linear forwards;}
+  @keyframes na2-life {to {transform:scaleX(0);}}
+}
+@media (min-width:768px) and (prefers-reduced-motion:reduce) {
+  .tj-root .tj-news-alert-controls .tj-news-alert-menu.na2 {animation:none;}
+  .na2-sw,.na2-sw i,.na2-b,.na2-tone button,.na2-lead button {transition:none;}
+  .na2-toast {animation:none;}
+  .na2-tc,.na2-tp {animation-duration:.01s;}
+}

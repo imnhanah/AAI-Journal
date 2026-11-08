@@ -18,7 +18,9 @@ test('routine phone completion decor and close affordance do not change save beh
   assert.match(css,/tj-routine-ring[^}]*width:64px;height:64px/);
   assert.match(css,/tj-routine-close[^}]*width:44px!important;height:44px!important/);
   assert.match(css,/inset:4px/);
-  assert.match(source,/phone&&<small>now/);
+  assert.match(source,/role="tablist" aria-label="Routine session view"/);
+  assert.match(source,/setSelectedSession\(code\)/);
+  assert.match(source,/saveAndOpenMarkup\?'Save & open markup →'/);
 });
 test('phone routine dismissal saves nothing and fade responds to real scroll overflow',()=>{
   assert.match(source,/scrollHeight-list.clientHeight-list.scrollTop>2/);

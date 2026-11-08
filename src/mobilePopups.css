@@ -17,7 +17,7 @@
  .tj-root.tj-root.tj-root.tj-root .tj-single-switch-section-heading :is(strong,span) {font-size:12px;letter-spacing:0;}
  .tj-root.tj-root.tj-root.tj-root .tj-single-switch-deleted li {padding:8px;border:1px solid var(--tj-border);border-radius:8px;background:var(--tj-panel-alt);}
  .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(>.tj-finance-reminder) {padding:16px;align-items:center;isolation:isolate;background:color-mix(in srgb,var(--tj-bg) 55%,transparent);}
- .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(>.tj-finance-reminder)::before {content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;backdrop-filter:blur(6px);}
+ .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(>.tj-finance-reminder)::before {content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;}
  .tj-root.tj-root.tj-root.tj-root .tj-modal.tj-finance-reminder {width:100%!important;max-width:420px;height:auto!important;max-height:calc(100dvh - 32px);margin:0;border-radius:20px!important;overflow-y:auto;}
  .tj-root.tj-root.tj-root.tj-root .tj-finance-reminder .tj-modal-head {display:none;}
  .tj-root.tj-root.tj-root.tj-root .tj-finance-reminder .tj-modal-body {padding:20px 16px;}

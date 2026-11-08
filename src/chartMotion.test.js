@@ -37,7 +37,18 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   visit(parse(source,{sourceType:'module',plugins:['jsx']}));
   // Savings goal progress now lives in the shared Orbit card, not this page's width fills.
   // Review period cards use reviewed counts instead of decorative progress fills.
-  assert.equal(chartCount,15);assert.equal(fillCount,55);
+  // The desktop side panel's rule progress bar is one more fill (56).
+  // Desktop Dashboard v2 adds two balance areas and the daily bars (18 charts) and four fills (60).
+  // Desktop Trade Logs v2 adds the balance sparkline (19 charts) and the per-account track (61).
+  // Desktop Analytics v2 Overview adds its equity area (20 charts) and six fills: trade mix x2,
+  // confluence win rate, model split x2 and discipline (67).
+  // Analytics v2 Edge adds the plan-impact bars (21 charts) and three fills: model P&L,
+  // model win rate and plan direction match (70).
+  // Analytics v2 Rhythm adds one shared bar chart for day, week and month (22) and the weekday edge fill (71).
+  // Analytics v2 Discipline & Risk adds four fills: factor bars, daily cap use, daily and monthly capacity (75).
+  // Calendar v2 adds the month sparkline and the insights bars (24 charts) and four fills:
+  // day bar, week bar, weekday track and win rate (79).
+  assert.equal(chartCount,24);assert.equal(fillCount,79);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 

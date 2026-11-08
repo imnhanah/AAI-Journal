@@ -8,11 +8,9 @@
   input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
   .rv-editorial-field input:not([aria-invalid="true"]),
   .rv-editorial-field textarea:not([aria-invalid="true"]),
-  .cse-writing textarea:not([aria-invalid="true"]),
   .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
   .cse-validation textarea:not([aria-invalid="true"]),
-  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
-  .rde-content[contenteditable="true"]
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
 ) {
   border:0 !important;
   box-shadow:none !important;
@@ -29,7 +27,7 @@
   .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
 ) { background:color-mix(in srgb,var(--surface) 72%,var(--bg)) !important; }
 
-.tj-root :is(.rv-editorial-field :is(input,textarea),.cse-writing textarea,.rde-content[contenteditable="true"]) {
+.tj-root :is(.rv-editorial-field :is(input,textarea),.rde-content[contenteditable="true"]) {
   background:transparent !important;
   background-image:none !important;
 }
@@ -39,11 +37,9 @@
   input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
   .rv-editorial-field input:not([aria-invalid="true"]),
   .rv-editorial-field textarea:not([aria-invalid="true"]),
-  .cse-writing textarea:not([aria-invalid="true"]),
   .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
   .cse-validation textarea:not([aria-invalid="true"]),
-  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
-  .rde-content[contenteditable="true"]
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
 ):hover { border-color:transparent !important; box-shadow:none !important; }
 
 .tj-root :is(
@@ -51,25 +47,48 @@
   input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
   .rv-editorial-field input:not([aria-invalid="true"]),
   .rv-editorial-field textarea:not([aria-invalid="true"]),
-  .cse-writing textarea:not([aria-invalid="true"]),
   .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
   .cse-validation textarea:not([aria-invalid="true"]),
-  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
-  .rde-content[contenteditable="true"]
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
 ):focus { border-color:transparent !important; box-shadow:none !important; outline:0 !important; }
 
-/* Keyboard users retain a subtle, theme-aware location indicator. */
+/* Keyboard users retain a subtle, theme-aware location indicator on ordinary
+   fields. Research Notes owns its document-specific focus treatment below. */
 .tj-root :is(
   textarea.tj-input:not(.tj-modal textarea):not(.cv textarea):not([aria-invalid="true"]),
   input.tj-input:is(:not([type]),[type="text"],[type="email"],[type="password"],[type="url"],[type="tel"]):not(.tj-modal input):not(.cv input):not([aria-invalid="true"]),
   .rv-editorial-field input:not([aria-invalid="true"]),
   .rv-editorial-field textarea:not([aria-invalid="true"]),
-  .cse-writing textarea:not([aria-invalid="true"]),
   .cse-evidence-actions :is(input,textarea):not([aria-invalid="true"]),
   .cse-validation textarea:not([aria-invalid="true"]),
-  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"]),
-  .rde-content[contenteditable="true"]
+  .case-v2-evidence-detail :is(input,textarea):not([aria-invalid="true"])
 ):focus-visible {
   outline:1px solid color-mix(in srgb,var(--text) 42%,transparent) !important;
   outline-offset:2px;
 }
+
+/* Minimal underline input system. Pickers and specialised controls keep their own affordances. */
+.tj-root { --tj-input-underline:color-mix(in srgb,var(--border) 88%,transparent); --tj-input-underline-disabled:color-mix(in srgb,var(--border) 48%,transparent); }
+.tj-root :is(input:not([type]),input[type="text"],input[type="email"],input[type="password"],input[type="url"],input[type="tel"],input[type="search"],input[type="number"],textarea):not(.cv input):not(.cv textarea):not(.rde input):not(.rde textarea):not(.cse-writing > textarea):not(.cs2-sr input):not(.cs2-wtt):not(.cs2-sht):not(.fn2-in input):not(.fn2-sr input):not(.ch2-in input):not(.ch2-nt textarea):not(.st2-in input):not(.st2-ov textarea):not(.js2 input):not(.sp-form input):not(.tj-account-panel-modal input):not(.tr2 textarea) {
+  appearance:none; -webkit-appearance:none; background:transparent !important; border:0 !important;
+  border-bottom:1px solid var(--tj-input-underline) !important; border-radius:0 !important;
+  box-shadow:none !important; caret-color:var(--accent); color:var(--text); outline:0 !important; padding:8px 0 7px;
+}
+.tj-root :is(input:not([type]),input[type="text"],input[type="email"],input[type="password"],input[type="url"],input[type="tel"],input[type="search"],input[type="number"],textarea):not(.cv input):not(.cv textarea):not(.rde input):not(.rde textarea):not(.cse-writing > textarea):not(.cs2-sr input):not(.cs2-wtt):not(.cs2-sht):not(.fn2-in input):not(.fn2-sr input):not(.ch2-in input):not(.ch2-nt textarea):not(.st2-in input):not(.st2-ov textarea):not(.js2 input):not(.sp-form input):not(.tj-account-panel-modal input):not(.tr2 textarea)::placeholder { color:var(--muted); opacity:1; }
+/* The accent underline is the visible keyboard focus indicator; there is no boxed glow. */
+.tj-root :is(input:not([type]),input[type="text"],input[type="email"],input[type="password"],input[type="url"],input[type="tel"],input[type="search"],input[type="number"],textarea):not(.cv input):not(.cv textarea):not(.rde input):not(.rde textarea):not(.cse-writing > textarea):not(.cs2-sr input):not(.cs2-wtt):not(.cs2-sht):not(.fn2-in input):not(.fn2-sr input):not(.ch2-in input):not(.ch2-nt textarea):not(.st2-in input):not(.st2-ov textarea):not(.js2 input):not(.sp-form input):not(.tj-account-panel-modal input):not(.tr2 textarea):is(:focus,:focus-visible) {
+  border-bottom:2px solid var(--accent) !important; box-shadow:none !important; outline:0 !important; padding-bottom:6px;
+}
+.tj-root :is(input,textarea)[aria-invalid="true"],.tj-root .tj-field-error :is(input,textarea) { border-bottom-color:var(--red) !important; }
+.tj-root :is(input,textarea):disabled { border-bottom-color:var(--tj-input-underline-disabled) !important; color:var(--muted) !important; cursor:not-allowed; opacity:.72; }
+/* Numeric values keep native precision and validation, without browser spinner arrows. */
+.tj-root input[type="number"] { -moz-appearance:textfield; }
+.tj-root input[type="number"]::-webkit-inner-spin-button,.tj-root input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+/* Search shells own the border so their inner input cannot create a double edge. */
+.tj-root :is(.tj-header-search,.tj-toolbar-search,.case-search) input { background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; padding:inherit; }
+.tj-root :is(.tj-header-search,.tj-toolbar-search,.case-search):focus-within { border-color:var(--accent) !important; }
+/* Rich text remains a document surface, not an ordinary input. */
+.tj-root .rde-content[contenteditable="true"] { border:0 !important; box-shadow:none !important; outline:0 !important; }
+/* A document keeps its caret and a subtle heading state, not an input-sized
+   focus rectangle. This wins over the generic writing focus-visible rule. */
+.tj-root .rde-content[contenteditable="true"]:focus-visible { outline:0 !important; outline-offset:0 !important; caret-color:var(--accent); }

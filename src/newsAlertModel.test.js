@@ -48,6 +48,9 @@ test("next release and countdown use absolute timestamps",()=>{
   assert.equal(countdownLabel(-1),"0:00:00");
 });
 test("settings restore only supported reminder choices",()=>{
-  assert.deepEqual(readAlertSettings({getItem:()=>JSON.stringify({enabled:true,sound:false,minutes:[15,99]})}),{enabled:true,sound:false,minutes:[15]});
-  assert.deepEqual(readAlertSettings({getItem:()=>"{bad"}),{enabled:false,sound:true,minutes:[15,5]});
+  assert.deepEqual(readAlertSettings({getItem:()=>JSON.stringify({enabled:true,sound:false,minutes:[15,99]})}),{enabled:true,sound:false,minutes:[15],tone:"app",delivery:{inApp:true,browser:false}});
+  assert.deepEqual(readAlertSettings({getItem:()=>"{bad"}),{enabled:false,sound:true,minutes:[15,5],tone:"app",delivery:{inApp:true,browser:false}});
+  // Desktop lead times, tones and delivery are kept; unknown values fall back.
+  assert.deepEqual(readAlertSettings({getItem:()=>JSON.stringify({enabled:true,minutes:[60,30,5],tone:"chime",delivery:{inApp:false,browser:true}})}),{enabled:true,sound:true,minutes:[5,30,60],tone:"chime",delivery:{inApp:false,browser:true}});
+  assert.equal(readAlertSettings({getItem:()=>JSON.stringify({tone:"siren"})}).tone,"app");
 });

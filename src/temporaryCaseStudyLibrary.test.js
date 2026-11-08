@@ -20,7 +20,7 @@ test('recovery renders the normal editable library only through the isolated tem
   assert.doesNotMatch(journal,/handleSaveTemporaryCaseStudyWorkspace[\s\S]{0,280}setTemporaryCaseStudyWorkspace\(saved\.data\)/);
   const library=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8');
   assert.match(library,/Saved only on this device\. Your recovered legacy library is unchanged/);
-  assert.match(library,/Work in Progress — Coming Soon/);
-  assert.match(library,/Some features, including cloud synchronization, may be temporarily unavailable/);
+  assert.doesNotMatch(library,/Cloud sync unavailable/);
+  assert.doesNotMatch(library,/case-work-in-progress/);
   assert.doesNotMatch(library,/case-temporary-notice/);
 });

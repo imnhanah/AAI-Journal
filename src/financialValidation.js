@@ -61,6 +61,24 @@ export function validateFinanceMovement(movement) {
   return { valid:issues.length === 0, issues };
 }
 
+// A movement larger than what is available is allowed, because the journal may be
+// behind the broker, but it should be a deliberate choice and not a typing slip.
+export function financeOverdraftWarning({ type, source = 'trading', amount, tradingBalance, savingsBalance, money = String }) {
+  const value = Number(amount);
+  if (!(value > 0) || !['withdrawal','transfer'].includes(type)) return null;
+  const fromSavings = type === 'withdrawal' && source === 'savings';
+  const available = Number(fromSavings ? savingsBalance : tradingBalance);
+  if (!Number.isFinite(available) || value <= available + 0.005) return null;
+  const place = fromSavings ? 'this savings account' : 'available capital';
+  const after = Math.round((available - value) * 100) / 100;
+  return {
+    title: fromSavings ? 'More than this savings balance' : 'More than your available capital',
+    description: `You are moving ${money(value)}, but ${place} is ${money(available)}. Saving will take it to ${money(after)}. Check the amount, or save if your broker shows it is correct.`,
+    confirmLabel: 'Save anyway',
+    cancelLabel: 'Check amount',
+  };
+}
+
 export function validateAccountFinancialData(account) {
   const issues = [];
   if (!account) return { valid:true, issues };

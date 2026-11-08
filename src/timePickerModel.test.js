@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {timeParts,storedTime,displayTime} from './timePickerModel.js';
+import {isStoredTime,timeParts,storedTime,displayTime} from './timePickerModel.js';
 test('12-hour time round-trips every hour, including noon and midnight',()=>{
   for(let hour=0;hour<24;hour++){
     const value=String(hour).padStart(2,'0')+':37';
@@ -13,4 +13,7 @@ test('12-hour time round-trips every hour, including noon and midnight',()=>{
   assert.equal(displayTime(''),'--:--');
   assert.equal(storedTime('12','05','AM'),'00:05');
   assert.equal(storedTime('12','05','PM'),'12:05');
+  assert.equal(isStoredTime('23:59'),true);
+  assert.equal(isStoredTime('24:00'),false);
+  assert.equal(isStoredTime('09:60'),false);
 });

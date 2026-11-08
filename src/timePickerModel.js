@@ -1,6 +1,7 @@
 const pad = value => String(value).padStart(2, '0');
+export const isStoredTime = (value = '') => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value));
 export function timeParts(value = '') {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return {hour:'', minute:'', period:'AM'};
+  if (!isStoredTime(value)) return {hour:'', minute:'', period:'AM'};
   const [hour, minute] = value.split(':');
   return {hour:pad(Number(hour) % 12 || 12), minute, period:Number(hour) >= 12 ? 'PM' : 'AM'};
 }

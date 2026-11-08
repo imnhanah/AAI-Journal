@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {NEWS_ALERT_MINUTES,readAlertSettings,dueNewsAlerts} from './newsAlertModel.js';
+import {newsDayTiming,newsEventTiming,newsFilterCount,newsImpactDots,newsWeekTitle} from './mobileNews.js';
 const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 test('all five phone release-alert lead times persist and fire at the correct threshold',()=>{
  assert.deepEqual(NEWS_ALERT_MINUTES,[1,5,10,15,30]);
@@ -23,5 +24,27 @@ test('release sheet separates the blur layer, traps focus and restores its opene
  assert.match(source,/prior\?\.isConnected&&prior.focus\(\)/);
  assert.match(source,/targets.forEach\(\(\[e,inert\]\)=>\{e.inert=inert;/);
  assert.match(controls,/open && phone && <PhoneNewsAlertSheet/);
- assert.match(controls,/open && !phone && <div className="tj-news-alert-menu"/);
+ // Desktop keeps its own settings panel; phones keep the sheet.
+ assert.match(controls,/open && !phone && <NewsAlertPanel alert=\{alert\}/);
+});
+
+test('phone News helpers report timing, ordered dots and only real filter changes',()=>{
+ assert.equal(newsEventTiming({isoDate:'2026-11-05T12:00:00Z'},Date.parse('2026-11-06T00:00:00Z')),'Past');
+ assert.equal(newsEventTiming({isoDate:'2026-11-07T12:00:00Z'},Date.parse('2026-11-06T00:00:00Z')),'Upcoming');
+ const today=new Date('2026-11-06T12:00:00').toDateString();
+ assert.equal(newsDayTiming(today,today),'Today');
+ assert.equal(newsDayTiming(new Date('2026-11-04T12:00:00').toDateString(),today),'Past');
+ assert.deepEqual(newsImpactDots([{impact:'low'},{impact:'holiday'},{impact:'high'},{impact:'medium'}],2),['high','medium']);
+ const defaults={impact:{high:true,medium:true,low:false},currencies:[]};
+ assert.equal(newsFilterCount(defaults,['a','b'],['a','b'],0),0);
+ assert.equal(newsFilterCount({...defaults,currencies:['USD'],impact:{high:true,medium:false,low:false}},['a'],['a','b'],1),4);
+ assert.equal(newsWeekTitle(-1),'Last week');
+});
+
+test('phone News shares desktop alert state and leaves the desktop page unchanged',()=>{
+ const alerts=read('./NewsAlerts.jsx'),journal=read('./TradingJournal.jsx');
+ assert.match(alerts,/export function NewsReleaseHero/);
+ assert.match(alerts,/onClick=\{alert\.enable\}/);
+ assert.match(journal,/if \(phone\) \{\s*const liveHolidays/);
+ assert.doesNotMatch(journal,/tj-phone-news-tabs|tj-news-filters-toggle/);
 });

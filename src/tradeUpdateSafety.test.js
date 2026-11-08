@@ -26,5 +26,5 @@ test('zero-row conflicts give recovery instructions without disabling the revisi
   assert.ok(db.includes('query.eq("updated_at",x.updatedAt)'));
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   const start=source.indexOf('const handleSaveAccountSettings');
-  assert.ok(source.indexOf('accountRemovalSnapshotMatches(account, freshAccount)',start)<source.indexOf('await updateAccount(updated.id, updated)',start));
+  assert.ok(source.indexOf('accountRemovalSnapshotMatches(account, freshAccount)',start)<source.indexOf('await updateAccount(updated.id, settingsPatch)',start));
 });

@@ -24,6 +24,14 @@
   box-shadow: none !important;
 }
 
+/* The rail's other edges stay borderless. Its existing right border is the
+ * one workspace divider, restored after the broad chrome reset. The border
+ * width already belongs to the sidebar box, so this cannot change its size. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 {
+  box-sizing:border-box;
+  border-right-color:var(--border) !important;
+}
+
 /* Case Study shares the journal canvas instead of rendering page-sized wells. */
 :is(
   .case-library,

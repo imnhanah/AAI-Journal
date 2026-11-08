@@ -1,0 +1,123 @@
+/* Phone Challenge. Colours come from the --phone-* tokens set in mobileApp.css. */
+@media (max-width:767px) {
+  .tj-mc6-rail{display:flex;gap:12px;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .tj-mc6-rail::-webkit-scrollbar,.tj-mc6-sheet-body::-webkit-scrollbar{display:none}
+  .tj-mc6-rail-dots{display:flex;justify-content:center;gap:6px;margin:-4px 0 0}
+  .tj-mc6-rail-dots i{display:block;width:6px;height:6px;border-radius:3px;background:var(--phone-track);transition:all .25s}
+  .tj-mc6-rail-dots i.is-on{width:20px;background:var(--phone-pill)}
+  .tj-mc6-card,.tj-mobile-challenges-v6,.tj-mc6-sheet{color:var(--text);font-size:14px;line-height:1.4}
+  .tj-mc6-card *,.tj-mobile-challenges-v6 *,.tj-mc6-sheet-layer *{box-sizing:border-box}
+  .tj-mc6-card button,.tj-mobile-challenges-v6 button,.tj-mc6-sheet-layer button{padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation}
+  .tj-mc6-card button:focus-visible,.tj-mobile-challenges-v6 button:focus-visible,.tj-mc6-sheet-layer button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* Challenge card */
+  .tj-mc6-card{flex:0 0 100%;min-width:0;padding:16px;overflow:hidden;border:.5px solid var(--border);border-radius:34px;background:radial-gradient(110% 90% at 100% -10%,color-mix(in srgb,var(--phone-gain) 24%,transparent),transparent 60%),radial-gradient(80% 80% at 0 120%,color-mix(in srgb,var(--phone-blue) 20%,transparent),transparent 60%),var(--card);scroll-snap-align:center}
+  .tj-mc6-card>header{display:flex;align-items:center;gap:8px}
+  .tj-root .tj-mc6-card h2{flex:1;min-width:0;margin:0;overflow:hidden;font-size:20px;font-weight:500;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mc6-card>header b{flex:none;padding:3px 10px;border:1px solid currentColor;border-radius:10px;font-size:12px;font-weight:500}
+  .tj-mc6-card>header b.is-active{background:color-mix(in srgb,var(--phone-amber) 12%,transparent);color:var(--phone-amber)}
+  .tj-mc6-card>header b.is-complete{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-mc6-card>header b.is-failed{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-mc6-tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+  .tj-mc6-tags span{padding:4px 10px;border-radius:10px;background:var(--phone-raised);color:var(--muted);font-size:12px;font-weight:500}
+  .tj-mc6-level{display:flex;align-items:baseline;gap:8px}
+  .tj-mc6-level b{font-size:38px;font-weight:500;letter-spacing:-.04em;line-height:1}
+  .tj-mc6-level small{color:var(--muted);font-size:14px}
+  .tj-mc6-segments{display:flex;gap:2.5px;margin:14px 0}
+  .tj-mc6-segments i{display:block;flex:1;min-width:0;height:7px;border-radius:4px;background:var(--phone-track)}
+  .tj-mc6-segments i.is-passed{background:var(--phone-gain)}
+  .tj-mc6-segments i.is-funded{background:var(--phone-blue)}
+  .tj-mc6-segments i.is-now{background:var(--phone-amber)}
+  .tj-mc6-segments i.is-stepback{background:var(--phone-drop)}
+  .tj-mc6-two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;padding-top:12px;border-top:.5px solid var(--border)}
+  .tj-mc6-two span{display:block;margin-bottom:3px;color:var(--muted);font-size:12px;font-weight:500}
+  .tj-mc6-two b{display:block;overflow:hidden;font-size:clamp(13px,3.8vw,15px);font-weight:500;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mc6-two em{color:var(--muted);font-style:normal}
+  .tj-mc6-two b.is-gain{color:var(--phone-profit)}
+  .tj-mc6-mini{display:flex;gap:14px;margin-top:12px;color:var(--muted);font-size:12px}
+  .tj-mc6-mini b{color:var(--text);font-size:14px;font-weight:500}
+  .tj-mc6-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+  .tj-mc6-card .tj-mc6-buttons button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:15px;background:var(--phone-raised);font-size:13px;font-weight:500}
+
+  /* Stat tiles */
+  .tj-mobile-challenges-v6{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;padding-bottom:8px}
+  .tj-mc6-error,.tj-mc6-failed{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:12px 14px;border-radius:18px;background:var(--phone-drop-bg);color:var(--phone-loss);font-size:13px}
+  .tj-mc6-error button{min-height:44px;font-weight:500;text-decoration:underline}
+  .tj-mc6-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .tj-mc6-tiles>div{--tile-tone:var(--muted);--tile-text:var(--text);display:flex;min-width:0;min-height:112px;flex-direction:column;justify-content:space-between;padding:16px;border:.5px solid var(--border);border-radius:28px;background:radial-gradient(96px 96px at 100% 0,color-mix(in srgb,var(--tile-tone) 26%,transparent),transparent 100%),var(--card)}
+  .tj-mc6-tiles>.is-gain{--tile-tone:var(--phone-gain);--tile-text:var(--phone-profit)}
+  .tj-mc6-tiles>.is-risk{--tile-tone:var(--phone-drop);--tile-text:var(--phone-loss)}
+  .tj-mc6-tiles>.is-amber{--tile-tone:var(--phone-amber)}
+  .tj-mc6-tiles span{color:var(--muted);font-size:12px;font-weight:500}
+  .tj-mc6-tiles b{overflow:hidden;color:var(--tile-text);font-size:clamp(19px,6.3vw,25px);font-weight:500;letter-spacing:-.03em;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Compounding plan */
+  .tj-root .tj-mc6-plan-title{margin:0 2px 6px;font-size:17px;font-weight:500}
+  .tj-mc6-chips{display:flex;gap:6px;max-width:100%;margin-bottom:4px}
+  .tj-mc6-chips button{display:flex;flex:1 1 0;align-items:center;min-width:0;min-height:44px}
+  .tj-mc6-chips span{display:block;width:100%;height:32px;padding:0 6px;text-align:center;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;line-height:31px;white-space:nowrap}
+  .tj-mc6-chips button[aria-pressed=true] span{border-color:var(--phone-pill);background:var(--phone-pill);color:var(--phone-on-pill)}
+  .tj-mc6-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;padding:8px 0}
+  .tj-mc6-row::before{content:'';position:absolute;top:0;bottom:0;left:19px;width:2px;background:var(--phone-track)}
+  .tj-mc6-row:first-child::before{top:38px}
+  .tj-mc6-row:last-child:not(.is-open)::before{bottom:50%}
+  .tj-mc6-row-main{position:relative;z-index:1;display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;gap:12px;min-height:60px;text-align:left}
+  .tj-mc6-dot{display:grid;width:40px;height:40px;place-items:center;border:2px solid var(--phone-track);border-radius:50%;background:var(--bg);color:var(--muted);font-size:13px;font-weight:500}
+  .tj-mc6-row.is-funded .tj-mc6-dot{border-color:var(--phone-blue);background:var(--phone-blue-bg);color:var(--phone-blue)}
+  .tj-mc6-row.is-progress .tj-mc6-dot{border-color:var(--phone-amber);background:color-mix(in srgb,var(--phone-amber) 16%,var(--bg));color:var(--phone-amber)}
+  .tj-mc6-row.is-passed .tj-mc6-dot{border-color:var(--phone-gain);background:color-mix(in srgb,var(--phone-gain) 16%,var(--bg));color:var(--phone-profit)}
+  .tj-mc6-row.is-stepback .tj-mc6-dot{border-color:var(--phone-drop);color:var(--phone-loss)}
+  .tj-mc6-row-copy{min-width:0}
+  .tj-mc6-row-copy b{display:block;font-size:15px;font-weight:500}
+  .tj-mc6-row-copy em{margin-left:6px;color:var(--phone-amber);font-size:12px;font-style:normal;letter-spacing:.05em;text-transform:uppercase}
+  .tj-mc6-row-copy small{display:block;overflow:hidden;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mobile-challenges-v6 .tj-mc6-status{position:relative;z-index:1;display:flex;align-items:center;min-height:44px}
+  .tj-mc6-status span{display:block;padding:4px 10px;border-radius:9px;background:var(--phone-raised);color:var(--muted);font-size:12px;font-weight:500;white-space:nowrap}
+  .tj-mc6-status.is-progress span{background:color-mix(in srgb,var(--phone-amber) 18%,var(--card));color:var(--phone-amber)}
+  .tj-mc6-status.is-funded span{background:var(--phone-blue-bg);color:var(--phone-blue)}
+  .tj-mc6-status.is-passed span{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-mc6-status.is-stepback span{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-mc6-row-detail{grid-column:1/-1;min-width:0;margin:10px 0 4px 52px}
+  .tj-mc6-row-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  .tj-mc6-row-tiles>div{min-width:0;padding:9px 10px;border-radius:16px;background:var(--phone-raised)}
+  .tj-mc6-row-tiles small{display:block;color:var(--muted);font-size:12px}
+  .tj-mc6-row-tiles b{display:block;overflow:hidden;font-size:clamp(13px,3.7vw,15px);font-weight:500;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap}
+  .tj-mc6-row-tiles .is-risk b{color:var(--phone-loss)}
+  .tj-mc6-row-tiles .is-gain b{color:var(--phone-profit)}
+  .tj-mc6-row-detail dl{margin:0}
+  .tj-mc6-row-detail dl>div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border);font-size:13px}
+  .tj-mc6-row-detail dl>div:last-child{border:0}
+  .tj-mc6-row-detail dt{color:var(--muted)}
+  .tj-mc6-row-detail dd{margin:0;font-weight:500;text-align:right}
+
+  /* Sheets */
+  .tj-mc6-sheet-layer{position:fixed;z-index:120;inset:0;font-family:var(--font-sans)}
+  .tj-mc6-sheet-layer .tj-mc6-sheet-dismiss{position:absolute;inset:0;width:100%;background:var(--phone-scrim)}
+  .tj-mc6-sheet{position:absolute;right:0;bottom:0;left:0;display:flex;max-height:86dvh;flex-direction:column;border-radius:32px 32px 0 0;background:var(--bg)}
+  .tj-mc6-sheet-handle{display:block;flex:none;width:40px;height:5px;margin:10px auto 4px;border-radius:3px;background:var(--phone-track)}
+  .tj-mc6-sheet>header{display:flex;flex:none;align-items:center;justify-content:space-between;gap:10px;padding:2px 18px 6px}
+  .tj-root .tj-mc6-sheet h2{margin:0;font-size:20px;font-weight:500;line-height:1.25}
+  .tj-mc6-sheet-layer header button{display:grid;flex:none;width:44px;min-height:44px;margin-right:-6px;place-items:center}
+  .tj-mc6-sheet-body{flex:1;min-height:0;padding:6px 18px calc(18px + env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+  .tj-mc6-rule{margin-bottom:10px;padding:10px 12px;border-radius:16px;background:var(--phone-raised)}
+  .tj-mc6-rule b{display:block;margin-bottom:3px;font-size:13px;font-weight:500}
+  .tj-mc6-rule p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+  .tj-mc6-status-edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px;padding:0;border:0}
+  .tj-mc6-status-edit legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .tj-mc6-status-edit:disabled{opacity:.55}
+  .tj-mc6-sheet-layer .tj-mc6-status-edit button{min-height:44px;border:1px solid var(--border);border-radius:15px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;text-align:center}
+  .tj-mc6-sheet-layer .tj-mc6-status-edit button[aria-pressed=true]{border-color:var(--phone-gain);background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-mc6-sheet-layer .tj-mc6-status-edit button[data-status="Step back"][aria-pressed=true]{border-color:var(--phone-drop);background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-mc6-sheet-layer .tj-mc6-status-edit button[data-status="Not started"][aria-pressed=true]{border-color:var(--muted);background:var(--phone-raised);color:var(--text)}
+  .tj-mc6-sheet-lock,.tj-mc6-sheet-error{margin:0 0 12px;font-size:12px}
+  .tj-mc6-sheet-lock{color:var(--muted)}
+  .tj-mc6-sheet-error{color:var(--phone-loss)}
+  .tj-mc6-note span{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:500}
+  .tj-root.tj-root.tj-root.tj-root .tj-mc6-note textarea{display:block;width:100%;min-height:84px;padding:12px;border:.5px solid var(--border);border-radius:18px;background:var(--phone-raised);color:var(--text);font:inherit;font-size:14px;resize:vertical}
+  .tj-mc6-sheet>footer{flex:none;padding:12px 18px calc(16px + env(safe-area-inset-bottom,0px));border-top:.5px solid var(--border)}
+  .tj-mc6-sheet-layer footer button{width:100%;height:50px;border-radius:25px;background:var(--phone-gain);color:var(--phone-plus-icon);font-size:14px;font-weight:500;text-align:center}
+  .tj-mc6-sheet-layer footer button:disabled{opacity:.5}
+}
+@media (max-width:767px) and (prefers-reduced-motion: reduce) {
+  .tj-mc6-rail-dots i{transition:none}
+}

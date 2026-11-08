@@ -11,6 +11,16 @@ export const planTemporaryLibraryUpload = ({ temporaryLibrary, cloudLibrary, clo
   return { kind:'reconciliation-required', expectedRevision:cloudRevision ?? null, local:temporaryLibrary, cloud:cloudLibrary };
 };
 
+// Pending snapshots are never uploaded merely because the application starts.
+// This planner makes the safe outcomes explicit: confirmation, a user-triggered
+// retry against the same revision, or a conflict that preserves both copies.
+export const planPendingLibraryRecovery = ({ pending, cloudLibrary, cloudRevision }) => {
+  if (!pending?.workspace) return { kind:'nothing-pending' };
+  if (cloudLibrary != null && sameProfileCaseStudyLibrary(pending.workspace, cloudLibrary)) return { kind:'confirmed', revision:cloudRevision ?? null };
+  if (pending.baseRevision === (cloudRevision ?? null)) return { kind:'retry-safe', expectedRevision:pending.baseRevision };
+  return { kind:'reconciliation-required', local:pending.workspace, cloud:cloudLibrary, cloudRevision:cloudRevision ?? null };
+};
+
 export const cloudSyncState = ({ temporary, syncing=false, error=null, conflict=false, synced=false }) => {
   if (conflict) return 'Sync conflict';
   if (syncing) return 'Syncing';

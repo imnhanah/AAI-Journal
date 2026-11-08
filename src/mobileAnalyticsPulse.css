@@ -1,0 +1,98 @@
+/* Phone Analytics. Colours come from the --phone-* tokens set in mobileApp.css. */
+@media (max-width:767px) {
+  /* The page owns its side gutter so swipe rows can run edge to edge. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.tj-pulse){padding-inline:0}
+  .tj-pulse{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;padding:0 14px 8px;color:var(--text);font-size:14px;line-height:1.4;--pulse-tone:var(--phone-gain)}
+  .tj-pulse *{box-sizing:border-box}
+  .tj-pulse button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+  .tj-pulse button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .tj-pulse .pos{color:var(--phone-profit)}
+  .tj-pulse .neg{color:var(--phone-loss)}
+  .tj-pulse .amb{color:var(--phone-amber)}
+  .tj-pulse-empty{margin:0;padding:22px 16px;color:var(--muted);font-size:13px;text-align:center}
+
+  .tj-pulse-period{display:flex;flex:none;align-items:center;min-height:44px;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer}
+  .tj-pulse-period>span{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 9px;border:.5px solid var(--border);border-radius:17px;background:var(--card);font-size:12px;font-weight:500;white-space:nowrap}
+
+  .tj-pulse-hero{position:relative;overflow:hidden;margin-bottom:6px;padding:18px 0 4px;border:.5px solid var(--border);border-radius:34px;background:radial-gradient(120% 90% at 85% -10%,var(--phone-purple-wash),transparent 62%),linear-gradient(180deg,var(--phone-purple-base),var(--card))}
+  .tj-pulse-hero-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 18px}
+  .tj-pulse-label{color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+  .tj-pulse-pill{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:12px;background:var(--phone-raised);color:var(--muted);font-size:12px;font-weight:500;white-space:nowrap}
+  .tj-pulse .tj-pulse-pill.pos{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-pulse .tj-pulse-pill.neg{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-pulse-big{margin:6px 18px 0;overflow:hidden;font-size:clamp(34px,11.5vw,48px);font-weight:500;letter-spacing:-.035em;line-height:1.05;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tj-pulse-sub{min-height:19px;margin:3px 18px 12px;color:var(--muted);font-size:13px}
+  .tj-pulse-sub b{font-weight:500}
+  .tj-pulse-lens{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 14px 4px;border-radius:20px;background:var(--phone-raised)}
+  .tj-pulse-lens>i{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:17px;background:var(--phone-pill);transform:translateX(calc(var(--lens-index) * 100%));transition:transform .32s cubic-bezier(.3,.9,.3,1)}
+  .tj-pulse-lens button{position:relative;z-index:1;min-height:44px;padding:0;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:500;text-align:center;transition:color .2s}
+  .tj-pulse .tj-pulse-lens button.is-on{color:var(--phone-on-pill)}
+  .tj-pulse-chart-wrap{margin-top:6px}
+  .tj-pulse-chart-pad{padding:0 12px}
+  .tj-pulse-chart{display:block;width:100%;height:auto;touch-action:pan-y}
+  .tj-pulse-chart text{fill:var(--muted);font-family:inherit;font-size:12px}
+
+  .tj-pulse-section{display:flex;align-items:baseline;justify-content:space-between;margin:20px 6px 10px}
+  .tj-root .tj-pulse-section h2{margin:0;color:var(--text);font-size:17px;font-weight:500;letter-spacing:-.01em}
+  .tj-pulse-section span{color:var(--muted);font-size:12px}
+
+  .tj-pulse-rail{display:flex;gap:10px;max-width:none;margin:0 -14px;padding:2px 14px 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-left:14px;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .tj-pulse-rail::-webkit-scrollbar,.tj-pulse-chips::-webkit-scrollbar,.tj-pulse-notes::-webkit-scrollbar{display:none}
+  .tj-pulse-vital{position:relative;display:flex;flex:0 0 150px;flex-direction:column;justify-content:space-between;height:132px;padding:14px;border:.5px solid var(--border);border-radius:28px;background:linear-gradient(160deg,color-mix(in srgb,var(--pulse-tone) 16%,var(--card)),var(--card) 70%);scroll-snap-align:start;transition:opacity .12s linear}
+  .tj-pulse-vital.is-purple{--pulse-tone:var(--phone-purple)}
+  .tj-pulse-vital.is-amber{--pulse-tone:var(--phone-amber)}
+  .tj-pulse-vital.is-drop{--pulse-tone:var(--phone-drop)}
+  .tj-pulse-vital small{display:block;color:var(--muted);font-size:12px}
+  .tj-root .tj-pulse-vital strong{display:block;margin-top:2px;overflow:hidden;font-size:clamp(20px,6.6vw,26px);font-weight:500;letter-spacing:-.02em;line-height:1.05;text-overflow:ellipsis;white-space:nowrap}
+  .tj-pulse-vital p{margin:0;color:var(--muted);font-size:12px;line-height:1.3}
+  .tj-pulse-vital-ring{position:absolute;top:12px;right:12px;width:38px;height:38px}
+  .tj-pulse-gauge{height:5px;margin-top:6px;overflow:hidden;border-radius:3px;background:var(--phone-track)}
+  .tj-pulse-gauge i{display:block;height:100%;border-radius:3px;background:var(--pulse-tone)}
+  .tj-pulse-spark{display:block;width:100%;height:26px;margin-top:2px}
+  .tj-pulse-dots{display:flex;justify-content:center;gap:5px;margin-top:6px}
+  .tj-pulse-dots i{display:block;width:6px;height:6px;border-radius:3px;background:var(--phone-track);transition:all .25s}
+  .tj-pulse-dots i.is-on{width:18px;background:var(--phone-pill)}
+
+  .tj-pulse-chips{display:flex;gap:6px;max-width:none;margin:-6px -14px 0;padding:0 14px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none}
+  .tj-pulse-chips button{display:flex;flex:none;align-items:center;min-height:44px;padding:0;border:0;background:transparent;scroll-snap-align:center}
+  .tj-pulse-chips span{display:block;height:32px;padding:0 13px;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;line-height:31px;white-space:nowrap;transition:background .2s,color .2s}
+  .tj-pulse-chips button.is-on span{border-color:var(--phone-pill);background:var(--phone-pill);color:var(--phone-on-pill)}
+  .tj-pulse-list{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;margin-top:4px;scroll-margin-top:12px}
+  .tj-pulse-row{min-width:0;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card)}
+  .tj-pulse-row>button{display:grid;grid-template-columns:30px minmax(0,1fr) auto 16px;align-items:center;gap:2px 11px;width:100%;padding:13px 14px 14px;border:0;background:transparent;text-align:left}
+  .tj-pulse-row>button>svg{color:var(--muted)}
+  .tj-pulse-rank{display:grid;width:30px;height:30px;place-items:center;border-radius:10px;background:var(--phone-raised);color:var(--muted);font-size:13px;font-weight:500}
+  .tj-pulse-rank.is-top{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-pulse-row-copy{min-width:0}
+  .tj-pulse-row-copy b{display:block;overflow:hidden;font-size:15px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-pulse-row-copy small{display:block;margin-top:1px;color:var(--muted);font-size:12px;line-height:1.3}
+  .tj-pulse-row-value{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .tj-pulse-row-value b{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tj-pulse-row-value em{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:7px;background:var(--phone-purple-bg);color:var(--phone-purple);font-size:12px;font-style:normal;font-weight:500}
+  .tj-pulse-row-value em.is-low{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-pulse-row-bar{grid-column:1/-1;display:block;height:7px;margin-top:10px;overflow:hidden;border-radius:4px;background:var(--phone-track)}
+  .tj-pulse-row-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--phone-gain),color-mix(in srgb,var(--phone-gain) 55%,var(--phone-purple)))}
+  .tj-pulse-row-bar i.is-loss{background:linear-gradient(90deg,var(--phone-drop),color-mix(in srgb,var(--phone-drop) 60%,var(--phone-amber)))}
+  .tj-pulse-row-detail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 14px 14px}
+  .tj-pulse-row-detail>div{min-width:0;padding:8px 10px;border-radius:14px;background:var(--phone-raised)}
+  .tj-pulse-row-detail small{display:block;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+  .tj-pulse-row-detail b{display:block;margin-top:2px;overflow:hidden;font-size:14px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-pulse-more{justify-self:center;min-height:44px;padding:0;border:0;background:transparent}
+  .tj-pulse-more span{display:block;height:32px;padding:0 13px;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;line-height:31px}
+
+  .tj-pulse-notes{display:flex;gap:10px;max-width:100%;padding:2px 0 6px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .tj-pulse-note-dots{display:flex;justify-content:center;gap:5px;margin-top:6px}
+  .tj-pulse-note-dots i{display:block;width:6px;height:6px;border-radius:3px;background:var(--phone-track)}
+  .tj-pulse-note-dots i.is-on{width:18px;background:var(--phone-pill)}
+  .tj-pulse .tj-pulse-note{--note-tone:var(--phone-amber);flex:0 0 100%;min-width:0;padding:16px;border:.5px solid color-mix(in srgb,var(--note-tone) 35%,var(--border));border-radius:28px;background:linear-gradient(160deg,color-mix(in srgb,var(--note-tone) 18%,var(--card)),var(--card) 75%);scroll-snap-align:center;scroll-snap-stop:always;text-align:left}
+  .tj-pulse .tj-pulse-note.is-red{--note-tone:var(--phone-drop)}
+  .tj-pulse .tj-pulse-note.is-purple{--note-tone:var(--phone-purple)}
+  .tj-pulse-note-icon{display:grid;width:34px;height:34px;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--note-tone) 22%,var(--card));color:var(--note-tone)}
+  .tj-root .tj-pulse-note h3{margin:10px 0 4px;font-size:15px;font-weight:500}
+  .tj-pulse-note p{margin:0;color:var(--muted);font-size:13px;font-weight:400}
+  .tj-pulse-note p b{color:var(--text);font-weight:500}
+  .tj-pulse-note-go{display:flex;align-items:center;gap:4px;margin-top:10px;color:var(--note-tone);font-size:12px;font-weight:500}
+}
+@media (max-width:767px) and (prefers-reduced-motion: reduce) {
+  .tj-pulse-lens>i,.tj-pulse-vital,.tj-pulse-dots i,.tj-pulse-chips span{transition:none}
+}

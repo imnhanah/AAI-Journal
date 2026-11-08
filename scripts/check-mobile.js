@@ -30,20 +30,29 @@ try{
     if(await page.locator('.tj-page-title').innerText()==='Dashboard'&&route!=='dashboard')throw new Error(`Route ${route} fell back to Dashboard`);
     await inspect(route);
     if(includeSheets&&route==='dashboard'){
-     await page.getByRole('button',{name:/^Start Day Daily routine/}).click();
-     const popup=page.locator('.tj-routine-popup');await popup.waitFor();
+     await page.getByRole('button',{name:'Open quick menu',exact:true}).click();
+     await page.getByRole('dialog',{name:'Quick menu',exact:true}).getByRole('button',{name:/^Start day/}).click();
+     const popup=page.locator('.tj-sd');await popup.waitFor();
      await inspect(route,'routine-open');
-     const boxes=popup.locator('input[type="checkbox"]'),count=await boxes.count(),partial=Math.ceil(count*2/3);
-     for(let index=0;index<partial;index++)await boxes.nth(index).check();
+     const boxes=popup.locator('.tj-sd-tick'),count=await boxes.count(),partial=Math.ceil(count*2/3);
+     for(let index=0;index<partial;index++)await boxes.nth(index).click();
      await inspect(route,'routine-progress');
-     for(let index=partial;index<count;index++)await boxes.nth(index).check();
+     for(let index=partial;index<count;index++)await boxes.nth(index).click();
      await inspect(route,'routine-complete');
-     await popup.locator('.tj-routine-close').click();await popup.waitFor({state:'hidden'});
+     await popup.locator('.tj-sd-close').click();
+     const discard=page.locator('.tj-confirm-dialog');await discard.waitFor();await inspect(route,'routine-discard');
+     await discard.getByRole('button',{name:'Discard',exact:true}).click();await popup.waitFor({state:'hidden'});
      if(await page.locator('.tj-markup-composer-modal').isVisible())throw new Error('Closing the routine unexpectedly opened markup.');
-     await page.getByRole('button',{name:'Add to your day',exact:true}).click();
-     const menu=page.getByRole('dialog',{name:'Add to your day',exact:true});await menu.waitFor();await inspect(route,'add-menu');
-     await menu.getByRole('button',{name:/^Start Day Daily routine/}).click();await popup.waitFor();await inspect(route,'routine-from-add');
-     await popup.locator('.tj-routine-close').click();await popup.waitFor({state:'hidden'});
+     await page.getByRole('button',{name:'Open quick menu',exact:true}).click();
+     const menu=page.getByRole('dialog',{name:'Quick menu',exact:true});await menu.waitFor();await inspect(route,'add-menu');
+     await menu.getByRole('button',{name:/^Start day/}).click();await popup.waitFor();await inspect(route,'routine-from-add');
+     await popup.locator('.tj-sd-close').click();await popup.waitFor({state:'hidden'});
+     const openMore=async()=>{await page.locator('.tj-mobile-bottom>button',{hasText:'More'}).click();await page.locator('.tj-mobile-sheet-more').waitFor();};
+     await openMore();await inspect(route,'more');
+     await page.locator('.tj-more-me').click();await page.locator('.tj-mp').waitFor();await inspect(route,'profile');
+     await page.locator('.tj-mp .tj-back').click();await page.locator('.tj-mp').waitFor({state:'hidden'});
+     await page.locator('.tj-mobile-sheet-more').waitFor();await page.locator('.tj-more-list button',{hasText:'Account'}).click();await page.locator('.tj-account-settings-redesign').waitFor();await inspect(route,'account');
+     await page.locator('.tj-ma .tj-back').click();await page.locator('.tj-account-settings-redesign').waitFor({state:'hidden'});
     }
     if(includeSheets&&route==='calendar')for(const date of ['2026-10-02','2026-10-06','2026-10-08']){
      await page.getByRole('button',{name:new RegExp(`^${date},`)}).click();await page.locator('.tj-calendar-day-modal').waitFor();

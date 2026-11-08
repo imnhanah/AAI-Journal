@@ -1,6 +1,7 @@
 /* All refinements in this file are phone-only. Desktop is the captured baseline. */
 @media(max-width:767px) {
- .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {padding:0 0 var(--mobile-bottom);}
+ /* mobileFrame owns the root/main height budget. Keep this later refinement
+    from partially overriding it during a live desktop-to-phone resize. */
  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {position:static;flex:0 0 var(--mobile-top);width:100%;transition:none;}
  .tj-root.tj-root.tj-root.tj-root .tj-content-inner>*,.tj-root.tj-root.tj-root.tj-root .tj-card>* {min-width:0;max-width:100%;}
  .tj-root.tj-root.tj-root.tj-root :is(button,a[href],[role="button"],[role="tab"],[role="switch"]) {min-height:44px!important;}

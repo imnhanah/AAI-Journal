@@ -1,6 +1,8 @@
 import React, {useRef,useState,useEffect} from 'react';
 import {Trophy} from 'lucide-react';
 import {playAlertSound,unlockAlertSounds} from './alertSounds';
+// The trader's display name, for the desktop celebration and certificate (provided by TradingJournal).
+export const TraderNameContext = React.createContext('');
 const POPPER_PARTICLES = Array.from({ length: 76 }, (_, index) => {
   const fan = (index % 38) / 37;
   const radius = 310 + (index % 6) * 52;

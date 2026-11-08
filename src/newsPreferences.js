@@ -20,7 +20,26 @@ export function matchesNewsFilters(event, filters) {
     (!filters.currencies.length || filters.currencies.includes(event.currency) || event.currency === "All"));
 }
 
-export function readNewsFilters(storage) {
-  try { return normalizeNewsFilters(JSON.parse(storage.getItem(NEWS_FILTER_KEY))); }
-  catch { return normalizeNewsFilters(null); }
+// Keep this preference per signed-in profile.  It deliberately remains in
+// browser storage on logout, so a returning user keeps the market focus they
+// chose without leaking that choice to another profile on the same device.
+export function newsFilterKey(userId) {
+  return userId ? `${NEWS_FILTER_KEY}:${encodeURIComponent(userId)}` : NEWS_FILTER_KEY;
+}
+
+export function readNewsFilters(storage, userId) {
+  try {
+    const saved = storage.getItem(newsFilterKey(userId));
+    // Preserve a previously saved browser-wide preference once for existing
+    // users. Subsequent saves move it to that user's own key.
+    const legacy = userId && saved == null ? storage.getItem(NEWS_FILTER_KEY) : saved;
+    return normalizeNewsFilters(JSON.parse(legacy));
+  } catch { return normalizeNewsFilters(null); }
+}
+
+export function saveNewsFilters(storage, filters, userId) {
+  storage.setItem(newsFilterKey(userId), JSON.stringify(normalizeNewsFilters(filters)));
+  // The old key was shared by every profile. Once the active profile has
+  // claimed it, remove it so a different profile starts with its own choice.
+  if (userId) storage.removeItem?.(NEWS_FILTER_KEY);
 }

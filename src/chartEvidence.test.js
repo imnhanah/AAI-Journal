@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addAnnotation, annotation, boardObject, boardToScreen, commitBoardText, createFittedBoard, defaultStyle, fitBoardViewport, history, moveBoardObject, normaliseAnnotation, normaliseBoard, point, redo, removeAnnotation, replaceAnnotation, resizeBoardImage, screenToBoard, svgPrimitive, undo } from './chartEvidence.js';
+import { DEFAULT_ANNOTATION_COLOR, addAnnotation, annotation, boardObject, boardObjectCanvasGeometry, boardToScreen, commitBoardText, createFittedBoard, defaultStyle, duplicateBoardObjects, fitBoardViewport, history, imageRelativeBoardObject, moveBoardObject, moveImageRelativeBoardObject, normaliseAnnotation, normaliseBoard, normaliseStyle, point, redo, removeAnnotation, replaceAnnotation, resizeBoardImage, screenToBoard, svgPrimitive, undo } from './chartEvidence.js';
 import { readFileSync } from 'node:fs';
 test('annotations are placement-local and retain relative coordinates',()=>{const a=annotation('box',{x:.1,y:.2},{x:.7,y:.8});const one=addAnnotation({annotations:[]},a);const two=addAnnotation({annotations:[]},annotation('line',{x:0,y:0},{x:1,y:1}));assert.equal(one.annotations[0].start.x,.1);assert.equal(two.annotations.length,1);assert.equal(removeAnnotation(one,a.id).annotations.length,0);});
 test('annotation edit and history undo redo preserve originals',()=>{const a=annotation('text',{x:.5,y:.5},{x:.5,y:.5},'note');const first={annotations:[a]};const second=replaceAnnotation(first,a.id,{text:'changed'});assert.equal(first.annotations[0].text,'note');let state={past:[],value:first,future:[]};state=history(state,second);assert.equal(undo(state).value.annotations[0].text,'note');assert.equal(redo(undo(state)).value.annotations[0].text,'changed');});
 test('attached evidence exposes a hook-safe board action and the viewer handles absent images',()=>{const editor=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8');const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');assert.match(editor,/Open viewer/);assert.match(editor,/openViewer\(item\.id\)/);assert.ok(editor.indexOf("useEffect(() =>") < editor.indexOf('if (viewerId) return <ChartViewerBoundary'));assert.match(editor,/ChartViewerBoundary/);assert.match(viewer,/This evidence image is unavailable/);assert.match(viewer,/onClick=\{leave\}/);});
-test('viewer has an image-bound board, drawing, pan, resize, and history paths',()=>{const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');assert.match(viewer,/className="cv-board-surface"/);assert.match(viewer,/className="cv-board-objects"/);assert.match(viewer,/draggable="false"/);assert.match(viewer,/kind:'resize'/);assert.match(viewer,/kind:'pan'/);assert.match(viewer,/resizeBoardImage/);assert.match(viewer,/onPointerCancel=\{up\}/);assert.match(viewer,/Undo2/);assert.match(viewer,/Redo2/);});
+test('viewer keeps chart image inert while drawings, pan, and history stay available',()=>{const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');assert.match(viewer,/className="cv-board-surface"/);assert.match(viewer,/className="cv-board-objects"/);assert.match(viewer,/draggable="false"/);assert.doesNotMatch(viewer,/kind:'resize'/);assert.match(viewer,/kind:'pan'/);assert.match(viewer,/onPointerCancel=\{up\}/);assert.match(viewer,/Undo2/);assert.match(viewer,/Redo2/);});
 test('saved box, arrow, line, text, and freehand records produce visible SVG primitives',()=>{
   const records=[
     [{id:'box',tool:'box',start:{x:10,y:20},end:{x:70,y:80}},'rect'],
@@ -24,9 +24,9 @@ test('pointer positions map to the stable image surface and never to page coordi
   assert.deepEqual(point({clientX:250,clientY:175},{left:100,top:75,width:300,height:200}),{x:.5,y:.5});
   assert.deepEqual(point({clientX:-5,clientY:900},{left:100,top:75,width:300,height:200}),{x:0,y:1});
 });
-test('board keeps drawing, pan, image annotations, and the resize control on separate paths',()=>{
-  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8'); const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
-  assert.match(viewer,/className="cv-board-surface"/); assert.match(viewer,/className="cv-board-world"/); assert.match(viewer,/if\(tool==='pan'\)/); assert.match(viewer,/tool==='select'/); assert.match(viewer,/className="cv-board-resize"/); assert.match(css,/\.cv-board-resize/);
+test('board keeps drawing selection and pan separate from the inert chart image',()=>{
+  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');
+  assert.match(viewer,/className="cv-board-surface"/); assert.match(viewer,/className="cv-board-world"/); assert.match(viewer,/if\(tool==='pan'\)/); assert.match(viewer,/tool==='select'/); assert.doesNotMatch(viewer,/cv-board-resize/);
 });
 test('text creation, editing, undo, redo, and reopening retain a visible placement annotation',()=>{
   const created=annotation('text',{x:.3,y:.6},{x:.3,y:.6},'Liquidity sweep');
@@ -46,6 +46,45 @@ test('drawing styles are individual, bounded, and survive annotation updates',()
   const changed=replaceAnnotation({annotations:[line]},line.id,{style:{...line.style,thickness:6}});
   assert.equal(changed.annotations[0].style.thickness,6); assert.equal(line.style.thickness,5);
   assert.equal(normaliseAnnotation({tool:'draw'}).style.thickness,2); assert.equal(defaultStyle('text').fontSize,13);
+});
+test('arrow styles preserve explicit HEX colors and arrowhead sizes through serialization',()=>{
+  const arrow=annotation('arrow',{x:.1,y:.1},{x:.8,y:.8},'',{color:'#A14BC9',arrowSize:19});
+  const reopened=JSON.parse(JSON.stringify(arrow));
+  assert.equal(reopened.style.color,'#A14BC9');
+  assert.equal(normaliseStyle('arrow',reopened.style).color,'#A14BC9');
+  assert.equal(normaliseStyle('arrow',reopened.style).arrowSize,19);
+});
+test('annotation colors are explicit HEX values, survive serialization, and never inherit the application theme',()=>{
+  const custom=normaliseStyle('line',{color:'#1aB2c3'});
+  const legacy=normaliseStyle('line',{color:'accent'});
+  const invalid=normaliseStyle('line',{color:'var(--accent)'});
+  assert.equal(custom.color,'#1AB2C3');
+  assert.equal(legacy.color,DEFAULT_ANNOTATION_COLOR);
+  assert.equal(invalid.color,DEFAULT_ANNOTATION_COLOR);
+  const blue=boardObject('line',{x:10,y:20},{x:80,y:90},'',{color:'#0077FF'});
+  const orange=boardObject('box',{x:20,y:30},{x:70,y:80},'',{color:'#FF6B00'});
+  const reopened=JSON.parse(JSON.stringify({objects:[blue,orange]}));
+  assert.equal(reopened.objects[0].style.color,'#0077FF');
+  assert.equal(reopened.objects[1].style.color,'#FF6B00');
+  assert.notEqual(reopened.objects[0].style.color,reopened.objects[1].style.color);
+});
+test('duplicated annotations retain independent geometry, text, colors, and styles with a small offset',()=>{
+  const originals=[
+    {...boardObject('line',{x:10,y:20},{x:40,y:60},'',{color:'#0088FF',thickness:4}),relativeToImage:false},
+    {...imageRelativeBoardObject('text',{x:120,y:120},{x:120,y:120},{x:100,y:100,width:400,height:200},'Sweep',[],{color:'#FF6600'}),relativeToImage:true},
+  ];
+  const copies=duplicateBoardObjects(originals);
+  assert.equal(copies.length,2); assert.notEqual(copies[0].id,originals[0].id); assert.equal(copies[0].style.color,'#0088FF');
+  assert.equal(copies[0].start.x,26); assert.equal(copies[1].text,'Sweep'); assert.equal(copies[1].style.color,'#FF6600');
+  assert.ok(copies[1].start.x>originals[1].start.x);
+});
+test('a multi-delete is one placement history change and undo restores every selected drawing together',()=>{
+  const one=boardObject('line',{x:.1,y:.2},{x:.5,y:.7}),two=boardObject('box',{x:.2,y:.3},{x:.6,y:.8}),three=boardObject('ellipse',{x:.3,y:.4},{x:.7,y:.9});
+  const before={board:{objects:[one,two,three]}},deleted={board:{objects:[three]}};
+  const state=history({past:[],value:before,future:[]},deleted);
+  assert.equal(state.past.length,1);
+  assert.deepEqual(undo(state).value,before);
+  assert.deepEqual(redo(undo(state)).value,deleted);
 });
 test('style history and reopening preserve selected annotation styles',()=>{
   const box=annotation('box',{x:.1,y:.1},{x:.8,y:.8},'',{thickness:2,fill:'none'});
@@ -126,10 +165,80 @@ test('Fit view centers a saved offscreen chart without moving its image or annot
 });
 test('viewer distinguishes loading and failure states, retries images, and guards placement switching',()=>{
   const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8'); const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
-  assert.match(viewer,/onLoad=\{loadImage\}/); assert.match(viewer,/onError=\{failImage\}/); assert.match(viewer,/Retry image/); assert.match(viewer,/imageKeyRef\.current!==imageKey/); assert.match(viewer,/key=\{`\$\{imageKey\}:\$\{imageState\.retry\}`\}/);
+  assert.match(viewer,/onLoad=\{loadImage\}/); assert.match(viewer,/onError=\{failImage\}/); assert.match(viewer,/Retry image/); assert.match(viewer,/event\.currentTarget\.dataset\.imageKey!==imageKeyRef\.current/); assert.match(viewer,/key=\{`\$\{imageKey\}:\$\{activeImageState\.retry\}`\}/);
   assert.match(viewer,/createFittedBoard\(size,image\.naturalWidth,image\.naturalHeight\)/); assert.match(viewer,/fitBoardViewport\(normaliseBoard\(current\.board,ratio\),size\)/); assert.match(css,/\.cv-board-image-status/);
 });
 test('board workspace uses connected flex chrome and a canvas that owns remaining height',()=>{
   const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8'); const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
-  assert.match(viewer,/className="cv-board-chrome"/); assert.match(viewer,/Fit view/); assert.match(css,/\.cv-board\{background:var\(--raised\);display:flex;flex-direction:column/); assert.match(css,/\.cv-board-chrome\{[^}]*flex:0 0 auto[^}]*width:100%/); assert.match(css,/\.cv-board-surface\{background-color:var\(--raised\).*flex:1 1 0.*min-height:0.*min-width:0.*width:100%/); assert.match(css,/\.cv-board-world\{height:1px;left:0;position:absolute;top:0/); assert.doesNotMatch(css,/\.cv-board-surface\{[^}]*top:105px/);
+  assert.match(viewer,/className="cv-board-chrome"/); assert.match(viewer,/Fit view/); assert.match(css,/\.cv\.cv-board\{[^}]*background:var\(--raised\)[^}]*display:flex[^}]*flex-direction:column/); assert.match(css,/\.cv-board-chrome\{[^}]*flex:0 0 auto[^}]*width:100%/); assert.match(css,/\.cv-board-surface\{background-color:var\(--raised\).*flex:1 1 0.*min-height:0.*min-width:0.*width:100%/); assert.match(css,/\.cv-board-world\{height:1px;left:0;position:absolute;top:0/); assert.doesNotMatch(css,/\.cv-board-surface\{[^}]*top:105px/);
+});
+
+test('viewer is the full-width flex child while its bounded inspector remains beside the chart',()=>{
+  const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
+  assert.match(css,/\.cv\.cv-board\{[^}]*flex:1 1 0[^}]*max-width:none[^}]*min-width:0[^}]*width:100%/);
+  assert.match(css,/\.cv-board-workspace \{[^}]*grid-template-columns:152px minmax\(0,1fr\) clamp\(250px,22vw,310px\)[^}]*overflow:hidden/);
+  assert.match(css,/\.cv-board-workspace > \.cv-board-tools \{[^}]*grid-column:1[^}]*overflow-x:hidden[^}]*overflow-y:auto[^}]*width:152px/);
+  assert.match(css,/\.cv-board-workspace > \.cv-board-surface \{ grid-column:2; grid-row:1/);
+});
+
+test('image load fits either a new or existing board once without changing image-relative annotations',()=>{
+  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');
+  assert.match(viewer,/current\.board\?fitBoardViewport\(normaliseBoard\(current\.board,imageRatio\),size\):createFittedBoard/);
+  assert.match(viewer,/initialisedBoardKeyRef\.current===imageKey/);
+  assert.match(viewer,/data-image-key=\{imageKey\}/);
+  assert.match(viewer,/setImageState\(state=>\(\{key:imageKey,status:'loaded'/);
+  assert.match(viewer,/\[panelOpen,compareOpen,activeImageState\.status\]/);
+});
+
+test('new board objects retain image-relative geometry through image movement, resizing, and reopen serialization',()=>{
+  const image={x:100,y:80,width:800,height:400};
+  const line=imageRelativeBoardObject('line',{x:180,y:120},{x:740,y:360},image);
+  assert.equal(line.relativeToImage,true);
+  assert.deepEqual(boardObjectCanvasGeometry(line,image).start,{x:180,y:120});
+  const movedImage={x:260,y:40,width:1200,height:600};
+  assert.deepEqual(boardObjectCanvasGeometry(JSON.parse(JSON.stringify(line)),movedImage).start,{x:380,y:100});
+  const shifted=moveImageRelativeBoardObject(line,{x:120,y:60},image);
+  assert.deepEqual(boardObjectCanvasGeometry(shifted,image).start,{x:300,y:180});
+});
+
+test('Phase 5 viewer has cancellation, compare, inspector, and image-relative rendering paths',()=>{
+  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8'); const library=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8'); const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
+  assert.match(viewer,/onContextMenu=\{event=>\{event\.preventDefault\(\);setDraft\(null\);setMoving\(null\);setTool\('select'\);\}\}/);
+  assert.match(viewer,/event\.key==='Escape'/);
+  assert.match(viewer,/imageRelativeBoardObject\(draft\.tool/);
+  assert.match(viewer,/boardObjectCanvasGeometry\(object,board\.image\)/);
+  assert.match(viewer,/Compare evidence/);
+  assert.match(viewer,/cv-inspector-properties/);
+  assert.match(library,/allEvidence=\{workspace\.evidence\}/);
+  assert.match(css,/\.cv-board-workspace\.is-comparing/);
+  assert.match(css,/\.cv-board-bottom/);
+});
+
+test('viewer uses the native color input and carries the selected color into new drawing and text records',()=>{
+  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');
+  const css=readFileSync(new URL('./chartViewer.css',import.meta.url),'utf8');
+  assert.match(viewer,/type="color" aria-label="Annotation color"/);
+  assert.match(viewer,/setDrawingColor\(color\)/);
+  assert.match(viewer,/style:\{color:drawingColor\}/);
+  assert.match(viewer,/imageRelativeBoardObject\(draft\.tool,[\s\S]*draft\.style\)/);
+  assert.match(viewer,/const markerId=key=>`board-arrow-/);
+  assert.match(viewer,/fill=\{color\} stroke=\{color\}/);
+  assert.match(viewer,/markerEnd=\{item\.tool==='arrow'\?`url\(#\$\{markerId\(key\)\}\)`/);
+  assert.doesNotMatch(viewer,/context-stroke/);
+  assert.match(css,/\.cv-inspector \.cv-color-field input\[type="color"\]/);
+});
+
+test('viewer selection shortcuts are placement-local, atomic, and leave editable fields alone',()=>{
+  const viewer=readFileSync(new URL('./ChartViewer.jsx',import.meta.url),'utf8');
+  assert.match(viewer,/\[selectedIds,setSelectedIds\]=useState\(\[\]\)/);
+  assert.match(viewer,/event\.shiftKey\)\{toggleSelection\(object\.id\);return;\}/);
+  assert.match(viewer,/command&&key==='a'/);
+  assert.match(viewer,/command&&key==='z'/);
+  assert.match(viewer,/command&&key==='c'/);
+  assert.match(viewer,/command&&key==='v'/);
+  assert.match(viewer,/command&&key==='d'/);
+  assert.match(viewer,/target\?\.closest\?\.\(/);
+  assert.match(viewer,/contenteditable="true"/);
+  assert.match(viewer,/const deleteSelection=.*new Set\(selectedIds\)[\s\S]*objects\.filter\(object=>!ids\.has\(object\.id\)\)/);
+  assert.match(viewer,/copiedObjectsRef\.current=\[\]/);
 });

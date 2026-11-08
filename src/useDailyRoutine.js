@@ -24,5 +24,17 @@ export function useDailyRoutine(user) {
     const work=queue.current.catch(()=>{}).then(()=>globalThis.navigator?.locks ? navigator.locks.request(`tj-daily-routine:${user.id}`,persist) : persist());
     queue.current=work;return work;
   };
-  return {routine,refresh,update};
+  const restore=nextRoutine=>{
+    const next=normalizeRoutine(nextRoutine);
+    const persist=async()=>{
+      // Keep the browser cache aligned before the profile write so a complete
+      // local backup remains recoverable if the connection drops afterward.
+      publish(next);
+      try { return publish(await saveRoutineProfile(supabase.auth,user.id,()=>next)); }
+      catch(error) { throw new Error(`Journal restored locally, but Daily Routine could not be confirmed in your profile: ${error?.message || 'retry when online.'}`); }
+    };
+    const work=queue.current.catch(()=>{}).then(()=>globalThis.navigator?.locks ? navigator.locks.request(`tj-daily-routine:${user.id}`,persist) : persist());
+    queue.current=work;return work;
+  };
+  return {routine,refresh,update,restore};
 }

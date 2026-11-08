@@ -4,7 +4,7 @@ export const THIN_COLUMNS = {
   accounts: 'id,user_id,name,icon,balance,breakeven_cap,rating_style,theme,default_commission,monthly_goal_pct,yearly_goal_pct,daily_loss_limit_pct,monthly_loss_limit_pct,created_at,updated_at',
   trades: 'id,account_id,created_at,updated_at,trade_date,trade_time,close_date,close_time,asset,direction,entry_price,exit_price,risk_method,risk_preset,stop_loss_pips,take_profit_pips,exit_pips,stop_loss_price,take_profit_price,planned_rr,realized_rr,gross_pnl,commission,swap,net_pnl,pnl,rr,session,entry_session,entry_type,rating,types,mistakes,mood_before,mood_after,context,confluence_session,premarket_markup_id,rule_evaluations',
   premarket_markups: 'id,account_id,updated_at,markup_date,markup_time,market,instrument,bias,status,levels,market_structure,notes',
-  trade_reviews: 'id,account_id,trade_id,updated_at,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,lessons,action_items,notes',
+  trade_reviews: 'id,account_id,trade_id,updated_at,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,execution_score,adherence_score,psychology_score,lessons,action_items,notes',
 };
 const canonical = value => JSON.stringify(value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.keys(value).sort().map(key => [key, JSON.parse(canonical(value[key]) ?? 'null')])) : Array.isArray(value) ? value.map(item => JSON.parse(canonical(item) ?? 'null')) : value);
 export const hasMedia = value => typeof value === 'string' ? value.startsWith('data:image/') || value.startsWith('tj-image:') || /^https?:/.test(value) : Array.isArray(value) ? value.some(hasMedia) : value && typeof value === 'object' ? Object.values(value).some(hasMedia) : false;

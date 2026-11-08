@@ -11,12 +11,15 @@ test('sidebar fade cues follow the hidden content, including rounding tolerance'
   assert.deepEqual(scrollEdges({scrollTop:150,scrollHeight:700,clientHeight:400}),{top:true,bottom:true});
   assert.deepEqual(scrollEdges({scrollTop:299.5,scrollHeight:700,clientHeight:400}),{top:true,bottom:false});
 });
-test('sidebar uses nearest route scrolling without collapsed hover artifacts',()=>{
+test('sidebar uses nearest route scrolling and provides collapsed hover labels',()=>{
   const shell=readFileSync(new URL('./SidebarShell.jsx',import.meta.url),'utf8');
   assert.match(shell,/scrollIntoView\(SIDEBAR_SCROLL_OPTIONS\)/);
   assert.deepEqual(SIDEBAR_SCROLL_OPTIONS,{block:'nearest',inline:'nearest'});
   assert.match(shell,/new ResizeObserver/);
-  assert.doesNotMatch(shell,/createPortal|onFocusCapture|onMouseOver|data-sidebar-label/);
+  assert.doesNotMatch(shell,/createPortal|onMouseOver|data-sidebar-label/);
+  assert.match(shell,/onPointerOverCapture=\{showTip\}/);
+  assert.match(shell,/onFocusCapture=\{showTip\}/);
+  assert.match(shell,/role="tooltip"/);
   const css=readFileSync(new URL('./sidebarV2.css',import.meta.url),'utf8');
   const shellCss=readFileSync(new URL('./shellAlignment.css',import.meta.url),'utf8');
   assert.doesNotMatch(css,/(?:transform|mask-image)\s*:/);
@@ -50,4 +53,6 @@ test('sidebar footer has only one divider and uses neutral theme surfaces',()=>{
   assert.match(css,/tj-theme-dark \.tj-sidebar-v2\.tj-sidebar-shown[\s\S]*?tj-sidebar-user \{background:transparent !important;/);
   assert.match(css,/tj-sidebar-collapsed \.tj-sidebar-footer \{display:flex;flex-direction:column;align-items:center;\}/);
   assert.match(css,/tj-sidebar-collapsed \.tj-sidebar-user \{width:54px;height:54px;min-height:54px;box-sizing:border-box;align-self:center;margin:0 auto;/);
+  const borderless=readFileSync(new URL('./borderlessInterface.css',import.meta.url),'utf8');
+  assert.match(borderless,/\.tj-sidebar-v2 \{\s*box-sizing:border-box;\s*border-right-color:var\(--border\) !important;/);
 });

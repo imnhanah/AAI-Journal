@@ -30,6 +30,11 @@
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal [role="tabpanel"]>section {min-width:0;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal [role="tabpanel"][hidden] {display:none;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-reference-card {min-width:0;margin:0;padding:16px;border:1px solid var(--tj-border);border-radius:16px;background:var(--tj-card);box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk {display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px;padding:14px 16px;border:1px solid color-mix(in srgb,var(--tj-accent) 42%,var(--tj-border));border-radius:14px;background:color-mix(in srgb,var(--tj-accent) 12%,var(--tj-card));}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk small {display:block;font-size:12px;font-weight:800;letter-spacing:.07em;color:var(--tj-muted);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk strong {display:block;margin-top:3px;font-size:22px;line-height:1.25;color:var(--tj-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk p {margin:3px 0 0;font-size:12px;line-height:1.35;color:var(--tj-muted);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk>b {display:grid;place-items:center;flex:none;width:46px;height:46px;border:2px solid color-mix(in srgb,var(--tj-accent) 55%,var(--tj-border));border-radius:50%;color:var(--tj-accent);font-size:12px;font-variant-numeric:tabular-nums;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal h4 {font-size:17px;line-height:1.3;margin:0 0 14px;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-field {min-width:0;gap:6px;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-field-label {text-align:left;font-size:13px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;}
@@ -59,6 +64,17 @@
   .tj-root .tj-trade-composer-modal .tj-trade-score-pills b {color:var(--tj-text);font-size:13px;}
   .tj-root .tj-trade-composer-modal .tj-trade-score-pills b.tj-red {color:var(--tj-red);}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-rule-verification-grid {display:grid;grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-rule-verification-card {min-height:48px;padding:10px 11px;border-radius:11px;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-rule-verification-card small {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection {padding:14px 13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection-head {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection-head h4 {margin:0;font-size:15px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection-head p {margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--tj-muted);}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection-head>span {flex:none;padding:4px 7px;border:1px solid var(--tj-border);border-radius:7px;color:var(--tj-muted);font-size:12px;white-space:nowrap;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection .tj-tagwrap {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection .tj-tag {display:flex;align-items:center;justify-content:flex-start;min-height:43px!important;padding:8px 9px;border-radius:9px;text-align:left;line-height:1.25;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection .tj-tag:before {content:'+';display:grid;place-items:center;flex:none;width:16px;height:16px;margin-right:7px;border:1px solid currentColor;border-radius:5px;font-size:12px;line-height:1;opacity:.72;}
+  .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection .tj-tag-active:before {content:'✓';background:currentColor;color:var(--tj-card);opacity:1;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-confluence-toggle {width:100%;min-height:46px!important;font-size:14px;margin:12px 0 0;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-tagwrap {display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-tag {min-height:44px!important;min-width:44px;padding:8px 12px;font-size:13px;white-space:normal;overflow-wrap:anywhere;max-width:100%;}
@@ -69,7 +85,7 @@
   .tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer button {height:48px!important;min-height:48px!important;font-size:15px;border-radius:12px;padding:0 12px;white-space:nowrap;justify-content:center;text-align:center;}
   .tj-root .tj-trade-composer-modal .tj-phone-image-icon {display:block;}
   .tj-root .tj-phone-instrument-overlay {position:fixed;inset:0;z-index:200500;isolation:isolate;}
-  .tj-root .tj-phone-instrument-backdrop {position:absolute;inset:0;background:color-mix(in srgb,var(--tj-bg) 55%,transparent);backdrop-filter:blur(5px);}
+  .tj-root .tj-phone-instrument-backdrop {position:absolute;inset:0;background:color-mix(in srgb,var(--tj-bg) 55%,transparent);}
   .tj-root .tj-phone-instrument-sheet {position:absolute;left:0;right:0;bottom:0;max-height:75dvh;display:flex;flex-direction:column;gap:12px;padding:10px 16px max(16px,env(safe-area-inset-bottom,0px));box-sizing:border-box;border:1px solid var(--tj-border);border-bottom:0;border-radius:24px 24px 0 0;background:var(--tj-panel);color:var(--tj-text);animation:tj-phone-instrument-enter .18s ease-out;}
   .tj-root .tj-phone-picker-handle {width:100%;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;flex:none;touch-action:none;}
   .tj-root .tj-phone-picker-handle span {width:36px;height:4px;border-radius:4px;background:var(--tj-border);}
@@ -85,4 +101,5 @@
   .tj-root :is(.tj-trade-composer-modal,.tj-phone-instrument-sheet) button:focus-visible {outline:2px solid var(--tj-accent);outline-offset:2px;}
   @keyframes tj-phone-instrument-enter {from {bottom:-24px;opacity:0;}to {bottom:0;opacity:1;}}
   @media(prefers-reduced-motion:reduce) {.tj-root .tj-phone-instrument-sheet {animation:none;}}
+  @media(max-width:360px) {.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection {padding:12px 10px;}.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-process-selection .tj-tag {font-size:12px;padding:8px 7px;}.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk {padding:12px;}.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk strong {font-size:19px;}}
 }

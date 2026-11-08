@@ -9,6 +9,11 @@ export function formatCompactAmount(value) {
 }
 // Compatibility for existing consumers; both names use one implementation.
 export const compactCalendarAmount=formatCompactAmount;
+// Day cells have room for about five characters, so the currency sign only shows when it fits.
+export function calendarCellAmount(value) {
+  const compact=formatCompactAmount(value);
+  return Math.abs(Number(value)||0)<999.5 ? `${compact[0]}$${compact.slice(1)}` : compact;
+}
 
 // Merge adjacent quiet weeks only; never hide an active week between them.
 export function mobileCalendarWeeks(snapshots) {

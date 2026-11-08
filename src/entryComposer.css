@@ -165,6 +165,7 @@
 .tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
 @media(max-width:900px) { .tj-root .tj-trade-composer-modal .tj-trade-price-basics,.tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } }
 @media(max-width:480px) { .tj-root .tj-trade-composer-modal .tj-trade-price-basics,.tj-root .tj-trade-composer-modal .tj-trade-risk-results { grid-template-columns:minmax(0,1fr) !important; } }
+
 .tj-root .tj-news-workspace .tj-news-event-board { display:grid; gap:10px; align-items:start; overflow-x:auto; padding-bottom:8px; }
 .tj-root .tj-news-workspace .tj-news-day-block { margin:0; padding:10px; background:color-mix(in srgb,var(--tj-panel-alt) 86%,var(--tj-panel)); border:1px solid var(--tj-border); border-radius:14px; min-width:0; }
 .tj-root .tj-news-workspace .tj-news-day-today { border-color:var(--color-border-173); }
@@ -1487,7 +1488,7 @@
 .tj-root .tj-reference-dashboard .tj-recent-row>:last-child { text-align:right; white-space:nowrap; }
 .tj-root .tj-reference-dashboard .tj-recent-row>span:nth-child(3) { justify-self:start; padding:4px 8px; border-radius:5px; background:color-mix(in srgb,var(--tj-green) 10%,var(--tj-panel)); font-size:var(--text-min); font-weight:800; }
 .tj-root .tj-reference-dashboard .tj-recent-row>span:nth-child(3).tj-red { background:var(--color-surface-232); }
-@media(max-width:1200px) { .tj-root .tj-reference-dashboard .tj-reference-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }.tj-root .tj-reference-dashboard .tj-reference-hero-grid { grid-template-columns:1fr; } }
+/* KPI and hero reflow moved to workspaceAdaptive.css (by workspace width, not window). */
 @media(max-width:700px) { .tj-root .tj-reference-dashboard .tj-reference-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }.tj-root .tj-reference-dashboard .tj-dashboard-analytics-grid { grid-template-columns:1fr; }.tj-root .tj-reference-dashboard .tj-reference-flow { overflow-x:auto; }.tj-root .tj-reference-dashboard .tj-recent-table { min-width:540px; } }
 .tj-root.tj-theme-dark .tj-review-library { --tj-panel:var(--color-surface-144); --tj-panel-alt:var(--color-surface-133); --tj-border:var(--color-border-145); --tj-text:var(--color-ink-136); --tj-muted:var(--color-ink-137); }
 .tj-root .tj-review-library { gap:8px; }
@@ -2116,6 +2117,11 @@
 .tj-root .tj-review-editor-modal .tj-review-wrong textarea { border-color:var(--color-border-147); }
 .tj-root .tj-review-editor-modal .tj-review-notes-media { display:grid; grid-template-columns:2fr 1fr; gap:12px; }
 .tj-root .tj-review-editor-modal .tj-review-notes-media textarea { min-height:76px; }
+.tj-root .tj-review-editor-modal .tj-field-label:has(.tj-review-score) { align-items:center; justify-content:space-between; }
+.tj-root .tj-review-editor-modal .tj-review-score { display:inline-flex; gap:4px; }
+.tj-root .tj-review-editor-modal .tj-review-score button { display:grid; width:24px; height:24px; padding:0; place-items:center; border:1px solid var(--tj-border); border-radius:7px; background:var(--tj-panel-alt); color:var(--tj-muted); cursor:pointer; font:inherit; font-size:12px; font-weight:700; }
+.tj-root .tj-review-editor-modal .tj-review-score button[aria-pressed="true"] { border-color:var(--tj-accent); background:var(--tj-accent); color:var(--tj-on-accent); }
+.tj-root .tj-review-editor-modal .tj-review-score button:focus-visible { outline:2px solid var(--tj-accent); outline-offset:2px; }
 .tj-root .tj-review-editor-modal .tj-dropzone { padding:0; min-height:76px; border-radius:10px; background:transparent; }
 .tj-root .tj-review-editor-modal .tj-trade-add-image { width:100%; min-height:74px; border:0; background:transparent; color:var(--tj-muted); font:inherit; font-size:var(--text-min); cursor:pointer; }
 .tj-root .tj-review-editor-modal .tj-entry-composer-footer { padding:16px 28px; }
@@ -2264,7 +2270,7 @@
 .tj-root .tj-sidebar .tj-nav-item{position:relative;min-height:38px;padding:9px 10px;font-size:12px;font-weight:600;flex-shrink:0;border-radius:9px}
 .tj-root .tj-sidebar .tj-nav-item svg{color:var(--tj-muted);filter:none}
 .tj-root .tj-sidebar .tj-nav-active{background:color-mix(in srgb,var(--accent) 12%,var(--tj-panel-alt));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--tj-border));color:var(--accent)}
-.tj-root .tj-sidebar .tj-nav-active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--accent)}
+.tj-root .tj-sidebar .tj-nav-active::before{content:none!important;display:none!important}
 .tj-root .tj-sidebar .tj-nav-active svg{color:var(--accent)}
 .tj-root .tj-sidebar-settings{border-top:1px solid var(--tj-border);padding-top:12px;margin-top:3px}
 .tj-root .tj-sidebar .tj-nav-danger,.tj-root .tj-sidebar .tj-nav-danger svg{color:var(--tj-red)}
@@ -2370,6 +2376,8 @@
 .tj-root .tj-topbar-actions .tj-btn-outline,.tj-root .tj-topbar-actions .tj-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 13px;border-radius:10px;font-size:12px;box-shadow:none}
 .tj-root .tj-topbar-actions .tj-start-day-action{border-color:color-mix(in srgb,var(--tj-accent) 48%,var(--tj-border));color:var(--tj-accent);background:color-mix(in srgb,var(--tj-accent) 7%,transparent)}
 .tj-root .tj-topbar-actions .tj-start-day-action:hover:not(:disabled){background:color-mix(in srgb,var(--tj-accent) 13%,transparent)}
+.tj-root .tj-topbar-actions .tj-continue-routine-action{border-color:color-mix(in srgb,var(--tj-amber) 72%,var(--tj-border));color:var(--tj-amber);background:color-mix(in srgb,var(--tj-amber) 13%,var(--tj-panel));white-space:nowrap}
+.tj-root .tj-topbar-actions .tj-continue-routine-action:hover:not(:disabled){background:color-mix(in srgb,var(--tj-amber) 20%,var(--tj-panel))}
 .tj-root .tj-header-search{position:relative;display:flex;align-items:center;gap:9px;border:1px solid var(--tj-border);border-radius:10px;background:var(--tj-panel-alt);padding:8px 12px;color:var(--tj-muted);min-width:0}
 .tj-root .tj-header-search input{flex:1;min-width:0;border:0;outline:none;background:none;color:var(--tj-text);font-size:var(--text-min);font-family: var(--font-sans);padding:0}
 .tj-root .tj-header-search input::placeholder{color:var(--tj-muted)}
@@ -2904,6 +2912,22 @@
 }
 .tj-challenge-split-page .tj-challenge-split { margin-inline:0; }
 
+/* Compact rules disclosure in the Challenge header. It is positioned as an
+   application popover, so it does not change the card or page layout. */
+.tj-challenge-split .tj-cs-rules-menu { position:relative; }
+.tj-challenge-split .tj-cs-rule-link { display:inline-flex; align-items:center; gap:4px; min-height:32px; padding:0 9px; border:1px solid var(--cs-border); border-radius:9px; background:var(--cs-raised); color:var(--cs-text); font:inherit; font-size:12px; font-weight:800; }
+.tj-challenge-split .tj-cs-rule-link[aria-expanded=true] { border-color:color-mix(in srgb,var(--cs-accent) 55%,var(--cs-border)); color:var(--cs-accent); background:color-mix(in srgb,var(--cs-accent) 12%,var(--cs-raised)); }
+.tj-challenge-split .tj-cs-rule-link:focus-visible { outline:2px solid var(--cs-accent); outline-offset:2px; }
+.tj-challenge-split .tj-cs-rules-popover { position:absolute; z-index:30; top:calc(100% + 8px); right:0; width:min(380px,calc(100vw - 40px)); margin:0; padding:12px; border:1px solid var(--cs-border); border-radius:12px; background:var(--cs-surface); box-shadow:0 16px 32px color-mix(in srgb,var(--cs-text) 18%,transparent); }
+.tj-challenge-split .tj-cs-rules-popover header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 0 9px; border-bottom:1px solid var(--cs-border); }
+.tj-challenge-split .tj-cs-rules-popover header strong { font-size:13px; }
+.tj-challenge-split .tj-cs-rules-popover header button { display:grid; width:26px; height:26px; padding:0; place-items:center; border:0; border-radius:7px; background:transparent; color:var(--cs-muted); }
+.tj-challenge-split .tj-cs-rules-popover header button:hover { background:var(--cs-raised); color:var(--cs-text); }
+.tj-challenge-split .tj-cs-rules-popover ol { display:grid; gap:8px; margin:10px 0 0; padding:0; list-style:none; }
+.tj-challenge-split .tj-cs-rules-popover li { display:grid; gap:2px; }
+.tj-challenge-split .tj-cs-rules-popover li strong { font-size:12px; }
+.tj-challenge-split .tj-cs-rules-popover li span { color:var(--cs-muted); font-size:12px; line-height:1.4; }
+
 /* Expanded compounding plan: retain the reference's generous two-column
    workspace rather than squeezing either pane into a compact card. */
 @media (min-width:1101px) {
@@ -3045,3 +3069,396 @@
 .tj-root .tj-entry-composer-modal .tj-field-error-message{display:block;margin-top:5px;color:var(--tj-red);font-size:var(--text-min);line-height:1.35;}
 @media(max-width:600px){.tj-root .tj-entry-composer-modal .tj-trade-validation-summary{margin:0 14px;}}
 
+/* The entry panel is a real flex sibling of the workspace. Only this outer
+   rail changes width; its inner form always retains the saved pixel width. */
+.tj-root .tj-entry-panel-outer { flex:0 0 auto; width:0; height:100dvh; min-height:0; overflow:hidden; position:relative; transition:width 240ms cubic-bezier(.2,.8,.2,1); }
+.tj-root .tj-entry-panel-outer.tj-entry-panel-open { width:var(--tj-entry-panel-width); }
+.tj-root .tj-entry-panel-inner { width:var(--tj-entry-panel-width); min-width:var(--tj-entry-panel-width); box-sizing:border-box; height:100%; display:flex; flex-direction:column; background:var(--tj-panel); }
+@media (min-width:901px) {
+  /* The panel remains one direct flex sibling of the workspace. Ordering the
+     existing shell is enough to mirror it; no duplicate panel is mounted. */
+  .tj-root.tj-entry-panel-position-right > .tj-sidebar { order:0; }
+  .tj-root.tj-entry-panel-position-right > .tj-main { order:1; }
+  .tj-root.tj-entry-panel-position-right > .tj-entry-panel-outer { order:2; }
+  .tj-root.tj-entry-panel-position-left > .tj-sidebar { order:0; }
+  .tj-root.tj-entry-panel-position-left > .tj-entry-panel-outer { order:1; }
+  .tj-root.tj-entry-panel-position-left > .tj-main { order:2; }
+  .tj-root .tj-entry-panel-inner .tj-modal.tj-entry-panel { position:relative; width:100%!important; min-width:100%!important; max-width:none!important; height:100dvh!important; max-height:100dvh!important; margin:0; border:0; border-left:1px solid var(--tj-border); border-radius:0; animation:none; overflow:hidden; will-change:auto; }
+  .tj-entry-panel-grip { position:absolute; left:-7px; top:0; bottom:0; z-index:8; width:14px; cursor:col-resize; touch-action:none; display:grid; place-items:center; }
+  .tj-entry-panel-grip::before { content:""; width:5px; height:48px; border-radius:999px; background:var(--tj-accent); transition:filter .14s ease,box-shadow .14s ease; }
+  .tj-root.tj-entry-panel-position-left .tj-entry-panel-inner .tj-modal.tj-entry-panel { border-left:0; border-right:1px solid var(--tj-border); }
+  .tj-root.tj-entry-panel-position-left .tj-entry-panel-grip { left:auto; right:-7px; }
+  /* The grip is deliberately the only visible resize affordance. */
+  .tj-entry-panel-grip:hover::before,.tj-entry-panel-grip:focus-visible::before,body.tj-entry-panel-dragging .tj-entry-panel-grip::before { filter:brightness(1.12); box-shadow:0 0 0 3px color-mix(in srgb,var(--tj-accent) 20%,transparent); }
+  .tj-root .tj-entry-panel,.tj-root .tj-entry-panel:focus,.tj-root .tj-entry-panel:focus-visible,
+  .tj-root .tj-entry-panel-grip,.tj-root .tj-entry-panel-grip:focus,.tj-root .tj-entry-panel-grip:focus-visible { outline:none!important; box-shadow:none!important; }
+  .tj-entry-panel .tj-modal-head,.tj-root .tj-entry-panel.tj-trade-composer-modal>.tj-modal-head { display:flex; padding-left:24px; }
+  .tj-entry-panel .tj-modal-body { min-width:0; padding:0; display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+  .tj-entry-panel-form { display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+  .tj-entry-panel-form[hidden] { display:none; }
+  .tj-entry-panel.tj-markup-composer-modal .tj-modal-head-actions { display:flex; }
+  .tj-entry-panel .tj-entry-composer-scroll { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scroll-behavior:auto; scrollbar-width:none; -ms-overflow-style:none; scrollbar-gutter:auto; padding:12px 20px 10px; }
+  .tj-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar { display:none; width:0; height:0; }
+  .tj-entry-panel .tj-entry-composer-scroll { scrollbar-width:none!important; -ms-overflow-style:none; }
+  .tj-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar { display:none!important; width:0!important; height:0!important; }
+  .tj-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar-track,.tj-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar-thumb { background:transparent; border:0; }
+  /* Safari may expose the thumb from a flex ancestor rather than the inner
+     scroll area. Keep the rule inside the entry-panel ownership boundary. */
+  .tj-entry-panel :is(.tj-modal,.tj-modal-body,.tj-entry-panel-form,.tj-entry-composer,.tj-entry-composer-scroll) { scrollbar-width:none!important; -ms-overflow-style:none; }
+  .tj-entry-panel :is(.tj-modal,.tj-modal-body,.tj-entry-panel-form,.tj-entry-composer,.tj-entry-composer-scroll)::-webkit-scrollbar { -webkit-appearance:none; display:none!important; width:0!important; height:0!important; background:transparent; }
+  .tj-entry-panel .tj-trade-reference-card { margin-bottom:10px; padding:14px; }
+  .tj-entry-panel .tj-trade-reference-card>h4 { margin-bottom:10px; }
+  .tj-entry-panel .tj-trade-reference-plan .tj-trade-risk-results,.tj-entry-panel .tj-trade-reference-plan .tj-trade-timing-row { margin-top:10px; padding-top:10px; }
+  .tj-entry-panel .tj-trade-reference-accounts,.tj-entry-panel .tj-trade-reference-psychology { display:block; }
+  .tj-entry-panel .tj-trade-reference-accounts>.tj-balance-target-picks { margin:0 0 10px; }
+  .tj-entry-panel .tj-trade-reference-accounts>.tj-account-target-result { margin:0; }
+  .tj-entry-panel .tj-trade-reference-psychology { padding-bottom:10px; }
+  .tj-entry-panel .tj-trade-reference-psychology-grid { display:grid; gap:10px; }
+  .tj-entry-panel .tj-trade-reference-psychology-grid>.tj-grid2,.tj-entry-panel .tj-trade-reference-psychology-grid>.tj-trade-image-sessions { grid-column:auto; }
+  .tj-entry-panel .tj-entry-composer-footer { flex-shrink:0; }
+  .tj-entry-panel .tj-markup-continuous-form { min-height:0; }
+  .tj-entry-panel .tj-markup-continuous-form .tj-entry-composer-scroll { padding-top:0; }
+  .tj-entry-panel .tj-markup-continuous-section { padding:18px 0 4px; }
+  .tj-entry-panel .tj-markup-continuous-section + .tj-markup-continuous-section { margin-top:16px; padding-top:22px; border-top:1px solid var(--tj-border); }
+  .tj-entry-panel .tj-markup-continuous-heading { margin:0 0 16px; }
+  .tj-entry-panel .tj-markup-continuous-heading h3 { margin:0; color:var(--tj-text); font-size:.95rem; }
+  .tj-entry-panel .tj-markup-continuous-heading p { margin:4px 0 0; color:var(--tj-muted); font-size:var(--text-min); line-height:1.4; }
+  body.tj-entry-panel-dragging { user-select:none; cursor:col-resize; }
+  body.tj-entry-panel-dragging .tj-entry-panel-outer { transition:none!important; }
+}
+@media (max-width:900px) { .tj-root .tj-entry-panel-outer { position:fixed; inset:0 0 0 auto; z-index:80; height:100dvh; }.tj-root .tj-entry-panel-outer.tj-entry-panel-open { width:min(100vw,var(--tj-entry-panel-width)); }.tj-root .tj-entry-panel-inner { width:min(100vw,var(--tj-entry-panel-width)); min-width:min(100vw,var(--tj-entry-panel-width)); }.tj-entry-panel-grip { display:none; } }
+@media (prefers-reduced-motion:reduce) { .tj-root .tj-entry-panel-outer { transition:none; } }
+
+/* Aperture — refined execution and research workspace.
+   Scoped to the shared entry panel so the rest of the journal keeps its own
+   page language while all existing form behaviour remains untouched. */
+.tj-root .tj-entry-panel.tj-aperture-entry-panel {
+  container-type:inline-size;
+  background:
+    radial-gradient(ellipse 82% 250px at 66% -75px,color-mix(in srgb,var(--accent) 17%,transparent),transparent 76%),
+    var(--tj-panel);
+}
+.tj-root .tj-aperture-entry-panel>.tj-modal-head {
+  display:flex!important;
+  align-items:flex-start;
+  gap:14px;
+  min-height:94px;
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--tj-border);
+  background:transparent;
+}
+.tj-root .tj-aperture-entry-panel>.tj-modal-head::before {
+  content:"EXECUTION WORKSPACE";
+  position:absolute;
+  top:20px;
+  left:24px;
+  color:var(--accent);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.16em;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal>.tj-modal-head::before { content:"RESEARCH WORKSPACE"; }
+.tj-root .tj-aperture-entry-panel .tj-modal-title {
+  align-self:end;
+  color:var(--tj-text);
+  font-family:ui-serif,Georgia,serif;
+  font-size:clamp(1.75rem,6cqw,2.25rem);
+  font-style:italic;
+  font-weight:400;
+  letter-spacing:-.055em;
+  line-height:1;
+}
+.tj-root .tj-aperture-entry-panel .tj-modal-header-note {
+  align-self:start;
+  margin-left:auto;
+  padding:5px 9px;
+  border:1px solid color-mix(in srgb,var(--accent) 46%,var(--tj-border));
+  border-radius:999px;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
+  font-size:var(--text-min);
+}
+.tj-root .tj-aperture-entry-panel .tj-modal-head-actions { align-self:start; }
+.tj-root .tj-aperture-entry-panel .tj-entry-identity {
+  padding:12px 24px;
+  border-bottom:1px solid var(--tj-border);
+  background:color-mix(in srgb,var(--accent) 3%,transparent);
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-identity>div { text-align:left; }
+.tj-root .tj-aperture-entry-panel .tj-entry-identity small,
+.tj-root .tj-aperture-entry-panel .tj-field-label,
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading h3 {
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-identity strong {
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.025em;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-scroll {
+  padding:22px 24px 18px;
+  background:transparent;
+  scrollbar-width:none;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-scroll::-webkit-scrollbar { display:none; }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-stacked .tj-trade-reference-card,
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-section {
+  padding:0 0 22px;
+  margin:0 0 22px;
+  border:0;
+  border-bottom:1px solid var(--tj-border);
+  border-radius:0;
+  background:transparent;
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-stacked .tj-trade-reference-card>h4,
+.tj-root .tj-aperture-entry-panel .tj-markup-section>h4 {
+  margin:0 0 15px;
+  color:var(--tj-text);
+  font-size:.84rem;
+  font-weight:750;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan,
+.tj-root .tj-aperture-entry-panel .tj-markup-reference-analysis { padding-top:4px!important; }
+.tj-root .tj-aperture-entry-panel .tj-trade-direction-toggle,
+.tj-root .tj-aperture-entry-panel .tj-calculation-method-toggle,
+.tj-root .tj-aperture-entry-panel .tj-markup-bias-toggle {
+  gap:4px;
+  padding:4px;
+  border:1px solid var(--tj-border);
+  border-radius:11px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 76%,transparent);
+}
+.tj-root .tj-aperture-entry-panel :is(.tj-trade-direction-toggle,.tj-calculation-method-toggle,.tj-markup-bias-toggle)>button {
+  min-height:34px;
+  border:0!important;
+  border-radius:8px;
+  background:transparent;
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  font-weight:750;
+}
+.tj-root .tj-aperture-entry-panel :is(.tj-trade-direction-toggle,.tj-calculation-method-toggle,.tj-markup-bias-toggle)>button[aria-pressed="true"] {
+  background:var(--accent)!important;
+  color:var(--on-accent)!important;
+}
+.tj-root .tj-aperture-entry-panel :is(input[type="number"],.tj-position-risk-summary strong,.tj-position-lot-summary strong,.tj-trade-risk-results input,.tj-trade-pnl-grid input) {
+  font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums;
+}
+.tj-root .tj-aperture-entry-panel .tj-position-suggestion {
+  margin:0 0 22px;
+  padding:17px;
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--tj-border));
+  border-radius:15px;
+  background:linear-gradient(125deg,color-mix(in srgb,var(--accent) 11%,transparent),transparent 74%);
+}
+.tj-root .tj-aperture-entry-panel .tj-position-risk-summary>span,
+.tj-root .tj-aperture-entry-panel .tj-position-lot-summary>span { letter-spacing:.12em; font-size:var(--text-min); }
+.tj-root .tj-aperture-entry-panel .tj-position-risk-summary strong,
+.tj-root .tj-aperture-entry-panel .tj-position-lot-summary strong { color:var(--accent); }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure {
+  margin:0 0 22px;
+  border:1px solid var(--tj-border);
+  border-radius:13px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 58%,transparent);
+  overflow:hidden;
+}
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:50px;
+  padding:0 15px;
+  color:var(--tj-text);
+  cursor:pointer;
+  font-size:.84rem;
+  font-weight:750;
+  list-style:none;
+}
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary::-webkit-details-marker { display:none; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary::after { content:"+"; color:var(--accent); font-size:1.2rem; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure[open]>summary { border-bottom:1px solid var(--tj-border); }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure[open]>summary::after { content:"−"; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure>summary small { color:var(--tj-muted); font-size:var(--text-min); font-weight:500; margin-left:auto; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure-content { padding:18px; }
+.tj-root .tj-aperture-entry-panel .tj-aperture-disclosure-content .tj-trade-reference-card:last-child { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer {
+  padding:14px 24px;
+  border-top:1px solid var(--tj-border);
+  background:var(--tj-panel);
+}
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer .tj-btn-primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.tj-root .tj-aperture-entry-panel .tj-entry-composer-footer .tj-btn-outline { background:transparent; border-color:var(--tj-border); }
+@container (max-width:580px) {
+  .tj-root .tj-aperture-entry-panel .tj-grid4,
+  .tj-root .tj-aperture-entry-panel .tj-trade-timing-row,
+  .tj-root .tj-aperture-entry-panel .tj-markup-meta-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root .tj-aperture-entry-panel .tj-grid3 { grid-template-columns:1fr; }
+}
+@container (max-width:430px) {
+  .tj-root .tj-aperture-entry-panel :is(.tj-grid4,.tj-grid3,.tj-grid2,.tj-trade-timing-row,.tj-markup-meta-row,.tj-markup-pair-row) { grid-template-columns:1fr; }
+  .tj-root .tj-aperture-entry-panel .tj-entry-identity { grid-template-columns:1fr; gap:8px; }
+  .tj-root .tj-aperture-entry-panel .tj-entry-identity>div+div { border-left:0; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .tj-root .tj-aperture-entry-panel * { transition:none!important; animation:none!important; }
+}
+.tj-confirm-overlay{position:fixed;inset:0;z-index:400000;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--tj-bg) 28%,transparent);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.tj-confirm-dialog{width:min(520px,calc(100vw - 40px));padding:26px 28px 22px;border:1px solid color-mix(in oklab,var(--tj-border) 82%,var(--tj-text));border-radius:19px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 28px 66px -34px color-mix(in srgb,var(--tj-text) 44%,transparent),0 2px 5px color-mix(in srgb,var(--tj-text) 8%,transparent);animation:tj-confirm-in .2s cubic-bezier(.22,1,.36,1)}.tj-confirm-dialog header{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:start;gap:16px}.tj-confirm-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:color-mix(in oklab,var(--tj-red) 10%,var(--tj-panel));color:var(--tj-red)}.tj-confirm-icon svg{width:25px;height:25px}.tj-confirm-copy{min-width:0;padding-top:2px}.tj-confirm-dialog h2{margin:0;color:var(--tj-text);font-size:19px;font-weight:750;letter-spacing:-.025em;line-height:1.2}.tj-confirm-dialog p{max-width:385px;margin:7px 0 0;color:var(--tj-muted);font-size:14px;line-height:1.5}.tj-confirm-close{display:grid;place-items:center;width:30px;min-width:30px;height:30px;min-height:30px;padding:0!important;border:0!important;border-radius:9px!important;background:transparent!important;color:var(--tj-muted)!important}.tj-confirm-close:hover{background:var(--tj-panel-alt)!important;color:var(--tj-text)!important}.tj-confirm-close svg{width:19px;height:19px}.tj-confirm-dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--tj-border)}.tj-confirm-dialog footer button{min-height:42px;padding:8px 15px;border:1px solid var(--tj-border);border-radius:12px;background:transparent;color:var(--tj-text);font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}.tj-confirm-dialog footer button:hover{background:var(--tj-panel-alt);border-color:color-mix(in oklab,var(--tj-text) 18%,var(--tj-border))}.tj-confirm-dialog .tj-confirm-danger{border-color:color-mix(in oklab,var(--tj-red) 70%,var(--tj-border));background:var(--tj-red);color:var(--tj-primary-contrast);box-shadow:0 10px 18px -12px color-mix(in srgb,var(--tj-red) 76%,transparent)}.tj-confirm-dialog .tj-confirm-danger:hover{background:color-mix(in oklab,var(--tj-red) 88%,var(--tj-text));border-color:transparent;transform:translateY(-1px)}@keyframes tj-confirm-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.tj-confirm-dialog{animation:none}}
+@media (max-width:767px){.tj-confirm-overlay{align-items:end;padding:12px}.tj-confirm-dialog{width:100%;padding:22px 20px 18px;border-radius:18px}.tj-confirm-dialog header{grid-template-columns:44px minmax(0,1fr) auto;gap:12px}.tj-confirm-icon{width:44px;height:44px}.tj-confirm-icon svg{width:22px;height:22px}.tj-confirm-dialog h2{font-size:17px}.tj-confirm-dialog footer{margin-top:18px;padding-top:14px}.tj-confirm-dialog footer button{flex:1;min-height:44px;padding-inline:10px}}
+
+/* The app header belongs to the workspace canvas, rather than introducing a
+   second chrome surface. These are the same opaque canvas tokens used by the
+   shared page layout, so content can never show through a sticky header. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {
+  background:var(--bg) !important;
+}
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light:not([data-profile-theme]) .tj-topbar,
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light[data-profile-theme="default"] .tj-topbar {
+  background:var(--journal-light-bg) !important;
+}
+
+/* In dark mode the workspace canvas must be opaque too. Otherwise the root's
+   decorative glow shows through the transparent main region and makes an
+   already-matching solid header look like a separate surface. */
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-main,
+.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-dark .tj-topbar {
+  background-color:var(--tj-bg) !important;
+  background-image:none !important;
+}
+
+/* Aperture finishing pass — deliberately scoped to the persistent journal
+   composer, so the regular modal and review forms retain their own layouts. */
+.tj-root .tj-aperture-entry-panel .tj-modal-title::after {
+  content:"Capture the execution. Understand the outcome.";
+  display:block;
+  max-width:36rem;
+  margin-top:5px;
+  color:var(--tj-muted);
+  font-family:var(--font-sans);
+  font-size:var(--text-min);
+  font-style:normal;
+  font-weight:500;
+  letter-spacing:0;
+  line-height:1.35;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-modal-title::after {
+  content:"Build the thesis. Review the session.";
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-setup::before,
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan::before,
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts::before {
+  display:block;
+  margin:0 0 8px;
+  color:var(--accent);
+  font-size:var(--text-min);
+  font-weight:800;
+  letter-spacing:.13em;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-setup::before { content:"01 / TRADE SETUP"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-plan::before { content:"02 / EXECUTION & RISK"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts::before { content:"03 / RESULTS & ACCOUNTS"; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts {
+  display:block;
+  padding-top:0!important;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>h4 {
+  margin:0 0 10px;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-balance-target-picks {
+  position:static;
+  margin:0 0 12px;
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-account-target-result {
+  margin:0;
+  padding:13px;
+  border:1px solid var(--tj-border);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--tj-panel-alt) 74%,transparent);
+}
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts>.tj-account-target-result + .tj-account-target-result { margin-top:10px; }
+.tj-root .tj-aperture-entry-panel .tj-trade-reference-accounts .tj-trade-pnl-grid { gap:8px; }
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  margin:0 0 14px;
+}
+.tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading::after {
+  content:"Research workspace";
+  color:var(--tj-muted);
+  font-size:var(--text-min);
+  white-space:nowrap;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-markup-reference-analysis textarea { min-height:116px; }
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-markup-reference-expectations textarea { min-height:148px; }
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-dropzone {
+  min-height:122px;
+  padding:0;
+  border:1px dashed color-mix(in srgb,var(--tj-border) 75%,var(--accent));
+  border-radius:13px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 68%);
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-trade-add-image {
+  display:grid;
+  min-height:120px;
+  place-items:center;
+  color:var(--tj-text);
+  font-size:var(--text-min);
+  font-weight:700;
+}
+.tj-root .tj-aperture-entry-panel.tj-markup-composer-modal .tj-shot-grid {
+  width:100%;
+  gap:12px;
+}
+@container (max-width:430px) {
+  .tj-root .tj-aperture-entry-panel .tj-modal-title::after { display:none; }
+  .tj-root .tj-aperture-entry-panel .tj-markup-continuous-heading::after { display:none; }
+}
+
+
+
+/* Log trade, Execution tab, new trades only: the layout follows the panel's width, not the screen's.
+   Wide (780px and up) keeps its existing columns. Edit trade, New markup and the phone form are untouched.
+   The form sits inside the panel's 1px border, so each limit below is the panel width minus 1. */
+@media (min-width:768px) {
+  .tj-root .tj-panel-fit { container:tj-log-trade / inline-size; }
+  .tj-root .tj-panel-fit :is(.tj-entry-identity,.tj-entry-composer-tabs,.tj-entry-composer-scroll>:first-child) { overflow-wrap:normal; }
+  .tj-root .tj-panel-fit .tj-entry-composer-scroll>:first-child :is(.tj-field,.tj-themed-control) { min-width:0; }
+  .tj-root .tj-panel-fit .tj-entry-composer-scroll>:first-child input[readonly] { text-overflow:ellipsis; }
+  .tj-root .tj-panel-fit .tj-entry-composer-scroll>:first-child .tj-picker-trigger { display:block; position:relative; width:100%; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .tj-root .tj-panel-fit .tj-entry-composer-scroll>:first-child .tj-picker-trigger>span { position:absolute; top:50%; right:9px; transform:translateY(-50%); }
+
+  @container tj-log-trade (max-width:778.9px) {
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-identity { padding:16px 22px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-composer-tabs { margin-right:22px; margin-left:22px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal :is(.tj-trade-plan-context,.tj-trade-risk-results,.tj-trade-timing-row,.tj-trade-core-grid) { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:12px 10px; }
+    /* Direction + Calc method on one row, the three prices together under them. */
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-price-basics { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-price-basics>* { grid-column:span 2; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-price-basics>:nth-child(-n+2) { grid-column:span 3; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-risk-results>:first-child { grid-column:1 / -1; }
+    /* Account results take the whole card, so the four figures have room for one row. */
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-reference-accounts { grid-template-columns:minmax(0,1fr); }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-reference-accounts>* { grid-column:1; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-reference-accounts>.tj-balance-target-picks { justify-self:start; }
+  }
+  @container tj-log-trade (max-width:478.9px) {
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-identity { padding:14px; gap:0; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-identity>div { padding:0 6px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-composer-tabs { margin-right:14px; margin-left:14px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-entry-composer-scroll { padding-right:14px; padding-left:14px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-reference-card { padding:14px; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-plan-context { grid-template-columns:minmax(0,1fr) !important; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-price-basics>:nth-child(3) { grid-column:1 / -1; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-price-basics>:nth-child(n+4) { grid-column:span 3; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-trade-pnl-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-multi-challenge-sizing-grid { grid-template-columns:minmax(0,1fr); }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-position-suggestion.has-lot-size { grid-template-columns:minmax(0,1fr); }
+    .tj-root .tj-panel-fit.tj-trade-composer-modal .tj-position-lot-summary { padding:12px 0 0; border-top:1px solid color-mix(in srgb,var(--tj-green) 35%,var(--tj-border)); border-left:0; }
+  }
+}

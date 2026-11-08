@@ -1,0 +1,133 @@
+/* Desktop Review navigator and insight card, after aaicorefx-desktop-review.html.
+   Navigator tiles live in ReviewPage.jsx (QuarterTile, MonthTile); the insight card is
+   ReviewLibraryPage's controls row in TradingJournal.jsx. Phones use MobilePeriodReviews.
+   Theme tokens only. Class prefix: rv2-. */
+@media (min-width:768px) {
+  /* Insight card: message on the left, account and year controls on the right. */
+  .tj-root .tj-review-redesign-controls.rv2-insight {position:relative;display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:16px;margin:6px 0 16px;padding:14px 20px 14px 18px;overflow:hidden;border:1px solid var(--border);border-radius:20px;background:linear-gradient(90deg,color-mix(in oklab,var(--accent) 12%,transparent),transparent 55%),var(--surface);box-shadow:0 1px 2px color-mix(in srgb,var(--text) 4%,transparent),0 14px 30px -18px color-mix(in srgb,var(--text) 18%,transparent);}
+  .tj-root .rv2-insight::before {content:"";display:block;flex:none;width:40px;height:40px;border-radius:13px;background:color-mix(in oklab,var(--accent) 12%,transparent);}
+  .tj-root .rv2-insight::after {content:"";position:absolute;top:50%;left:28px;width:20px;height:20px;margin-top:-10px;background:var(--accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8 12l3 3 5-6'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8 12l3 3 5-6'/%3E%3C/svg%3E") center/contain no-repeat;}
+  .rv2-insight-copy {flex:1;min-width:0;}
+  .rv2-insight-copy h2 {margin:0;color:var(--text);font-size:17px;font-weight:700;letter-spacing:-.015em;line-height:1.35;}
+  .rv2-insight-copy p {margin:1px 0 0;color:var(--muted);font-size:13px;line-height:1.45;}
+  .tj-root .rv2-insight .tj-review-year-switch {flex:none;}
+
+  /* Navigator: annual card, 2x2 quarters, 4x3 months. */
+  .tj-root .rv .rv2-nav {gap:16px;padding:16px 18px;border:1px solid var(--border);border-radius:20px;background:var(--surface);box-shadow:0 1px 2px color-mix(in srgb,var(--text) 4%,transparent),0 14px 30px -18px color-mix(in srgb,var(--text) 18%,transparent);scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+  .rv2-nl {display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+  .rv2-nl em {font-size:12px;font-style:normal;font-weight:500;letter-spacing:0;text-transform:none;}
+  .tj-root .rv .rv2-nav .rv-card--year {width:100%;border-radius:20px;}
+  .rv2-qg {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .rv2-mg {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .tj-root .rv :is(.rv2-qt,.rv2-mt) {position:relative;min-width:0;border:1px solid var(--border);background:var(--raised);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s,background .18s;}
+  .tj-root .rv :is(.rv2-qt,.rv2-mt):hover:not(:disabled) {border-color:color-mix(in oklab,var(--accent) 30%,var(--border));transform:translateY(-1px);}
+  .tj-root .rv :is(.rv2-qt,.rv2-mt).is-related {border-color:color-mix(in oklab,var(--accent) 28%,var(--border));}
+  .tj-root .rv :is(.rv2-qt,.rv2-mt)[aria-pressed=true] {border-color:color-mix(in oklab,var(--accent) 60%,transparent);background:var(--surface);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 12%,transparent);}
+  .tj-root .rv :is(.rv2-qt,.rv2-mt):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .tj-root .rv .rv2-qt {display:flex;flex-direction:column;gap:2px;min-height:108px;padding:11px 13px 10px;border-radius:16px;}
+  .rv2-qt-head {display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .rv2-qt-head b {font-size:14px;}
+  .rv2-st {padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .rv2-st.is-done {background:color-mix(in oklab,var(--accent) 12%,transparent);color:var(--accent);}
+  .rv2-st.is-need {background:color-mix(in oklab,var(--tj-amber) 16%,transparent);color:var(--tj-amber);}
+  .rv2-st.is-none {background:var(--surface);color:var(--muted);font-weight:600;}
+  .rv2-qt-ret {margin-top:2px;font-size:21px;font-weight:700;letter-spacing:-.03em;}
+  .rv2-qt-sub {overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap;}
+  .rv2-mini {display:flex;align-items:flex-end;gap:7px;height:36px;margin-top:auto;padding-top:8px;}
+  .rv2-mini>span {display:flex;flex:1;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%;color:var(--muted);font-size:12px;font-weight:600;line-height:1;}
+  .rv2-mini i {display:block;width:100%;max-width:26px;min-height:3px;border-radius:4px;}
+  .rv2-mini i.is-pos {background:var(--tj-green);}
+  .rv2-mini i.is-neg {background:var(--loss);}
+  .rv2-mini i.is-empty {background:var(--border);}
+  .tj-root .rv .rv2-mt {display:flex;flex-direction:column;justify-content:space-between;height:56px;min-height:0;padding:9px 11px;border-radius:15px;color:var(--muted);font-size:12px;font-weight:600;}
+  .rv2-mt b {font-size:13px;font-weight:700;letter-spacing:-.01em;}
+  .tj-root .rv .rv2-mt.is-pos {background:color-mix(in oklab,var(--tj-green) 11%,var(--surface));color:var(--text);}
+  .rv2-mt.is-pos b {color:var(--tj-green);}
+  .tj-root .rv .rv2-mt.is-neg {background:color-mix(in oklab,var(--loss) 11%,var(--surface));color:var(--text);}
+  .rv2-mt.is-neg b {color:var(--loss);}
+  .tj-root .rv .rv2-mt.is-empty {cursor:default;opacity:.6;}
+  .rv2-mt.is-empty b {color:var(--muted);font-weight:500;}
+  .rv2-dot {position:absolute;top:9px;right:9px;width:7px;height:7px;border-radius:50%;}
+  .rv2-dot.is-done {background:var(--accent);}
+  .rv2-dot.is-need {background:var(--tj-amber);}
+
+  /* Detail pane as one card beside the navigator. */
+  .tj-root .rv .rv-md {grid-template-columns:minmax(360px,430px) minmax(0,1fr);}
+  .tj-root .rv .rv-detail {overflow-y:auto;overflow-x:hidden;padding-left:0;border:1px solid var(--border);border-left:1px solid var(--border);border-radius:20px;background:var(--surface);box-shadow:0 1px 2px color-mix(in srgb,var(--text) 4%,transparent),0 14px 30px -18px color-mix(in srgb,var(--text) 18%,transparent);scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+  .tj-root .rv .rv-detail::-webkit-scrollbar {display:block;width:6px;}
+  .tj-root .rv .rv-detail::-webkit-scrollbar-thumb {background:var(--border);border-radius:999px;}
+  .tj-root .rv .rv-detail::-webkit-scrollbar-track {background:transparent;}
+
+  /* Month sections and week rows. These are the Review page's in-panel tabs,
+     not the application navigation tabs. */
+  .tj-root .rv .rv2-tabs {display:flex;gap:4px;padding:8px 14px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none;}
+  .tj-root .rv .rv2-tabs::-webkit-scrollbar {display:none;}
+  .tj-root .rv .rv2-tabs button {display:inline-flex;align-items:center;height:30px;padding:0 12px;border:0;border-radius:9px;color:var(--muted);background:transparent;font:600 12.5px var(--font-body,inherit);white-space:nowrap;cursor:pointer;transition:color .15s,background .15s;}
+  .tj-root .rv .rv2-tabs button:hover {color:var(--text);}
+  .tj-root .rv .rv2-tabs button.is-on {color:var(--accent);background:var(--accent-soft);}
+  .tj-root .rv .rv2-tabs button:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .rv2-wdot {display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:var(--border);}
+  .rv2-wdot.is-pos {background:var(--tj-green);}
+  .rv2-wdot.is-neg {background:var(--loss);}
+  .rv2-wdot.is-none {background:var(--border);}
+  .tj-root .rv .rv2-wrow {display:grid;grid-template-columns:78px minmax(0,1fr) auto;align-items:center;width:100%;gap:12px;margin-top:8px;padding:12px 14px;border:1px solid transparent;border-radius:14px;color:var(--text);background:var(--raised);font:inherit;text-align:left;cursor:pointer;transition:transform .15s,border-color .15s;}
+  .tj-root .rv .rv2-wrow:hover {border-color:color-mix(in oklab,var(--accent) 35%,var(--border));transform:translateY(-1px);}
+  .tj-root .rv .rv2-wrow:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .rv2-wrow b {font-size:13.5px;}
+  .rv2-wrow small {display:block;color:var(--muted);font-size:12px;}
+  .rv2-wrow-mid {display:flex;align-items:center;min-width:0;color:var(--muted);font-size:13px;}
+  .rv2-wrow-end {min-width:72px;text-align:right;}
+  .rv2-wrow-end b {display:block;}
+
+  /* A selected week keeps the same compact, readable structure as its parent month. */
+  .rv2-wgrid {display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:14px;}
+  .rv2-wdays {grid-row:span 2;}
+  .rv2-days {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:12px;}
+  .rv2-day {display:flex;flex-direction:column;justify-content:space-between;min-height:80px;padding:10px 11px;border-radius:14px;color:var(--muted);background:var(--raised);font-size:12px;font-weight:600;}
+  .rv2-day-n {display:flex;justify-content:space-between;gap:4px;}
+  .rv2-day.is-out {opacity:.35;border:1px dashed var(--border);background:transparent;}
+  .rv2-day.is-pos {color:var(--tj-green);background:color-mix(in oklab,var(--tj-green) 12%,var(--surface));border:1px solid var(--tj-green);}
+  .rv2-day.is-neg {color:var(--loss);background:color-mix(in oklab,var(--loss) 11%,var(--surface));border:1px solid var(--loss);}
+  .rv2-day b {font-size:14px;letter-spacing:-.01em;}
+  .rv2-day small,.rv2-day-none {display:block;color:var(--muted);font-size:12px;font-weight:500;}
+  .rv2-trades {margin-top:12px;}
+  .rv2-trade {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding:11px 14px;border-radius:12px;background:var(--raised);font-size:13px;}
+  .rv2-trade>span {display:flex;align-items:center;min-width:0;gap:10px;}
+  .rv2-trade i {flex:none;width:8px;height:8px;border-radius:50%;background:var(--tj-green);}
+  .rv2-trade i.is-neg {background:var(--loss);}
+  .rv2-trade b {white-space:nowrap;}
+  .rv2-wform {grid-column:1 / -1;margin-top:0;}
+  .rv2-wform-fields {grid-template-columns:repeat(3,minmax(0,1fr));}
+  .rv2-week-empty {margin:0;padding:22px;border:1.5px dashed var(--border);border-radius:14px;color:var(--muted);font-size:13px;text-align:center;}
+  .rv2-week-empty b {display:block;margin-bottom:2px;color:var(--text);}
+}
+
+@media (min-width:768px) and (max-width:860px) {
+  .tj-root .rv .rv-md {grid-template-columns:1fr;}
+}
+/* By the page's own width: the side panel can take half the window. */
+@media (min-width:768px) {
+  @container journal-workspace (max-width:980px) {
+    .tj-root .rv .rv-md {grid-template-columns:minmax(0,1fr);height:auto;overflow:visible;}
+    .tj-root .rv :is(.rv-list,.rv-detail) {height:auto;overflow:visible;overscroll-behavior:auto;}
+    .tj-root .rv .rv-bar {flex-wrap:wrap;}
+    /* The narrow-window rules from review.css, by page width. */
+    .tj-root .rv .rv-stats {grid-template-columns:repeat(3,1fr);}
+    .tj-root .rv :is(.rv-mwork,.rv-eq,.rv-q2,.rv-actions,.rv-cmp,.rv-ahero,.rv-rp) {grid-template-columns:1fr;}
+    .tj-root .rv :is(.rv-qband,.rv-q4,.rv-tiles) {grid-template-columns:1fr 1fr;}
+    .tj-root .rv .rv-qband>div:nth-child(n+3) {border-top:1px solid var(--border);}
+    .tj-root .rv .rv-qband>div:nth-child(3) {border-left:0;}
+    .tj-root .rv .rv-heat {grid-template-columns:repeat(6,minmax(0,1fr));}
+    .tj-root .rv .rv-ametrics+.rv-ametrics {grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px;}
+    .tj-root .rv .rv2-wgrid {grid-template-columns:1fr;}
+    .tj-root .rv .rv2-wdays {grid-row:auto;}
+  }
+  @container journal-workspace (max-width:760px) {
+    .tj-root .tj-review-redesign-controls.rv2-insight {flex-wrap:wrap;}
+    .tj-root .rv2-insight .rv2-insight-copy {flex-basis:calc(100% - 56px);}
+    .tj-root .rv2-insight::after {top:34px;}
+  }
+}
+@media (min-width:768px) and (prefers-reduced-motion:reduce) {
+  .tj-root .rv :is(.rv2-qt,.rv2-mt) {transition:none;}
+}

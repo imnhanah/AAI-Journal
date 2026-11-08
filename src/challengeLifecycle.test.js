@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildChallengePlan,emptyChallenge,canUseLossStreak} from './challengeModel.js';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle} from './challengeLifecycle.js';
+import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle,liveChallengeBalance} from './challengeLifecycle.js';
 import {accountLossGuardrails} from './accountRisk.js';
 const base=()=>resetAutomation(emptyChallenge(),[],'risk',1,new Date('2026-10-06T09:00:00Z'));
 const account={id:'a',balance:20,challengeEnabled:true};
@@ -65,6 +65,24 @@ test('open linked trades lock settings without contributing to balance or progre
   const state=replayChallenge(base(),{...account,trades:[open]});
   assert.equal(state.settingsLocked,true);assert.equal(state.counted,0);assert.equal(state.liveBalance,20);
   assert.equal(linkedChallengeTrades(base(),{...account,trades:[open]}).length,1);
+});
+test('a stale open account-result status does not exclude its saved non-zero P&L from challenge capital',()=>{
+  const balance={id:'exness',startingBalance:50,isActive:true};
+  const workspace={balances:[balance],financeMovements:[],trades:[{
+    id:'saved-loss',date:'2026-10-30',balanceResults:[{balanceId:'exness',grossPnl:-10,commission:0,swap:0,netPnl:-10,status:'open'}],
+  }]};
+  const scoped=scopeChallengeAccount(workspace,balance);
+  assert.equal(scoped.trades[0].status,'closed');
+  assert.equal(liveChallengeBalance(scoped),40);
+});
+test('a genuinely running zero-P&L account target remains excluded from challenge capital',()=>{
+  const balance={id:'exness',startingBalance:50,isActive:true};
+  const workspace={balances:[balance],financeMovements:[],trades:[{
+    id:'running',date:'2026-11-04',balanceResults:[{balanceId:'exness',grossPnl:0,commission:0,swap:0,netPnl:0,status:'open'}],
+  }]};
+  const scoped=scopeChallengeAccount(workspace,balance);
+  assert.equal(scoped.trades[0].status,'open');
+  assert.equal(liveChallengeBalance(scoped),50);
 });
 test('activating a challenge leaves previously logged trades outside the new challenge',()=>{
   const historical={...loss,id:'historical',createdAt:'2026-10-05T09:00:00Z'};

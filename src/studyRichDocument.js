@@ -28,6 +28,34 @@ export const migrateRichDocument = (study, sectionName) => {
   return { version:RICH_DOCUMENT_VERSION, content:{ type:'doc', content:content.length ? content : emptyRichDocument().content.content } };
 };
 
+// A study used to store only plain text in `sectionNotes` (and, for the first
+// section, `body`).  Keep those fields intact and lazily expose a structured
+// document for the editor.  We deliberately do not bulk-migrate old studies:
+// a document is written only after the user changes that section.
+export const migrateSectionRichDocument = (study, sectionName, sectionIndex = 0) => {
+  const stored = normaliseRichDocument(study?.sectionDocuments?.[sectionName]);
+  if (stored) return stored;
+  const note = typeof study?.sectionNotes?.[sectionName] === 'string' ? study.sectionNotes[sectionName] : '';
+  if (note) return { version:RICH_DOCUMENT_VERSION, content:{ type:'doc', content:textBlocks(note) } };
+  if (sectionIndex === 0) return migrateRichDocument(study, sectionName);
+  return emptyRichDocument();
+};
+
+// Keep structured documents isolated by section while mirroring the first
+// section to legacy fields.  The mirror keeps exports and older UI paths
+// readable without allowing a later section to overwrite the overview.
+export const patchSectionRichDocument = (study, sectionName, sectionIndex, document) => {
+  const current = normaliseRichDocument(document) || emptyRichDocument();
+  const text = richDocumentText(current);
+  const patch = { sectionDocuments:{ ...(study?.sectionDocuments || {}), [sectionName]:current } };
+  if (sectionIndex === 0) {
+    patch.richDocument = current;
+    patch.body = text;
+    patch.sectionNotes = { ...(study?.sectionNotes || {}), [sectionName]:text };
+  }
+  return patch;
+};
+
 export const richDocumentFromSections = sections => {
   const content = (sections || []).filter(Boolean).flatMap((section, index) => [{ type:'heading', attrs:{ level:index === 0 ? 1 : 2 }, content:[{ type:'text', text:section }] }, { type:'paragraph' }]);
   return { version:RICH_DOCUMENT_VERSION, content:{ type:'doc', content:content.length ? content : emptyRichDocument().content.content } };

@@ -17,7 +17,7 @@ test('dashboard routine card uses live progress and the existing start action',(
   assert.match(source,/const routineStatus = mobileRoutineStatus\(routine\)/);
   assert.match(source,/onStartDay=\{openNewMarkup\}/);
   assert.match(source,/routine=\{routineStore.routine\}/);
-  assert.equal(mobileRoutineStatus({}).total,8);
+  assert.equal(mobileRoutineStatus({}).total,11);
   assert.ok(source.indexOf('className="tj-phone-dashboard-start"')<source.indexOf('className="tj-reference-kpis"'));
   assert.ok(source.indexOf('className="tj-phone-dashboard-quote"')>source.indexOf('className="tj-dashboard-analytics-grid"'));
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { caseStudyBackup, linkEvidence, linkRelatedStudy, mergeCaseStudyWorkspace, normaliseCaseStudyWorkspace, unlinkEvidence, validateEvidenceImage } from './caseStudyWorkspace.js';
+import { addEvidenceRecords, attachDocumentImageEvidence, caseStudyBackup, linkEvidence, linkRelatedStudy, mergeCaseStudyWorkspace, normaliseCaseStudyWorkspace, unlinkEvidence, validateEvidenceImage } from './caseStudyWorkspace.js';
 
 const workspace = () => normaliseCaseStudyWorkspace({ notebooks:[{id:'notes',name:'Notes'}], evidence:[{id:'e1',title:'Shared chart'}], studies:[{id:'s1',title:'One',evidenceIds:['e1'],evidencePlacements:{e1:{caption:'First placement'}},relatedStudyIds:[]},{id:'s2',title:'Two',evidenceIds:['e1'],evidencePlacements:{e1:{caption:'Second placement'}},relatedStudyIds:[]}] });
 
@@ -9,6 +9,20 @@ test('normalisation preserves workspace data and supplies new collections', () =
   assert.deepEqual(value.personalTemplates, []);
   assert.deepEqual(value.studies[0].evidencePlacements, {});
   assert.deepEqual(value.studies[0].relatedStudyIds, []);
+});
+
+test('archived study state persists without changing research content or evidence links', () => {
+  const value=normaliseCaseStudyWorkspace({studies:[{id:'archived',title:'Liquidity',archived:true,favorite:true,pinned:true,evidenceIds:['e1'],evidencePlacements:{e1:{caption:'Kept'}},review:{conclusion:'Kept'}}]});
+  const archived=value.studies[0];
+  assert.equal(archived.archived,true);
+  assert.equal(archived.favorite,true);
+  assert.equal(archived.pinned,true);
+  assert.deepEqual(archived.evidenceIds,['e1']);
+  assert.equal(archived.evidencePlacements.e1.caption,'Kept');
+  const restored={...archived,archived:false};
+  assert.equal(restored.archived,false);
+  assert.equal(restored.review.conclusion,'Kept');
+  assert.deepEqual(restored.evidenceIds,['e1']);
 });
 
 test('shared evidence carries independent annotations and safely unlinks everywhere', () => {
@@ -26,6 +40,48 @@ test('link helpers do not duplicate evidence or related studies', () => {
   assert.equal(study.evidencePlacements.e1.caption, '');
   assert.equal(linkEvidence(study, 'e1').evidenceIds.length, 1);
   assert.equal(linkRelatedStudy({relatedStudyIds:[]}, 's2').relatedStudyIds[0], 's2');
+});
+
+test('saving a Research Notes image to Evidence Library reuses its blob reference and links each study independently', () => {
+  const imageRef = 'tj-case-study-image:chart-1';
+  const source = normaliseCaseStudyWorkspace({ studies:[{id:'s1'},{id:'s2'}] });
+  const first = attachDocumentImageEvidence(source, 's1', { id:'e1', title:'London sweep', url:imageRef, documentImageRef:imageRef, tags:[] });
+  assert.equal(first.created, true);
+  assert.equal(first.workspace.evidence.length, 1);
+  assert.equal(first.workspace.evidence[0].url, imageRef);
+  assert.deepEqual(first.workspace.studies[0].evidenceIds, ['e1']);
+
+  const second = attachDocumentImageEvidence(first.workspace, 's2', { id:'would-duplicate', title:'Ignored duplicate', url:imageRef, documentImageRef:imageRef, tags:[] });
+  assert.equal(second.created, false);
+  assert.equal(second.evidence.id, 'e1');
+  assert.equal(second.workspace.evidence.length, 1);
+  assert.deepEqual(second.workspace.studies[1].evidenceIds, ['e1']);
+  assert.notEqual(second.workspace.studies[0].evidencePlacements.e1, second.workspace.studies[1].evidencePlacements.e1);
+});
+
+test('direct Evidence Library uploads remain unlinked unless the in-study workflow explicitly requests a link', () => {
+  const source = normaliseCaseStudyWorkspace({ studies:[{id:'s1'}] });
+  const record = {id:'e1',title:'Unlinked chart',url:'tj-case-study-evidence:chart-1',tags:[]};
+  const direct = addEvidenceRecords(source,[record]);
+  assert.equal(direct.evidence.length,1);
+  assert.deepEqual(direct.studies[0].evidenceIds,[]);
+  const attached = addEvidenceRecords(source,[record],{studyId:'s1'});
+  assert.deepEqual(attached.studies[0].evidenceIds,['e1']);
+});
+
+test('evidence links are keyed by ID, update only the current study, and unlink without deleting shared records', () => {
+  const source=normaliseCaseStudyWorkspace({
+    evidence:[{id:'e1',title:'Same title'},{id:'e2',title:'Same title'}],
+    studies:[{id:'s1'},{id:'s2'}],
+  });
+  const first={...source,studies:source.studies.map(study=>study.id==='s1'?linkEvidence(study,'e1'):study)};
+  const relinked={...first,studies:first.studies.map(study=>study.id==='s1'?linkEvidence(study,'e1'):study)};
+  assert.deepEqual(relinked.studies.find(study=>study.id==='s1').evidenceIds,['e1']);
+  assert.deepEqual(relinked.studies.find(study=>study.id==='s2').evidenceIds,[]);
+  const linkedSecond={...relinked,studies:relinked.studies.map(study=>study.id==='s1'?linkEvidence(study,'e2'):study)};
+  const unlinked={...linkedSecond,studies:linkedSecond.studies.map(study=>study.id==='s1'?{...study,evidenceIds:study.evidenceIds.filter(id=>id!=='e1')}:study)};
+  assert.deepEqual(unlinked.studies.find(study=>study.id==='s1').evidenceIds,['e2']);
+  assert.deepEqual(unlinked.evidence.map(item=>item.id),['e1','e2']);
 });
 
 test('backup retains templates, validation and conflict-safe imports', () => {

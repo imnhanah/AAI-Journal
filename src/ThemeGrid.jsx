@@ -8,7 +8,7 @@ export const DARK_THEMES = [
 ];
 
 export default function ThemeGrid({ themes, value, onChange, onPreview }) {
-  return <div className="tg" role="group" aria-label="Themes">{themes.map((theme) => <button key={theme.id} type="button" className="tg-card" aria-pressed={value === theme.id} onClick={() => onChange(theme.id)} onMouseEnter={() => onPreview?.(theme.id)} onMouseLeave={() => onPreview?.(null)} onFocus={() => onPreview?.(theme.id)} onBlur={() => onPreview?.(null)}>
+  return <div className="tg" role="group" aria-label="Themes" data-scroll-row="true">{themes.map((theme) => <button key={theme.id} type="button" className="tg-card" aria-pressed={value === theme.id} onClick={() => onChange(theme.id)} onMouseEnter={() => onPreview?.(theme.id)} onMouseLeave={() => onPreview?.(null)} onFocus={() => onPreview?.(theme.id)} onBlur={() => onPreview?.(null)}>
     <span className="tg-tick" aria-hidden="true">✓</span><span className="tg-mini" data-theme={theme.id} aria-hidden="true"><span className="tg-side"><i/><i/><i/></span><span className="tg-page"><span className="tg-panel"><span className="tg-lines"><i/><i/></span><span className="tg-pills"><i/><i/><i/></span></span></span></span><span className="tg-name">{theme.name}</span><span className="tg-sub">{theme.sub}</span>
   </button>)}</div>;
 }

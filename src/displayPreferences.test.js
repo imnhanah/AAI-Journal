@@ -4,10 +4,12 @@ import {readFileSync} from 'node:fs';
 import {normaliseDisplayPreferences, displayMetadata, startOfDisplayWeek, weekStartOffset, displayWeekdays, resolveStartPage, maskMoneyText} from './displayPreferences.js';
 import {ownedStoragePaths} from '../supabase/functions/_shared/deleteProfileStorage.js';
 
-test('safe defaults and round-trip metadata for all three controls', () => {
+test('safe defaults and round-trip metadata for display controls', () => {
   assert.deepEqual(normaliseDisplayPreferences(), {weekStart:'monday',startPage:'dashboard',hideBalances:false});
   const saved = {weekStart:'sunday',startPage:'last',hideBalances:true};
   assert.deepEqual(normaliseDisplayPreferences(displayMetadata(saved)), saved);
+  assert.deepEqual(normaliseDisplayPreferences({...displayMetadata(saved),trade_panel_position:'left'}), saved);
+  assert.equal(Object.hasOwn(displayMetadata(saved), 'trade_panel_position'), false);
   assert.equal(resolveStartPage({start_page:'untrusted'},'finance'),'dashboard');
 });
 test('Sunday and Monday boundaries split a Sunday trade correctly', () => {

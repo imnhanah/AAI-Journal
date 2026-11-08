@@ -5,6 +5,7 @@
 
 @media (min-width:901px) {
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {
+    --tj-expanded-sidebar-width:252px;
     gap:var(--floating-shell-gap);
     padding:var(--floating-shell-gap);
     background-color:var(--bg);
@@ -82,6 +83,7 @@
 
 @media (min-width:901px) and (max-width:1180px) {
   :root { --floating-shell-gap:10px; }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root { --tj-expanded-sidebar-width:228px; }
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2 { width:228px !important; min-width:228px; flex-basis:228px; }
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sidebar-v2.tj-sidebar-collapsed { width:72px !important; min-width:72px; flex-basis:72px; }
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-actions { gap:7px; }

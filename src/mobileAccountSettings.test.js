@@ -30,3 +30,14 @@ test('phone popup actions stack primary first, preserve gates and keep long bala
  assert.match(single,/disabled=\{!acknowledged\}/);
  assert.ok([...css.matchAll(/font-size:\s*([\d.]+)px/g)].every(m=>Number(m[1])>=12));
 });
+test('phone Account Settings is its own layout on the existing save path',()=>{
+ const source=read('./TradingJournal.jsx'),view=read('./MobileAccountSettings.jsx'),danger=read('./SettingsDangerZone.jsx');
+ const modal=source.slice(source.indexOf('function AccountSettingsModal('),source.indexOf('function ProfilePreferencesLayout('));
+ assert.match(modal,/if \(phone\) \{/);
+ assert.match(modal,/onSave=\{saveSettings\}/);
+ assert.match(modal,/<SettingsDangerZone inline account=\{account\}/);
+ assert.match(modal,/SingleAccountSwitchDialog/);
+ assert.doesNotMatch(view,/saveSettings|supabase|localStorage/);
+ assert.match(danger,/if \(inline\) return/);
+ assert.match(danger,/typedName === workspaceName/);
+});

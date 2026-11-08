@@ -218,28 +218,6 @@
 .tj-root.tj-root .tj-management-reference .tj-management-content .tj-risk-preset-builder { padding:0; border:0; border-radius:0; background:transparent; }
 .tj-root.tj-root .tj-management-reference .tj-management-content .tj-management-tiles { gap:10px; }
 .tj-root.tj-root .tj-management-reference .tj-management-content .tj-rule-row { min-height:44px; border-radius:10px; background:var(--tj-panel-alt); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress { display:grid; min-height:548px; align-content:start; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:18px; border-bottom:1px solid var(--tj-border); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head small { display:block; color:var(--tj-muted); font-size:10px; font-weight:800; letter-spacing:.1em; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head h2 { margin:5px 0; font-size:24px; line-height:1.1; letter-spacing:-.03em; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head p { margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge { display:inline-flex; align-items:center; gap:7px; flex:0 0 auto; padding:7px 10px; border:1px solid color-mix(in srgb,var(--tj-amber) 42%,var(--tj-border)); border-radius:999px; background:color-mix(in srgb,var(--tj-amber) 12%,var(--tj-panel)); color:var(--tj-amber); font-size:11px; font-weight:800; line-height:1.2; white-space:nowrap; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge i { width:7px; height:7px; border-radius:50%; background:currentColor; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-body { display:grid; gap:16px; padding:22px 0 0; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:15px; padding:18px; border:1px solid var(--tj-border); border-radius:14px; background:var(--tj-panel-alt); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:14px; background:var(--tj-accent-muted); color:var(--tj-accent); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message h3 { margin:0 0 4px; font-size:16px; line-height:1.25; letter-spacing:-.02em; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message p { max-width:560px; margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article { min-height:174px; padding:17px; border:1px solid var(--tj-border); border-radius:13px; background:var(--tj-panel-alt); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article.is-current { border-color:var(--tj-accent-border); background:var(--tj-accent-muted); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article>span { display:grid; place-items:center; width:26px; height:26px; margin-bottom:16px; border-radius:50%; background:var(--tj-panel); color:var(--tj-muted); font-size:11px; font-weight:800; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail article.is-current>span { background:var(--tj-accent); color:var(--on-accent); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail h3 { margin:0 0 7px; font-size:14px; line-height:1.3; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail p { margin:0; color:var(--tj-muted); font-size:12px; line-height:1.5; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail small { display:inline-block; margin-top:14px; color:var(--tj-muted); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail .is-current small { color:var(--tj-accent); }
-.tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-note { padding:12px 14px; border-left:3px solid var(--tj-accent); background:var(--tj-accent-muted); color:var(--tj-muted); font-size:12px; line-height:1.5; }
 .tj-root.tj-root .tj-management-reference .tj-routine-management { min-height:0; padding:0; border:0; border-radius:0; background:transparent; }
 .tj-root.tj-root .tj-management-reference .tj-routine-management>header { padding-bottom:12px; border-bottom:0; }
 .tj-root.tj-root .tj-management-reference .tj-routine-management-banner { display:none; }
@@ -283,7 +261,6 @@
 .tj-root.tj-root .tj-management-reference .tj-routine-missed-item strong { display:block; margin-top:5px; font-size:12px; }.tj-root.tj-root .tj-management-reference .tj-routine-missed-item p,.tj-root.tj-root .tj-management-reference .tj-routine-progress-note { margin:4px 0 0; color:var(--tj-muted); font-size:10px; line-height:1.45; }
 .tj-root.tj-root .tj-management-reference .tj-routine-progress-note { margin:0; padding-top:12px; border-top:1px solid var(--tj-border); }.tj-root.tj-root .tj-management-reference .tj-routine-progress-note b { color:var(--tj-accent); }
 @media(max-width:700px) { .tj-root.tj-root .tj-management-reference { padding:16px; } .tj-root.tj-root .tj-management-reference .tj-management-content { min-height:0; padding:16px; } .tj-root.tj-root .tj-management-reference .tj-management-nav { border-radius:12px; } }
-@media(max-width:700px) { .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress { min-height:420px; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-head { display:block; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-badge { margin-top:12px; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-message { align-items:start; } .tj-root.tj-root .tj-management-reference .tj-playbooks-in-progress-rail { grid-template-columns:1fr; } }
 @media(max-width:920px) { .tj-root.tj-root .tj-management-reference .tj-routine-management { grid-template-columns:1fr; } .tj-root.tj-root .tj-management-reference .tj-routine-management-preview { grid-column:1; grid-row:auto; margin-top:18px; } }
 
 /* Shared list-manager treatment from the Management v2 references. */

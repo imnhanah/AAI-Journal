@@ -1,12 +1,23 @@
 export const NEWS_ALERT_SETTINGS_KEY = "tj:news-alert-settings:v1";
 export const NEWS_ALERT_DELIVERED_KEY = "tj:news-alert-delivered:v1";
-export const NEWS_ALERT_DEFAULTS = {enabled:false,sound:true,minutes:[15,5]};
+// Phone sheet choices stay as they were; desktop offers 5, 15, 30 and 60 minutes.
 export const NEWS_ALERT_MINUTES = [1,5,10,15,30];
+export const NEWS_ALERT_DESKTOP_MINUTES = [5,15,30,60];
+export const NEWS_ALERT_ALLOWED_MINUTES = [1,5,10,15,30,60];
+// "app" is the app's own recorded alert; the others are short synthesised tones.
+export const NEWS_ALERT_TONES = ["app","soft","chime","pulse"];
+export const NEWS_ALERT_DEFAULTS = {enabled:false,sound:true,minutes:[15,5],tone:"app",delivery:{inApp:true,browser:false}};
 export function readAlertSettings(storage) {
   try {
     const value = JSON.parse(storage.getItem(NEWS_ALERT_SETTINGS_KEY));
-    return {enabled:value?.enabled === true,sound:value?.sound !== false,minutes:Array.isArray(value?.minutes) ? NEWS_ALERT_MINUTES.filter((minute)=>value.minutes.includes(minute)) : [15,5]};
-  } catch { return {...NEWS_ALERT_DEFAULTS,minutes:[15,5]}; }
+    return {
+      enabled:value?.enabled === true,
+      sound:value?.sound !== false,
+      minutes:Array.isArray(value?.minutes) ? NEWS_ALERT_ALLOWED_MINUTES.filter((minute)=>value.minutes.includes(minute)) : [15,5],
+      tone:NEWS_ALERT_TONES.includes(value?.tone) ? value.tone : "app",
+      delivery:{inApp:value?.delivery?.inApp !== false,browser:value?.delivery?.browser === true},
+    };
+  } catch { return {...NEWS_ALERT_DEFAULTS,minutes:[15,5],delivery:{...NEWS_ALERT_DEFAULTS.delivery}}; }
 }
 export function eventAlertKey(event,minute) { return [event.isoDate,event.currency,event.title,minute].join("|"); }
 export function dueNewsAlerts(events, now, lastCheck, delivered, minutes = [15,5]) {

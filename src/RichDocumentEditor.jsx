@@ -1,45 +1,108 @@
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
-import { FontFamily, FontSize, LineHeight, TextStyle } from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Highlight from '@tiptap/extension-highlight';
-import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
-import { Table } from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import { TextSelection } from '@tiptap/pm/state';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, CheckSquare, Code2, FileSearch, Heading1, Heading2, Heading3, Highlighter, ImagePlus, Italic, Link2, List, ListOrdered, Minus, Quote, Redo2, RemoveFormatting, Search, Strikethrough, Table2, Underline as UnderlineIcon, Undo2, Unlink } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, Bold, Heading1, Heading2, Heading3, ImagePlus, Italic, Link2, List, ListOrdered, Minus, Quote, Redo2, RemoveFormatting, Strikethrough, Underline as UnderlineIcon, Undo2, Unlink } from 'lucide-react';
+import { isDocumentImageReference, readCaseStudyDocumentImage, saveCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
 import { emptyRichDocument, isSafeLink, normaliseRichDocument } from './studyRichDocument.js';
 import './richDocumentEditor.css';
 
-const imageLimit = 1024 * 1024;
 const iconButton = (Icon, label, action, active = false, disabled = false) => <button type="button" className={active?'is-active':''} aria-label={label} title={label} onMouseDown={event=>event.preventDefault()} onClick={action} disabled={disabled}><Icon size={16}/></button>;
+const percentage = value => Math.max(25,Math.min(100,Number(value)||100));
 
-function documentOutline(editor) {
-  if (!editor) return [];
-  const items=[]; editor.state.doc.descendants((node,pos)=>{if(node.type.name==='heading')items.push({pos:pos+1,level:node.attrs.level,text:node.textContent||'Untitled heading'});}); return items;
+function ResearchImageView({node,selected,updateAttributes,editor,getPos,extension}) {
+  const [resolved,setResolved]=useState(node.attrs.src);
+  const [missing,setMissing]=useState(false);
+  useEffect(()=>{
+    let url=''; let active=true; setMissing(false); setResolved(node.attrs.src);
+    if (!isDocumentImageReference(node.attrs.src)) return () => { active=false; };
+    readCaseStudyDocumentImage(node.attrs.src).then(blob=>{
+      if (!active) return;
+      if (!blob) { setMissing(true); return; }
+      url=URL.createObjectURL(blob); setResolved(url);
+    }).catch(()=>active&&setMissing(true));
+    return ()=>{ active=false; if(url) URL.revokeObjectURL(url); };
+  },[node.attrs.src]);
+  const select=()=>{ const position=typeof getPos==='function' ? getPos() : null; if(typeof position==='number') editor.commands.setNodeSelection(position); };
+  const width=percentage(node.attrs.width);
+  const evidenceActions=extension.options.evidenceActions?.current;
+  const sharedEvidence=evidenceActions?.documentEvidence?.[node.attrs.src]||null;
+  const keepNodeSelected=event=>event.preventDefault();
+  return <NodeViewWrapper as="figure" className={`rde-image rde-image--${node.attrs.align||'center'}${selected?' is-selected':''}`} style={{width:`${width}%`}} data-drag-handle>
+    {missing ? <button type="button" className="rde-missing-image" onClick={select}>Image unavailable on this device</button> : <img src={resolved} alt={node.attrs.alt||'Research note'} onClick={select} draggable="false" />}
+    {selected && <div className="rde-image-controls" contentEditable={false} onClick={event=>event.stopPropagation()}>
+      <label>Size <input aria-label="Image size" type="range" min="25" max="100" value={width} onChange={event=>updateAttributes({width:percentage(event.target.value)})}/></label>
+      <div role="group" aria-label="Image alignment"><button type="button" aria-label="Align image left" className={node.attrs.align==='left'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'left'})}><AlignLeft size={14}/></button><button type="button" aria-label="Center image" className={(node.attrs.align||'center')==='center'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'center'})}><AlignCenter size={14}/></button><button type="button" aria-label="Align image right" className={node.attrs.align==='right'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'right'})}><AlignRight size={14}/></button></div>
+      {sharedEvidence ? <button type="button" className="rde-evidence-action" onMouseDown={keepNodeSelected} onClick={()=>evidenceActions?.onViewEvidence?.(sharedEvidence.id)}>View in Evidence Library</button> : <button type="button" className="rde-evidence-action" onMouseDown={keepNodeSelected} onClick={()=>evidenceActions?.onRequestEvidence?.({ref:node.attrs.src,preview:resolved})}>Save to Evidence Library</button>}
+    </div>}
+    <figcaption contentEditable={false}><input aria-label="Image caption" value={node.attrs.caption||''} onChange={event=>updateAttributes({caption:event.target.value})} placeholder="Add a caption…"/></figcaption>
+  </NodeViewWrapper>;
 }
-function readImage(file) { return new Promise((resolve,reject)=>{if(!file?.type.startsWith('image/'))return reject(new Error('Choose an image file.'));if(file.size>imageLimit)return reject(new Error('Images in Overview must be 1 MB or smaller.'));const reader=new FileReader();reader.onerror=()=>reject(new Error('The image could not be read.'));reader.onload=()=>resolve(String(reader.result));reader.readAsDataURL(file);}); }
 
-export default function RichDocumentEditor({ document, needsInitialise = false, onChange, saveState, onInitialise }) {
+const ResearchImage=Image.extend({
+  addAttributes() { return { ...this.parent?.(), width:{default:100}, align:{default:'center'}, caption:{default:''} }; },
+  addNodeView() { return ReactNodeViewRenderer(ResearchImageView); }
+});
+
+export async function insertImageInView(view,file,coordinates) {
+  const src=await saveCaseStudyDocumentImage(file);
+  let transaction=view.state.tr;
+  const location=coordinates&&view.posAtCoords(coordinates);
+  if(location) transaction=transaction.setSelection(TextSelection.create(view.state.doc,location.pos));
+  transaction=transaction.replaceSelectionWith(view.state.schema.nodes.image.create({src,alt:file.name||'Research image',width:100,align:'center',caption:''})).scrollIntoView();
+  view.dispatch(transaction);
+}
+
+function InlineEvidenceDialog({image,onClose,onSave,onSaved}) { const [title,setTitle]=useState(''),[source,setSource]=useState(''),[tags,setTags]=useState(''),[error,setError]=useState(''),[saving,setSaving]=useState(false); const submit=async event=>{event.preventDefault();if(!title.trim()){setError('Add a title before saving.');return;}setSaving(true);setError('');try{await onSave({imageRef:image.ref,title,source,tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)});onSaved?.();onClose();}catch(reason){setError(reason.message||'Evidence could not be saved.');setSaving(false);}};return <div className="case-dialog-backdrop"><form className="case-form-dialog rde-evidence-dialog" onSubmit={submit}><button type="button" className="case-close" onClick={onClose}>×</button><p className="case-eyebrow">Research Notes image</p><h2>Save to Evidence Library</h2>{image.preview&&<img className="rde-evidence-dialog__preview" src={image.preview} alt="Selected Research Notes image"/>}<label>Title<input autoFocus value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. London sweep, 15m"/></label><label>Source <small>optional</small><input value={source} onChange={event=>setSource(event.target.value)} placeholder="e.g. TradingView"/></label><label>Tags <small>comma-separated</small><input value={tags} onChange={event=>setTags(event.target.value)} placeholder="EUR/USD, liquidity"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving…':'Save evidence'}</button></footer></form></div>; }
+
+export default function RichDocumentEditor({ document, onChange, saveState, sectionName, documentEvidence={}, onSaveImage, onViewEvidence, bare=false, placeholder='', onFocusEditor=null }) {
   const latestChange=useRef(onChange); latestChange.current=onChange;
+  const latestFocus=useRef(onFocusEditor); latestFocus.current=onFocusEditor;
   const initial=useMemo(()=>normaliseRichDocument(document)||emptyRichDocument(),[]);
-  const [outline,setOutline]=useState([]),[query,setQuery]=useState(''),[notice,setNotice]=useState(''),[tableSize,setTableSize]=useState({rows:3,cols:3}); const fileInput=useRef(null);
-  const editor=useEditor({ extensions:[StarterKit.configure({link:false}),Underline,TextStyle,FontSize,FontFamily,LineHeight,Color,Highlight.configure({multicolor:true}),TextAlign.configure({types:['heading','paragraph']}),Link.configure({openOnClick:false,protocols:['http','https','mailto']}),Image.configure({allowBase64:true,inline:false}),Table.configure({resizable:true}),TableRow,TableHeader,TableCell,TaskList,TaskItem.configure({nested:true}),Placeholder.configure({placeholder:'Write the market context, hypothesis, evidence, and next action…'}),CharacterCount], content:initial.content, editorProps:{attributes:{class:'rde-content',spellcheck:'true'},handlePaste:(view,event)=>{const file=[...(event.clipboardData?.files||[])].find(entry=>entry.type.startsWith('image/'));if(!file)return false;readImage(file).then(src=>editor?.chain().focus().setImage({src,alt:file.name}).run()).catch(error=>setNotice(error.message));return true;}},onUpdate:({editor:instance})=>{setOutline(documentOutline(instance));latestChange.current({version:1,content:instance.getJSON()});} });
-  const initialized=useRef(false);
-  useEffect(()=>{if(!editor)return;setOutline(documentOutline(editor));if(needsInitialise&&!initialized.current){initialized.current=true;onInitialise?.({version:1,content:editor.getJSON()});}},[editor,needsInitialise]);
+  const [notice,setNotice]=useState('');
+  const [isDropping,setIsDropping]=useState(false);
+  const [evidenceImage,setEvidenceImage]=useState(null);
+  const fileInput=useRef(null);
+  const evidenceActions=useRef();
+  evidenceActions.current={documentEvidence,onRequestEvidence:setEvidenceImage,onViewEvidence};
+  const editor=useEditor({
+    extensions:[StarterKit.configure({link:false}),Underline,Link.configure({openOnClick:false,protocols:['http','https','mailto']}),ResearchImage.configure({evidenceActions}),Placeholder.configure({placeholder:placeholder||'Write the observation, the evidence behind it, and what you will test next…'}),CharacterCount],
+    content:initial.content,
+    editorProps:{
+      attributes:{class:'rde-content',spellcheck:'true'},
+      handlePaste:(view,event)=>{ const file=[...(event.clipboardData?.files||[])].find(item=>item.type.startsWith('image/')); if(!file)return false; event.preventDefault(); insertImageInView(view,file).catch(error=>setNotice(error.message)); return true; },
+      handleDrop:(view,event,_slice,moved)=>{ const file=[...(event.dataTransfer?.files||[])].find(item=>item.type.startsWith('image/')); if(!file||moved)return false; event.preventDefault(); insertImageInView(view,file,{left:event.clientX,top:event.clientY}).catch(error=>setNotice(error.message)); return true; }
+    },
+    onUpdate:({editor:instance})=>latestChange.current({version:1,content:instance.getJSON()}),
+    onFocus:({editor:instance})=>latestFocus.current?.(instance)
+  });
+  const insertImage=async event=>{ const file=event.target.files?.[0]; event.target.value=''; if(!file||!editor)return; try { await insertImageInView(editor.view,file); } catch(error) { setNotice(error.message); } };
   if(!editor)return <div className="rde-loading">Preparing document editor…</div>;
   const command=callback=>()=>callback(editor.chain().focus()).run();
-  const setLink=()=>{const previous=editor.getAttributes('link').href||'';const href=window.prompt('Link URL',previous);if(href===null)return;if(!href){editor.chain().focus().unsetLink().run();return;}if(!isSafeLink(href)){setNotice('Use an http, https, or mailto link.');return;}editor.chain().focus().extendMarkRange('link').setLink({href}).run();};
-  const insertImage=async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;try{editor.chain().focus().setImage({src:await readImage(file),alt:file.name}).run();}catch(error){setNotice(error.message);}};
-  const style={fontSize:editor.getAttributes('textStyle').fontSize||'14px',fontFamily:editor.getAttributes('textStyle').fontFamily||'inherit'};
-  return <section className="rde"><div className="rde-toolbar" role="toolbar" aria-label="Document formatting"><div>{iconButton(Undo2,'Undo',command(chain=>chain.undo()),false,!editor.can().undo())}{iconButton(Redo2,'Redo',command(chain=>chain.redo()),false,!editor.can().redo())}</div><i/>{iconButton(Bold,'Bold',command(chain=>chain.toggleBold()),editor.isActive('bold'))}{iconButton(Italic,'Italic',command(chain=>chain.toggleItalic()),editor.isActive('italic'))}{iconButton(UnderlineIcon,'Underline',command(chain=>chain.toggleUnderline()),editor.isActive('underline'))}{iconButton(Strikethrough,'Strikethrough',command(chain=>chain.toggleStrike()),editor.isActive('strike'))}{iconButton(RemoveFormatting,'Clear formatting',command(chain=>chain.unsetAllMarks()),false)}<select aria-label="Text color" value={editor.getAttributes('textStyle').color||'var(--text)'} onChange={event=>editor.chain().focus().setColor(event.target.value).run()}><option value="var(--text)">Text</option><option value="var(--accent)">Accent</option><option value="var(--profit)">Profit</option><option value="var(--loss)">Loss</option></select><button type="button" className={editor.isActive('highlight')?'is-active':''} aria-label="Highlight" title="Highlight" onMouseDown={event=>event.preventDefault()} onClick={command(chain=>chain.toggleHighlight({color:'var(--accent-soft)'}))}><Highlighter size={16}/></button><select aria-label="Font size" value={style.fontSize} onChange={event=>editor.chain().focus().setMark('textStyle',{fontSize:event.target.value}).run()}>{[12,13,14,16,18,20,24].map(size=><option key={size} value={`${size}px`}>{size}px</option>)}</select><select aria-label="Font family" value={style.fontFamily} onChange={event=>editor.chain().focus().setMark('textStyle',{fontFamily:event.target.value}).run()}><option value="inherit">Journal Sans</option><option value="var(--font-mono, monospace)">Mono</option></select><i/>{iconButton(Heading1,'Heading 1',command(chain=>chain.toggleHeading({level:1})),editor.isActive('heading',{level:1}))}{iconButton(Heading2,'Heading 2',command(chain=>chain.toggleHeading({level:2})),editor.isActive('heading',{level:2}))}{iconButton(Heading3,'Heading 3',command(chain=>chain.toggleHeading({level:3})),editor.isActive('heading',{level:3}))}{iconButton(List,'Bullet list',command(chain=>chain.toggleBulletList()),editor.isActive('bulletList'))}{iconButton(ListOrdered,'Numbered list',command(chain=>chain.toggleOrderedList()),editor.isActive('orderedList'))}{iconButton(CheckSquare,'Task list',command(chain=>chain.toggleTaskList()),editor.isActive('taskList'))}{iconButton(Quote,'Quote',command(chain=>chain.toggleBlockquote()),editor.isActive('blockquote'))}{iconButton(Code2,'Code block',command(chain=>chain.toggleCodeBlock()),editor.isActive('codeBlock'))}{iconButton(Minus,'Divider',command(chain=>chain.setHorizontalRule()))}<i/>{iconButton(AlignLeft,'Align left',command(chain=>chain.setTextAlign('left')),editor.isActive({textAlign:'left'}))}{iconButton(AlignCenter,'Align center',command(chain=>chain.setTextAlign('center')),editor.isActive({textAlign:'center'}))}{iconButton(AlignRight,'Align right',command(chain=>chain.setTextAlign('right')),editor.isActive({textAlign:'right'}))}{iconButton(AlignJustify,'Justify',command(chain=>chain.setTextAlign('justify')),editor.isActive({textAlign:'justify'}))}<i/>{iconButton(Link2,'Add or edit link',setLink,editor.isActive('link'))}{iconButton(Unlink,'Remove link',command(chain=>chain.unsetLink()),false,!editor.isActive('link'))}{iconButton(ImagePlus,'Insert image',()=>fileInput.current?.click())}<input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={insertImage} hidden/><label className="rde-table">Table <select value={`${tableSize.rows}x${tableSize.cols}`} onChange={event=>{const [rows,cols]=event.target.value.split('x').map(Number);setTableSize({rows,cols});}}>{[2,3,4,5].flatMap(rows=>[2,3,4,5].map(cols=><option key={`${rows}x${cols}`} value={`${rows}x${cols}`}>{rows}×{cols}</option>))}</select><button type="button" onClick={command(chain=>chain.insertTable({rows:tableSize.rows,cols:tableSize.cols,withHeaderRow:true}))}><Table2 size={15}/></button></label>{editor.isActive('table')&&<span className="rde-table-actions"><button type="button" onClick={command(chain=>chain.addRowAfter())}>+ Row</button><button type="button" onClick={command(chain=>chain.addColumnAfter())}>+ Col</button><button type="button" onClick={command(chain=>chain.deleteTable())}>Delete</button></span>}<span className="rde-status">{saveState}</span></div><div className="rde-workspace">{outline.length>0&&<aside className="rde-outline"><strong>Document outline</strong>{outline.map((heading,index)=><button key={`${heading.pos}-${index}`} style={{paddingLeft:`${(heading.level-1)*12+8}px`}} onClick={()=>editor.chain().focus().setTextSelection(heading.pos).run()}>{heading.text}</button>)}</aside>}<div className="rde-page"><EditorContent editor={editor}/></div></div><footer className="rde-footer"><span>{editor.storage.characterCount.words()} words · {editor.storage.characterCount.characters()} characters</span><label><Search size={14}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Find in document"/></label>{query&&<span>{editor.state.doc.textContent.toLowerCase().split(query.toLowerCase()).length-1} matches</span>}{notice&&<span className="rde-notice">{notice}</span>}</footer></section>;
+  if(bare)return <div className={`rde rde-bare${isDropping?' is-dropping':''}`} onDragEnter={event=>{if([...event.dataTransfer.types].includes('Files'))setIsDropping(true);}} onDragLeave={event=>{if(event.currentTarget===event.target)setIsDropping(false);}} onDrop={()=>setIsDropping(false)}>
+    <EditorContent editor={editor}/>{isDropping&&<div className="rde-drop-indicator">Drop PNG, JPEG, or WebP image into this section</div>}
+    {notice&&<p className="rde-notice" role="alert">{notice}</p>}
+    {evidenceImage&&<InlineEvidenceDialog image={evidenceImage} onClose={()=>setEvidenceImage(null)} onSave={onSaveImage} onSaved={()=>setNotice('Saved to Evidence Library. The inline image remains unchanged.')}/>}
+  </div>;
+  const setLink=()=>{ const previous=editor.getAttributes('link').href||''; const href=window.prompt('Link URL',previous); if(href===null)return; if(!href){editor.chain().focus().unsetLink().run();return;} if(!isSafeLink(href)){setNotice('Use an http, https, or mailto link.');return;} editor.chain().focus().extendMarkRange('link').setLink({href}).run(); };
+  return <section className={`rde rde-document-workspace${isDropping?' is-dropping':''}`} onDragEnter={event=>{if([...event.dataTransfer.types].includes('Files'))setIsDropping(true);}} onDragLeave={event=>{if(event.currentTarget===event.target)setIsDropping(false);}} onDrop={()=>setIsDropping(false)}>
+    <div className="rde-toolbar" role="toolbar" aria-label="Document formatting">
+      <div>{iconButton(Undo2,'Undo',command(chain=>chain.undo()),false,!editor.can().undo())}{iconButton(Redo2,'Redo',command(chain=>chain.redo()),false,!editor.can().redo())}</div><i/>
+      {iconButton(Bold,'Bold',command(chain=>chain.toggleBold()),editor.isActive('bold'))}{iconButton(Italic,'Italic',command(chain=>chain.toggleItalic()),editor.isActive('italic'))}{iconButton(UnderlineIcon,'Underline',command(chain=>chain.toggleUnderline()),editor.isActive('underline'))}{iconButton(Strikethrough,'Strikethrough',command(chain=>chain.toggleStrike()),editor.isActive('strike'))}{iconButton(RemoveFormatting,'Clear formatting',command(chain=>chain.unsetAllMarks()))}<i/>
+      {iconButton(Heading1,'Heading 1',command(chain=>chain.toggleHeading({level:1})),editor.isActive('heading',{level:1}))}{iconButton(Heading2,'Heading 2',command(chain=>chain.toggleHeading({level:2})),editor.isActive('heading',{level:2}))}{iconButton(Heading3,'Heading 3',command(chain=>chain.toggleHeading({level:3})),editor.isActive('heading',{level:3}))}{iconButton(List,'Bullet list',command(chain=>chain.toggleBulletList()),editor.isActive('bulletList'))}{iconButton(ListOrdered,'Numbered list',command(chain=>chain.toggleOrderedList()),editor.isActive('orderedList'))}{iconButton(Quote,'Quote',command(chain=>chain.toggleBlockquote()),editor.isActive('blockquote'))}{iconButton(Minus,'Divider',command(chain=>chain.setHorizontalRule()))}<i/>
+      {iconButton(Link2,'Add or edit link',setLink,editor.isActive('link'))}{iconButton(Unlink,'Remove link',command(chain=>chain.unsetLink()),false,!editor.isActive('link'))}{iconButton(ImagePlus,'Insert image',()=>fileInput.current?.click())}<input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={insertImage} hidden/>
+      <span className="rde-status">{saveState}</span>
+    </div>
+    <div className="rde-document-canvas">
+      <div className="rde-document-head"><div><p className="case-eyebrow">Research notes</p><h3>{sectionName}</h3></div><span>{editor.storage.characterCount.words()} words</span></div>
+      <div className="rde-page"><EditorContent editor={editor}/>{isDropping&&<div className="rde-drop-indicator">Drop PNG, JPEG, or WebP image into this section</div>}</div>
+      <footer className="rde-footer"><span>Images are stored locally in this browser. Select one to save a reusable copy to Evidence Library.</span>{notice&&<span className="rde-notice" role="alert">{notice}</span>}</footer>
+    </div>
+    {evidenceImage&&<InlineEvidenceDialog image={evidenceImage} onClose={()=>setEvidenceImage(null)} onSave={onSaveImage} onSaved={()=>setNotice('Saved to Evidence Library. The inline image remains unchanged.')}/>} 
+  </section>;
 }

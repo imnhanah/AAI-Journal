@@ -326,6 +326,7 @@ create table if not exists public.trade_reviews (
   id uuid primary key default gen_random_uuid(), account_id uuid not null references public.accounts(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade, trade_id uuid not null references public.trades(id) on delete cascade,
   review_date date not null, done_well text, went_wrong text, execution_review text, rule_adherence text, psychology text,
+  execution_score smallint check (execution_score between 1 and 5), adherence_score smallint check (adherence_score between 1 and 5), psychology_score smallint check (psychology_score between 1 and 5),
   lessons text, action_items text, notes text, screenshots jsonb not null default '[]'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table if not exists public.period_reviews (

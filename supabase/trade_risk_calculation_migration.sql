@@ -19,7 +19,7 @@ begin
     when 'accounts' then 'id,user_id,name,icon,balance,breakeven_cap,rating_style,theme,default_commission,monthly_goal_pct,yearly_goal_pct,daily_loss_limit_pct,monthly_loss_limit_pct,position_size_enabled,base_currency,default_risk_pct,default_stop_loss_pips,workspace_type,created_at,updated_at'
     when 'trades' then 'id,user_id,account_id,trade_date,trade_time,close_date,close_time,asset,direction,entry_price,exit_price,risk_method,risk_preset,stop_loss_pips,take_profit_pips,exit_pips,stop_loss_price,take_profit_price,planned_rr,realized_rr,gross_pnl,commission,swap,net_pnl,pnl,rr,session,entry_session,entry_type,rating,types,mistakes,mood_before,mood_after,context,confluence_session,premarket_markup_id,rule_evaluations,created_at,updated_at'
     when 'premarket_markups' then 'id,user_id,account_id,markup_date,markup_time,market,instrument,bias,status,levels,market_structure,notes,created_at,updated_at'
-    when 'trade_reviews' then 'id,user_id,account_id,trade_id,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,lessons,action_items,notes,created_at,updated_at'
+    when 'trade_reviews' then 'id,user_id,account_id,trade_id,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,execution_score,adherence_score,psychology_score,lessons,action_items,notes,created_at,updated_at'
     when 'period_reviews' then 'id,user_id,account_id,period_type,period_key,completed,created_at,updated_at'
     when 'rules' then 'id,user_id,account_id,rule_text,active,created_at,updated_at'
     when 'journal_entries' then 'id,user_id,account_id,rule_id,entry_date,checked,created_at,updated_at'

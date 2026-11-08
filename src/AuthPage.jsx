@@ -3,6 +3,7 @@ import { BarChart3, BookOpen, ShieldCheck, ClipboardCheck, ArrowLeft, ArrowRight
 import { signUp, signIn, signInWithGoogle, requestPasswordReset } from './auth';
 import { FinancialDisclaimerDialog } from './FinancialDisclaimer.jsx';
 import Turnstile from './Turnstile.jsx';
+import { TURNSTILE_CONFIGURATION_ERROR, TURNSTILE_SITE_KEY, TURNSTILE_WIDGET_ENABLED } from './turnstileConfig.js';
 
 function GoogleMark() {
   return <svg className="auth-google-mark" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
@@ -27,12 +28,13 @@ export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
-  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
-  const turnstileEnabled = Boolean(siteKey);
+  const siteKey = TURNSTILE_SITE_KEY;
+  const turnstileEnabled = TURNSTILE_WIDGET_ENABLED;
   const resetTurnstile = useCallback(() => { setCaptchaToken(''); setTurnstileResetKey(key => key + 1); }, []);
   const switchMode = (next) => { setMode(next); setPassword(''); setShowPassword(false); setError(''); setInfo(''); resetTurnstile(); if (next !== 'forgot') onModeChange?.(next); };
   const submit = async (event) => {
     event.preventDefault(); if (busy) return;
+    if (TURNSTILE_CONFIGURATION_ERROR) { setError('Secure sign-in is not configured for this environment.'); return; }
     if (turnstileEnabled && !captchaToken) { setError('Complete the security verification before continuing.'); return; }
     setError(''); setInfo(''); setBusy(true);
     try {
@@ -56,9 +58,9 @@ export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange
           {mode !== 'forgot' && <label>Password<span className="auth-password"><input required minLength={mode === 'signup' ? 6 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a strong password' : 'Enter your password'}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></span></label>}
           {mode === 'signup' && <label className="auth-disclaimer-check"><input required type="checkbox" checked={financialDisclaimerAcknowledged} onChange={event => setFinancialDisclaimerAcknowledged(event.target.checked)}/><span>I acknowledge that AAICOREFX is for educational and personal journaling purposes only, and does not provide financial advice. <button type="button" onClick={() => setFinancialDisclaimerOpen(true)}>Read the Financial Disclaimer</button></span></label>}
           {mode === 'login' && <button type="button" className="auth-forgot" onClick={() => switchMode('forgot')}>Forgot password?</button>}
-          {turnstileEnabled ? <Turnstile siteKey={siteKey} resetKey={turnstileResetKey} onSuccess={(token) => { setCaptchaToken(token); setError(''); }} onExpire={() => { setCaptchaToken(''); setError('Security verification expired. Please complete it again.'); }} onError={() => { setCaptchaToken(''); setError('Security verification could not be completed. Please refresh and try again.'); }}/> : <p className="auth-turnstile-warning" role="status">Bot verification is not configured for this environment. Keep Supabase CAPTCHA protection disabled until the Turnstile site key is deployed and tested.</p>}
+          {turnstileEnabled && <Turnstile siteKey={siteKey} resetKey={turnstileResetKey} onSuccess={(token) => { setCaptchaToken(token); setError(''); }} onExpire={() => { setCaptchaToken(''); setError('Security verification expired. Please complete it again.'); }} onError={() => { setCaptchaToken(''); setError('Security verification could not be completed. Please refresh and try again.'); }}/>} 
           {error && <div className="auth-message auth-error" role="alert">{error}</div>}{info && <div className="auth-message" role="status">{info}</div>}
-          <button className="auth-submit" type="submit" disabled={busy || (mode === 'signup' && !financialDisclaimerAcknowledged) || (turnstileEnabled && !captchaToken)}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in'}<ArrowRight size={17}/></button>
+          <button className="auth-submit" type="submit" disabled={busy || TURNSTILE_CONFIGURATION_ERROR || (mode === 'signup' && !financialDisclaimerAcknowledged) || (turnstileEnabled && !captchaToken)}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in'}<ArrowRight size={17}/></button>
         </form>
         {mode !== 'forgot' && <><div className="auth-divider">OR CONTINUE WITH</div><button className="auth-google" disabled={busy || (mode === 'signup' && !financialDisclaimerAcknowledged)} onClick={google}><GoogleMark/>Continue with Google</button></>}
         <div className="auth-switch">{mode === 'login' ? <>Don’t have an account? <button onClick={() => switchMode('signup')}>Sign up</button></> : <>{mode === 'signup' ? 'Already have an account? ' : ''}<button onClick={() => switchMode('login')}>Sign in</button></>}</div>

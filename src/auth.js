@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { START_PAGES } from './displayPreferences';
 import { activatePrivateUser } from './privateCacheRuntime';
+import { TURNSTILE_ENABLED, captchaTokenForAuth } from './turnstileConfig.js';
 
 // Keep email-confirmation links in the same environment where the account was
 // created. This is localhost during development and the live domain in
@@ -35,7 +36,7 @@ function friendlyAuthError(error) {
   if (msg.includes("rate limit")) {
     return "Too many attempts — please wait a moment and try again.";
   }
-  if (msg.includes("captcha") || msg.includes("captcha_token")) {
+  if ((msg.includes("captcha") || msg.includes("captcha_token")) && TURNSTILE_ENABLED) {
     return "Security verification failed or expired. Complete it again and retry.";
   }
   if (msg.includes("failed to fetch") || msg.includes("network")) {
@@ -64,7 +65,7 @@ export async function signUp({ name, email, password, financialDisclaimerAcknowl
       options: {
         data: { display_name: name.trim(), financial_disclaimer_signup_acknowledged: true },
         emailRedirectTo: currentAppUrl(),
-        ...(captchaToken ? { captchaToken } : {}),
+        ...(captchaTokenForAuth(captchaToken) ? { captchaToken: captchaTokenForAuth(captchaToken) } : {}),
       },
     });
     if (error) return { error: friendlyAuthError(error) };
@@ -101,7 +102,7 @@ export async function signIn({ email, password, captchaToken }) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
-      options: { ...(captchaToken ? { captchaToken } : {}) },
+      options: { ...(captchaTokenForAuth(captchaToken) ? { captchaToken: captchaTokenForAuth(captchaToken) } : {}) },
     });
     if (error) return { error: friendlyAuthError(error) };
     return { user: data.user, session: data.session };
@@ -140,7 +141,7 @@ export async function requestPasswordReset(email, captchaToken) {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: window.location.origin + "?reset=1",
-      ...(captchaToken ? { captchaToken } : {}),
+      ...(captchaTokenForAuth(captchaToken) ? { captchaToken: captchaTokenForAuth(captchaToken) } : {}),
     });
     if (error) return { error: friendlyAuthError(error) };
     // Supabase intentionally doesn't reveal whether the email exists (to
@@ -183,7 +184,7 @@ export async function deleteProfilePermanently() {
   }
 }
 
-export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled, privacyScreenTimeoutMinutes, theme, themePreference, accentColor, themePalettes, timezone, dateFormat, timeFormat, language, week_start, start_page, hide_balances }) {
+export async function updateProfile({ fullName, displayName, avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled, privacyScreenTimeoutMinutes, theme, themePreference, accentColor, themePalettes, timezone, dateFormat, timeFormat, language, week_start, start_page, hide_balances, trade_entry_layout, trade_panel_position, trade_panel_behavior }) {
   const cleanName = (fullName || displayName || "").trim();
   const cleanDisplayName = (displayName || cleanName).trim();
   if (!cleanName) return { error: "Please enter your full name." };
@@ -194,6 +195,9 @@ export async function updateProfile({ fullName, displayName, avatarUrl, sessionT
     if (week_start !== undefined) displayData.week_start = week_start === 'sunday' ? 'sunday' : 'monday';
     if (start_page !== undefined) displayData.start_page = START_PAGES.includes(start_page) ? start_page : 'dashboard';
     if (hide_balances !== undefined) displayData.hide_balances = hide_balances === true;
+    if (trade_entry_layout !== undefined) displayData.trade_entry_layout = trade_entry_layout === 'center' ? 'center' : 'side';
+    if (trade_panel_position !== undefined) displayData.trade_panel_position = trade_panel_position === 'left' ? 'left' : 'right';
+    if (trade_panel_behavior !== undefined) displayData.trade_panel_behavior = trade_panel_behavior === 'overlay' ? 'overlay' : 'push';
     const { data, error } = await supabase.auth.updateUser({
       data: { ...displayData, ...(language !== undefined ? { language } : {}), display_name: cleanDisplayName, full_name: cleanName, ...(avatarUrl !== undefined && (avatarUrl || null) !== currentAvatar ? {avatar_url:avatarUrl || null} : {}), session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, privacy_screen_enabled: !!privacyScreenEnabled, privacy_screen_timeout_minutes: [5, 15, 60].includes(Number(privacyScreenTimeoutMinutes)) ? Number(privacyScreenTimeoutMinutes) : 15, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", ...(themePalettes && typeof themePalettes === 'object' ? { theme_palettes: themePalettes } : {}), timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
     });

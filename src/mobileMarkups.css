@@ -34,8 +34,8 @@
   .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-card-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-card {min-width:0;width:100%;border:1px solid var(--tj-border)!important;border-radius:16px;background:var(--tj-panel-alt)!important;box-shadow:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-reference-markups .tj-reference-markup-card {background:var(--color-white)!important;}
-  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-row {display:block!important;min-height:0!important;padding:14px!important;position:static!important;background:transparent!important;}
-  .tj-root .tj-phone-markup-header {display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-row {display:block!important;min-height:0!important;padding:12px!important;position:static!important;background:transparent!important;}
+  .tj-root .tj-phone-markup-header {display:flex;flex-direction:column;gap:10px;min-width:0;}
   .tj-root .tj-phone-markup-date {display:flex;justify-content:space-between;align-items:start;gap:8px;font-size:12px;color:var(--tj-muted);font-weight:600;}
   .tj-root .tj-phone-markup-date>span:first-child {min-width:0;overflow-wrap:anywhere;}
   .tj-root .tj-phone-markup-date .tj-markup-status {font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:3px 6px;white-space:normal;line-height:1.3;}
@@ -48,7 +48,7 @@
   .tj-root .tj-phone-markup-bias-bearish {color:var(--tj-red);background:color-mix(in srgb,var(--tj-red) 12%,var(--tj-panel));}
   .tj-root .tj-phone-markup-pnl {text-align:right;min-width:0;}
   .tj-root .tj-phone-markup-pnl small {display:block;font-size:12px;color:var(--tj-muted);margin-top:4px;}
-  .tj-root .tj-phone-markup-chips {display:flex;flex-wrap:wrap;gap:6px;}
+  .tj-root .tj-phone-markup-chips {display:flex;flex-wrap:wrap;gap:5px;min-width:0;}
   .tj-root .tj-phone-markup-chips>span {font-size:12px;color:var(--tj-muted);background:var(--tj-input-bg);border:1px solid var(--tj-border);border-radius:999px;padding:4px 7px;overflow-wrap:anywhere;}
   .tj-root .tj-phone-markup-actions {display:flex;justify-content:center;}
   .tj-root .tj-phone-markup-actions.is-expanded {display:grid;grid-template-columns:1.1fr 1fr 44px 44px;gap:8px;}
@@ -56,7 +56,7 @@
   .tj-root .tj-phone-markup-expand {width:100%;border:0;background:transparent;color:var(--tj-muted);}
   .tj-root .tj-phone-markup-actions details {position:relative;min-width:0;}
   .tj-root .tj-phone-markup-actions .tj-trade-actions-menu>div {right:0;left:auto;max-width:calc(100vw - 64px);width:210px;}
-  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-detail-inner {padding:0 14px 14px;display:flex;flex-direction:column;gap:14px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-detail-inner {padding:0 12px 12px;display:flex;flex-direction:column;gap:12px;min-width:0;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-reference-markup-detail:not(.tj-reference-markup-detail-open) .tj-reference-markup-detail-inner {padding:0 14px;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-detail-top {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
   .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-detail-top>div {min-width:0;padding:10px;border-radius:10px;background:var(--tj-input-bg);}
@@ -78,7 +78,9 @@
   .tj-root .tj-reference-markups .tj-linked-markup-trade>div:last-child {text-align:right;}
   .tj-root.tj-root .tj-reference-markups .tj-markup-show-linked {min-height:44px!important;font-size:13px;width:100%;}
   .tj-root .tj-reference-markups :is(.tj-markup-panel-empty,.tj-markup-chart-empty) {font-size:13px;min-height:64px;white-space:normal;}
-  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-chart-group {grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-chart-group {grid-template-columns:minmax(0,1fr);gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-chart-card {min-width:0;min-height:76px;padding:8px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-reference-markups .tj-markup-chart-card :is(img,.tj-image-preview) {width:88px;height:58px;flex:0 0 88px;object-fit:cover;}
   /* The phone form owns one scrollport; summary, steps and save bar stay pinned. */
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal.tj-markup-composer-modal {width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;margin:0;padding:0;border:0;border-radius:0!important;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--tj-bg);--tj-phone-markup-card:var(--tj-panel-alt);}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light .tj-markup-composer-modal {--tj-phone-markup-card:var(--color-white);}
