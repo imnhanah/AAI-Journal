@@ -38,6 +38,7 @@ import { activeRoutineItems, completeRoutine, isRoutineTradingDay, routineRequir
 import { disclosurePair, disclosureColumns } from './disclosurePairs';
 import { summarizeClosedTrades } from './journalStats';
 import {financialValidationMessage, validateAccountFinancialData, validateFinanceMovement, validateTradeFinancialData} from './financialValidation.js';
+import { validateTradeForm } from './tradeFormValidation.js';
 import { monthlyPnlRange } from './monthlyPnl';
 import './chartMotion.css';
 import './tradeRuleCards.css';
@@ -678,7 +679,47 @@ function StatCard({ label, children }) {
   );
 }
 
+let tradeEntryValidation = { active:false, errors:{} };
+const tradeEntryValidationListeners = new Set();
+const publishTradeEntryValidation = (next) => {
+  tradeEntryValidation = next;
+  tradeEntryValidationListeners.forEach(listener => listener());
+};
+const useTradeEntryValidation = () => {
+  const [state, setState] = useState(tradeEntryValidation);
+  useEffect(() => {
+    const listener = () => setState(tradeEntryValidation);
+    tradeEntryValidationListeners.add(listener);
+    return () => tradeEntryValidationListeners.delete(listener);
+  }, []);
+  return state;
+};
+const tradeValidationKeyForLabel = (label) => {
+  const normalized = String(label || '').replace(' *', '');
+  if (normalized === 'Instrument') return 'asset';
+  if (normalized === 'Direction') return 'direction';
+  if (normalized === 'Open date') return 'date';
+  if (normalized === 'Open time') return 'time';
+  if (normalized === 'Close date') return 'closeDate';
+  if (normalized === 'Close time') return 'closeTime';
+  if (normalized === 'Gross P&L') return 'grossPnl';
+  if (normalized === 'Commission') return 'commission';
+  if (normalized === 'Swap') return 'swap';
+  if (normalized.startsWith('Entry Price')) return 'entryPrice';
+  if (normalized.startsWith('Stop Loss Price')) return 'stopLossPrice';
+  if (normalized.startsWith('Actual Exit Price')) return 'exitPrice';
+  if (normalized.startsWith('Stop Loss (')) return 'stopLossPips';
+  if (normalized.startsWith('Actual Closed ')) return 'exitPips';
+  return '';
+};
+function TradeValidationSummary({ validation }) {
+  const entries = [...new Set(Object.values(validation.errors || {}))];
+  if (!validation.active || !entries.length) return null;
+  return <div className="tj-trade-validation-summary" role="alert" tabIndex="-1"><strong>Complete the highlighted fields before saving.</strong><ul>{entries.map(message => <li key={message}>{message}</li>)}</ul></div>;
+}
+
 function Modal({ title, onClose, children, wide, className = "", centered = false, headerActions = null, headerNote = null, closeLabel = "Cancel", sheet = false }) {
+  const validation = useTradeEntryValidation();
   return (
     <div className={`tj-modal-overlay ${centered ? "tj-modal-overlay-centered" : ""}`} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`tj-modal ${wide ? "tj-modal-wide" : ""} ${className}`} role={sheet ? 'dialog' : undefined} aria-modal={sheet ? true : undefined} aria-label={sheet ? 'Day details' : undefined}>
@@ -688,23 +729,30 @@ function Modal({ title, onClose, children, wide, className = "", centered = fals
           {headerNote && <span className="tj-modal-header-note">{headerNote}</span>}
           <div className="tj-modal-head-actions">{headerActions}<button type="button" className="tj-icon-btn tj-modal-close" title={closeLabel} aria-label={closeLabel} onClick={onClose}><X size={18} /></button></div>
         </div>
+        <TradeValidationSummary validation={validation} />
         <ThemedFields.Provider value={true}><div className="tj-modal-body">{children}</div></ThemedFields.Provider>
       </div>
     </div>
   );
 }
 
-function InstrumentPicker({value, onChange, options = DEFAULT_INSTRUMENTS}) { return <ThemeInstrument value={value} onChange={onChange} options={options}/>; }
+function InstrumentPicker({value, onChange, options = DEFAULT_INSTRUMENTS, ...accessibility}) { return <ThemeInstrument value={value} onChange={onChange} options={options} {...accessibility}/>; }
 
-function Field({ label, children, className = "" }) {
+function Field({ label, children, className = "", error = "", id = "" }) {
+  const validation = useTradeEntryValidation();
+  const key = tradeValidationKeyForLabel(label);
+  const resolvedError = error || (validation.active && key ? validation.errors[key] || '' : '');
+  const resolvedId = id || (key ? `trade-field-${key}` : '');
+  const errorId = React.useId();
   const content = React.Children.map(children, child => {
     if (!React.isValidElement(child)) return child;
-    if (child.type === 'select' || child.type === ThemeSelect) return <ThemeSelect {...child.props} label={child.props.label || label}/>;
-    if (child.type === 'input' && child.props.type === 'time') return <ThemeTime {...child.props} format={activeRegionalPreferences.timeFormat} label={label}/>;
-    if (child.type === 'input' && child.props.type === 'date') return <ThemeDate {...child.props} label={label}/>;
-    return child;
+    const accessibility = resolvedError ? { 'aria-invalid':true, 'aria-describedby':errorId } : {};
+    if (child.type === 'select' || child.type === ThemeSelect) return <ThemeSelect {...child.props} {...accessibility} label={child.props.label || label}/>;
+    if (child.type === 'input' && child.props.type === 'time') return <ThemeTime {...child.props} {...accessibility} format={activeRegionalPreferences.timeFormat} label={label}/>;
+    if (child.type === 'input' && child.props.type === 'date') return <ThemeDate {...child.props} {...accessibility} label={label}/>;
+    return React.cloneElement(child, accessibility);
   });
-  return <div className={`tj-field ${className}`}><div className="tj-field-label">{label}</div>{content}</div>;
+  return <div id={resolvedId} className={`tj-field ${className} ${resolvedError ? 'tj-field-error' : ''}`} aria-invalid={resolvedError ? true : undefined}><div className="tj-field-label">{label}</div>{content}{resolvedError && <small id={errorId} className="tj-field-error-message" role="alert">{resolvedError}</small>}</div>;
 }
 
 function TagPicker({ options, selected, onToggle, color = "purple" }) {
@@ -1012,6 +1060,7 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   const testLabel = testType === "forward" ? "Forward Test" : "Backtest";
   const testTradeLabel = testType === "forward" ? "forward-test" : "simulated";
   const [confluenceOpen,setConfluenceOpen]=useState(false);
+  const [saveAttempted,setSaveAttempted]=useState(false);
   const [form, setForm] = useState(() => {
     const currentTime = nowTime();
     const base = { id: uid(), date: todayISO(), time: currentTime, closeDate: "", closeTime: "", asset: "", direction: "BUY", calculationMethod: account?.defaultRiskMethod || "price", riskPreset: "", riskPct: account?.defaultRiskPct || 1, stopLossPips: account?.defaultStopLossPips || "", takeProfitPips: "", exitPips: "", entryPrice: "", exitPrice: "", stopLossPrice: "", takeProfitPrice: "", plannedRr: null, realizedRr: null, grossPnl: "", commission: defaultCommission || 0, swap: 0, pnl: "", rr: "", entryType: "", entrySession: entrySessionFromOpenTime(currentTime, todayISO()), session: entrySessionFromOpenTime(currentTime, todayISO()), confluence: [], types: [], mistakes: [], moodBefore: "Neutral", moodAfter: "Neutral", context: "", screenshots: { entry: [], exit: [] }, premarketMarkupId: null, ruleEvaluations: [], strategy: "", timeframe: "", manualConversionRates:{} };
@@ -1142,6 +1191,22 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   const markupRating = backtest ? 0 : (form.premarketMarkupId ? 2 : 0);
   const mistakePenalty = form.mistakes.length;
   const calculatedRating = clamp(ruleRating + resultRating + markupRating - mistakePenalty, 0, 5);
+  const tradeValidation = useMemo(() => validateTradeForm({
+    form,
+    accountId:account?.id,
+    multiBalance,
+    validBalanceIds:balanceTargets.map(balance=>balance.id),
+    isRunning,
+    realizedR:riskCalculation.realized,
+  }), [account?.id, balanceTargets, form, isRunning, multiBalance, riskCalculation.realized]);
+  useEffect(() => {
+    publishTradeEntryValidation({ active:saveAttempted, errors:tradeValidation.errors });
+    return () => publishTradeEntryValidation({ active:false, errors:{} });
+  }, [saveAttempted, tradeValidation.errors]);
+  const focusFirstValidationError = () => {
+    const target = tradeValidation.firstField && (document.getElementById(`trade-field-${tradeValidation.firstField}`) || document.querySelector('.tj-balance-target-picks'));
+    window.setTimeout(() => { target?.scrollIntoView?.({block:'center',behavior:'smooth'}); target?.querySelector?.('input, select, button')?.focus?.(); }, 0);
+  };
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const applyRiskPreset = (name) => {
     const preset = riskPresets.find((item) => item.name === name);
@@ -1182,7 +1247,8 @@ export function NewTradeModal({ onClose, onSave, editing, draft, typeTags, mista
   }));
   const save = () => {
     if (saving) return;
-    if (!form.asset.trim() || !form.time || timingError) return;
+    setSaveAttempted(true);
+    if (!tradeValidation.valid) { focusFirstValidationError(); return; }
     if (positionSizingError) return;
     const grossPnl = isRunning ? null : Number(form.grossPnl), commission = Number(form.commission) || 0, swap = Number(form.swap) || 0;
     if (!multiBalance && !isRunning && !Number.isFinite(grossPnl)) return;

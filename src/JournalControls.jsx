@@ -9,7 +9,7 @@ import {instrumentGroup} from './instrumentCatalog';
 
 export const ThemedFields = React.createContext(false);
 
-function Popup({ label, text, leading, children, disabled = false, compact = false, variant = '', className = '', required = false }) {
+function Popup({ label, text, leading, children, disabled = false, compact = false, variant = '', className = '', required = false, ...accessibility }) {
   const [open, setOpen] = useState(false);
   const root = useRef(null), trigger = useRef(null), panel = useRef(null);
   const [position, setPosition] = useState(null);
@@ -47,7 +47,7 @@ function Popup({ label, text, leading, children, disabled = false, compact = fal
   }, [open, Boolean(position)]);
   const close = () => { setOpen(false); trigger.current?.focus(); };
   return <div ref={root} className={`tj-themed-control ${variant ? `tj-control-${variant}` : ''}`} onBlur={event => { if (!root.current?.contains(event.relatedTarget) && !panel.current?.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={event => { if (event.key === 'Escape') {event.stopPropagation(); close();} }}>
-    <button ref={trigger} type="button" className={`tj-input tj-picker-trigger ${className}`} disabled={disabled} aria-label={label} aria-required={required || undefined} aria-expanded={open} aria-controls={open ? id : undefined} onKeyDown={event=>{if(event.key==='ArrowDown'){event.preventDefault();setOpen(true);panel.current?.querySelector('button[aria-checked="true"],button:not(:disabled)')?.focus();}}} onClick={() => setOpen(!open)}>{leading != null && <i className="tj-picker-leading" aria-hidden="true">{leading}</i>}{leading != null ? <em className="tj-picker-account-name">{text || 'Select…'}</em> : text || 'Select…'}<span aria-hidden="true">{open && ['calendar-account', 'analytics-account'].includes(variant) ? '⌃' : '⌄'}</span></button>
+    <button ref={trigger} type="button" className={`tj-input tj-picker-trigger ${className}`} disabled={disabled} aria-label={label} aria-required={required || undefined} aria-expanded={open} aria-controls={open ? id : undefined} {...accessibility} onKeyDown={event=>{if(event.key==='ArrowDown'){event.preventDefault();setOpen(true);panel.current?.querySelector('button[aria-checked="true"],button:not(:disabled)')?.focus();}}} onClick={() => setOpen(!open)}>{leading != null && <i className="tj-picker-leading" aria-hidden="true">{leading}</i>}{leading != null ? <em className="tj-picker-account-name">{text || 'Select…'}</em> : text || 'Select…'}<span aria-hidden="true">{open && ['calendar-account', 'analytics-account'].includes(variant) ? '⌃' : '⌄'}</span></button>
     {open && createPortal(<div ref={panel} id={id} className={`tj-picker-panel tj-floating-picker ${compact ? 'tj-picker-compact' : ''} ${variant ? `tj-picker-${variant}` : ''}`} style={position || {position:'fixed',visibility:'hidden',width:compact?160:250}} role="group" aria-label={label}>{children(close)}</div>, root.current?.closest('.tj-root,.public-site') || document.body)}
   </div>;
 }
@@ -74,18 +74,18 @@ export function ThemeSelect({ value, onChange, children, label, leading, disable
   const title = label || props['aria-label'] || 'Select';
   const isAccountPicker = ['account-card', 'analytics-account', 'calendar-account'].includes(variant);
   const accountLeading = leading ?? (isAccountPicker ? (value ? options.filter(item => String(item.value) !== '').findIndex(item => String(item.value) === String(value)) + 1 : 'A') : undefined);
-  return <Popup label={title} leading={accountLeading} disabled={disabled} required={required} className={className} compact={compact} variant={variant || 'select'} text={options.find(item => String(item.value) === String(value))?.label}>{close => <><strong>{title}</strong><ChoiceList options={options} value={value} label={title} onSelect={next => {onChange?.({target:{value:String(next), name:props.name}}); close();}}/></>}</Popup>;
+  return <Popup label={title} leading={accountLeading} disabled={disabled} required={required} className={className} compact={compact} variant={variant || 'select'} text={options.find(item => String(item.value) === String(value))?.label} {...props}>{close => <><strong>{title}</strong><ChoiceList options={options} value={value} label={title} onSelect={next => {onChange?.({target:{value:String(next), name:props.name}}); close();}}/></>}</Popup>;
 }
 
 const pad = value => String(value).padStart(2,'0');
-export function ThemeInstrument({value, onChange, options}) {
+export function ThemeInstrument({value, onChange, options, ...accessibility}) {
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>setPhone(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const [query,setQuery] = useState('');
   const compact = text => String(text || '').replace(/[^a-z0-9]/gi,'').toUpperCase();
   const matches = options.filter(item => compact(item).includes(compact(query)));
-  if(phone)return <MobileInstrumentPicker value={value} onChange={onChange} options={options}/>;
-  return <Popup label="Instrument" text={value || 'Select'}>{close => <><strong>Instrument</strong><input autoFocus className="tj-input tj-picker-search" aria-label="Search instruments" placeholder="Search instruments" value={query} onChange={event=>setQuery(event.target.value)}/><ChoiceList label="Instruments" options={matches.map(item=>({value:item,label:<><b>{item}</b><small className="tj-instrument-group-label">{instrumentGroup(item)}</small></>}))} value={value} onSelect={next=>{onChange(next);setQuery('');close();}}/>{!matches.length && <p>No matching instruments.</p>}</>}</Popup>;
+  if(phone)return <MobileInstrumentPicker value={value} onChange={onChange} options={options} {...accessibility}/>;
+  return <Popup label="Instrument" text={value || 'Select'} {...accessibility}>{close => <><strong>Instrument</strong><input autoFocus className="tj-input tj-picker-search" aria-label="Search instruments" placeholder="Search instruments" value={query} onChange={event=>setQuery(event.target.value)}/><ChoiceList label="Instruments" options={matches.map(item=>({value:item,label:<><b>{item}</b><small className="tj-instrument-group-label">{instrumentGroup(item)}</small></>}))} value={value} onSelect={next=>{onChange(next);setQuery('');close();}}/>{!matches.length && <p>No matching instruments.</p>}</>}</Popup>;
 }
 export function ThemeRiskReward({value, onChange, disabled = false, customValues = []}) {
   const values=[...new Set([2,2.5,3,3.5,4,5,...customValues.map(Number).filter(item=>Number.isFinite(item)&&item>0)])].sort((a,b)=>a-b);
@@ -93,7 +93,7 @@ export function ThemeRiskReward({value, onChange, disabled = false, customValues
   const text=value === '' || value == null ? 'Select or enter' : String(value);
   return <Popup label="Risk:Reward (R)" disabled={disabled} text={text}>{close => <><strong>Risk:Reward (R)</strong><input autoFocus type="number" min="0" step="0.1" className="tj-input tj-picker-search" aria-label="Custom risk reward" placeholder="Enter custom value" value={value ?? ''} onChange={event=>onChange(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();close();}}}/><ChoiceList label="Risk reward presets" options={options} value={value} onSelect={next=>{onChange(next);close();}}/></>}</Popup>;
 }
-export function ThemeTime({ value = '', onChange, label = 'Time', format = '12', disabled = false, required = false, className = '' }) {
+export function ThemeTime({ value = '', onChange, label = 'Time', format = '12', disabled = false, required = false, className = '', ...accessibility }) {
   const now = new Date();
   const current = timeParts(`${pad(now.getHours())}:${pad(now.getMinutes())}`);
   const {hour, minute, period} = value ? timeParts(value) : current;
@@ -101,21 +101,21 @@ export function ThemeTime({ value = '', onChange, label = 'Time', format = '12',
   const hour24 = value ? value.slice(0,2) : pad(now.getHours());
   const choose = (h, m, p) => onChange({target:{value:storedTime(h, m, p)}});
   const choose24 = (h,m) => onChange({target:{value:`${h}:${m || '00'}`}});
-  return <Popup label={label} disabled={disabled} required={required} className={className} variant="time" text={is24 ? value || '--:--' : displayTime(value)}>{close => <><strong>{label}</strong><div className={`tj-time-columns ${is24 ? '' : 'tj-time-columns-12'}`}>
+  return <Popup label={label} disabled={disabled} required={required} className={className} variant="time" text={is24 ? value || '--:--' : displayTime(value)} {...accessibility}>{close => <><strong>{label}</strong><div className={`tj-time-columns ${is24 ? '' : 'tj-time-columns-12'}`}>
     <div><small>Hour</small><ChoiceList label="Hour" options={Array.from({length:is24?24:12},(_,i)=>({value:pad(is24?i:i+1),label:pad(is24?i:i+1)}))} value={is24?hour24:hour} onSelect={next=>is24?choose24(next,minute):choose(next,minute,period)}/></div>
     <div><small>Minute</small><ChoiceList label="Minute" options={Array.from({length:60},(_,i)=>({value:pad(i),label:pad(i)}))} value={minute} onSelect={next=>is24?choose24(hour24,next):choose(hour,next,period)}/></div>
     {!is24 && <div><small>AM / PM</small><ChoiceList label="AM or PM" options={['AM','PM'].map(next=>({value:next,label:next}))} value={period} onSelect={next=>choose(hour,minute,next)}/></div>}
     </div><button type="button" className="tj-picker-clear" onClick={close}>Done</button><button type="button" className="tj-picker-clear" onClick={() => {onChange({target:{value:''}});close();}}>Clear time</button></>}</Popup>;
 }
 
-export function ThemeDate({ value = '', onChange, label = 'Date', disabled = false, required = false, min, max, className = '' }) {
+export function ThemeDate({ value = '', onChange, label = 'Date', disabled = false, required = false, min, max, className = '', ...accessibility }) {
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date();
   const now = new Date();
   const today = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const [month, setMonth] = useState(new Date(parsed.getFullYear(),parsed.getMonth(),1));
   useEffect(() => { if(value) setMonth(new Date(`${value.slice(0,7)}-01T12:00:00`)); }, [value]);
   const year=month.getFullYear(), index=month.getMonth(), days=new Date(year,index+1,0).getDate();
-  return <Popup label={label} disabled={disabled} required={required} className={className} variant="date" text={value || 'Choose date'}>{close => <><strong>{label}</strong><div className="tj-date-heading"><button type="button" aria-label="Previous month" onClick={()=>setMonth(new Date(year,index-1,1))}>‹</button><strong>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button type="button" aria-label="Next month" onClick={()=>setMonth(new Date(year,index+1,1))}>›</button></div><input className="tj-input" aria-label={`Enter ${label} as YYYY-MM-DD`} placeholder="YYYY-MM-DD" defaultValue={value} key={value} onBlur={event => {const next=event.target.value;const date=new Date(`${next}T12:00:00`);if(/^\d{4}-\d{2}-\d{2}$/.test(next)&&!isNaN(date)&&(!min||next>=min)&&(!max||next<=max)&&`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`===next)onChange({target:{value:next}});}}/><div className="tj-date-days">{displayWeekdays().map(day=><small key={day}>{day}</small>)}{Array.from({length:weekStartOffset(month)},(_,i)=><span key={`blank${i}`}/>)}{Array.from({length:days},(_,i)=>{const next=`${year}-${pad(index+1)}-${pad(i+1)}`;return <button type="button" key={next} disabled={(min && next<min)||(max && next>max)} className={next===today ? 'tj-picker-current' : ''} aria-label={next} aria-pressed={value===next} onClick={()=>{onChange({target:{value:next}});close();}}>{i+1}</button>;})}</div><div className="tj-date-actions"><button type="button" className="tj-picker-clear" disabled={(min&&today<min)||(max&&today>max)} onClick={()=>{onChange({target:{value:today}});close();}}>Today</button><button type="button" className="tj-picker-clear" onClick={()=>{onChange({target:{value:''}});close();}}>Clear date</button></div></>}</Popup>;
+  return <Popup label={label} disabled={disabled} required={required} className={className} variant="date" text={value || 'Choose date'} {...accessibility}>{close => <><strong>{label}</strong><div className="tj-date-heading"><button type="button" aria-label="Previous month" onClick={()=>setMonth(new Date(year,index-1,1))}>‹</button><strong>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button type="button" aria-label="Next month" onClick={()=>setMonth(new Date(year,index+1,1))}>›</button></div><input className="tj-input" aria-label={`Enter ${label} as YYYY-MM-DD`} placeholder="YYYY-MM-DD" defaultValue={value} key={value} onBlur={event => {const next=event.target.value;const date=new Date(`${next}T12:00:00`);if(/^\d{4}-\d{2}-\d{2}$/.test(next)&&!isNaN(date)&&(!min||next>=min)&&(!max||next<=max)&&`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`===next)onChange({target:{value:next}});}}/><div className="tj-date-days">{displayWeekdays().map(day=><small key={day}>{day}</small>)}{Array.from({length:weekStartOffset(month)},(_,i)=><span key={`blank${i}`}/>)}{Array.from({length:days},(_,i)=>{const next=`${year}-${pad(index+1)}-${pad(i+1)}`;return <button type="button" key={next} disabled={(min && next<min)||(max && next>max)} className={next===today ? 'tj-picker-current' : ''} aria-label={next} aria-pressed={value===next} onClick={()=>{onChange({target:{value:next}});close();}}>{i+1}</button>;})}</div><div className="tj-date-actions"><button type="button" className="tj-picker-clear" disabled={(min&&today<min)||(max&&today>max)} onClick={()=>{onChange({target:{value:today}});close();}}>Today</button><button type="button" className="tj-picker-clear" onClick={()=>{onChange({target:{value:''}});close();}}>Clear date</button></div></>}</Popup>;
 }
 
 export function ConfirmDeleteButton({children, onClick, className='', title, disabled, ...props}) {

@@ -3030,3 +3030,18 @@
   outline-offset:3px;
 }
 
+.tj-root .tj-entry-composer-modal .tj-trade-validation-summary{
+  margin:0 24px;
+  padding:10px 12px;
+  border:1px solid var(--tj-red);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--tj-red) 9%,var(--tj-panel));
+  color:var(--tj-text);
+  font-size:var(--text-min);
+}
+.tj-root .tj-trade-validation-summary strong{color:var(--tj-red);}
+.tj-root .tj-trade-validation-summary ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px;}
+.tj-root .tj-entry-composer-modal .tj-field-error :is(input,select,textarea,button.tj-picker-trigger){border-color:var(--tj-red)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--tj-red) 35%,transparent);}
+.tj-root .tj-entry-composer-modal .tj-field-error-message{display:block;margin-top:5px;color:var(--tj-red);font-size:var(--text-min);line-height:1.35;}
+@media(max-width:600px){.tj-root .tj-entry-composer-modal .tj-trade-validation-summary{margin:0 14px;}}
+
