@@ -4,12 +4,14 @@ import {readFileSync} from 'node:fs';
 
 const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./desktopTradeLogs.css', import.meta.url), 'utf8');
+const tradeLog = journal.slice(journal.indexOf('function TradeLogPage'), journal.indexOf('\nfunction CalendarPage'));
 
-test('desktop shows Trade Logs v2 after the phone timeline', () => {
-  assert.match(journal, /const TRADE_LOGS_V2 = true;/);
+test('desktop returns Trade Logs v2 after the phone timeline', () => {
   assert.match(journal, /import '\.\/desktopTradeLogs\.css';/);
-  assert.match(journal, /if \(TRADE_LOGS_V2\) return desktopV2;/);
-  assert.ok(journal.indexOf('if(phone)return <><MobileJournalTimeline') < journal.indexOf('if (TRADE_LOGS_V2) return desktopV2;'));
+  assert.match(journal, /if\(phone\)return <>\<MobileJournalTimeline/);
+  assert.match(journal, /return desktopV2;/);
+  assert.ok(journal.indexOf('if(phone)return <><MobileJournalTimeline') < journal.indexOf('return desktopV2;'));
+  assert.doesNotMatch(tradeLog, /TRADE_LOGS_V2|tj-tradelog-reference-summary|tj-tradelog-card-grid/);
   assert.match(journal, /const shownAccountBalance = useDashboardBalanceCountUp\(accountBalance\);/);
   assert.match(journal, /const accountBalanceParts = ddMoneyParts\(shownAccountBalance, account\.baseCurrency\);/);
 });

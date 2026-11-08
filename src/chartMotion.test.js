@@ -38,10 +38,10 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   // Savings goal progress now lives in the shared Orbit card, not this page's width fills.
   // Review period cards use reviewed counts instead of decorative progress fills.
   // The desktop side panel's rule progress bar is one more fill (56).
-  // The removed unreachable Dashboard implementations contained six charts and three fills.
-  // The active desktop Dashboard, Trade Logs, Analytics and Calendar surfaces total 18 charts
-  // and 67 percentage fills.
-  assert.equal(chartCount,18);assert.equal(fillCount,67);
+  // The removed unreachable Trade Logs branch contained one chart and sixteen percentage
+  // fills. The active surfaces, including the Analytics Edge and Rhythm views, total 17
+  // charts and 65 fills.
+  assert.equal(chartCount,17);assert.equal(fillCount,65);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 

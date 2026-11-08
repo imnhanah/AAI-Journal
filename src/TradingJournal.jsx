@@ -14,7 +14,6 @@ import {usePhoneTradeDialog} from './usePhoneTradeDialog.js';
 import {MobileMarkupOverview,MobileMarkupHeader,MobileMarkupForm} from './MobileMarkups.jsx';
 import MobileMarkupsV2 from './MobileMarkupsV2.jsx';
 import MarkupsRedesign from './MarkupsRedesign.jsx';
-import TradeLogsRedesign from './TradeLogsReference.jsx';
 import ReviewPage, { DEFAULT_QUESTIONS as REVIEW_DEFAULT_QUESTIONS } from './ReviewPage.jsx';
 import CaseStudyLibrary from './CaseStudyLibrary.jsx';
 import SidebarShell from './SidebarShell?sidebar-divider=2';
@@ -3985,9 +3984,6 @@ function FinancialDataCorrection({ issues = [] }) {
   </section>;
 }
 
-// Desktop Trade Logs v2 is on. Set to false to fall back to the previous desktop layout.
-const TRADE_LOGS_V2 = true;
-
 /* Desktop Dashboard v2 (desktopDashboard.css, dd- classes). Phones use
    MobileDashboardV6 without mounting the desktop chart tree in the background. */
 const ddMoneyParts = (value, currency) => {
@@ -4488,36 +4484,11 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
   const [monthFilters, setMonthFilters] = usePageState('tradelog', 'tj-nav-monthFilters', []);
   const [sortKey, setSortKey] = usePageState('tradelog', 'tj-nav-sortKey', "date");
   const [sortDir, setSortDir] = usePageState('tradelog', 'tj-nav-sortDir', "desc");
-  const [expanded, setExpanded] = usePageState('tradelog', 'tj-nav-expanded', {});
-  const [closing, setClosing] = useState({});
-  const closeTimers = useRef({});
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [linkDrafts, setLinkDrafts] = useState({});
-  const [selectedImage, setSelectedImage] = useState("");
-  const [listPage, setListPage] = usePageState('tradelog', 'tj-nav-listPage', 1);
-  const [showAll, setShowAll] = usePageState('tradelog', 'tj-nav-showAll', false);
   const [selectedTradeId, setSelectedTradeId] = usePageState('tradelog', 'tj-nav-selectedTrade', null);
   const toolbarRef = useCloseOnOutside(filtersOpen || sortOpen, () => { setFiltersOpen(false); setSortOpen(false); });
-  const preserveTradeScroll = useDisclosureScroll(expanded);
-  const expandedTradeRef = useCloseOnOutside(Object.keys(expanded).length > 0, () => {
-    preserveTradeScroll(expandedTradeRef.current?.querySelector('.tj-tradelog-card-shell-expanded'));
-    Object.values(closeTimers.current).forEach(window.clearTimeout);
-    setExpanded({}); setClosing({});
-  }, true);
-  useEffect(() => () => Object.values(closeTimers.current).forEach(window.clearTimeout), []);
-  const toggleTrade = (id) => {
-    Object.values(closeTimers.current).forEach(window.clearTimeout);
-    if (!expanded[id]) {
-      setClosing({});
-      setExpanded(disclosurePair(visibleTrades, id, disclosureColumns(expandedTradeRef.current)));
-      return;
-    }
-    const shell = [...(expandedTradeRef.current?.children || [])].find(item => item.dataset.disclosureId === String(id));
-    preserveTradeScroll(shell);
-    setExpanded({});
-    setClosing({});
-  };
 
   const cap = account.breakevenCap;
   const reviewedTradeIds = useMemo(() => new Set(reviews.map((review) => review.tradeId || review.trade_id).filter(Boolean)), [reviews]);
@@ -4546,9 +4517,6 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
     else if (sortKey === "asset") cmp = a.asset.localeCompare(b.asset);
     return sortDir === "asc" ? cmp : -cmp;
   });
-  const tradePageCount = Math.max(1, Math.ceil(filtered.length / 10));
-  const activeTradePage = Math.min(listPage, tradePageCount);
-  const visibleTrades = showAll ? filtered : filtered.slice((activeTradePage - 1) * 10, activeTradePage * 10);
   const balanceNames = new Map(activeBalances(account).map((balance) => [balance.id, balance.name]));
   const accountOpeningBalance = tradingOpeningBalance(account);
   const referenceTrades = filtered.map((trade) => ({
@@ -4564,8 +4532,6 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
       src: screenshotSource(screenshot), alt: label, tag: label,
     })),
   }));
-
-  useWhenChanged(() => { setListPage(1); setExpanded({}); }, [search, balanceFilter, yearFilter, assetFilter, sessionFilter, resultFilter, monthFilters, sortKey, sortDir,phoneFilters]);
 
   const stats = computeStats(filtered, cap);
   const accountBalance = financeTotals(account).tradingBalance;
@@ -4609,7 +4575,7 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
     setBalanceFilter("");
     setYearFilter(currentYear);
     setSearch(""); setAssetFilter("All"); setSessionFilter("All"); setResultFilter("All"); setMonthFilters([]);
-    setSortKey("date"); setSortDir("desc"); setListPage(1); setShowAll(false); setExpanded({});
+    setSortKey("date"); setSortDir("desc");
     setFiltersOpen(false); setSortOpen(false); setSelectedImage("");
   };
 
@@ -4622,8 +4588,7 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
   };
   if(phone)return <><MobileJournalTimeline trades={filtered} allTrades={workspace.trades} decorate={decoratePhoneTrade} netPnl={stats.netPnl} count={filtered.length} filters={phoneFilters} onFilters={setPhoneFilters} onReset={restoreTradeLogBoard} search={search} onSearch={setSearch} money={fmtMoney} date={formatDate} balances={activeBalances(workspace)} markups={markups} noteOf={tradeNote} renderScreenshot={({src,label,key})=><ImagePreview key={key} src={src} alt={label}/>} onReview={(trade,preview)=>setLogReviewEditor({trade:workspace.trades.find(item=>item.id===trade.id)||trade,preview})} onEdit={onEdit} onDelete={onDelete} onLinkMarkup={onLinkMarkup} onNewTrade={onNewTrade} locked={locked}/>{reviewEditor}</>;
   // Desktop Trade Logs v2 (desktopTradeLogs.css, tl2- classes) after
-  // aaicorefx-desktop-trade-logs.html. Same filters, sort, months, figures and actions as the
-  // layout below it, which stays until it is removed (TRADE_LOGS_V2).
+  // aaicorefx-desktop-trade-logs.html. It is the only desktop Trade Logs layout.
   const signedMoney = (value, currency = account.baseCurrency) => `${Number(value) < 0 ? "−" : "+"}${currencySymbol(currency)}${Math.abs(Number(value) || 0).toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 })}`;
   const plainMoney = (value) => fmtMoney(value, account.baseCurrency).replace(/^\+/, "");
   const accountBalanceParts = ddMoneyParts(shownAccountBalance, account.baseCurrency);
@@ -4717,7 +4682,7 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
       <span className="tl2-count tl2-num">{filtered.length} trade{filtered.length === 1 ? "" : "s"}{yearFilter === "All" ? "" : ` · ${yearFilter}`}{monthFilters.length ? ` · ${monthFilters.length} month${monthFilters.length === 1 ? "" : "s"}` : ""}</span>
     </div>
     <div className={`tl2-panel ${filtersOpen ? "is-open" : ""}`} aria-hidden={!filtersOpen}><div><div className="tl2-card tl2-pad">
-      <div className="tl2-row"><div><h4>Filter trades</h4><p className="tl2-sub">Focus the trade log on the exact instrument, session, or result you want to review.</p></div><div className="tl2-panel-actions"><span className="tl2-match tl2-num">{filtered.length} trade{filtered.length === 1 ? "" : "s"} match</span><button type="button" className="tl2-small" onClick={() => { setSearch(""); setBalanceFilter(""); setAssetFilter("All"); setSessionFilter("All"); setResultFilter("All"); setMonthFilters([]); setYearFilter("All"); setListPage(1); }}>Clear all</button><button type="button" className="tl2-icon is-small" aria-label="Close filters" onClick={() => setFiltersOpen(false)}><X size={14}/></button></div></div>
+      <div className="tl2-row"><div><h4>Filter trades</h4><p className="tl2-sub">Focus the trade log on the exact instrument, session, or result you want to review.</p></div><div className="tl2-panel-actions"><span className="tl2-match tl2-num">{filtered.length} trade{filtered.length === 1 ? "" : "s"} match</span><button type="button" className="tl2-small" onClick={() => { setSearch(""); setBalanceFilter(""); setAssetFilter("All"); setSessionFilter("All"); setResultFilter("All"); setMonthFilters([]); setYearFilter("All"); }}>Clear all</button><button type="button" className="tl2-icon is-small" aria-label="Close filters" onClick={() => setFiltersOpen(false)}><X size={14}/></button></div></div>
       <div className={`tl2-filter-grid ${balances.length > 1 ? "has-account" : ""}`}>
         <label className="tl2-field"><span>Search</span><span className="tl2-search"><Search size={16} aria-hidden="true"/><input placeholder="Search trades..." value={search} onChange={(event) => setSearch(event.target.value)} tabIndex={filtersOpen ? 0 : -1}/></span></label>
         {balances.length > 1 && <div className="tl2-field"><span>Account</span><ThemeSelect compact label="Trade log account" value={balanceFilter} onChange={(event) => setBalanceFilter(event.target.value)}><option value="">All accounts</option>{balances.map((balance) => <option key={balance.id} value={balance.id}>{balance.name}</option>)}</ThemeSelect></div>}
@@ -4752,125 +4717,9 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
     </div> : <div className="tl2-card tl2-pad"><div className="tl2-empty"><b>No trades match these filters</b>Try another filter, or press Reset.</div></div>}
     {reviewEditor}
   </div>;
-  if (TRADE_LOGS_V2) return desktopV2;
-  return (
-    <>
-      <div className="tj-tradelog-summary-title">Trades</div>
-      <div className="tj-tradelog-reference-summary">
-        <div className="tj-tradelog-balance-summary"><span>Account Balance</span><div className="tj-tradelog-balance-curve" aria-label="Account balance curve"><ResponsiveContainer width="100%" height="100%"><AreaChart data={balanceCurve}><Area {...getChartAnimation("line")} type="monotone" dataKey="balance" stroke={UI_COLORS.primary} fill="none" strokeWidth={2} dot={false}/></AreaChart></ResponsiveContainer></div><strong>{fmtMoney(accountBalance).replace(/^\+/, "")}</strong></div>
-        <div><span>Net Return</span><strong className={netReturn >= 0 ? "tj-green" : "tj-red"}>{netReturn >= 0 ? "+" : ""}{netReturn.toFixed(2)}%</strong><small>{fmtMoney(stats.netPnl)}</small></div>
-        <div><span>Average Trade</span><strong className={averageTrade >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(averageTrade)}</strong><small>Expected result per trade</small></div>
-        <div><span>Costs</span><strong className={totalCosts > 0 ? "tj-red" : ""}>{fmtMoney(totalCosts).replace(/^\+/, "")}</strong><small>{accountOpeningBalance ? `${((totalCosts / accountOpeningBalance) * 100).toFixed(2)}% of balance` : "No opening balance"}</small></div>
-        <div><span>Win Rate</span><strong>{stats.winRate.toFixed(0)}%</strong><div className="tj-tradelog-summary-progress"><i data-chart-fill="horizontal" style={{width:`${Math.max(0,Math.min(100,stats.winRate))}%`}}/></div><small>{stats.wins}W · {stats.losses}L · {stats.be} B/E</small></div>
-        <div><span>Avg RR</span><strong>{stats.averageR == null ? "—" : `${stats.averageR.toFixed(2)}R`}</strong><small>All results</small></div>
-        <div><span>Profit Factor</span><strong className={stats.profitFactor >= 1.5 ? "tj-green" : "tj-amber-txt"}>{formatRatio(stats.profitFactor)}</strong><small>Gross profit vs loss</small></div>
-        <div><span>Best Trade</span><strong className={bestTrade?.pnl >= 0 ? "tj-green" : "tj-red"}>{bestTrade ? fmtMoney(bestTrade.pnl) : "—"}</strong><small>{bestTrade ? `${bestTrade.asset || "No instrument"} · ${bestTrade.date || "No date"}` : "No trades shown"}</small></div>
-        <div><span>Largest Loss</span><strong className={largestLoss?.pnl < 0 ? "tj-red" : "tj-muted-txt"}>{largestLoss ? fmtMoney(largestLoss.pnl) : "—"}</strong><small>{largestLoss ? `${largestLoss.asset || "No instrument"} · ${largestLoss.date || "No date"}` : "No trades shown"}</small></div>
-        <div><span>Plan Alignment</span><strong>{planAlignment == null ? "—" : `${planAlignment.toFixed(0)}%`}</strong><div className="tj-tradelog-summary-progress"><i data-chart-fill="horizontal" style={{width:`${Math.max(0,Math.min(100,planAlignment || 0))}%`}}/></div><small>{planAlignment == null ? "Link a bullish/bearish markup" : `${planAlignedTrades.length}/${tradesWithPlanBias.length} followed markup bias`}</small></div>
-      </div>
-
-      <div className="tj-tradelog-compact-toolbar" ref={toolbarRef}>
-        <div className="tj-markup-toolbar-actions"><button className={`tj-icon-btn tj-markup-toolbar-button ${filtersOpen ? "tj-icon-btn-active" : ""}`} title="Filter trade log" onClick={() => { setFiltersOpen((value) => !value); setSortOpen(false); }}>Filter</button><button className={`tj-icon-btn tj-markup-toolbar-button ${sortOpen ? "tj-icon-btn-active" : ""}`} title="Sort trade log" onClick={() => { setSortOpen((value) => !value); setFiltersOpen(false); }}>Sort</button><button className="tj-icon-btn tj-markup-toolbar-button" title="Restore trade log board" aria-label="Restore trade log board" onClick={restoreTradeLogBoard}>Reset</button></div>
-        <div className="tj-markup-toolbar-status">{showAll ? <b>All visible</b> : <div className="tj-pagination-arrows tj-toolbar-pagination"><button type="button" className="tj-icon-btn" aria-label="Previous trade logs page" title="Previous page" disabled={activeTradePage === 1} onClick={() => setListPage(activeTradePage - 1)}><ChevronLeft size={16}/></button><b>{`Page ${activeTradePage} of ${tradePageCount}`}</b><button type="button" className="tj-icon-btn" aria-label="Next trade logs page" title="Next page" disabled={activeTradePage === tradePageCount} onClick={() => setListPage(activeTradePage + 1)}><ChevronRight size={16}/></button></div>}</div>
-        {filtersOpen && <div className="tj-markup-filter-popover tj-tradelog-filter-popover">
-          <div className="tj-markup-filter-head"><div><strong>Filter trades</strong><span>Focus the trade log on the exact instrument, session, or result you want to review.</span></div><div className="tj-tradelog-filter-header-actions"><span>{filtered.length} trades match</span><button type="button" className="tj-tradelog-clear-filters" onClick={() => { setSearch(""); setBalanceFilter(""); setAssetFilter("All"); setSessionFilter("All"); setResultFilter("All"); setMonthFilters([]); setYearFilter("All"); setListPage(1); }}>Clear all</button><button className="tj-icon-btn" title="Close filters" onClick={() => setFiltersOpen(false)}><X size={14}/></button></div></div>
-          <div className="tj-markup-filter-grid tj-tradelog-filter-grid">
-            <Field label="Search"><div className="tj-toolbar-search"><Search size={15} className="tj-toolbar-search-icon"/><input className="tj-toolbar-search-input" placeholder="Search trades..." value={search} onChange={(event) => setSearch(event.target.value)}/></div></Field>
-            {balances.length > 1 && <Field label="Account"><ThemeSelect compact label="Trade log account" value={balanceFilter} onChange={event => setBalanceFilter(event.target.value)}><option value="">All accounts</option>{balances.map(balance => <option key={balance.id} value={balance.id}>{balance.name}</option>)}</ThemeSelect></Field>}
-            <Field label="Instrument"><ThemeSelect compact label="Instrument" value={assetFilter} onChange={(event) => setAssetFilter(event.target.value)}>{assets.map((asset) => <option key={asset} value={asset}>{asset === "All" ? "All Instruments" : asset}</option>)}</ThemeSelect></Field>
-            <Field label="Session"><ThemeSelect compact label="Session" value={sessionFilter} onChange={(event) => setSessionFilter(event.target.value)}>{sessionsUsed.map((item) => <option key={item} value={item}>{item === "All" ? "All Sessions" : item}</option>)}</ThemeSelect></Field>
-            <Field label="Result"><ThemeSelect compact label="Result" value={resultFilter} onChange={(event) => setResultFilter(event.target.value)}><option value="All">All Results</option><option value="win">Wins</option><option value="loss">Losses</option><option value="be">Break-even</option></ThemeSelect></Field>
-          </div>
-        </div>}
-        {sortOpen && <div className="tj-tradelog-sort-controls tj-tradelog-month-controls">
-          <div className="tj-tradelog-month-head"><strong>Months</strong><div className="tj-tradelog-year-nav">
-            <button type="button" className="tj-icon-btn" aria-label="Previous trade year" disabled={yearFilter === "All" || tradeYears.indexOf(yearFilter) === tradeYears.length - 1} onClick={() => { setYearFilter(tradeYears[tradeYears.indexOf(yearFilter) + 1]); setMonthFilters([]); }}><ChevronLeft size={14}/></button>
-            <div className="tj-month-year"><ThemeSelect compact label="Trade log year" value={yearFilter} onChange={event => { setYearFilter(event.target.value); setMonthFilters([]); setExpanded({}); }}><option value="All">All time</option>{tradeYears.map(year => <option key={year} value={year}>{year}</option>)}</ThemeSelect></div>
-            <button type="button" className="tj-icon-btn" aria-label="Next trade year" disabled={yearFilter === "All" || tradeYears.indexOf(yearFilter) <= 0} onClick={() => { setYearFilter(tradeYears[tradeYears.indexOf(yearFilter) - 1]); setMonthFilters([]); }}><ChevronRight size={14}/></button>
-          </div></div>
-          <div className="tj-tradelog-month-options">
-            <button type="button" className={`tj-markup-sort-option ${!monthFilters.length ? "tj-markup-sort-option-active" : ""}`} aria-pressed={!monthFilters.length} onClick={() => setMonthFilters([])}>All<small>{account.trades.filter(trade => yearFilter === "All" || String(trade.date || "").slice(0,4) === yearFilter).length}</small></button>
-            {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((label, index) => { const month = index + 1, count = account.trades.filter((trade) => (yearFilter === "All" || String(trade.date || "").slice(0, 4) === yearFilter) && Number(String(trade.date || "").slice(5, 7)) === month).length, active = monthFilters.includes(month); return <button type="button" key={label} disabled={!count} aria-pressed={active} className={`tj-markup-sort-option ${active ? "tj-markup-sort-option-active" : ""}`} onClick={() => setMonthFilters((current) => active ? current.filter((item) => item !== month) : [...current, month])}>{label}<small>{count}</small></button>; })}
-          </div>
-        </div>}
-      </div>
-
-      {filtered.length > 0 && <TradeLogsRedesign
-        theme={document.documentElement.dataset.theme?.startsWith('dark') ? 'dark' : 'light'}
-        trades={referenceTrades}
-        markups={markups}
-        renderScreenshot={({src,alt})=><ImagePreview src={src} alt={alt} className="tl-live-shot"/>}
-        onWriteReview={(trade) => trade && setLogReviewEditor({trade: workspace.trades.find((item) => item.id === trade.id) || trade, preview: reviewedTradeIds.has(trade.id)})}
-        onEditTrade={(trade) => trade && onEdit(trade)}
-        onDeleteTrade={(trade) => trade && onDelete(trade.id)}
-        onLinkMarkup={(trade, markupId) => trade && onLinkMarkup(trade, markupId)}
-      />} 
-      {filtered.length === 0 && (
-        <Card className="tj-panel"><div className="tj-empty">No trades match these filters.</div></Card>
-      )}
-      {false && <div className="tj-tradelog-card-grid" ref={expandedTradeRef}>
-          {visibleTrades.map((rawTrade) => {
-            // The parent trade is a summary row. Derive it from the accounts
-            // still attached to the trade so an old combined total can never
-            // survive after another account has been removed.
-            const accountResults = (rawTrade.balanceResults || []).map((result) => ({ ...result, account:activeBalances(account).find((balance) => balance.id === result.balanceId) })).filter((result) => result.account);
-            const accountNetPnl = accountResults.reduce((sum, result) => sum + Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))), 0);
-            const summarisedTrade = accountResults.length ? { ...rawTrade, pnl:accountNetPnl } : rawTrade;
-            const t = { ...summarisedTrade, rr: tradeRiskReward(summarisedTrade) };
-            const isRunning = isRunningTrade(t);
-            const cls = isRunning ? "running" : classify(t.pnl, cap);
-            const isOpen = !!expanded[t.id], isClosing = !!closing[t.id], visible = isOpen || isClosing;
-            const isReviewed = reviewedTradeIds.has(t.id);
-            const linkedMarkupRecord = markups.find((markup) => markup.id === t.premarketMarkupId);
-            const linkedMarkup = linkedMarkupRecord ? { ...linkedMarkupRecord, date: formatDate(linkedMarkupRecord.date) } : null;
-            const tradeReturn = account.balance ? (t.pnl / account.balance) * 100 : 0;
-            const confluenceCount = (t.confluence || t.types || []).length;
-            const tradeScreenshots = tradeScreenshotItems(t.screenshots);
-            const screenshotCount = tradeScreenshots.length;
-            const linkedMarkupScreenshots = linkedMarkup ? Object.entries(linkedMarkup.screenshots || {}).filter(([, images]) => Array.isArray(images)).flatMap(([slot, images]) => images.map((screenshot, index) => ({ source: screenshotSource(screenshot), key: `${slot}-${index}` }))) : [];
-            const linkDraft = linkDrafts[t.id] ?? t.premarketMarkupId ?? "";
-            return (
-              <div key={t.id} data-disclosure-id={t.id} className={`tj-tradelog-card-shell ${visible ? "tj-tradelog-card-shell-expanded" : ""}`}><Card className={`tj-tlog-card tj-reference-tradelog-row tj-tlog-${cls} ${visible ? "tj-reference-tradelog-expanded" : ""}`}>
-                <div className="tj-tlog-row" onPointerDown={event => {if (isOpen && (!event.target.closest('button, a, input, select, textarea, details') || event.target.closest('button[title="Collapse trade"]'))) preserveTradeScroll(event.currentTarget.closest('.tj-tradelog-card-shell'));}} onClick={() => toggleTrade(t.id)}>
-                  {isOpen ? <div className="tj-reference-trade-left"><div className="tj-tlog-main"><div className="tj-tlog-asset">{t.asset || "No instrument"}</div></div><span className={`tj-dirpill-sm tj-reference-trade-direction ${t.direction === "BUY" ? "tj-green" : "tj-red"}`}>{t.direction}</span><span className="tj-reference-trade-session">{t.entrySession || t.session || "No session"} · {formatDate(t.date)} · {formatTime(t.time)}</span></div> : <div className="tj-reference-trade-left tj-trade-card-identity"><small className="tj-trade-card-date">{cTraderOpeningIsUnknown(t) ? "Opening time not included" : `${formatDate(t.date)} · ${formatTime(t.time)}`}</small><strong className="tj-trade-card-instrument">{t.asset || "No instrument"}</strong><div className="tj-trade-card-status"><span className={t.direction === "BUY" ? "tj-green" : "tj-red"}>{t.direction}</span><span>{t.entrySession || t.session || "No session"}</span></div><div className="tj-trade-card-metrics"><div><span>SESSION</span><strong>{t.entrySession || t.session || "—"}</strong></div><div><span>RR</span><strong>{t.rr ? `${t.rr.toFixed(2)}R` : "—"}</strong></div><div><span>CONFLUENCE</span><strong>{confluenceCount}</strong></div></div><p>{tradeNote(t) || "No trade note added."}</p></div>}
-                  <div className="tj-reference-trade-right" onClick={(event) => {if (event.target.closest('button, a, input, select, textarea, details')) event.stopPropagation();}}>
-                    <button type="button" className={`tj-review-status ${isRunning ? "tj-review-pending" : (isReviewed ? "tj-review-reviewed" : "tj-review-pending")}`} disabled={isRunning} onClick={() => setLogReviewEditor({trade:workspace.trades.find(item=>item.id===t.id)||t,preview:isReviewed})} title={isRunning ? "This trade is still open and cannot be reviewed yet" : (isReviewed ? "View trade review" : "Write trade review")}>{isRunning ? "Open" : (isReviewed ? <><CheckCircle2 size={12} /> Reviewed</> : "Write review")}</button>
-                    {!isOpen && <div className="tj-tlog-pnl-block">
-                      <div className={isRunning ? "tj-amber tj-tlog-pnl" : (cls === "be" ? "tj-blue tj-tlog-pnl" : (t.pnl >= 0 ? "tj-green tj-tlog-pnl" : "tj-red tj-tlog-pnl"))}>{isRunning ? "Running" : (cls === "be" ? "B/E" : fmtMoney(t.pnl))}</div>
-                      <div className="tj-reference-trade-return">{isRunning ? "Open trade" : `${tradeReturn >= 0 ? "+" : ""}${tradeReturn.toFixed(2)}%${isOpen && t.rr ? ` · ${t.rr.toFixed(2)}R` : ""}`}</div>
-                    </div>}
-                    {isOpen && <><button className="tj-markup-round-button" disabled={locked} title={locked ? "Trade changes are locked by the account loss limit" : "Edit trade"} onClick={() => onEdit(t)}><Pencil size={15}/></button><details className="tj-trade-actions-menu"><summary className="tj-markup-round-button" aria-label="More trade actions">···</summary><div><ConfirmDeleteButton className="tj-btn-outline tj-trade-menu-delete" disabled={locked} title="Delete trade" onClick={() => onDelete(t.id)}><Trash2 size={14}/> Delete trade</ConfirmDeleteButton></div></details></>}<button className={`tj-markup-round-button tj-trade-expand-toggle ${isOpen ? "is-open" : ""}`} title={isOpen ? "Collapse trade" : "Expand trade"} aria-label={isOpen ? "Collapse trade" : "Expand trade"} aria-expanded={isOpen} onClick={() => toggleTrade(t.id)}><ChevronDown size={16} /></button>
-                  </div>
-                </div>
-                <div className={`tj-reference-trade-detail ${visible ? "tj-reference-trade-detail-open" : ""} ${isClosing ? "tj-reference-detail-closing" : ""}`} aria-hidden={!visible}>
-                    <div className="tj-tlog-expand tj-reference-trade-expand tj-reference-trade-detail-inner">
-                    <div className="tj-reference-trade-detail-summary"><div><span>NET RETURN</span><strong className={isRunning ? "tj-amber" : (t.pnl >= 0 ? "tj-green" : "tj-red")}>{isRunning ? "P&L pending" : fmtMoney(t.pnl)}</strong></div><div className="tj-reference-percentage-return"><span>PERCENTAGE</span><strong className={isRunning ? "tj-amber" : (tradeReturn >= 0 ? "tj-green" : "tj-red")}>{isRunning ? "Pending" : `${tradeReturn >= 0 ? "+" : ""}${tradeReturn.toFixed(2)}%`}</strong></div><div><span>COSTS</span><strong className={(Number(t.commission)||0)+(Number(t.swap)||0) ? "tj-red" : ""}>{isRunning ? "Pending" : fmtMoney(-((Number(t.commission) || 0) + (Number(t.swap) || 0)))}</strong></div><div><span>R:R</span><strong>{isRunning ? "—" : (t.rr ? `${t.rr.toFixed(2)}R` : "—")}</strong></div><div><span>RULES</span><strong>{t.ruleEvaluations?.filter((entry) => entry.checked).length || 0}/{t.ruleEvaluations?.length || 0}</strong></div></div>
-                    <div className="tj-reference-trade-main-grid">
-                      <section className="tj-reference-trade-brief"><div className="tj-reference-trade-section-head"><span>Trade brief</span><div><em className={t.direction === "BUY" ? "tj-green" : "tj-red"}>{t.direction}</em><em>{t.entrySession || t.session || "—"}</em>{(t.entryType || t.confluenceSession) && <em>{t.entryType || t.confluenceSession}</em>}<em className={isRunning ? "tj-amber" : (tradeReturn >= 0 ? "tj-green" : "tj-red")}>{isRunning ? "Open trade" : `${tradeReturn >= 0 ? "+" : ""}${tradeReturn.toFixed(2)}%`}</em></div></div><div className="tj-reference-trade-brief-rows"><div><span>OPENED</span><strong>{cTraderOpeningIsUnknown(t) ? "Not included in cTrader report" : `${formatDate(t.date)} · ${formatTime(t.time)}`}</strong></div><div><span>CLOSED</span><strong>{t.closeDate ? `${formatDate(t.closeDate)} · ${t.closeTime ? formatTime(t.closeTime) : "Time not logged"}` : "Not logged"}</strong></div>{isMultiBalanceWorkspace(account) && accountResults.map((result) => { const net = Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))); return <div key={result.balanceId}><span>{result.account?.name || "Archived account"}</span><strong className={net >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(net, result.account?.baseCurrency || account.baseCurrency)}</strong></div>; })}<div><span>ENTRY MODEL</span><strong>{t.entryType || t.confluenceSession || "—"}</strong></div><div><span>ENTRY / EXIT PRICE</span><strong>{t.entryPrice === "" || t.entryPrice == null ? "—" : Number(t.entryPrice).toLocaleString(undefined,{maximumFractionDigits:8})} / {t.exitPrice === "" || t.exitPrice == null ? "—" : Number(t.exitPrice).toLocaleString(undefined,{maximumFractionDigits:8})}</strong></div><div><span>MOOD SHIFT</span><strong>{t.moodBefore || "—"} → {t.moodAfter || "—"}</strong></div><div><span>RATING</span><strong><RatingDisplay value={t.rating} noRules={!t.ruleEvaluations?.length&&!t.rating}/></strong></div><div><span>CONFLUENCES</span><div className="tj-tradelog-brief-tags">{confluenceCount ? (t.confluence || t.types || []).map((item) => <span key={item} className="tj-tag tj-tag-purple tj-tag-active tj-tag-xs">{item}</span>) : <span className="tj-muted-txt">No confluences logged.</span>}</div></div><div><span>MISTAKES</span><div className="tj-tradelog-brief-tags">{t.mistakes?.length ? t.mistakes.map((mistake) => <span key={mistake} className="tj-tag tj-tag-red tj-tag-active tj-tag-xs">{mistake}</span>) : <span className="tj-muted-txt">No mistakes logged.</span>}</div></div></div><div className="tj-reference-trade-note">{tradeNote(t) || "No trade note added."}</div></section>
-                      <section className="tj-reference-trade-markup"><div className="tj-reference-trade-section-head"><span>Linked markup</span><small>{linkedMarkup ? "Executed" : "Not linked"}</small></div>{linkedMarkup && <strong className="tj-reference-linked-title">{linkedMarkup.date} · {linkedMarkup.instrument || "Untitled markup"}</strong>}<div className="tj-reference-linked-meta">{linkedMarkup ? `${linkedMarkup.market || "No session"} · ${linkedMarkup.bias || "No bias"} · Executed` : "Choose one of your three most recent markups."}</div><div className="tj-reference-link-controls"><ThemeSelect label="Linked markup" className="tj-input" value={linkDraft} onChange={(event) => setLinkDrafts((current) => ({ ...current, [t.id]: event.target.value }))}><option value="">No linked markup</option>{recentMarkups.map((markup) => <option key={markup.id} value={markup.id}>{markup.date} · {markup.instrument || "Untitled"} · {markup.bias || "No bias"}</option>)}</ThemeSelect><button className="tj-btn-outline tj-btn-small" disabled={String(linkDraft || "") === String(t.premarketMarkupId || "")} onClick={() => onLinkMarkup(t, linkDraft || null)}>Save link</button></div><div className="tj-reference-markup-shots-head"><span>MARKUP SCREENSHOTS</span><small>{linkedMarkupScreenshots.length} shot{linkedMarkupScreenshots.length === 1 ? "" : "s"}</small></div>{linkedMarkupScreenshots.length ? <div className="tj-reference-markup-shots">{linkedMarkupScreenshots.slice(0, 3).map((image) => <ImagePreview key={image.key} src={image.source} alt="Linked markup screenshot" selected={selectedImage === image.source} onSelect={setSelectedImage}/>)}</div> : <div className="tj-reference-trade-empty">No markup screenshots.</div>}</section>
-                    </div>
-                    {screenshotCount > 0 && <section className="tj-reference-journal-detail"><div className="tj-reference-trade-section-head"><span>Screenshots</span><small>{screenshotCount} saved</small></div><div className="tj-reference-trade-screens"><div className="tj-tlog-shots">{tradeScreenshots.map(({ screenshot, label, key }) => <div key={key} className="tj-trade-shot-slot"><ImagePreview src={screenshotSource(screenshot)} alt={label} selected={selectedImage === screenshotSource(screenshot)} onSelect={setSelectedImage}/><small>{label}</small></div>)}</div></div></section>}
-                  </div>
-                </div>
-              </Card></div>
-            );
-          })}
-        </div>}
-      <ListPagination total={filtered.length} page={activeTradePage} showAll={showAll} onPageChange={setListPage} onShowAll={(next) => { setShowAll(next); if (!next) setListPage(1); }} label="trade logs" hideArrows/>
-      {reviewEditor}
-      <button className="tj-fab" disabled={locked} title={locked ? "Trade entry is paused by the account loss limit" : "New trade"} onClick={onNewTrade}><Plus size={16} /> {locked ? "Trade Locked" : "New Trade"}</button>
-    </>
-  );
+  return desktopV2;
 }
 
-/* ================================ ANALYTICS ============================= */
-
-/* Desktop Analytics v2 shared pieces (aaicorefx-desktop-analytics.html). */
-const AnStat = ({ label, value, sub, tone = "", extra = "" }) => <div className={`an2-st ${extra}`}><small>{label}</small><b className={`an2-num ${tone}`}>{value}</b>{sub && <span>{sub}</span>}</div>;
-const AnRing = ({ value, main, sub, size = 104 }) => { const r = 42, c = 2 * Math.PI * r; return <div className="an2-ring" style={{ width: size, height: size }}><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r={r} className="an2-ring-track"/><circle cx="50" cy="50" r={r} className="an2-ring-value" strokeDasharray={c} strokeDashoffset={c * (1 - clamp(value, 0, 100) / 100)} transform="rotate(-90 50 50)"/></svg><div><b className="an2-num">{main}</b><small>{sub}</small></div></div>; };
-const anGrade = (grade) => <i className={`an2-grade is-${String(grade || "").replace("+", "p")}`}>{grade || "—"}</i>;
-const anTone = (value) => Number(value) > 0 ? "is-gain" : Number(value) < 0 ? "is-loss" : "";
-// Sticky section bar: scrolls the page's own scroll area and marks the section in view.
 function AnSectionNav({ items }) {
   const navRef = useRef(null);
   const [active, setActive] = useState(items[0]?.[0]);
@@ -5320,6 +5169,7 @@ function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
     <AnRhythmSection id="month" title="Monthly P&L" sub={`${monthly.activeCount} month${monthly.activeCount === 1 ? "" : "s"} with trades`} rows={months} unit="months" labels={["Range outcome", "Positive months", "Best month", "Worst month"]} chartTitle="Monthly P&L evolution" chartSub="Realised P&L per calendar month" average="Average month" control={rangeSwitch}/>
   </div>;
 }
+
 
 function ExecutionRhythmView({ account, trades, cap, stats, monthlyYear }) {
   if (ANALYTICS_V2) return <AnalyticsRhythmV2 account={account} trades={trades} cap={cap} stats={stats} monthlyYear={monthlyYear}/>;
