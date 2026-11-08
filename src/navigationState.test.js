@@ -55,15 +55,17 @@ test('Challenge retains only loaded or saved progress, rejects stale reads and s
   assert.match(page,/usePageState\('challenge','tj-challenge-expandedCards'/);
   assert.match(page,/initializeChallengeExpansion/);
 });
-test('collapsed sidebar has no hover or focus tooltip artifact handlers', () => {
+test('collapsed sidebar exposes the themed page-label tooltip on hover and focus', () => {
   const code=readFileSync(new URL('./SidebarShell.jsx',import.meta.url),'utf8');
   const styles=readFileSync(new URL('./sidebarV2.css',import.meta.url),'utf8');
-  // Shell v2 (the desktop shell mockup) names icons while collapsed. The handlers exist only for v2,
-  // and the name clears on leave, blur and toggle so nothing is left on screen.
-  assert.doesNotMatch(code.replace(/onMouseOver=\{v2\?showTip:undefined\} onFocus=\{v2\?showTip:undefined\} onMouseLeave=\{v2\?\(\)=>setTip\(null\):undefined\} onBlur=\{v2\?\(\)=>setTip\(null\):undefined\}/,''),/onMouse(?:Enter|Leave|Over)|onFocus|title=/);
+  // Shell v2 names collapsed icons through a themed tooltip. It is available to
+  // pointer and keyboard users, and clears when focus or the pointer leaves.
   assert.match(code,/if\(!v2\|\|open\)return;/);
-  assert.match(code,/setTip\(null\);setSweep/);
-  assert.doesNotMatch(code,/setTooltip|tooltip/i);
+  assert.match(code,/onPointerOverCapture=\{showTip\}/);
+  assert.match(code,/onPointerLeave=\{\(\)=>setTip\(null\)\}/);
+  assert.match(code,/onFocusCapture=\{showTip\}/);
+  assert.match(code,/onBlurCapture=.*setTip\(null\)/);
+  assert.match(code,/tj-sidebar-tooltip.*role="tooltip"/);
   assert.match(styles,/tj-sidebar-collapsed[\s\S]*?\.tj-nav-label\s*\{\s*display:none/);
 });
 test('all Backtest custom chart dot branches have stable keys', () => {
