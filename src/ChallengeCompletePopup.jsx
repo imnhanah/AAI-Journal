@@ -75,7 +75,7 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   };
-  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `×${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`, 'Growth']];
+  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `${growth > 0 ? '+' : ''}${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`, 'Trading growth']];
   if (view === 'certificate') return <div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
     <div className="cc2-wrap">
       <div className="cc2-cert">
@@ -115,7 +115,7 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       </div>
       <div className="cc2-in">
         <h2 id="cc2-title">You conquered all {totalLevels} levels</h2>
-        <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its risk rules. This is rare discipline.</p>
+        <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its rules. This is rare discipline.</p>
         <div className="cc2-chips"><span>{accountName}</span><span>{modeName}</span>{rewardLabel && <span>{rewardLabel}</span>}</div>
         <div className="cc2-big">
           <small>Full challenge target reached</small>

@@ -12,7 +12,7 @@ import {ThemeSelect} from './JournalControls';
 import {targetAmount,changeSetupTarget} from './challengeSetupTargets';
 import {activeBalances,isMultiBalanceWorkspace} from './balanceModel';
 import {buildChallengePlan, challengeFailureFloor, isAdaptiveBalanceMode} from './challengeModel';
-import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance} from './challengeLifecycle';
+import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance,closedChallengeTrade} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import useBalanceChallenge from './useBalanceChallenge';
 import JournalSignalHeader from './JournalSignalHeader';
@@ -159,6 +159,12 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   const visiblePlan=rangeStart==='all'?plan:plan.slice(rangeStart,rangeStart+10);
   const modeName=adaptive?'Mode 3 — Adaptive Balance':mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit';
   const rewardLabel=adaptive?`${state.automation?.adaptiveRiskPct ?? 1}% risk · ${reward}R`:reward?`1:${reward}`:'';
+  // Challenge growth is earned trading performance, not a change in funded
+  // capital. Deposits and withdrawals can advance the plan, but never inflate
+  // the achievement percentage shown in the completion card or certificate.
+  const challengeTradingPnl=linkedChallengeTrades(state,account)
+    .filter(closedChallengeTrade)
+    .reduce((sum,trade)=>sum+Number(trade.pnl || 0),0);
   // Facts for the desktop celebration and certificate, all from this challenge's own record.
   const celebrationFacts=()=>{
     const trades=linkedChallengeTrades(state,account);
@@ -169,7 +175,7 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
       finalTarget:plan.at(-1)?.end ?? life.liveBalance, trades:trades.length,
       daysTaken:Number.isFinite(started)?Math.max(1,Math.ceil((completedAt-started)/864e5)):null,
       stepBacks:state.stepBacks ?? Object.values(state.statuses || {}).filter(status=>status==='Step back').length,
-      growth:challengeBalance>0?life.liveBalance/challengeBalance:null, completedAt,
+      growth:challengeBalance>0?challengeTradingPnl/challengeBalance*100:null, completedAt,
       certificateId:`AF-${String(account.id || account.name || '').replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase()}-${plan.length}`};
   };
   const jumpToActive=()=>{setExpanded(true);setPlanRange(Math.floor((current.level-1)/10)*10);setTimeout(()=>activeRow.current?.scrollIntoView({behavior:'smooth',block:'center'}),0);};
@@ -223,7 +229,7 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
       <button type="button" className="tj-btn-outline" aria-label="Cancel" title="Cancel" disabled={deleting || savingSetup} onClick={()=>setSetup(null)}>Cancel</button>
       <button type="button" className="tj-btn-primary" aria-label={savingSetup?'Saving challenge':'Save challenge'} title="Save challenge" disabled={deleting || savingSetup || !setup.name.trim() || !(Number(setup.startingBalance)>0)} onClick={saveSetup}><Save size={16}/>{savingSetup?'Saving…':'Save changes'}</button>
     </footer></section></div>}
-    {celebrating&&<ChallengeCelebration accountName={account.name} totalLevels={plan.length} startingBalance={challengeBalance} finalBalance={life.liveBalance} currency={account.baseCurrency || 'USD'} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}
+    {celebrating&&<ChallengeCelebration accountName={account.name} totalLevels={plan.length} startingBalance={challengeBalance} finalBalance={life.liveBalance} tradingPnl={challengeTradingPnl} currency={account.baseCurrency || 'USD'} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}
   </article>;
 }
 // A deposit can place an account at a higher level, but it is never an earned

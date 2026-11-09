@@ -78,7 +78,7 @@
 .cc2-tick {stroke:var(--celebrate-on);}
 .cc2-in {position:relative;padding:6px 26px 24px;}
 .cc2-in h2 {margin:8px 0 6px;font-size:30px;letter-spacing:-.04em;line-height:1.1;text-wrap:balance;}
-.cc2-sub {max-width:340px;margin:0 auto;color:var(--muted);font-size:13px;}
+.cc2-sub {max-width:390px;margin:0 auto;color:var(--muted);font-size:13px;text-wrap:balance;}
 .cc2-chips {display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px;}
 .cc2-chips span {padding:5px 10px;border:1px solid var(--border);border-radius:99px;background:var(--raised);color:var(--muted);font-size:12px;font-weight:600;}
 .cc2-chips span:first-child {border-color:transparent;background:color-mix(in oklab,var(--accent) 14%,var(--surface));color:var(--accent);}
@@ -155,9 +155,16 @@
 
 /* Save as PDF prints the certificate alone. */
 @media print {
+  @page {size:landscape;margin:0;}
+  html,body {width:100%!important;height:100%!important;margin:0!important;overflow:hidden!important;}
   body * {visibility:hidden;}
   .cc2-cv,.cc2-cv * {visibility:visible;}
-  .cc2-cv {position:absolute;inset:0;background:var(--surface);backdrop-filter:none;}
+  .cc2-cv {position:fixed;inset:0;width:100vw;height:100vh;padding:0;overflow:hidden;background:var(--surface);backdrop-filter:none;}
+  .cc2-wrap {width:100vw;height:100vh;}
+  .cc2-cert {box-sizing:border-box;width:100vw;height:100vh;min-height:0;aspect-ratio:auto;overflow:hidden;border-radius:0;box-shadow:none;break-inside:avoid;page-break-inside:avoid;}
+  .cc2-cin {box-sizing:border-box;height:100%;padding:4vh 8vw 2.5vh;}
+  .cc2-nm {background:none!important;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;}
+  .cc2-foot {margin-top:auto;}
   .cc2-bar {display:none;}
 }
 @media (prefers-reduced-motion:reduce) {
