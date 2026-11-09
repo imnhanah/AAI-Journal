@@ -14,7 +14,7 @@ test('phone Analytics uses stacked charts, two-column facts and six factor bars 
   assert.match(css,/\.tj-analytics-equity-milestones \{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.tj-engine-metrics \{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.tj-core-breakdown-grid>section:first-child>\.recharts-responsive-container/);
-  assert.ok(source.includes('6 contributing factors'));
+  assert.ok(source.includes('Six contributing factors'));
   assert.ok([...css.matchAll(/font-size:\s*([\d.]+)px/g)].every(match=>Number(match[1])>=12));
   assert.doesNotMatch(css,/(?:^|[\s{;])(?:transform|filter|mask-image)\s*:/);
 });

@@ -4657,30 +4657,9 @@ function AnSectionNav({ items }) {
 const AnSectionHead = ({ id, title, sub, children }) => <div className="an2-sech" id={`an2-sec-${id}`}><h2>{title}</h2><span>{sub}</span>{children}</div>;
 
 function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], cap, stats, tagStats, confluenceStats, pairingStats, instrumentStats, onOpenTradeReview, onViewMarkups }) {
-  const [view, setView] = useState("models");
-  const [monthlyRange, setMonthlyRange] = useState("year");
-  const [selectedConfluenceName, setSelectedConfluenceName] = useState(null);
-  const [taggedTradesModal, setTaggedTradesModal] = useState(null);
-  const views = [["models", "Entry Models"], ["confluences", "Confluences"], ["daily", "Daily Growth"], ["monthly", "Monthly P&L"], ["instruments", "Instruments"], ["markups", "Markups"]];
-  const dayRows = stats.dayClasses.map((day) => {
-    const dayTrades = trades.filter((trade) => trade.date === day.date);
-    const wins = dayTrades.filter((trade) => classify(trade.pnl, cap) === "win").length;
-    return { ...day, count: dayTrades.length, winRate: dayTrades.length ? wins / dayTrades.length * 100 : 0 };
-  });
-  let dailyRunning = account.balance;
-  const dailyCurve = [{ date: "Start", pct: 0, equity: account.balance }];
-  dayRows.forEach((day) => { dailyRunning += day.pnl; dailyCurve.push({ ...day, rawDate: day.date, date: day.date.slice(5), pct: account.balance ? (dailyRunning - account.balance) / account.balance * 100 : 0, equity: dailyRunning }); });
-  const monthlySummary = monthlyPnlRange(closedTrades(account.trades), { balance: account.balance, year: monthlyYear, range: monthlyRange, isWin: pnl => classify(pnl, cap) === "win" });
-  const monthlyChartRows = monthlySummary.rows;
-  const bestMonth = monthlySummary.best;
-  const worstMonth = monthlySummary.worst;
-  const monthlyLongRange = monthlyRange === "3y" || monthlyRange === "all";
-  const bestDay = dayRows.length ? dayRows.reduce((a, b) => b.pnl > a.pnl ? b : a) : null;
-  const worstDay = dayRows.length ? dayRows.reduce((a, b) => b.pnl < a.pnl ? b : a) : null;
   const mostActiveInstrument = instrumentStats.slice().sort((a, b) => b.count - a.count)[0];
   const bestQualityInstrument = instrumentStats.slice().sort((a, b) => b.winRate - a.winRate)[0];
   const reviewInstrument = instrumentStats.slice().sort((a, b) => a.netPnl - b.netPnl)[0];
-  const maxInstrumentCount = Math.max(1, ...instrumentStats.map((item) => item.count));
   const markupRows = markups.map((markup) => {
     const linkedTrades = trades.filter((trade) => trade.premarketMarkupId === markup.id);
     const wins = linkedTrades.filter((trade) => classify(trade.pnl, cap) === "win").length;
@@ -4692,68 +4671,6 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
   const markupOutcome = markupRows.reduce((sum, item) => sum + item.pnl, 0);
   const linkedMarkupCount = markupRows.filter((item) => item.count > 0).length;
   const markupDirectionMatch = markupRows.reduce((sum, item) => sum + item.directionMatch * item.count, 0) / Math.max(1, markupRows.reduce((sum, item) => sum + item.count, 0));
-  const markupMaxPnl = Math.max(1, ...markupRows.map((item) => Math.abs(item.pnl)));
-  const topMarkup = markupRows[0];
-  const reviewMarkup = markupRows.slice().sort((a, b) => a.pnl - b.pnl)[0];
-  const bestEntry = tagStats[0];
-  const bestConfluence = confluenceStats[0];
-  const bestPairing = pairingStats[0];
-  const trimEntry = tagStats.slice().sort((a, b) => a.netPnl - b.netPnl)[0];
-  const trimConfluence = confluenceStats.slice().sort((a, b) => a.netPnl - b.netPnl)[0];
-  const trimPairing = pairingStats.slice().sort((a, b) => a.netPnl - b.netPnl)[0];
-  const taggedConfluenceTrades = trades.filter((trade) => (trade.confluence || trade.types || []).length).length;
-  const confluenceTradeSets = confluenceStats.map(item => trades.filter(trade => (trade.confluence || trade.types || []).includes(item.name)).map(trade => trade.id).sort().join('|'));
-  const identicalConfluenceSamples = confluenceStats.length > 1 && confluenceTradeSets.every(sample => sample === confluenceTradeSets[0]);
-  const modelMaxPnl = Math.max(1, ...tagStats.map((item) => Math.abs(item.netPnl)));
-  const modelPnlDomain = tagStats.every((item) => item.netPnl >= 0) ? [0, modelMaxPnl] : ["auto", "auto"];
-  const modelLabelWidth = Math.min(180, Math.max(72, ...tagStats.map((item) => Math.ceil(String(item.tag || "").length * 6) + 14)));
-  const confluenceMaxPnl = Math.max(1, ...confluenceStats.map((item) => Math.abs(item.netPnl)));
-  const selectedConfluence = confluenceStats.find((item) => item.name === selectedConfluenceName) || null;
-  const selectedConfluenceTrades = selectedConfluence
-    ? trades.filter((trade) => (trade.confluence || trade.types || []).includes(selectedConfluence.name)).slice().sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`))
-    : [];
-  const dailyBars = dayRows.map((day, index) => {
-    const curvePoint = dailyCurve[index + 1];
-    const openingBalance = index === 0 ? account.balance : dailyCurve[index]?.equity;
-    return {
-      ...day,
-      label: day.date ? new Date(`${day.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—",
-      compoundedReturn: openingBalance ? day.pnl / openingBalance * 100 : 0,
-      closingBalance: curvePoint?.equity ?? account.balance,
-    };
-  });
-  const latestDay = dailyBars.at(-1);
-  const priorDay = dailyBars.at(-2);
-  const dailyChange = latestDay && priorDay ? latestDay.pnl - priorDay.pnl : 0;
-  const positiveDays = dailyBars.filter((day) => day.cls === "win").length;
-  const negativeDays = dailyBars.filter((day) => day.cls === "loss").length;
-
-  const DailyBarTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const day = payload[0].payload;
-    const resultClass = day.pnl >= 0 ? "tj-green" : "tj-red";
-    return <div className={`tj-daily-bar-tooltip tj-reference-result-tooltip ${day.pnl < 0 ? 'tj-result-tooltip-loss' : 'tj-result-tooltip-profit'}`}>
-      <header><strong>{day.label}</strong><span className="tj-result-tooltip-badge">{day.pnl < 0 ? 'LOSING DAY' : day.pnl > 0 ? 'WINNING DAY' : 'FLAT DAY'}</span></header>
-      <div><span>DAY P&amp;L</span><b className={resultClass}>{fmtMoney(day.pnl)}</b></div>
-      <div><span>COMPOUNDED RETURN</span><b className={day.compoundedReturn >= 0 ? 'tj-green' : 'tj-red'}>{day.compoundedReturn >= 0 ? "+" : ""}{day.compoundedReturn.toFixed(2)}%</b></div>
-      <div className="tj-result-tooltip-balance"><span>CLOSING BALANCE</span><b className={day.closingBalance >= 0 ? 'tj-green' : 'tj-red'}>{fmtMoney(day.closingBalance)}</b></div>
-      <div><span>QUALITY</span><b className={day.winRate >= 50 ? 'tj-green' : 'tj-red'}>{day.count} trade{day.count === 1 ? "" : "s"} · {day.winRate.toFixed(0)}% WR</b></div>
-    </div>;
-  };
-
-  const MonthlyBarTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const month = payload[0].payload;
-    const resultClass = month.pnl >= 0 ? "tj-green" : "tj-red";
-    return <div className={`tj-daily-bar-tooltip tj-monthly-bar-tooltip tj-reference-result-tooltip ${month.pnl < 0 ? 'tj-result-tooltip-loss' : 'tj-result-tooltip-profit'}`}>
-      <header><strong>{month.label}</strong><span className="tj-result-tooltip-badge">{month.pnl < 0 ? 'NEGATIVE MONTH' : month.pnl > 0 ? 'POSITIVE MONTH' : 'FLAT MONTH'}</span></header>
-      <div><span>MONTHLY P&amp;L</span><b className={resultClass}>{fmtMoney(month.pnl)}</b></div>
-      <div><span>MONTHLY RETURN</span><b className={month.returnPct >= 0 ? 'tj-green' : 'tj-red'}>{month.returnPct >= 0 ? "+" : ""}{month.returnPct.toFixed(2)}%</b></div>
-      <div className="tj-result-tooltip-balance"><span>CLOSING BALANCE</span><b className={month.closingBalance >= 0 ? 'tj-green' : 'tj-red'}>{fmtMoney(month.closingBalance)}</b></div>
-      <div><span>QUALITY</span><b className={wrColorClass(month.winRate)}>{month.count} trade{month.count === 1 ? "" : "s"} · {month.winRate.toFixed(0)}% WR</b></div>
-    </div>;
-  };
-
   const MarkupBarTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const item = payload[0].payload;
@@ -4772,62 +4689,7 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
     </div>;
   };
 
-  const ModelBarTooltip = ({ active, payload, metric }) => {
-    if (!active || !payload?.length) return null;
-    const model = payload[0].payload;
-    const value = metric === "pnl" ? fmtMoney(model.netPnl) : `${model.winRate.toFixed(0)}%`;
-    return <div className="tj-daily-bar-tooltip tj-model-bar-tooltip"><strong>{model.tag}</strong><div><span>{metric === "pnl" ? "NET P&L" : "WIN RATE"}</span><b className={metric === "pnl" ? (model.netPnl >= 0 ? "tj-green" : "tj-red") : wrColorClass(model.winRate)}>{value}</b></div><div><span>TRADES</span><b>{model.count}</b></div><div><span>AVG RR</span><b>{model.avgRR.toFixed(2)}R</b></div></div>;
-  };
-
-  const ModelCard = ({ item }) => {
-    const grade = getGrade(item.winRate, item.netPnl, item.count);
-    return <article className="tj-performance-model-card"><header><strong>{item.tag}</strong><b className={`tj-grade-badge ${grade === "D" || grade === "C" ? "tj-grade-bad" : ""}`}>{grade}</b></header><div className="tj-performance-model-card-metrics"><section><span><small>NET P&amp;L</small><b className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</b></span><span><small>TRADES</small><b>{item.count}</b></span></section><section><span><small>WIN RATE</small><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}%</b></span><span><small>AVG RR</small><b>{item.avgRR.toFixed(2)}R</b></span></section><section><span><small>BEST TRADE</small><b className="tj-green">{fmtMoney(item.best)}</b></span><span><small>WORST TRADE</small><b className="tj-red">{fmtMoney(item.worst)}</b></span></section></div></article>;
-  };
-
-  const ModelAxisTick = ({ x, y, payload }) => <text x={x - modelLabelWidth + 12} y={y} fill="var(--tj-muted)" fontSize="12" textAnchor="start" dominantBaseline="middle">{payload.value}</text>;
-
-  const ConfluenceRow = ({ item, index }) => {
-    const wins = Math.round(item.winRate / 100 * item.count);
-    const losses = Math.max(0, item.count - wins);
-    const grade = getGrade(item.winRate, item.netPnl, item.count);
-    const pnlWidth = Math.abs(item.netPnl) / confluenceMaxPnl * 100;
-    const selected = item.name === selectedConfluenceName;
-    return <button type="button" className={`tj-confluence-row ${selected ? "tj-confluence-row-selected" : ""}`} onClick={() => setSelectedConfluenceName(selected ? null : item.name)} aria-expanded={selected}><div className="tj-confluence-name"><small>{String(index + 1).padStart(2, "0")}</small><strong>{item.name}</strong></div><div className="tj-confluence-pnl"><strong className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</strong><span>{fmtMoney(item.best)} best</span><i><b data-chart-fill="horizontal" className={item.netPnl >= 0 ? "tj-bar-green" : "tj-bar-red"} style={{ width: `${pnlWidth}%` }}/></i></div><div className="tj-confluence-quality"><div><strong className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}%</strong><span>{item.avgRR.toFixed(2)} RR</span></div><i><b data-chart-fill="horizontal" className={wrBarClass(item.winRate)} style={{ width: `${item.winRate}%` }}/></i></div><div className="tj-confluence-meta"><b className={`tj-grade-badge ${grade === "D" || grade === "C" ? "tj-grade-bad" : ""}`}>{grade}</b><div className="tj-confluence-sample"><span>{item.count} trade{item.count === 1 ? "" : "s"}</span><small>{wins}W / {losses}L</small></div></div></button>;
-  };
-
-  const TaggedTradeCard = ({ trade }) => <button type="button" className="tj-confluence-trade-card" onClick={() => onOpenTradeReview?.(trade)}><div><strong>{trade.asset || "No instrument"}</strong><span className={trade.direction === "BUY" ? "tj-green" : "tj-red"}>{trade.direction || "—"}</span></div><small>{formatDate(trade.date)} · {trade.entrySession || trade.session || "—"}</small><div><span>{Number(trade.rr || 0).toFixed(2)}R</span><b className={Number(trade.pnl) >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(trade.pnl)}</b></div></button>;
-
-  const ConfluenceTradeDropdown = () => selectedConfluence && <section className="tj-confluence-preview"><header><div><small>CONTRIBUTING TRADES</small><strong>{selectedConfluence.name}</strong><span>Showing the latest {Math.min(10, selectedConfluenceTrades.length)} of {selectedConfluenceTrades.length} tagged trades.</span></div><button type="button" className="tj-btn-secondary" onClick={() => setTaggedTradesModal(selectedConfluence)}>View all {selectedConfluenceTrades.length} trades</button></header>{selectedConfluenceTrades.length ? <div className="tj-confluence-trade-preview-grid">{selectedConfluenceTrades.slice(0, 10).map((trade) => <TaggedTradeCard key={trade.id} trade={trade}/>)}</div> : <div className="tj-empty">No trades are tagged with this confluence yet.</div>}</section>;
-
-  const InstrumentCard = ({ item, index }) => {
-    const winRate = Math.max(0, Math.min(100, item.winRate));
-    const qualityColor = winRate >= 50 ? UI_COLORS.primary : UI_COLORS.warning;
-    const share = stats.netPnl ? item.netPnl / stats.netPnl * 100 : 0;
-    const cadence = trades.filter(trade => trade.asset === item.asset).slice().sort((a, b) => `${a.date || ""} ${a.time || ""}`.localeCompare(`${b.date || ""} ${b.time || ""}`)).slice(-10);
-    const cadenceMax = Math.max(1, ...cadence.map(trade => Math.abs(Number(trade.pnl) || 0)));
-    return <article className="tj-instrument-performance-card">
-      <div className="tj-instrument-signal">
-        <div className="tj-instrument-ring" role="img" aria-label={`${item.asset}: ${winRate.toFixed(0)}% win rate`}>
-          <svg viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="49" fill="none" stroke="var(--tj-border)" strokeWidth="11"/><circle cx="56" cy="56" r="49" fill="none" stroke={qualityColor || "var(--color-ink-23)"} strokeWidth="11" strokeLinecap="round" pathLength="100" strokeDasharray={`${winRate} 100`} transform="rotate(-90 56 56)"/></svg>
-          <div><strong>{winRate.toFixed(0)}%</strong><small>WIN RATE</small></div>
-        </div>
-        <div className="tj-instrument-signal-copy"><small>{String(index + 1).padStart(2, "0")} · MARKET SIGNAL</small><strong>{item.asset}</strong><span>{fmtMoney(item.netPnl)} realised across {item.count} trades</span></div>
-      </div>
-      <div className="tj-instrument-detail">
-        <section><small>NET OUTCOME</small><strong className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</strong><i><b data-chart-fill="horizontal" className={item.netPnl >= 0 ? "tj-bar-green" : "tj-bar-red"} style={{ width: `${Math.min(100, Math.abs(share))}%` }}/></i><span>{share.toFixed(0)}% of total net P&amp;L</span></section>
-        <section><small>QUALITY</small><strong className={wrColorClass(winRate)}>{winRate.toFixed(0)}% <em>WIN RATE</em></strong><span>{item.avgRR.toFixed(2)} average RR</span></section>
-        <section><small>SAMPLE</small><strong>{item.count} trades</strong><span>sampled</span></section>
-        <section><small>TRADE CADENCE</small><div className="tj-instrument-cadence" aria-label="Recent trade outcome magnitudes">{cadence.map(trade => <i key={trade.id} style={{ height: `${Math.max(3, Math.abs(Number(trade.pnl) || 0) / cadenceMax * 23)}px` }} title={`${formatDate(trade.date)} · ${fmtMoney(trade.pnl)}`}/>)}</div><strong>{fmtMoney(item.netPnl / Math.max(1, item.count))} <em>per trade</em></strong></section>
-        <footer><span>BEST <b className="tj-green">{fmtMoney(item.best)}</b></span><span>WORST <b className="tj-red">{fmtMoney(item.worst)}</b></span></footer>
-      </div>
-    </article>;
-  };
-
-  const PerformanceCard = ({ item, kind, maxImpact }) => <div className="tj-performance-stat-card"><div className="tj-performance-stat-head"><span>{kind}</span><b className={`tj-grade-badge ${item.grade === "D" || item.grade === "C" ? "tj-grade-bad" : ""}`}>{item.grade}</b></div><strong>{item.tag || item.name}</strong><em className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</em><div className="tj-performance-mini-metrics"><span><small>WIN RATE</small><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}%</b></span><span><small>TRADES</small><b>{item.count}</b></span><span><small>AVG RR</small><b className="tj-purple-txt">{item.avgRR.toFixed(2)}</b></span></div><div className="tj-performance-bars"><span>IMPACT</span><i><b data-chart-fill="horizontal" style={{ width: `${Math.abs(item.netPnl) / Math.max(1, maxImpact) * 100}%` }}/></i><strong>{fmtMoneyShort(item.netPnl)}</strong><span>FREQUENCY</span><i><b data-chart-fill="horizontal" className="tj-performance-purple" style={{ width: `${item.count / Math.max(1, stats.total) * 100}%` }}/></i><strong>{item.count} trade{item.count === 1 ? "" : "s"}</strong><span>QUALITY</span><i><b data-chart-fill="horizontal" className={wrBarClass(item.winRate)} style={{ width: `${item.winRate}%` }}/></i><strong>{item.winRate.toFixed(0)}%</strong></div><footer><span>BEST {fmtMoneyShort(item.best)}</span><span>WORST {fmtMoneyShort(item.worst)}</span></footer></div>;
-  const EntryCard = ({ item }) => { const grade = getGrade(item.winRate, item.netPnl, item.count); const wins = Math.round(item.winRate / 100 * item.count); return <div className="tj-performance-entry-card"><div><strong>{item.tag}</strong><b className={`tj-grade-badge ${grade === "D" || grade === "C" ? "tj-grade-bad" : ""}`}>{grade}</b></div><section><span><small>NET P&amp;L</small><b className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</b></span><span><small>WIN RATE</small><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}%</b></span><span><small>TRADES</small><b>{item.count} <i>({wins}W/{item.count - wins}L)</i></b></span><span><small>AVG RR</small><b className="tj-purple-txt">{item.avgRR.toFixed(2)}</b></span></section><div className="tj-performance-best-worst"><span><small>Best</small><b className="tj-green">{fmtMoneyShort(item.best)}</b></span><span><small>Worst</small><b className="tj-red">{fmtMoneyShort(item.worst)}</b></span></div><i><b data-chart-fill="horizontal" className={wrBarClass(item.winRate)} style={{ width: `${item.winRate}%` }}/></i></div>; };
-
-  // Desktop Analytics v2 Edge: entry models, instruments and markups (Daily and Monthly live in Rhythm).
-  if (ANALYTICS_V2) {
+  // Desktop Analytics Edge: entry models, instruments and markups (Daily and Monthly live in Rhythm).
     const edgeModels = [...tagStats].sort((a, b) => b.netPnl - a.netPnl);
     const edgeLead = edgeModels[0];
     const edgeTrim = edgeModels.length > 1 ? edgeModels[edgeModels.length - 1] : null;
@@ -4915,118 +4777,6 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
     </div>;
   }
 
-  return <div className="tj-performance-workspace">
-    <Card className="tj-performance-views"><div><strong>Performance Views</strong></div><small>{views.find(([id]) => id === view)?.[1]}</small><AnalyticsViewChips views={views} value={view} onChange={setView}/></Card>
-    <div className="tj-view-transition" key={view}>
-
-    {view === "models" && <Card className="tj-performance-surface tj-performance-model-surface tj-performance-reference-models">
-      <div className="tj-performance-title"><div><strong>Entry Model Performance</strong><span>Compare each base entry idea before its supporting confluences are added.</span></div><small>{bestEntry ? `${bestEntry.tag} leads` : "No entry models"}</small></div>
-      <div className="tj-performance-model-highlights"><div><small>BEST MODEL</small><strong>{bestEntry?.tag || "—"}</strong><span>{bestEntry ? `${fmtMoney(bestEntry.netPnl)} · ${bestEntry.winRate.toFixed(0)}% WR` : "No data"}</span></div><div><small>TRIM FIRST</small><strong>{trimEntry?.tag || "—"}</strong><span>{trimEntry ? `${fmtMoney(trimEntry.netPnl)} · ${trimEntry.winRate.toFixed(0)}% WR` : "No data"}</span></div></div>
-      <div className="tj-performance-model-charts">
-        <section><header><span>NET P&amp;L BY MODEL</span><small>Realised contribution</small></header><div className="tj-model-comparison-bars">{tagStats.map(item => <div key={item.tag} title={`${item.tag}: ${fmtMoney(item.netPnl)} from ${item.count} trades`}><span>{item.tag}</span><i><b data-chart-fill="horizontal" style={{width:`${Math.abs(item.netPnl) / Math.max(1, ...tagStats.map(model => Math.abs(model.netPnl))) * 100}%`,background:item.netPnl >= 0 ? 'var(--tj-green)' : 'var(--tj-red)'}}/></i><strong className={item.netPnl >= 0 ? 'tj-green' : 'tj-red'}>{fmtMoney(item.netPnl)}</strong></div>)}</div></section>
-        <section><header><span>WIN RATE BY MODEL</span><small>Repeatability</small></header><div className="tj-model-comparison-bars">{tagStats.map(item => <div key={item.tag} title={`${item.tag}: ${item.winRate.toFixed(0)}% win rate from ${item.count} trades`}><span>{item.tag}</span><i><b data-chart-fill="horizontal" style={{width:`${item.winRate}%`,background:item.winRate >= 50 ? 'var(--tj-green)' : 'var(--tj-amber)'}}/></i><strong className={item.winRate >= 50 ? 'tj-green' : 'tj-amber-txt'}>{item.winRate.toFixed(0)}%</strong></div>)}</div></section>
-      </div>
-      <div className="tj-performance-model-grid">{tagStats.map((item) => <ModelCard key={item.tag} item={item}/>)}</div>
-    </Card>}
-
-    {view === "confluences" && <Card className="tj-performance-surface tj-confluence-surface"><div className="tj-performance-title"><div><strong>Confluence Performance</strong><span>Read the conditions that add the strongest contribution around your base entry model.</span></div><small>{confluenceStats.length} confluence{confluenceStats.length === 1 ? "" : "s"}</small></div><div className="tj-confluence-highlights"><div><small>TOP TAGGED P&amp;L</small><strong>{bestConfluence?.name || "—"}</strong><span>{bestConfluence ? `${fmtMoney(bestConfluence.netPnl)} · ${bestConfluence.count} trades` : "No data"}</span></div><div><small>COVERAGE</small><strong>{taggedConfluenceTrades} / {stats.total}</strong><span>{(trades.reduce((sum, trade) => sum + (trade.confluence || trade.types || []).length, 0) / Math.max(1, taggedConfluenceTrades)).toFixed(1)} signals per tagged trade</span></div><div><small>LOWEST TAGGED P&amp;L</small><strong>{trimConfluence?.name || "—"}</strong><span>{trimConfluence ? fmtMoney(trimConfluence.netPnl) : "No data"}</span></div></div><div className="tj-confluence-table"><header><span>TAG</span><span>TAGGED-TRADE P&amp;L</span><span>QUALITY</span><span>SAMPLE</span></header>{confluenceStats.map((item, index) => <React.Fragment key={item.name}><ConfluenceRow item={item} index={index}/>{selectedConfluenceName === item.name && <ConfluenceTradeDropdown/>}</React.Fragment>)}</div><footer className="tj-confluence-reference-note">{identicalConfluenceSamples ? `All ${confluenceStats.length} tags sit on the same ${bestConfluence.count} trades, so their results are identical and can't be compared yet. Tag trades with different confluences to see which one actually helps.` : 'Tagged-trade results can overlap when several confluences share a trade. Compare their quality and sample sizes; do not add their P&L totals together.'}</footer></Card>}
-
-
-    {view === "daily" && <Card className="tj-performance-surface tj-performance-daily-surface">
-      <div className="tj-performance-title"><div><strong>Daily P&amp;L Growth</strong><span>One bar per trading day, coloured by the realised result.</span></div><small>{dailyBars.length} trading days</small></div>
-      <div className="tj-performance-daily-summary">
-        <div><small>RANGE OUTCOME</small><strong className={stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(stats.netPnl)}</strong><span>{dailyBars.length} trading days in the selected range</span></div>
-        <div><small>CONSISTENCY</small><strong className="tj-green">{stats.dayWinRate.toFixed(0)}% green</strong><span>{positiveDays} positive · {negativeDays} negative sessions</span></div>
-        <div><small>BEST IMPULSE</small><strong className="tj-green">{bestDay ? fmtMoney(bestDay.pnl) : "—"}</strong><span>{bestDay?.date || "No data"} · {bestDay?.count || 0} trade{bestDay?.count === 1 ? "" : "s"}</span></div>
-        <div><small>RISK SESSION</small><strong className="tj-red">{worstDay ? fmtMoney(worstDay.pnl) : "—"}</strong><span>{worstDay?.date || "No data"} · {worstDay?.count || 0} trade{worstDay?.count === 1 ? "" : "s"}</span></div>
-      </div>
-      <div className="tj-performance-daily-bars">
-        <header><div><small>SESSION PULSE</small><strong>Daily realised P&amp;L</strong><span>One bar per trading day</span></div><section><div><small>LATEST</small><b className={latestDay?.pnl >= 0 ? "tj-green" : "tj-red"}>{latestDay ? fmtMoney(latestDay.pnl) : "—"}</b><span>{latestDay?.label || "No session"}</span></div><div><small>PRIOR</small><b className={priorDay?.pnl >= 0 ? "tj-green" : "tj-red"}>{priorDay ? fmtMoney(priorDay.pnl) : "—"}</b><span>{priorDay?.label || "No prior session"}</span></div><div><small>CHANGE</small><b className={dailyChange >= 0 ? "tj-green" : "tj-red"}>{latestDay && priorDay ? fmtMoney(dailyChange) : "—"}</b><span>Latest vs prior</span></div></section></header>
-        <ResponsiveContainer width="100%" height={320}><BarChart data={dailyBars} margin={{ top: 14, right: 12, bottom: 4, left: 5 }}><CartesianGrid stroke="var(--tj-chart-grid)" strokeDasharray="3 3" vertical={false}/><XAxis dataKey="label" tick={CHART_TICK} minTickGap={28} interval="preserveStartEnd" axisLine={false} tickLine={false}/><YAxis tick={CHART_TICK} axisLine={false} tickLine={false} width={72} tickFormatter={(value) => fmtMoneyShort(value)}/><Tooltip cursor={{ fill: "var(--tj-chart-hover)" }} content={<DailyBarTooltip/>}/><Bar {...getChartAnimation("bar")} dataKey="pnl" maxBarSize={36} radius={[5, 5, 3, 3]}>{dailyBars.map((day) => <Cell key={day.date} fill={day.pnl >= 0 ? UI_COLORS.primary : UI_COLORS.danger}/>)}</Bar></BarChart></ResponsiveContainer>
-        <footer><span>Daily P&amp;L · hover a bar for the session review</span><span>Average day {fmtMoney(stats.netPnl / Math.max(1, dailyBars.length))}</span></footer>
-      </div>
-    </Card>}
-
-    {view === "monthly" && <Card className="tj-performance-surface tj-performance-monthly-surface">
-      <div className="tj-monthly-heading">
-        <strong>Monthly P&amp;L evolution</strong>
-        <div className="tj-monthly-range-row">
-          <div className="tj-monthly-ranges" role="group" aria-label="Monthly P&L range">
-            {[["year", String(monthlyYear || new Date().getFullYear())], ["12m", "12M"], ["3y", "3Y"], ["all", "All"]].map(([value, label]) => <button type="button" key={value} aria-pressed={monthlyRange === value} className={monthlyRange === value ? "is-active" : ""} onClick={() => setMonthlyRange(value)}>{label}</button>)}
-          </div>
-          <small>{monthlyChartRows.length} months</small>
-        </div>
-      </div>
-      <div className="tj-performance-four tj-performance-monthly-summary">
-        <div><small>BEST MONTH</small><strong className="tj-green">{bestMonth ? fmtMoney(bestMonth.pnl) : "—"}</strong><span>{bestMonth?.label || "No data"}</span></div>
-        <div><small>WORST MONTH</small><strong className={worstMonth?.pnl >= 0 ? "tj-green" : "tj-red"}>{worstMonth ? fmtMoney(worstMonth.pnl) : "—"}</strong><span>{worstMonth?.label || "No data"}</span></div>
-        <div><small>AVERAGE MONTH</small><strong className={monthlySummary.average >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(monthlySummary.average)}</strong><span>Across the active range</span></div>
-        <div><small>POSITIVE MONTHS</small><strong className="tj-green">{monthlySummary.positive}/{monthlySummary.activeCount}</strong><span>{monthlySummary.negative} negative months</span></div>
-      </div>
-      <div className="tj-performance-chart tj-monthly-chart">
-        {monthlyChartRows.length ? <ResponsiveContainer width="100%" height={290}>
-          <BarChart data={monthlyChartRows} margin={{ top: 16, right: 12, bottom: 26, left: 0 }}>
-            {!monthlyLongRange && <CartesianGrid stroke="var(--tj-chart-grid)" strokeDasharray="3 3" vertical={false}/>}
-            <XAxis dataKey="key" ticks={monthlyLongRange ? monthlySummary.years.map(item => item.middle) : undefined} tick={{ ...CHART_TICK, fontWeight: monthlyLongRange ? 700 : 400 }} tickFormatter={key => monthlyLongRange ? key.slice(0, 4) : formatMonthYear(key)} interval={monthlyLongRange ? 0 : "preserveStartEnd"} minTickGap={24} axisLine={false} tickLine={false} tickMargin={12}/>
-            <YAxis tick={CHART_TICK} ticks={monthlyLongRange ? [0] : undefined} axisLine={false} tickLine={false} width={64} tickFormatter={value => fmtMoneyShort(value)}/>
-            {monthlyLongRange && monthlySummary.years.map(item => <ReferenceLine key={item.year} x={item.first} stroke="var(--tj-border)"/>)}
-            <ReferenceLine y={0} stroke="var(--tj-border)"/>
-            <Tooltip cursor={{ fill: "var(--tj-chart-hover)" }} content={<MonthlyBarTooltip/>}/>
-            <Bar {...getChartAnimation("bar")} dataKey="pnl" maxBarSize={monthlyLongRange ? 12 : 28} radius={monthlyLongRange ? [1, 1, 1, 1] : [4, 4, 2, 2]}>
-              {monthlyChartRows.map(month => <Cell key={month.key} fill={month.pnl >= 0 ? UI_COLORS.primary : UI_COLORS.danger}/>)}
-            </Bar>
-            {monthlyLongRange && worstMonth?.pnl < 0 && <ReferenceDot x={worstMonth.key} y={worstMonth.pnl} r={3} fill={UI_COLORS.danger} stroke="none" label={({ viewBox }) => {
-              const onRight = monthlyChartRows.findIndex(month => month.key === worstMonth.key) > monthlyChartRows.length * .65;
-              return <text x={viewBox.x + (onRight ? -8 : 8)} y={viewBox.y + 16} textAnchor={onRight ? "end" : "start"} fill={UI_COLORS.danger} fontSize="var(--text-min)" fontWeight={700}>Worst {fmtMoney(worstMonth.pnl)} · {worstMonth.label}</text>;
-            }}/>}
-          </BarChart>
-        </ResponsiveContainer> : <div className="tj-monthly-empty">No closed trades in this range.</div>}
-      </div>
-    </Card>}
-
-    {view === "instruments" && <Card className="tj-performance-surface tj-performance-instruments"><div className="tj-performance-title"><div><small>MARKET PERFORMANCE</small><strong>Instrument Performance</strong></div><small>{instrumentStats.length} instruments</small></div><div className="tj-instrument-highlights"><div><small>MARKET LEADER</small><strong>{instrumentStats[0]?.asset || "—"}</strong><span>{instrumentStats[0] ? `${fmtMoney(instrumentStats[0].netPnl)} realised · ${instrumentStats[0].winRate.toFixed(0)}% win rate` : "No data"}</span></div><div><small>MOST ACTIVE</small><strong>{mostActiveInstrument?.asset || "—"}</strong><span>{mostActiveInstrument ? `${mostActiveInstrument.count} trades · ${fmtMoney(mostActiveInstrument.netPnl / mostActiveInstrument.count)} / trade` : "No data"}</span></div><div><small>BEST QUALITY</small><strong>{bestQualityInstrument?.asset || "—"}</strong><span>{bestQualityInstrument ? `${bestQualityInstrument.winRate.toFixed(0)}% WR · ${bestQualityInstrument.avgRR.toFixed(2)} avg RR` : "No data"}</span></div><div><small>REVIEW FIRST</small><strong>{reviewInstrument?.asset || "—"}</strong><span>{reviewInstrument ? `${fmtMoney(reviewInstrument.netPnl)} realised · ${reviewInstrument.winRate.toFixed(0)}% win rate` : "No data"}</span></div></div><div className="tj-instrument-performance-grid">{instrumentStats.map((item, index) => <InstrumentCard key={item.asset} item={item} index={index}/>)}</div></Card>}
-
-    {view === "markups" && <Card className="tj-performance-surface tj-markup-intelligence"><div className="tj-performance-title"><div><small>MARKUP INTELLIGENCE</small><strong>Plan impact and execution</strong></div><small>{markupRows.length} plan{markupRows.length === 1 ? "" : "s"}</small></div><div className="tj-markup-highlights"><div><small>PLAN OUTCOME</small><strong className={markupOutcome >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(markupOutcome)}</strong><span>{linkedMarkupCount} linked plan{linkedMarkupCount === 1 ? "" : "s"} reached execution</span></div><div><small>LINK RATE</small><strong>{markupRows.length ? (linkedMarkupCount / markupRows.length * 100).toFixed(0) : 0}%</strong><span>{linkedMarkupCount}/{markupRows.length} plans reached execution</span></div><div><small>DIRECTION MATCH</small><strong style={{ color: markupDirectionMatch >= 80 ? UI_COLORS.primary : markupDirectionMatch >= 50 ? UI_COLORS.warning : UI_COLORS.danger }}>{markupDirectionMatch.toFixed(0)}%</strong><span>Linked trades matching the planned direction</span></div><div><small>PLAN QUEUE</small><strong>{markupRows.filter((item) => !item.count).length} planned · {markupRows.filter((item) => String(item.markup.status || "").toLowerCase() === "passed").length} passed</strong><span>Plans without a linked trade, separated by outcome state</span></div></div><div className="tj-markup-intelligence-grid"><section className="tj-markup-impact"><header><div><small>PLAN IMPACT</small><strong>Which plans changed the account</strong></div><span>Realised P&amp;L</span></header><ResponsiveContainer width="100%" height={530}><BarChart data={markupRows} margin={{ top: 24, right: 6, bottom: 12, left: 0 }}><CartesianGrid stroke="var(--tj-chart-grid)" strokeDasharray="3 3" vertical={false}/><XAxis dataKey={(item) => `${item.markup.instrument || item.markup.market || "Plan"} ${formatDate(item.markup.date)}`} tick={CHART_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd"/><YAxis tick={CHART_TICK} axisLine={false} tickLine={false} width={66} tickFormatter={(value) => fmtMoneyShort(value)}/><Tooltip cursor={{ fill:"var(--tj-chart-hover)" }} content={<MarkupBarTooltip/>}/><Bar {...getChartAnimation("bar")} dataKey="pnl" maxBarSize={28} radius={[2,2,1,1]}>{markupRows.map((item) => <Cell key={item.markup.id} fill={item.pnl >= 0 ? UI_COLORS.primary : UI_COLORS.danger}/>)}</Bar></BarChart></ResponsiveContainer><footer><div><small>HIGHEST LINKED P&amp;L</small><strong>{topMarkup ? `${topMarkup.markup.instrument || topMarkup.markup.market || "Plan"} · ${formatDate(topMarkup.markup.date)}` : "—"}</strong><b className="tj-green">{topMarkup ? fmtMoney(topMarkup.pnl) : "—"}</b></div><div><small>REVIEW FIRST</small><strong>{reviewMarkup ? `${reviewMarkup.markup.instrument || reviewMarkup.markup.market || "Plan"} · ${formatDate(reviewMarkup.markup.date)}` : "—"}</strong><b className="tj-red">{reviewMarkup ? fmtMoney(reviewMarkup.pnl) : "—"}</b></div></footer></section><section className="tj-markup-plan-list"><header><span>PLAN</span><span>STATE</span><span>EXECUTION</span><span>DIRECTION MATCH</span><span>OUTCOME</span></header>{markupRows.slice(0, 10).map((item) => <article key={item.markup.id} className={item.pnl < 0 ? "tj-markup-plan-negative" : ""}><div><strong>{item.markup.instrument || item.markup.market || "Untitled plan"}</strong><span>{formatDate(item.markup.date)} <em className={/bull/i.test(item.markup.bias || "") ? "tj-markup-bias-bull" : /bear/i.test(item.markup.bias || "") ? "tj-markup-bias-bear" : ""}>{item.markup.bias || "No bias"}</em></span></div><div><strong className={item.count ? "tj-green" : ""}>{item.markup.status || (item.count ? "Executed" : "Planned")}</strong><span>{item.count ? "Trade link active" : "Waiting for trade"}</span></div><div><strong>{item.count} trade{item.count === 1 ? "" : "s"}</strong><span>{item.winRate.toFixed(0)}% WR</span></div><div className="tj-markup-match-cell"><i><b data-chart-fill="horizontal" style={{ width: `${item.directionMatch}%` }}/></i><strong>{item.directionMatch.toFixed(0)}%</strong></div><div><strong className={item.pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.pnl)}</strong><span>{item.count ? "Realised" : "Pending"}</span></div></article>)}<footer className="tj-markup-plans-footer"><span>Showing {Math.min(10, markupRows.length)} of {markupRows.length} plans</span><button type="button" onClick={onViewMarkups}>View all plans →</button></footer></section></div></Card>}
-    </div>
-    {taggedTradesModal && <Modal title={`${taggedTradesModal.name} tagged trades`} onClose={() => setTaggedTradesModal(null)} className="tj-confluence-trades-modal" wide><div className="tj-confluence-modal-list"><div className="tj-confluence-modal-intro"><span>{selectedConfluenceTrades.length} trade{selectedConfluenceTrades.length === 1 ? "" : "s"} with the {taggedTradesModal.name} confluence.</span><small>Select a trade to open its full review.</small></div><div>{selectedConfluenceTrades.map((trade) => <TaggedTradeCard key={trade.id} trade={trade}/>)}</div></div></Modal>}
-  </div>;
-}
-
-/* Desktop Analytics v2 Rhythm: day, week and month results (aaicorefx-desktop-analytics.html). */
-function AnBarTip({ active, payload }) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0].payload;
-  return <div className="an2-tip"><b>{row.full || row.label}</b><span className={anTone(row.pnl)}>{fmtMoney(row.pnl)}</span><small>{row.count} trade{row.count === 1 ? "" : "s"}{row.count ? ` · ${Math.round(row.winRate)}% WR` : ""}</small></div>;
-}
-function AnRhythmSection({ id, title, sub, rows, unit, labels, chartTitle, chartSub, average, control, side }) {
-  const active = rows.filter((row) => row.count);
-  const total = active.reduce((sum, row) => sum + row.pnl, 0);
-  const positive = active.filter((row) => row.pnl > 0).length;
-  const negative = active.filter((row) => row.pnl < 0).length;
-  const best = active.length ? active.reduce((a, b) => b.pnl > a.pnl ? b : a) : null;
-  const worst = active.length ? active.reduce((a, b) => b.pnl < a.pnl ? b : a) : null;
-  const last = active.at(-1), prev = active.at(-2);
-  const count = (row) => `${row.count} trade${row.count === 1 ? "" : "s"}`;
-  const chart = <section className="an2-card an2-pad">
-    <div className="an2-sh"><div><h3>{chartTitle}</h3><small>{chartSub}</small></div>{last && <div className="an2-lp">
-      <div><small>Latest</small><b className={`an2-num ${anTone(last.pnl)}`}>{fmtMoney(last.pnl)}</b><small>{last.label}</small></div>
-      {prev && <div><small>Prior</small><b className={`an2-num ${anTone(prev.pnl)}`}>{fmtMoney(prev.pnl)}</b><small>{prev.label}</small></div>}
-      {prev && <div><small>Change</small><b className={`an2-num ${anTone(last.pnl - prev.pnl)}`}>{fmtMoney(last.pnl - prev.pnl)}</b><small>vs prior</small></div>}
-    </div>}</div>
-    {rows.length ? <div className="an2-rchart"><ResponsiveContainer width="100%" height={300} debounce={100}><BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}><CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="label" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} tick={{ fill: "var(--muted)", fontSize: 12 }}/><YAxis width={64} tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 12 }} tickFormatter={(value) => fmtMoneyShort(value)}/><ReferenceLine y={0} stroke="var(--muted)" strokeOpacity={.45}/><Tooltip cursor={{ fill: "var(--raised)" }} content={<AnBarTip/>}/><Bar {...getChartAnimation("bar")} dataKey="pnl" radius={[5, 5, 5, 5]} maxBarSize={54}>{rows.map((row) => <Cell key={row.key} fill={row.pnl > 0 ? "var(--tj-green)" : row.pnl < 0 ? "var(--loss)" : "var(--border)"}/>)}</Bar></BarChart></ResponsiveContainer></div> : <div className="an2-empty">No trades in this range.</div>}
-    <div className="an2-row an2-foot"><span className="an2-mut">Hover a bar for the summary</span><b>{average} <span className={`an2-num ${anTone(active.length ? total / active.length : 0)}`}>{fmtMoney(active.length ? total / active.length : 0)}</span></b></div>
-  </section>;
-  return <>
-    <AnSectionHead id={id} title={title} sub={sub}>{control}</AnSectionHead>
-    <div className="an2-kpi4">
-      <AnStat extra="is-lg" label={labels[0]} value={fmtMoney(total)} sub={`${active.length} ${unit} in the selected range`} tone={anTone(total)}/>
-      <AnStat extra="is-lg" label={labels[1]} value={labels[1] === "Positive months" ? `${positive}/${active.length}` : `${active.length ? Math.round(positive / active.length * 100) : 0}% green`} sub={`${positive} positive · ${negative} negative`} tone="is-gain"/>
-      <AnStat extra="is-lg" label={labels[2]} value={best ? fmtMoney(best.pnl) : "—"} sub={best ? `${best.full || best.label} · ${count(best)}` : "No results yet"} tone={anTone(best?.pnl)}/>
-      <AnStat extra="is-lg" label={labels[3]} value={worst ? fmtMoney(worst.pnl) : "—"} sub={worst ? `${worst.full || worst.label} · ${count(worst)}` : "No results yet"} tone={anTone(worst?.pnl)}/>
-    </div>
-    {side ? <div className="an2-g an2-a4">{chart}{side}</div> : chart}
-  </>;
-}
 function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
   const [range, setRange] = useState("year");
   const dayLabel = (date) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -5077,79 +4827,7 @@ function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
 
 
 function ExecutionRhythmView({ account, trades, cap, stats, monthlyYear }) {
-  if (ANALYTICS_V2) return <AnalyticsRhythmV2 account={account} trades={trades} cap={cap} stats={stats} monthlyYear={monthlyYear}/>;
-  const weekdayRows = Object.values(trades.reduce((map, trade) => {
-    const day = new Date(`${trade.date}T00:00:00`).toLocaleDateString(undefined, { weekday: "short" });
-    if (!map[day]) map[day] = { label: day, pnl: 0, count: 0, wins: 0 };
-    map[day].pnl += trade.pnl; map[day].count += 1;
-    if (classify(trade.pnl, cap) === "win") map[day].wins += 1;
-    return map;
-  }, {})).map((row) => ({ ...row, winRate: row.count ? row.wins / row.count * 100 : 0 })).sort((a, b) => b.pnl - a.pnl);
-  const sessionRows = Object.values(trades.reduce((map, trade) => {
-    const session = trade.entrySession || trade.session || "Unspecified";
-    if (!map[session]) map[session] = { label: session, pnl: 0, count: 0, wins: 0 };
-    map[session].pnl += trade.pnl; map[session].count += 1;
-    if (classify(trade.pnl, cap) === "win") map[session].wins += 1;
-    return map;
-  }, {})).map((row) => ({ ...row, winRate: row.count ? row.wins / row.count * 100 : 0 })).sort((a, b) => b.pnl - a.pnl);
-  const weekRows = Object.values(trades.reduce((map, trade) => {
-    const date = new Date(`${trade.date}T00:00:00`);
-    const monday = startOfDisplayWeek(date);
-    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-    const key = localDateKey(monday);
-    if (!map[key]) map[key] = { key, start: monday, end: sunday, pnl: 0, count: 0, wins: 0 };
-    map[key].pnl += trade.pnl; map[key].count += 1;
-    if (classify(trade.pnl, cap) === "win") map[key].wins += 1;
-    return map;
-  }, {})).map((row) => ({ ...row, winRate: row.count ? row.wins / row.count * 100 : 0 })).sort((a, b) => a.key.localeCompare(b.key));
-  let weeklyRunning = Number(account.balance) || 0;
-  const weekChartRows = weekRows.map((week) => {
-    const openingBalance = weeklyRunning;
-    weeklyRunning += week.pnl;
-    return { ...week, openingBalance, closingBalance: weeklyRunning, returnPct: openingBalance ? week.pnl / openingBalance * 100 : 0 };
-  });
-  const monthRows = Object.values(trades.reduce((map, trade) => {
-    const key = trade.date.slice(0, 7);
-    if (!map[key]) map[key] = { key, pnl: 0, count: 0 };
-    map[key].pnl += trade.pnl; map[key].count += 1;
-    return map;
-  }, {})).sort((a, b) => a.key.localeCompare(b.key));
-  const dayRows = stats.dayClasses;
-  const bestDay = dayRows.length ? dayRows.reduce((a, b) => b.pnl > a.pnl ? b : a) : null;
-  const worstDay = dayRows.length ? dayRows.reduce((a, b) => b.pnl < a.pnl ? b : a) : null;
-  const maxWeekdayPnl = Math.max(1, ...weekdayRows.map((row) => Math.abs(row.pnl)));
-  const latestMonth = monthRows[monthRows.length - 1];
-  const bestWeekday = weekdayRows[0];
-  const bestSession = sessionRows[0];
-  const sessionShareTotal = Math.max(1, sessionRows.reduce((sum, row) => sum + Math.abs(row.pnl), 0));
-  const linkedPct = stats.total ? trades.filter((trade) => trade.premarketMarkupId).length / stats.total * 100 : 0;
-  const allRuleEntries = trades.flatMap((trade) => trade.ruleEvaluations || []);
-  const rulePct = allRuleEntries.length ? allRuleEntries.filter((entry) => entry.checked).length / allRuleEntries.length * 100 : 0;
-  const discipline = Math.round(clamp(linkedPct * .45 + rulePct * .55, 0, 100));
-  const avgRR = stats.total ? trades.reduce((sum, trade) => sum + (Number(trade.rr) || 0), 0) / stats.total : 0;
-  const scoreFactors = [{ metric: "Win rate", value: stats.winRate }, { metric: "Profit factor", value: norm(stats.profitFactor, 5) }, { metric: "Average RR", value: norm(avgRR, 3) }, { metric: "Consistency", value: stats.consistency }, { metric: "Recovery", value: stats.recovery }, { metric: "Discipline", value: discipline }];
-  const dayScore = Math.round(clamp(stats.dayWinRate * .6 + norm(dayRows.length ? stats.netPnl / dayRows.length : 0, 200) * .4, 0, 100));
-  const recentSix = dayRows.slice(-6);
-  let currentRun = 0; let currentType = null;
-  [...dayRows].reverse().some((day) => { if (!currentType) currentType = day.cls; if (day.cls !== currentType) return true; currentRun += 1; return false; });
-  const runs = dayRows.reduce((all, day) => { const last = all[all.length - 1]; if (last?.cls === day.cls) last.count += 1; else all.push({ cls: day.cls, count: 1 }); return all; }, []);
-  const maxDayPnl = Math.max(1, ...dayRows.map((day) => Math.abs(day.pnl)));
-  const fmtRangeDay = (date) => date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const WeeklyBarTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const week = payload[0].payload;
-    const resultClass = week.pnl >= 0 ? "tj-green" : "tj-red";
-    return <div className="tj-daily-bar-tooltip tj-weekly-bar-tooltip"><header><strong>{fmtRangeDay(week.start)} – {fmtRangeDay(week.end)}</strong><span className={`tj-weekly-outcome ${week.pnl < 0 ? "tj-weekly-outcome-loss" : ""}`}>{week.pnl < 0 ? "LOSING WEEK" : week.pnl > 0 ? "WINNING WEEK" : "FLAT WEEK"}</span></header><div><span>WEEKLY P&amp;L</span><b className={resultClass}>{fmtMoney(week.pnl)}</b></div><div><span>WEEKLY RETURN</span><b className={resultClass}>{week.returnPct >= 0 ? "+" : ""}{week.returnPct.toFixed(2)}%</b></div><div className="tj-weekly-closing"><span>CLOSING BALANCE</span><b className={week.closingBalance >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(week.closingBalance)}</b></div><div><span>QUALITY</span><b className={wrColorClass(week.winRate)}>{week.count} trade{week.count === 1 ? "" : "s"} · {week.winRate.toFixed(0)}% WR</b></div></div>;
-  };
-
-  return <div className="tj-execution-workspace">
-    <div className="tj-execution-rhythm-grid"><Card className="tj-execution-weekly-card"><div className="tj-execution-title"><div><strong>Weekly Cadence</strong><span>Recent realised P&amp;L</span></div><small>{weekChartRows.length} weeks</small></div><div className="tj-execution-weekly-chart"><ResponsiveContainer width="100%" height="100%" minHeight={220}><BarChart data={weekChartRows.slice(-9)}><CartesianGrid stroke="var(--tj-chart-grid)" strokeDasharray="3 3" vertical={false}/><XAxis dataKey="key" tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={(key) => { const week = weekChartRows.find((row) => row.key === key); return week ? `${fmtRangeDay(week.start)} – ${fmtRangeDay(week.end)}` : key; }} interval="preserveStartEnd"/><YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={(value) => fmtMoneyShort(value)}/><Tooltip cursor={{ fill:"var(--tj-chart-hover)" }} content={<WeeklyBarTooltip/>}/><Bar {...getChartAnimation("bar")} dataKey="pnl" barSize={28} radius={[6, 6, 2, 2]}>{weekChartRows.slice(-9).map((week) => <Cell key={week.key} fill={week.pnl >= 0 ? UI_COLORS.primary : UI_COLORS.danger}/>)}</Bar></BarChart></ResponsiveContainer></div></Card><Card className="tj-execution-weekday-card"><div className="tj-execution-title"><div><strong>Weekday Edge</strong><span>Where the week pays</span></div><small>{stats.thunderScore}/100 rhythm</small></div><div className="tj-execution-bars tj-execution-weekday-bars">{weekdayRows.map((row) => <div key={row.label}><strong>{row.label}</strong><i><b data-chart-fill="horizontal" className={row.pnl >= 0 ? "tj-bar-green" : "tj-bar-red"} style={{ width: `${Math.max(4, Math.abs(row.pnl) / maxWeekdayPnl * 100)}%` }}/></i><em className={row.pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoneyShort(row.pnl)}</em><span className={wrColorClass(row.winRate)}>{row.winRate.toFixed(0)}%</span></div>)}</div></Card></div>
-
-    <Card className="tj-core-breakdown"><div className="tj-execution-title"><strong>Core Score Breakdown</strong><small>6 contributing factors</small></div><div className="tj-core-breakdown-grid"><section><div><span><small>EXECUTION SCORE</small><strong className="tj-purple-txt">{stats.thunderScore}<i>/100</i></strong></span><p>Results, repeatability, recovery, and discipline are balanced into one practical execution read.</p></div><ResponsiveContainer width="100%" height={225}><RadarChart data={scoreFactors} outerRadius={72}><PolarGrid stroke="var(--tj-chart-grid)"/><PolarAngleAxis dataKey="metric" tick={{ fill: "var(--tj-muted)", fontSize: 12 }}/><Radar dataKey="value" stroke={UI_COLORS.purple} fill={UI_COLORS.purple} fillOpacity={.26}/></RadarChart></ResponsiveContainer><i><b data-chart-fill="horizontal" style={{ width: `${stats.thunderScore}%` }}/></i></section><section><div className="tj-discipline-head"><span><small>WHAT DRIVES DISCIPLINE</small><strong className="tj-purple-txt">{discipline}<i>/100</i></strong></span><p>Markup coverage and checked active rules measure preparation; the guardrail signal reflects whether the selected range is currently within its loss limits.</p></div><div className="tj-discipline-grid">{[["WIN RATE", `${stats.winRate.toFixed(0)}%`, stats.winRate, `${stats.wins} wins from ${stats.total} trades`], ["PROFIT FACTOR", formatRatio(stats.profitFactor), norm(stats.profitFactor, 5), "Gross profits compared with gross losses"], ["AVERAGE RR", avgRR.toFixed(2), norm(avgRR, 3), "Winner-to-loser payoff edge"], ["CONSISTENCY", stats.consistency.toFixed(0), stats.consistency, `${stats.bestWinStreak}W best run · ${stats.bestLossStreak}L loss run`], ["RECOVERY", `${stats.recovery.toFixed(0)}%`, stats.recovery, "How well the account has recovered after a loss"], ["DISCIPLINE", `${discipline}%`, discipline, `${linkedPct.toFixed(0)}% markup coverage · ${rulePct.toFixed(0)}% rules followed`]].map(([label, value, pct, note]) => <div key={label}><span><small>{label}</small><strong>{value}</strong></span><i><b data-chart-fill="horizontal" style={{ width: `${pct}%` }}/></i><p>{note}</p></div>)}</div><footer><span>{linkedPct.toFixed(0)}% trades linked to markups</span><span>{rulePct.toFixed(0)}% rule checks passed</span><span>{account.dailyLossLimitPct || account.monthlyLossLimitPct ? "Guardrails configured" : "Guardrails currently open"}</span></footer></section></div></Card>
-
-    <div className="tj-execution-bottom"><Card className="tj-session-time"><div className="tj-session-time-head"><div><strong>SESSION &amp; TIME PERFORMANCE</strong><span>Compare session windows and entry time separately so you know where the cleanest flow is coming from before you add more size.</span></div><small>{bestSession ? `${bestSession.label} LEADS` : "NO LEAD"}</small></div><div className="tj-session-rank-list">{sessionRows.map((row, index) => <article key={row.label}><span className="tj-session-rank">{String(index + 1).padStart(2, "0")}</span><section className="tj-session-name"><small>SESSION</small><strong>{row.label}</strong><span>{row.count} trades</span></section><section className="tj-session-quality"><small>WIN QUALITY</small><i><b data-chart-fill="horizontal" className={wrBarClass(row.winRate)} style={{ width: `${row.winRate}%` }}/></i></section><section className="tj-session-share"><small>JOURNAL SHARE</small><strong className={row.pnl >= 0 ? "tj-green" : "tj-red"}>{(Math.abs(row.pnl) / sessionShareTotal * 100).toFixed(0)}%</strong><span>{fmtMoney(row.pnl / Math.max(1, row.count))} / trade</span></section></article>)}</div><div className="tj-entry-time-empty"><header><span>ENTRY TIME ANALYSIS</span><small>{trades.some((trade) => trade.openTime) ? "Entry-time data is available." : "Log an open time to populate this field"}</small></header><p>{trades.some((trade) => trade.openTime) ? "Entry-time analysis will expand as more open times are recorded." : "Entry-time analysis will begin as soon as you add an open time to new or existing trades."}</p></div></Card>
-    <Card className="tj-execution-days"><div className="tj-execution-title"><strong>Day Distribution</strong><small>{dayScore < 50 ? "Needs attention" : dayScore < 75 ? "Building" : "Solid"}</small></div><div className="tj-execution-day-head"><div><strong>{dayScore}</strong><span>/100</span></div><section><strong>{dayScore < 50 ? "Developing" : dayScore < 75 ? "Building" : "Solid"}</strong><span>{dayRows.length} trading days · avg {fmtMoney(dayRows.length ? stats.netPnl / dayRows.length : 0)}/day</span><small><i className="tj-dot-green"/> {dayRows.filter((d) => d.cls === "win").length} green&nbsp;&nbsp; <i className="tj-dot-red"/> {dayRows.filter((d) => d.cls === "loss").length} red&nbsp;&nbsp; <i className="tj-dot-blue"/> {dayRows.filter((d) => d.cls === "be").length} flat</small></section></div><div className="tj-execution-day-dist"><i data-chart-fill="horizontal" style={{ width: `${dayRows.length ? dayRows.filter((d) => d.cls === "win").length / dayRows.length * 100 : 0}%` }}/><b data-chart-fill="horizontal" style={{ width: `${dayRows.length ? dayRows.filter((d) => d.cls === "loss").length / dayRows.length * 100 : 0}%` }}/></div><div className="tj-execution-day-metrics"><div><small>CURRENT</small><strong>{currentRun}{currentType === "loss" ? "L" : "W"}</strong></div><div><small>BEST RUN</small><strong>{Math.max(0, ...runs.filter((run) => run.cls === "win").map((run) => run.count))}d</strong></div><div><small>WORST RUN</small><strong>{Math.max(0, ...runs.filter((run) => run.cls === "loss").map((run) => run.count))}d</strong></div><div><small>AVG/DAY</small><strong>{fmtMoney(dayRows.length ? stats.netPnl / dayRows.length : 0)}</strong></div></div><div className="tj-execution-best-worst"><div><small>BEST DAY</small><strong className="tj-green">{bestDay ? fmtMoney(bestDay.pnl) : "—"}</strong><span>{bestDay?.date || "No data"}</span></div><div><small>WORST DAY</small><strong className="tj-red">{worstDay ? fmtMoney(worstDay.pnl) : "—"}</strong><span>{worstDay?.date || "No data"}</span></div></div><div className="tj-execution-section-label">LAST {recentSix.length} TRADING DAYS</div><div className="tj-execution-last-days">{recentSix.map((day) => <i key={day.date} className={day.cls === "win" ? "tj-day-win" : day.cls === "loss" ? "tj-day-loss" : "tj-day-flat"} style={{ flex: Math.max(.35, Math.abs(day.pnl) / maxDayPnl) }} title={`${day.date}: ${fmtMoney(day.pnl)}`}/>)}</div></Card></div>
-  </div>;
+  return <AnalyticsRhythmV2 account={account} trades={trades} cap={cap} stats={stats} monthlyYear={monthlyYear}/>;
 }
 
 function RiskGuardrailsView({ account, trades, cap, stats, confluenceStats, instrumentStats, onOpenAccountSettings }) {
@@ -5218,7 +4896,7 @@ function RiskGuardrailsView({ account, trades, cap, stats, confluenceStats, inst
   const capLabel = dailyCapPct ? "Daily cap" : monthlyCapPct ? "Monthly cap" : "No active loss cap";
 
   // Desktop Analytics v2 Discipline & Risk (aaicorefx-desktop-analytics.html).
-  if (ANALYTICS_V2) {
+
     const linkedPct = stats.total ? trades.filter((trade) => trade.premarketMarkupId).length / stats.total * 100 : 0;
     const rulePct = ruleEntries.length ? ruleChecks / ruleEntries.length * 100 : 0;
     const discipline = Math.round(clamp(linkedPct * .45 + rulePct * .55, 0, 100));
@@ -5290,20 +4968,6 @@ function RiskGuardrailsView({ account, trades, cap, stats, confluenceStats, inst
     </div>;
   }
 
-  return <div className="tj-risk-workspace">
-    <Card className="tj-risk-audit"><div className="tj-risk-title"><div><strong>Guardrail Audit</strong><span>Historical checks use each period’s live starting balance, then trace the losses that consumed or crossed the configured daily and monthly caps.</span></div><small className={breaches.length ? "tj-pill tj-pill-red" : "tj-pill tj-pill-green"}>{breaches.length} breach{breaches.length === 1 ? "" : "es"}</small></div><div className="tj-risk-four"><div><small>DAILY CAP</small><strong>{dailyCapPct ? `${dailyCapPct.toFixed(2)}%` : "Not set"}</strong><span>{dayAudit.length} checked trading days</span>{!dailyCapPct && <button type="button" className="tj-risk-settings-link" disabled={!onOpenAccountSettings} onClick={onOpenAccountSettings}>Set a cap in Account Settings →</button>}</div><div><small>MONTHLY CAP</small><strong>{monthlyCapPct ? `${monthlyCapPct.toFixed(2)}%` : "Not set"}</strong><span>{monthAudit.length} checked months</span>{!monthlyCapPct && <button type="button" className="tj-risk-settings-link" disabled={!onOpenAccountSettings} onClick={onOpenAccountSettings}>Set a cap in Account Settings →</button>}</div><div><small>PRE-LIMIT DAYS</small><strong className="tj-green">{dayAudit.filter((day) => day.used >= 75 && day.used < 100).length}</strong><span>Reached 75% of a daily cap</span></div><div><small>BREACH-FREE</small><strong className="tj-green">{breachFreeDays}</strong><span>Trading days since last breach</span></div></div><div className="tj-risk-audit-grid"><section><header><strong>DAILY CAP UTILISATION</strong><span>Recent trading days</span></header><div className="tj-risk-utilisation">{dayAudit.slice(-8).reverse().map((day) => <div key={day.date}><strong>{new Date(`${day.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</strong><i><b data-chart-fill="horizontal" className={day.used >= 100 ? "tj-bar-red" : day.used >= 75 ? "tj-bar-yellow" : "tj-bar-green"} style={{ width: `${Math.min(100, day.used)}%` }}/></i><span className={day.used >= 100 ? "tj-red" : day.used >= 75 ? "tj-wr-yellow" : "tj-green"}>{day.used.toFixed(0)}%</span></div>)}</div><footer><span><i className="tj-dot-green"/> Under 75%</span><span><i className="tj-dot-amber"/> 75% warning</span><span><i className="tj-dot-red"/> 100% breach</span></footer></section><section><header><strong>BREACH CONTRIBUTIONS</strong><span>Most recent first</span></header><div className="tj-risk-breaches">{breaches.length ? breaches.map((breach, index) => <div key={`${breach.type}-${breach.label}-${index}`}><header><span><small>BREACH EVENT {String(index + 1).padStart(2, "0")}</small><strong>{breach.label}</strong></span><b>GUARD BREACH</b></header><div className="tj-risk-breach-metrics"><section><small>BREACHED LIMIT</small><strong>{breach.type === "DAILY CAP" ? "Daily cap" : "Monthly cap"}</strong><span>{fmtMoney(breach.pnl)} maximum loss</span></section><section><small>CAP UTILISATION</small><strong className="tj-red">{breach.used.toFixed(0)}%</strong><span>{fmtMoney(breach.pnl)} realised loss</span></section></div><div className="tj-risk-breach-trigger"><section><small>THRESHOLD CROSSING TRADE</small><strong className="tj-red">{breach.trigger ? fmtMoney(breach.trigger.pnl) : fmtMoney(breach.pnl)}</strong><span>{breach.trigger ? "This trade moved the period beyond the active loss cap." : "This period moved beyond the active loss cap."}</span></section><b>{breach.trigger?.asset || "—"}</b></div></div>) : <div className="tj-risk-empty"><span aria-hidden="true">✓</span><p>No configured guardrail was breached in this trading history.</p></div>}</div></section></div></Card>
-
-    <div className="tj-risk-diagnostics">
-      <Card className="tj-risk-diagnostic"><header><span>BREACH PATTERN</span><strong>Where guardrails are being tested</strong><small>{breaches.length} recorded event{breaches.length === 1 ? "" : "s"}</small></header><div><section><small>REPEAT CONTEXT</small><b>{breaches.length ? `${breaches.length} breach${breaches.length === 1 ? "" : "es"}` : "No breach"}</b><span>Selected journal data</span></section><section className="tj-risk-session-danger"><small>COMMON SESSION</small><b className="tj-red">{commonSession?.label || "—"}</b><span>Threshold-crossing trade context</span></section><section><small>COMMON INSTRUMENT</small><b>{commonInstrument?.label || "—"}</b><span>Instrument behind the trigger</span></section><section><small>ENTRY MODEL</small><b>{commonModel?.label || "—"}</b><span>Model attached to the trigger</span></section></div></Card>
-      <Card className="tj-risk-diagnostic"><header><span>RISK CONCENTRATION</span><strong>Where realised loss is accumulating</strong><small className="tj-red">-{fmtMoney(totalRealisedLoss).replace(/^[-+]/, "")} realised loss</small></header><div><section><small>INSTRUMENT WEIGHT</small><b>{instrumentLoss?.label || "—"}</b><span>{instrumentLoss && totalRealisedLoss ? `${(instrumentLoss.pnl / totalRealisedLoss * 100).toFixed(0)}% of realised loss · ${instrumentLoss.count} trades` : "No loss sample"}</span></section><section className="tj-risk-session-danger"><small>SESSION WEIGHT</small><b className="tj-red">{sessionLoss?.label || "—"}</b><span>{sessionLoss && totalRealisedLoss ? `${(sessionLoss.pnl / totalRealisedLoss * 100).toFixed(0)}% of realised loss · ${sessionLoss.count} trades` : "No loss sample"}</span></section><section><small>ENTRY MODEL WEIGHT</small><b>{modelLoss?.label || "—"}</b><span>{modelLoss && totalRealisedLoss ? `${(modelLoss.pnl / totalRealisedLoss * 100).toFixed(0)}% of realised loss · ${modelLoss.count} trades` : "No loss sample"}</span></section><section><small>LARGEST CLUSTER</small><b>{totalRealisedLoss ? `${Math.max(instrumentLoss?.pnl || 0, sessionLoss?.pnl || 0, modelLoss?.pnl || 0) / totalRealisedLoss * 100 | 0}%` : "—"}</b><span>Single-context share of realised loss</span></section></div></Card>
-      <Card className="tj-risk-diagnostic"><header><span>RULE ADHERENCE</span><strong>How consistently the process is being followed</strong><small>{ruleEntries.length ? `${(ruleChecks / ruleEntries.length * 100).toFixed(0)}% checks complete` : "No rule checks"}</small></header><div><section><small>ACTIVE RULES</small><b>{activeRules}</b><span>Rules expected on every evaluated trade</span></section><section><small>TRADES EVALUATED</small><b>{trades.filter((trade) => (trade.ruleEvaluations || []).length).length}</b><span>Trades with a saved rule check</span></section><section><small>WEAKEST RULE</small><b>{weakestRule?.label || "No missed rule"}</b><span>{weakestRule ? `${weakestRule.count} incomplete check${weakestRule.count === 1 ? "" : "s"}` : "All logged checks completed"}</span></section><section><small>CLEAN RUN</small><b>{recentRuleChecks.filter((checked) => checked).length} / {recentRuleTrades.length}</b><span>Recent trades with every saved rule checked</span></section></div></Card>
-    </div>
-
-    <div className="tj-risk-bottom"><Card className="tj-risk-control"><div className="tj-risk-title"><strong>Risk Control Surface</strong><small className={`tj-pill ${withinLimits ? "tj-pill-green" : "tj-pill-red"}`}>{withinLimits ? "Within limits" : "Limit reached"}</small></div><div className="tj-risk-control-grid"><section><small>LIVE RISK POSTURE</small><strong className={withinLimits ? "tj-green" : "tj-red"}>{withinLimits ? "Room to operate" : "Pause and review"}</strong><p>Loss caps are monitoring each new result against the current compounded balance.</p><hr/><small>LIVE BALANCE</small><strong className="tj-green">{fmtMoney(currentEquity)}</strong><span>{account.balance ? `${stats.netPnl / account.balance * 100 >= 0 ? "+" : ""}${(stats.netPnl / account.balance * 100).toFixed(2)}% from the journal base` : ""}</span></section><section><div><header><span>Daily loss capacity</span><strong style={{ color: dailyCapPct ? UI_COLORS.primary : UI_COLORS.warning }}>{dailyCapPct ? fmtMoney(dailyCapacity) : "Not set"}</strong></header><i><b data-chart-fill="horizontal" style={{ width: `${Math.min(100, latestDay?.used || 0)}%` }}/></i><small>{latestDay?.used.toFixed(0) || 0}% of {dailyCapPct ? fmtMoney(-dailyCapacity) : fmtMoneyShort(0)} cap used on latest day</small></div><div><header><span>Monthly loss capacity</span><strong style={{ color: monthlyCapPct ? UI_COLORS.primary : UI_COLORS.warning }}>{monthlyCapPct ? fmtMoney(monthlyCapacity) : "Not set"}</strong></header><i><b data-chart-fill="horizontal" style={{ width: `${Math.min(100, latestMonth?.used || 0)}%` }}/></i><small>{latestMonth?.used.toFixed(0) || 0}% of {monthlyCapPct ? fmtMoney(-monthlyLimit) : fmtMoneyShort(0)} cap used in latest month</small></div><div className="tj-risk-target"><small>MONTHLY TARGET</small><strong className="tj-purple-txt">{monthlyTarget ? fmtMoney(monthlyTarget) : "Optional"}</strong><span>{monthlyTarget ? `${fmtMoney(Math.max(0, monthlyTarget - Math.max(0, latestMonth?.pnl || 0)))} left to target` : "Set a target in Account Settings"}</span></div></section><section className="tj-risk-bases"><div><small>JOURNAL BASE</small><strong>{fmtMoney(account.balance)}</strong><span>Original balance</span></div><div><small>MONTH BASE</small><strong>{fmtMoney(latestMonth?.start || account.balance)}</strong><span>{latestMonth?.pnl >= 0 ? "+" : ""}{latestMonth?.start ? (latestMonth.pnl / latestMonth.start * 100).toFixed(2) : "0.00"}% this month</span></div><div><small>YEAR BASE</small><strong>{fmtMoney(account.balance)}</strong><span>{account.balance ? `${stats.netPnl / account.balance * 100 >= 0 ? "+" : ""}${(stats.netPnl / account.balance * 100).toFixed(2)}% this year` : ""}</span></div><div><small>PEAK DRAWDOWN</small><strong className="tj-red">-{drawdownPct.toFixed(2)}%</strong><span>{fmtMoney(-peakDrawdown)} peak-to-floor</span></div></section></div></Card>
-    <Card className="tj-risk-coach"><div className="tj-risk-title"><strong>Coach Notes</strong><small className="tj-pill tj-pill-green">Live</small></div><div className="tj-risk-note tj-risk-note-good"><small>LEAN IN</small><strong>{bestConfluence ? `${bestConfluence.name} is the cleanest added edge right now` : "Build a confluence sample"}</strong><span>{bestConfluence ? `${fmtMoney(bestConfluence.netPnl)} across ${bestConfluence.count} trades with ${bestConfluence.winRate.toFixed(0)}% win rate.` : "Add confluences to unlock this note."}</span></div><div className="tj-risk-note tj-risk-note-good"><small>BEST WINDOW</small><strong>{bestInstrument ? `${bestInstrument.asset} is producing the cleanest flow` : "No leading market yet"}</strong><span>{bestInstrument ? `${fmtMoney(bestInstrument.netPnl)} over ${bestInstrument.count} trades with ${bestInstrument.wins} wins.` : "Log more trades to establish a lead."}</span></div><div className="tj-risk-note tj-risk-note-warn"><small>TRIM FIRST</small><strong>{trimConfluence ? `${trimConfluence.name} needs the next review pass` : "No weak confluence identified"}</strong><span>{trimConfluence ? `${fmtMoney(trimConfluence.netPnl)} with ${trimConfluence.winRate.toFixed(0)}% win rate. Check whether the condition is genuinely helping.` : "Keep reviewing the setup sample."}</span></div><div className="tj-risk-note tj-risk-note-context"><small>RISK CONTEXT</small><strong>{monthlyCapPct ? `${fmtMoney(monthlyCapacity)} monthly buffer still available` : "Set a monthly guardrail"}</strong><span>Trade logging stays live while configured limits remain intact.</span></div><div className="tj-risk-coach-metrics"><div><small>BEST INSTRUMENT P&amp;L</small><strong className="tj-green">{bestInstrument ? fmtMoney(bestInstrument.netPnl) : "—"}</strong><span>{bestInstrument ? `${bestInstrument.asset} · ${bestInstrument.count} trades` : "No data"}</span></div><div><small>COMMISSION + SWAP</small><strong className="tj-red">{fmtMoney(-(stats.totalCommission + stats.totalSwap))}</strong><span>{costPct.toFixed(1)}% of gross profit</span></div><div><small>BEST INSTRUMENT</small><strong className="tj-green">{bestInstrument?.asset || "—"}</strong><span>{bestInstrument ? `${bestInstrument.winRate.toFixed(0)}% WR · ${bestInstrument.avgRR.toFixed(2)} RR` : "No data"}</span></div></div><footer>{bestInstrument?.asset || "The leader"} is leading with {bestInstrument ? fmtMoney(bestInstrument.netPnl) : fmtMoneyShort(0)}. {dragInstrument?.asset || "No instrument"} is the current drag at {dragInstrument ? fmtMoney(dragInstrument.netPnl) : fmtMoneyShort(0)}.</footer></Card></div>
-    <Card className="tj-risk-next"><header><div><span>NEXT-TRADE RISK</span><strong>A clear ceiling before the next lock</strong></div><small>{capLabel} is the active constraint</small></header><div><section><small>RISK SLICES</small><b>{riskSlices || "—"}</b><span>{riskSlices ? "average-loss blocks left" : "Set a loss cap to calculate"}</span></section><section><small>NEXT-TRADE RISK CEILING</small><b className="tj-green">{activeCap ? fmtMoney(activeCap) : "Not set"}</b><span>{activeCap && averageLoss ? `${(averageLoss / activeCap * 100).toFixed(0)}% of the active cap per average loss` : "No active cap"}</span></section><section><small>AVERAGE LOSSES TO LOCK</small><b>{riskSlices ? `${riskSlices} avg losses` : "—"}</b><span>{averageLoss ? `${fmtMoney(-averageLoss)} average realised loss` : "No loss sample"}</span></section></div></Card>
-  </div>;
-}
 
 function riskInsightsData(account, trades, stats) {
   const averageRR = stats.total ? trades.reduce((sum, trade) => sum + (Number(trade.rr) || 0), 0) / stats.total : 0;
@@ -5604,7 +5268,6 @@ export function FinanceReminderModal({ account, savingsPlans, onClose, onOpenFin
   </Modal>;
 }
 
-const ANALYTICS_V2 = true;
 function AnalyticsPage({ account, balances = [], selectedBalanceId = "", onSelectBalance, reviews = [], markups = [], onSaveTradeReview, onViewMarkups, onOpenAccountSettings }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(() => {
@@ -5986,7 +5649,7 @@ function AnalyticsPage({ account, balances = [], selectedBalanceId = "", onSelec
       <AccountGuardrailsPanel account={account} guardrails={liveGuardrails} stats={liveGuardrailStats}/>
       <Card className="tj-analytics-deck" id="analytics-overview">
         <div className="tj-analytics-deck-copy"><span>ANALYTICS DECK</span></div>
-        <div className="tj-analytics-deck-controls">{balances.length > 1 && <ThemeSelect value={selectedBalanceId} onChange={(event) => onSelectBalance?.(event.target.value)} label="Analytics account" leading={selectedBalanceId ? balances.findIndex((balance) => balance.id === selectedBalanceId) + 1 : "A"} variant="analytics-account"><option value="">All accounts</option>{balances.map((balance) => <option key={balance.id} value={balance.id}>{balance.name}</option>)}</ThemeSelect>}<div className="tj-analytics-deck-tabs" role="tablist" aria-label="Analytics sections">{[["overview", "Overview", "analytics-overview"], ["performance", ANALYTICS_V2 ? "Edge" : "Performance Metrics", "analytics-performance"], ["rhythm", ANALYTICS_V2 ? "Rhythm" : "Execution Rhythm", "analytics-rhythm"], ["guardrails", ANALYTICS_V2 ? "Discipline & Risk" : "Risk Guardrails", "analytics-guardrails"]].map(([id, label, target]) => <button key={id} type="button" role="tab" aria-selected={analyticsTab === id} className={analyticsTab === id ? "tj-analytics-deck-tab-active" : ""} onClick={() => { setAnalyticsTab(id); if (!window.matchMedia(MOBILE_MEDIA).matches && id !== "performance" && id !== "overview") setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}><span className="tj-analytics-desktop-tab">{ANALYTICS_V2 && {overview:<BarChart3 size={16} aria-hidden="true"/>,performance:<Star size={16} aria-hidden="true"/>,rhythm:<ClockIcon size={16} aria-hidden="true"/>,guardrails:<ShieldCheck size={16} aria-hidden="true"/>}[id]}{label}</span><span className="tj-analytics-phone-tab">{{overview:"Overview",performance:"Metrics",rhythm:"Rhythm",guardrails:"Risk"}[id]}</span></button>)}</div></div>
+        <div className="tj-analytics-deck-controls">{balances.length > 1 && <ThemeSelect value={selectedBalanceId} onChange={(event) => onSelectBalance?.(event.target.value)} label="Analytics account" leading={selectedBalanceId ? balances.findIndex((balance) => balance.id === selectedBalanceId) + 1 : "A"} variant="analytics-account"><option value="">All accounts</option>{balances.map((balance) => <option key={balance.id} value={balance.id}>{balance.name}</option>)}</ThemeSelect>}<div className="tj-analytics-deck-tabs" role="tablist" aria-label="Analytics sections">{[["overview", "Overview", "analytics-overview"], ["performance", "Edge", "analytics-performance"], ["rhythm", "Rhythm", "analytics-rhythm"], ["guardrails", "Discipline & Risk", "analytics-guardrails"]].map(([id, label, target]) => <button key={id} type="button" role="tab" aria-selected={analyticsTab === id} className={analyticsTab === id ? "tj-analytics-deck-tab-active" : ""} onClick={() => { setAnalyticsTab(id); if (!window.matchMedia(MOBILE_MEDIA).matches && id !== "performance" && id !== "overview") setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}><span className="tj-analytics-desktop-tab">{{overview:<BarChart3 size={16} aria-hidden="true"/>,performance:<Star size={16} aria-hidden="true"/>,rhythm:<ClockIcon size={16} aria-hidden="true"/>,guardrails:<ShieldCheck size={16} aria-hidden="true"/>}[id]}{label}</span><span className="tj-analytics-phone-tab">{{overview:"Overview",performance:"Metrics",rhythm:"Rhythm",guardrails:"Risk"}[id]}</span></button>)}</div></div>
         <div className="tj-analytics-period-wrap" ref={periodRef}>
           <button type="button" className={`tj-analytics-period ${periodOpen ? "tj-analytics-period-open" : ""}`} title="Choose analytics months" aria-haspopup="dialog" aria-expanded={periodOpen} onClick={() => setPeriodOpen((open) => !open)}>
             <CalendarIcon size={14}/><span>{analyticsPeriodLabel}</span>{periodOpen ? <ChevronUp size={14}/> : <ChevronDown size={14}/>} 
@@ -6004,54 +5667,7 @@ function AnalyticsPage({ account, balances = [], selectedBalanceId = "", onSelec
       </Card>
 
       <div className="tj-view-transition" key={analyticsTab}>
-      {analyticsTab === "performance" ? <PerformanceMetricsView account={account} trades={trades} monthlyYear={pickerYear} markups={analyticsMarkups} cap={cap} stats={stats} tagStats={tagStats} confluenceStats={confluenceStats} pairingStats={pairingStats} instrumentStats={instrumentStats} onViewMarkups={onViewMarkups} onOpenTradeReview={(trade) => setTradeEditor({ trade })}/> : analyticsTab === "rhythm" ? <ExecutionRhythmView account={account} trades={trades} cap={cap} stats={stats} monthlyYear={pickerYear}/> : analyticsTab === "guardrails" ? <RiskGuardrailsView onOpenAccountSettings={onOpenAccountSettings} account={account} trades={trades} cap={cap} stats={stats} confluenceStats={confluenceStats} instrumentStats={instrumentStats}/> : ANALYTICS_V2 ? overviewV2 : <>
-
-      <Card className="tj-analytics-equity-hero">
-        <div className="tj-analytics-equity-head"><div><div className="tj-section-label">ALL-TIME EQUITY</div><h2>{fmtMoney(currentEquity)} <span>live balance</span></h2><p>Starts at {fmtMoney(openingBalance)}. Trade results and dated account cash movements roll into this balance line; trade metrics below remain trade-only.</p></div><div className="tj-analytics-hero-return"><strong className={equityChangePct >= 0 ? "tj-green" : "tj-red"}>{equityChangePct >= 0 ? "+" : ""}{equityChangePct.toFixed(2)}%</strong><span>{stats.total} trades tracked</span><small>{fmtMoney(currentMonthPnl)} this month · {currentMonthPct >= 0 ? "+" : ""}{currentMonthPct.toFixed(2)}%</small></div></div>
-        <div className="tj-analytics-equity-chart"><ResponsiveContainer width="100%" height="100%" minHeight={220}><AreaChart data={equityData}><defs><linearGradient id="analyticsEquity" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={UI_COLORS.purple} stopOpacity={.32}/><stop offset="100%" stopColor={UI_COLORS.purple} stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="var(--tj-chart-grid)" strokeDasharray="3 3" vertical={false}/><XAxis dataKey="label" hide/><YAxis hide domain={["dataMin - 100", "dataMax + 100"]}/><Tooltip content={<CompactChartTooltip metric="Equity" neutral/>}/><Area {...getChartAnimation("line")} type="monotone" dataKey="equity" stroke={UI_COLORS.purple} fill="url(#analyticsEquity)" strokeWidth={2.5} dot={false}/></AreaChart></ResponsiveContainer><div className="tj-analytics-equity-milestones"><div><small>BASE</small><strong>{fmtMoney(openingBalance)}</strong><span>Original starting balance</span></div><div><small>LOW PRINT</small><strong>{fmtMoney(lowestEquity)}</strong><span>Lowest balance print so far</span></div><div><small>MONTH BASE</small><strong>{fmtMoney(monthBase)}</strong><span>Current compounding reset point</span></div><div><small>HIGH-WATER</small><strong>{fmtMoney(highestEquity)}</strong><span>Best balance print so far</span></div><div><small>PEAK TO LOW</small><strong className="tj-red">-{maxDrawdown.pct.toFixed(2)}%</strong><span>{fmtMoney(-maxDrawdown.amount)} drawdown</span></div><div><small>NOW</small><strong>{fmtMoney(currentEquity)}</strong><span>Live balance right now</span></div></div></div>
-      </Card>
-
-      <Card key={engineTab} className={`tj-analytics-engine tj-analytics-engine-wide tj-engine-view-${engineTab} tj-subview-transition`}>
-        <div className="tj-engine-wide-head"><div><span>TRADING ENGINE</span></div><div className="tj-engine-tabs" role="tablist" aria-label="Trading engine sections">{[["overview", "Overview"], ["models", "Entry Models"], ["confluences", "Confluences"]].map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={engineTab === id} className={engineTab === id ? "tj-engine-tab-active" : ""} onClick={() => setEngineTab(id)}>{label}</button>)}</div></div>
-
-        {engineTab === "overview" && <>
-          <div className="tj-engine-wide-value"><div><strong className={stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(stats.netPnl)}</strong><div className="tj-engine-pills"><i className="tj-engine-period-return">{periodReturnPct >= 0 ? "+" : ""}{periodReturnPct.toFixed(2)}% return · {analyticsPeriodLabel}</i><i>{fmtMoney(stats.total ? stats.netPnl / stats.total : 0)} expectancy per trade</i><i>{averageRR.toFixed(2)} avg RR</i><i>{taggedTrades === stats.total ? "Entry model tagged on every trade" : `${taggedTrades}/${stats.total} trades use an Entry Model`}</i></div></div><div className="tj-engine-score"><small>EXECUTION QUALITY</small><strong>{stats.thunderScore}</strong><span>{executionLabel}</span></div></div>
-          <div className="tj-engine-metrics"><div><small>WIN RATE</small><strong className={wrColorClass(stats.winRate)}>{stats.winRate.toFixed(0)}%</strong><span>{stats.wins} wins from {stats.total} total trades</span></div><div><small>PROFIT FACTOR</small><strong>{formatRatio(stats.profitFactor)}</strong><span>{formatRatio(stats.avgWinLoss)} avg win/loss edge</span></div><div><small>CONSISTENCY</small><strong>{stats.consistency.toFixed(0)}</strong><span>{stats.bestWinStreak}W best run · {stats.bestLossStreak}L max loss run</span></div><div><small>RECOVERY</small><strong>{stats.recovery.toFixed(0)}%</strong><span>How often the next trade recovers after a loss</span></div><div><small>LARGEST WIN</small><strong className="tj-green">{stats.wins ? fmtMoney(Math.max(...stats.sorted.filter(trade => classify(trade.pnl, cap) === "win").map(trade => trade.pnl))) : "—"}</strong><span>{trades.slice().sort((a, b) => b.pnl - a.pnl)[0]?.asset || "Best closed trade"} · {trades.slice().sort((a, b) => b.pnl - a.pnl)[0]?.date || ""}</span></div><div><small>LARGEST LOSS</small><strong className="tj-red">{stats.losses ? fmtMoney(Math.min(...stats.sorted.filter(trade => classify(trade.pnl, cap) === "loss").map(trade => trade.pnl))) : "—"}</strong><span>{trades.slice().sort((a, b) => a.pnl - b.pnl)[0]?.asset || "Largest closed loss"} · {trades.slice().sort((a, b) => a.pnl - b.pnl)[0]?.date || ""}</span></div></div>
-          <div className="tj-engine-trade-mix"><span>TRADE MIX</span><small>{stats.wins}W / {stats.losses}L / {stats.be} B/E</small><i><em data-chart-fill="horizontal" style={{ width: `${stats.total ? stats.wins / stats.total * 100 : 0}%` }}/><b data-chart-fill="horizontal" style={{ width: `${stats.total ? stats.losses / stats.total * 100 : 0}%` }}/></i></div>
-        </>}
-
-        {engineTab === "models" && <div className="tj-engine-drilldown" role="region" aria-label="Entry model performance cards"><div className="tj-engine-drilldown-hero"><div><h3>{bestEntryType?.tag || "No model yet"}</h3><strong className={bestEntryType?.netPnl >= 0 ? "tj-green" : "tj-red"}>{bestEntryType ? fmtMoney(bestEntryType.netPnl) : fmtMoney(0)}</strong><div className="tj-engine-pills"><i>{bestEntryType ? `${bestEntryType.winRate.toFixed(0)}% WR` : "0% WR"}</i><i>{bestEntryType ? `${bestEntryType.avgRR.toFixed(2)} avg RR` : "0.00 avg RR"}</i><i>{taggedTrades === stats.total ? "Entry model tagged on every trade" : `${taggedTrades}/${stats.total} trades tagged`}</i></div></div><div className="tj-engine-score"><small>BEST MODEL</small><strong>{bestEntryType ? `${bestEntryType.winRate.toFixed(0)}%` : "—"}</strong><span>{bestEntryType ? `${bestEntryType.count} trades · ${bestEntryType.avgRR.toFixed(2)} avg RR` : "Build a tagged sample"}</span></div></div><div className="tj-engine-drilldown-cards tj-engine-model-cards">{tagStats.map((item) => { const grade = getGrade(item.winRate, item.netPnl, item.count); return <div key={item.tag} className={`tj-engine-drill-card ${item.tag === bestEntryType?.tag ? "tj-engine-drill-card-leading" : ""}`}><div><strong>{item.tag}</strong><b className={`tj-grade-badge ${grade === "D" || grade === "C" ? "tj-grade-bad" : ""}`}>{grade}</b></div><em className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</em><span className="tj-engine-model-meta"><span><b>{item.count}</b> trades</span><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}% WR</b><span><b>{item.avgRR.toFixed(2)}</b> RR</span></span><i><small data-chart-fill="horizontal" className={wrBarClass(item.winRate)} style={{ width: `${item.winRate}%` }}/></i></div>; })}</div></div>}
-
-        {engineTab === "confluences" && <div className="tj-engine-drilldown" role="region" aria-label="Confluence performance cards"><div className="tj-engine-drilldown-hero"><div><h3>{bestConfluence?.name || "No confluence yet"}</h3><strong className={bestConfluence?.netPnl >= 0 ? "tj-green" : "tj-red"}>{bestConfluence ? fmtMoney(bestConfluence.netPnl) : fmtMoney(0)}</strong><div className="tj-engine-pills"><i>{bestConfluence ? `${bestConfluence.winRate.toFixed(0)}% WR` : "0% WR"}</i><i>{bestConfluence ? `${bestConfluence.avgRR.toFixed(2)} avg RR` : "0.00 avg RR"}</i><i>{trades.filter((trade) => (trade.confluence || trade.types || []).length).length}/{stats.total} trades tagged with confluence</i></div></div><div className="tj-engine-score"><small>BEST CONFLUENCE</small><strong>{bestConfluence?.grade || "—"}</strong><span>{bestConfluence ? `${bestConfluence.count} trades · ${bestConfluence.winRate.toFixed(0)}% win rate` : "Build a tagged sample"}</span></div></div><div className="tj-engine-drilldown-cards tj-engine-confluence-cards">{confluenceStats.map((item) => <div key={item.name} className={`tj-engine-drill-card ${item.name === bestConfluence?.name ? "tj-engine-drill-card-leading" : ""}`}><div><strong>{item.name}</strong><b className={`tj-grade-badge ${item.grade === "D" || item.grade === "C" ? "tj-grade-bad" : ""}`}>{item.grade}</b></div><em className={item.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.netPnl)}</em><span className="tj-engine-model-meta"><span><b>{item.count}</b> trades</span><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}% WR</b><span><b>{item.avgRR.toFixed(2)}</b> RR</span></span><i><small data-chart-fill="horizontal" className={wrBarClass(item.winRate)} style={{ width: `${item.winRate}%` }}/></i></div>)}</div></div>}
-
-      </Card>
-
-      <Card className="tj-live-analytics" id="analytics-live">
-        <div className="tj-live-analytics-head"><div><strong>Live Analytics View</strong></div><span className="tj-pill tj-pill-green">Live</span></div>
-        <div className="tj-live-analytics-grid">
-          <section className="tj-live-panel">
-            <div className="tj-live-panel-head"><div><small>WIN RATE BY INSTRUMENT</small><strong>Where the cleanest wins are landing</strong></div><span>{instrumentStats.length} {instrumentStats.length === 1 ? "Instrument" : "Instruments"}</span></div>
-            <div className="tj-live-instrument-chart">
-              {liveInstrumentStats.map((item, index) => <div className="tj-live-instrument-row" key={item.asset} title={`${item.asset}: ${item.count} trades, ${fmtMoney(item.netPnl)}, ${item.winRate.toFixed(0)}% win rate`}><strong>{item.asset}</strong><i><em data-chart-fill="horizontal" style={{ width: `${item.winRate}%`, background: liveChartColors[index % liveChartColors.length] }}/></i><span>{item.winRate.toFixed(0)}%</span></div>)}
-            </div>
-            <div className="tj-live-chips">{liveInstrumentStats.map((item, index) => <span key={item.asset}><i style={{ background: liveChartColors[index % liveChartColors.length] }}/>{item.asset} {item.winRate.toFixed(0)}% WR</span>)}</div>
-          </section>
-
-          <section className="tj-live-panel">
-            <div className="tj-live-panel-head"><div><small>ASSET ALLOCATION &amp; EXPOSURE</small><strong>How the journal is distributed</strong></div><span>{stats.total} trades</span></div>
-            <div className="tj-live-donut-wrap"><div className="tj-live-donut" style={{ "--tj-allocation-gradient": allocationBackground }} title={`${stats.total} trades across ${instrumentStats.length} instruments`}><div><strong>{stats.total}</strong><span>LIVE SPLIT</span></div></div></div>
-            <div className="tj-live-chips">{liveInstrumentStats.map((item, index) => <span key={item.asset}><i style={{ background: liveChartColors[index % liveChartColors.length] }}/>{item.asset} {fmtMoney(item.netPnl)}</span>)}</div>
-          </section>
-
-          <section className="tj-live-panel">
-            <div className="tj-live-panel-head"><div><small>DAILY P&amp;L GROWTH</small><strong>The day-by-day pulse of the account</strong></div><span>{tradingDays.length} days</span></div>
-            <div className="tj-live-daily-chart"><ResponsiveContainer width="100%" height="100%" minHeight={220}><AreaChart data={dailyGrowthData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}><XAxis dataKey="date" hide/><YAxis hide/><Tooltip itemStyle={{color:"var(--tj-text)"}} labelStyle={{color:"var(--tj-text)"}} contentStyle={CHART_TOOLTIP_STYLE} labelFormatter={(label) => `Date ${label}`} formatter={(value, _name, item) => [`${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(2)}% · ${fmtMoney(item.payload.pnl)} · ${item.payload.count} trade${item.payload.count === 1 ? "" : "s"}`, "Daily result"]}/><Area {...getChartAnimation("line")} type="linear" dataKey="pct" stroke={UI_COLORS.primary} fill="none" strokeWidth={2.25} dot={false}/></AreaChart></ResponsiveContainer></div>
-            <div className="tj-live-chips"><span>BEST DAY <b className="tj-green">{bestDailyPct >= 0 ? "+" : ""}{bestDailyPct.toFixed(2)}%</b></span><span>WORST DAY <b className={worstDailyPct >= 0 ? "tj-green" : "tj-red"}>{worstDailyPct >= 0 ? "+" : ""}{worstDailyPct.toFixed(2)}%</b></span></div>
-          </section>
-        </div>
-      </Card>
-
-      </>}
+      {analyticsTab === "performance" ? <PerformanceMetricsView account={account} trades={trades} monthlyYear={pickerYear} markups={analyticsMarkups} cap={cap} stats={stats} tagStats={tagStats} confluenceStats={confluenceStats} pairingStats={pairingStats} instrumentStats={instrumentStats} onViewMarkups={onViewMarkups} onOpenTradeReview={(trade) => setTradeEditor({ trade })}/> : analyticsTab === "rhythm" ? <ExecutionRhythmView account={account} trades={trades} cap={cap} stats={stats} monthlyYear={pickerYear}/> : analyticsTab === "guardrails" ? <RiskGuardrailsView onOpenAccountSettings={onOpenAccountSettings} account={account} trades={trades} cap={cap} stats={stats} confluenceStats={confluenceStats} instrumentStats={instrumentStats}/> : overviewV2}
       </div>
       {tradeEditor && <TradeReviewEditorModal readOnly trade={tradeEditor.trade} trades={trades} existing={reviews.find((review) => review.tradeId === tradeEditor.trade.id)} reviews={reviews} markups={markups} account={account} onClose={() => setTradeEditor(null)} onSave={onSaveTradeReview}/>} 
     </div>

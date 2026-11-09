@@ -5,12 +5,12 @@ import {readFileSync} from 'node:fs';
 const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./desktopAnalytics.css', import.meta.url), 'utf8');
 
-test('desktop Analytics shows the v2 Overview and the renamed deck tabs', () => {
-  assert.match(journal, /const ANALYTICS_V2 = true;/);
+test('desktop Analytics uses the current Overview and renamed deck tabs directly', () => {
   assert.match(journal, /import '\.\/desktopAnalytics\.css';/);
-  assert.match(journal, /: ANALYTICS_V2 \? overviewV2 : <>/);
-  assert.match(journal, /\["performance", ANALYTICS_V2 \? "Edge" : "Performance Metrics", "analytics-performance"\]/);
-  assert.match(journal, /\["guardrails", ANALYTICS_V2 \? "Discipline & Risk" : "Risk Guardrails", "analytics-guardrails"\]/);
+  assert.doesNotMatch(journal, /ANALYTICS_V2/);
+  assert.match(journal, /: overviewV2\}/);
+  assert.match(journal, /\["performance", "Edge", "analytics-performance"\]/);
+  assert.match(journal, /\["guardrails", "Discipline & Risk", "analytics-guardrails"\]/);
 });
 
 test('Analytics Overview uses the existing figures and opens the other tabs', () => {
@@ -44,13 +44,13 @@ test('Analytics v2 does not inherit the legacy full-height scroll tracks', () =>
 
 test('Analytics v2 Edge has entry models, instruments and markups with a section bar', () => {
   assert.match(journal, /<AnSectionNav items=\{\[\["models", "Entry models"\], \["instruments", "Instruments"\], \["markups", "Markups"\]\]\}\/>/);
-  assert.match(journal, /if \(ANALYTICS_V2\) \{\n\s*const edgeModels = \[\.\.\.tagStats\]\.sort\(\(a, b\) => b\.netPnl - a\.netPnl\);/);
+  assert.match(journal, /const edgeModels = \[\.\.\.tagStats\]\.sort\(\(a, b\) => b\.netPnl - a\.netPnl\);/);
   assert.match(journal, /onClick=\{onViewMarkups\}>View all plans/);
   assert.match(css, /\.an2-snav \{position:sticky;top:8px;/);
 });
 
 test('Analytics v2 Rhythm shows day, week and month with the monthly range switch', () => {
-  assert.match(journal, /if \(ANALYTICS_V2\) return <AnalyticsRhythmV2 account=\{account\} trades=\{trades\} cap=\{cap\} stats=\{stats\} monthlyYear=\{monthlyYear\}\/>;/);
+  assert.match(journal, /function ExecutionRhythmView\(\{ account, trades, cap, stats, monthlyYear \}\) \{\n\s*return <AnalyticsRhythmV2 account=\{account\} trades=\{trades\} cap=\{cap\} stats=\{stats\} monthlyYear=\{monthlyYear\}\/>;/);
   assert.match(journal, /<AnSectionNav items=\{\[\["day", "Day"\], \["week", "Week"\], \["month", "Month"\]\]\}\/>/);
   assert.match(journal, /const monthly = monthlyPnlRange\(closedTrades\(account\.trades\), \{ balance: account\.balance, year: monthlyYear, range,/);
   assert.match(journal, /<ExecutionRhythmView account=\{account\} trades=\{trades\} cap=\{cap\} stats=\{stats\} monthlyYear=\{pickerYear\}\/>/);

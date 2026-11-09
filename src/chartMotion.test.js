@@ -37,20 +37,19 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   visit(parse(source,{sourceType:'module',plugins:['jsx']}));
   // Savings goal progress now lives in the shared Orbit card, not this page's width fills.
   // Review period cards use reviewed counts instead of decorative progress fills.
-  // The desktop side panel's rule progress bar is one more fill (56).
-  // The removed unreachable Trade Logs branch contained one chart and sixteen percentage
-  // fills. The active surfaces, including the Analytics Edge and Rhythm views, total 17
-  // charts and 65 fills after the unreachable legacy Review view was removed.
+  // The desktop side panel's rule progress bar is one more fill.
+  // The removed unreachable Analytics fallback contained extra charts and percentage
+  // fills; the active Edge and Rhythm surfaces remain covered below.
   // The active per-account challenge and guardrail panels own three fill nodes.
-  assert.equal(chartCount,17);assert.equal(fillCount,65);
+  assert.equal(chartCount,10);assert.equal(fillCount,41);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 
-test('donut turns only its ring, preserves summary labels and themes, and stops for reduced motion', () => {
+test('chart motion preserves the active Analytics mix summary and theme-safe animation rules', () => {
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   const css=readFileSync(new URL('./chartMotion.css',import.meta.url),'utf8');
   assert.doesNotMatch(source,/in rotation/);
-  assert.match(source,/<strong>\{stats.total\}<\/strong><span>LIVE SPLIT<\/span>/);
+  assert.match(source,/<span className="an2-eb2">Trade mix<\/span>/);
   assert.match(css,/\.tj-live-donut::after/);assert.match(css,/background: var\(--tj-allocation-gradient\)/);
   assert.match(css,/rotate\(-360deg\)/);assert.match(css,/@keyframes tj-chart-ring-turn \{[^}]+\}[^}]*to \{ transform: none;/);
   assert.match(css,/prefers-reduced-motion: reduce/);
