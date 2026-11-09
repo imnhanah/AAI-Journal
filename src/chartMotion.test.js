@@ -37,15 +37,19 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   visit(parse(source,{sourceType:'module',plugins:['jsx']}));
   // Savings goal progress now lives in the shared Orbit card, not this page's width fills.
   // Review period cards use reviewed counts instead of decorative progress fills.
-  assert.equal(chartCount,15);assert.equal(fillCount,55);
+  // The desktop side panel's rule progress bar is one more fill.
+  // Removed unreachable Analytics and Markups fallbacks contained extra charts and
+  // percentage fills; the active surfaces remain covered below.
+  // The active per-account challenge and guardrail panels own three fill nodes.
+  assert.equal(chartCount,10);assert.equal(fillCount,36);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 
-test('donut turns only its ring, preserves summary labels and themes, and stops for reduced motion', () => {
+test('chart motion preserves the active Analytics mix summary and theme-safe animation rules', () => {
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   const css=readFileSync(new URL('./chartMotion.css',import.meta.url),'utf8');
   assert.doesNotMatch(source,/in rotation/);
-  assert.match(source,/<strong>\{stats.total\}<\/strong><span>LIVE SPLIT<\/span>/);
+  assert.match(source,/<span className="an2-eb2">Trade mix<\/span>/);
   assert.match(css,/\.tj-live-donut::after/);assert.match(css,/background: var\(--tj-allocation-gradient\)/);
   assert.match(css,/rotate\(-360deg\)/);assert.match(css,/@keyframes tj-chart-ring-turn \{[^}]+\}[^}]*to \{ transform: none;/);
   assert.match(css,/prefers-reduced-motion: reduce/);

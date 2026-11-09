@@ -2,7 +2,8 @@ import React, { useEffect, useLayoutEffect, useId, useRef, useState } from 'reac
 import { createPortal } from 'react-dom';
 import './journal-controls.css';
 import {displayWeekdays, weekStartOffset} from './displayPreferences';
-import {timeParts, storedTime, displayTime} from './timePickerModel';
+import {isStoredTime, timeParts, storedTime, displayTime} from './timePickerModel';
+import {dateValueToday, dateWithinRange, parseDateValue} from './datePickerModel';
 import MobileInstrumentPicker from './MobileInstrumentPicker.jsx';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
 import {instrumentGroup} from './instrumentCatalog';
@@ -15,9 +16,19 @@ function Popup({ label, text, leading, children, disabled = false, compact = fal
   const [position, setPosition] = useState(null);
   const id = useId();
   useEffect(() => {
-    const outside = event => { if (!root.current?.contains(event.target) && !panel.current?.contains(event.target)) setOpen(false); };
-    document.addEventListener('pointerdown', outside);
-    return () => document.removeEventListener('pointerdown', outside);
+    // Safari can report a null relatedTarget while moving focus from the trigger
+    // into a portalled option. Do not dismiss from a blur handler: it can unmount
+    // the option between pointerdown and click. Pointer/focus containment works
+    // for both regular DOM children and React portals.
+    const outside = event => {
+      // The initial focus event from an auto-focused portalled input can occur
+      // before React assigns its ref. It belongs to this popup, not outside it.
+      if (!panel.current) return;
+      if (!root.current?.contains(event.target) && !panel.current.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', outside, true);
+    document.addEventListener('focusin', outside);
+    return () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('focusin', outside); };
   }, []);
   useLayoutEffect(() => {
     if (!open) {setPosition(null); return;}
@@ -43,12 +54,12 @@ function Popup({ label, text, leading, children, disabled = false, compact = fal
     return () => {window.removeEventListener('resize',place);document.removeEventListener('scroll',scroll,true);};
   }, [open, compact, variant]);
   useEffect(() => {
-    if (open && position) (panel.current?.querySelector('input[autofocus]') || panel.current?.querySelector('[aria-checked="true"], [aria-pressed="true"]') || panel.current?.querySelector('button:not(:disabled), input'))?.focus({preventScroll:true});
+    if (open && position) (panel.current?.querySelector('[data-picker-autofocus]') || panel.current?.querySelector('[aria-checked="true"], [aria-pressed="true"]') || panel.current?.querySelector('button:not(:disabled), input'))?.focus({preventScroll:true});
   }, [open, Boolean(position)]);
-  const close = () => { setOpen(false); trigger.current?.focus(); };
-  return <div ref={root} className={`tj-themed-control ${variant ? `tj-control-${variant}` : ''}`} onBlur={event => { if (!root.current?.contains(event.relatedTarget) && !panel.current?.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={event => { if (event.key === 'Escape') {event.stopPropagation(); close();} }}>
+  const close = () => { setOpen(false); trigger.current?.focus({preventScroll:true}); };
+  return <div ref={root} className={`tj-themed-control ${variant ? `tj-control-${variant}` : ''}`} onKeyDown={event => { if (event.key === 'Escape') {event.stopPropagation(); close();} }}>
     <button ref={trigger} type="button" className={`tj-input tj-picker-trigger ${className}`} disabled={disabled} aria-label={label} aria-required={required || undefined} aria-expanded={open} aria-controls={open ? id : undefined} {...accessibility} onKeyDown={event=>{if(event.key==='ArrowDown'){event.preventDefault();setOpen(true);panel.current?.querySelector('button[aria-checked="true"],button:not(:disabled)')?.focus();}}} onClick={() => setOpen(!open)}>{leading != null && <i className="tj-picker-leading" aria-hidden="true">{leading}</i>}{leading != null ? <em className="tj-picker-account-name">{text || 'Select…'}</em> : text || 'Select…'}<span aria-hidden="true">{open && ['calendar-account', 'analytics-account'].includes(variant) ? '⌃' : '⌄'}</span></button>
-    {open && createPortal(<div ref={panel} id={id} className={`tj-picker-panel tj-floating-picker ${compact ? 'tj-picker-compact' : ''} ${variant ? `tj-picker-${variant}` : ''}`} style={position || {position:'fixed',visibility:'hidden',width:compact?160:250}} role="group" aria-label={label}>{children(close)}</div>, root.current?.closest('.tj-root,.public-site') || document.body)}
+    {open && createPortal(<div className="tj-root tj-picker-portal" style={{position:'fixed',inset:0,width:0,height:0,overflow:'visible',pointerEvents:'none'}}><div ref={panel} id={id} className={`tj-picker-panel tj-floating-picker ${compact ? 'tj-picker-compact' : ''} ${variant ? `tj-picker-${variant}` : ''}`} style={{...(position || {position:'fixed',visibility:'hidden',width:compact?160:250}),pointerEvents:'auto'}} role="group" aria-label={label}>{children(close)}</div></div>, document.body)}
   </div>;
 }
 
@@ -85,37 +96,55 @@ export function ThemeInstrument({value, onChange, options, ...accessibility}) {
   const compact = text => String(text || '').replace(/[^a-z0-9]/gi,'').toUpperCase();
   const matches = options.filter(item => compact(item).includes(compact(query)));
   if(phone)return <MobileInstrumentPicker value={value} onChange={onChange} options={options} {...accessibility}/>;
-  return <Popup label="Instrument" text={value || 'Select'} {...accessibility}>{close => <><strong>Instrument</strong><input autoFocus className="tj-input tj-picker-search" aria-label="Search instruments" placeholder="Search instruments" value={query} onChange={event=>setQuery(event.target.value)}/><ChoiceList label="Instruments" options={matches.map(item=>({value:item,label:<><b>{item}</b><small className="tj-instrument-group-label">{instrumentGroup(item)}</small></>}))} value={value} onSelect={next=>{onChange(next);setQuery('');close();}}/>{!matches.length && <p>No matching instruments.</p>}</>}</Popup>;
+  return <Popup label="Instrument" text={value || 'Select'} {...accessibility}>{close => <><strong>Instrument</strong><input data-picker-autofocus className="tj-input tj-picker-search" aria-label="Search instruments" placeholder="Search instruments" value={query} onChange={event=>setQuery(event.target.value)}/><ChoiceList label="Instruments" options={matches.map(item=>({value:item,label:<><b>{item}</b><small className="tj-instrument-group-label">{instrumentGroup(item)}</small></>}))} value={value} onSelect={next=>{onChange(next);setQuery('');close();}}/>{!matches.length && <p>No matching instruments.</p>}</>}</Popup>;
 }
 export function ThemeRiskReward({value, onChange, disabled = false, customValues = []}) {
   const values=[...new Set([2,2.5,3,3.5,4,5,...customValues.map(Number).filter(item=>Number.isFinite(item)&&item>0)])].sort((a,b)=>a-b);
   const options=values.map(item=>({value:String(item),label:String(item)}));
   const text=value === '' || value == null ? 'Select or enter' : String(value);
-  return <Popup label="Risk:Reward (R)" disabled={disabled} text={text}>{close => <><strong>Risk:Reward (R)</strong><input autoFocus type="number" min="0" step="0.1" className="tj-input tj-picker-search" aria-label="Custom risk reward" placeholder="Enter custom value" value={value ?? ''} onChange={event=>onChange(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();close();}}}/><ChoiceList label="Risk reward presets" options={options} value={value} onSelect={next=>{onChange(next);close();}}/></>}</Popup>;
+  return <Popup label="Risk:Reward (R)" disabled={disabled} text={text}>{close => <><strong>Risk:Reward (R)</strong><input data-picker-autofocus type="number" min="0" step="0.1" className="tj-input tj-picker-search" aria-label="Custom risk reward" placeholder="Enter custom value" value={value ?? ''} onChange={event=>onChange(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();close();}}}/><ChoiceList label="Risk reward presets" options={options} value={value} onSelect={next=>{onChange(next);close();}}/></>}</Popup>;
 }
 export function ThemeTime({ value = '', onChange, label = 'Time', format = '12', disabled = false, required = false, className = '', ...accessibility }) {
   const now = new Date();
   const current = timeParts(`${pad(now.getHours())}:${pad(now.getMinutes())}`);
-  const {hour, minute, period} = value ? timeParts(value) : current;
+  const [draftValue,setDraftValue] = useState(value);
+  useEffect(() => setDraftValue(value), [value]);
+  const {hour, minute, period} = draftValue ? timeParts(draftValue) : current;
   const is24 = format === '24';
-  const hour24 = value ? value.slice(0,2) : pad(now.getHours());
-  const choose = (h, m, p) => onChange({target:{value:storedTime(h, m, p)}});
-  const choose24 = (h,m) => onChange({target:{value:`${h}:${m || '00'}`}});
+  const hour24 = draftValue ? draftValue.slice(0,2) : pad(now.getHours());
+  const choose = (h, m, p) => setDraftValue(storedTime(h, m, p));
+  const choose24 = (h,m) => setDraftValue(`${h}:${m || '00'}`);
+  const done = close => { if (isStoredTime(draftValue)) onChange({target:{value:draftValue}}); close(); };
   return <Popup label={label} disabled={disabled} required={required} className={className} variant="time" text={is24 ? value || '--:--' : displayTime(value)} {...accessibility}>{close => <><strong>{label}</strong><div className={`tj-time-columns ${is24 ? '' : 'tj-time-columns-12'}`}>
     <div><small>Hour</small><ChoiceList label="Hour" options={Array.from({length:is24?24:12},(_,i)=>({value:pad(is24?i:i+1),label:pad(is24?i:i+1)}))} value={is24?hour24:hour} onSelect={next=>is24?choose24(next,minute):choose(next,minute,period)}/></div>
     <div><small>Minute</small><ChoiceList label="Minute" options={Array.from({length:60},(_,i)=>({value:pad(i),label:pad(i)}))} value={minute} onSelect={next=>is24?choose24(hour24,next):choose(hour,next,period)}/></div>
     {!is24 && <div><small>AM / PM</small><ChoiceList label="AM or PM" options={['AM','PM'].map(next=>({value:next,label:next}))} value={period} onSelect={next=>choose(hour,minute,next)}/></div>}
-    </div><button type="button" className="tj-picker-clear" onClick={close}>Done</button><button type="button" className="tj-picker-clear" onClick={() => {onChange({target:{value:''}});close();}}>Clear time</button></>}</Popup>;
+    </div><button type="button" className="tj-picker-clear" onClick={()=>done(close)}>Done</button><button type="button" className="tj-picker-clear" onClick={() => {setDraftValue('');onChange({target:{value:''}});close();}}>Clear time</button></>}</Popup>;
 }
 
 export function ThemeDate({ value = '', onChange, label = 'Date', disabled = false, required = false, min, max, className = '', ...accessibility }) {
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date();
-  const now = new Date();
-  const today = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const parsed = parseDateValue(value) || new Date();
+  const today = dateValueToday();
   const [month, setMonth] = useState(new Date(parsed.getFullYear(),parsed.getMonth(),1));
-  useEffect(() => { if(value) setMonth(new Date(`${value.slice(0,7)}-01T12:00:00`)); }, [value]);
+  useEffect(() => { const next = parseDateValue(value); if(next) setMonth(new Date(next.getFullYear(),next.getMonth(),1)); }, [value]);
   const year=month.getFullYear(), index=month.getMonth(), days=new Date(year,index+1,0).getDate();
-  return <Popup label={label} disabled={disabled} required={required} className={className} variant="date" text={value || 'Choose date'} {...accessibility}>{close => <><strong>{label}</strong><div className="tj-date-heading"><button type="button" aria-label="Previous month" onClick={()=>setMonth(new Date(year,index-1,1))}>‹</button><strong>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button type="button" aria-label="Next month" onClick={()=>setMonth(new Date(year,index+1,1))}>›</button></div><input className="tj-input" aria-label={`Enter ${label} as YYYY-MM-DD`} placeholder="YYYY-MM-DD" defaultValue={value} key={value} onBlur={event => {const next=event.target.value;const date=new Date(`${next}T12:00:00`);if(/^\d{4}-\d{2}-\d{2}$/.test(next)&&!isNaN(date)&&(!min||next>=min)&&(!max||next<=max)&&`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`===next)onChange({target:{value:next}});}}/><div className="tj-date-days">{displayWeekdays().map(day=><small key={day}>{day}</small>)}{Array.from({length:weekStartOffset(month)},(_,i)=><span key={`blank${i}`}/>)}{Array.from({length:days},(_,i)=>{const next=`${year}-${pad(index+1)}-${pad(i+1)}`;return <button type="button" key={next} disabled={(min && next<min)||(max && next>max)} className={next===today ? 'tj-picker-current' : ''} aria-label={next} aria-pressed={value===next} onClick={()=>{onChange({target:{value:next}});close();}}>{i+1}</button>;})}</div><div className="tj-date-actions"><button type="button" className="tj-picker-clear" disabled={(min&&today<min)||(max&&today>max)} onClick={()=>{onChange({target:{value:today}});close();}}>Today</button><button type="button" className="tj-picker-clear" onClick={()=>{onChange({target:{value:''}});close();}}>Clear date</button></div></>}</Popup>;
+  return <Popup label={label} disabled={disabled} required={required} className={className} variant="date" text={value || 'Choose date'} {...accessibility}>{close => <><strong>{label}</strong><div className="tj-date-heading"><button type="button" aria-label="Previous month" onClick={()=>setMonth(new Date(year,index-1,1))}>‹</button><strong>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button type="button" aria-label="Next month" onClick={()=>setMonth(new Date(year,index+1,1))}>›</button></div><DateTextEntry value={value} label={label} min={min} max={max} onChange={onChange} onDone={close}/><div className="tj-date-days">{displayWeekdays().map(day=><small key={day}>{day}</small>)}{Array.from({length:weekStartOffset(month)},(_,i)=><span key={`blank${i}`}/>)}{Array.from({length:days},(_,i)=>{const next=`${year}-${pad(index+1)}-${pad(i+1)}`;return <button type="button" key={next} disabled={!dateWithinRange(next,min,max)} className={next===today ? 'tj-picker-current' : ''} aria-label={next} aria-pressed={value===next} onClick={()=>{onChange({target:{value:next}});close();}}>{i+1}</button>;})}</div><div className="tj-date-actions"><button type="button" className="tj-picker-clear" disabled={!dateWithinRange(today,min,max)} onClick={()=>{onChange({target:{value:today}});close();}}>Today</button><button type="button" className="tj-picker-clear" onClick={()=>{onChange({target:{value:''}});close();}}>Clear date</button></div></>}</Popup>;
+}
+
+function DateTextEntry({value, label, min, max, onChange, onDone}) {
+  const [draft,setDraft] = useState(value);
+  const valid = !draft || dateWithinRange(draft,min,max);
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => {
+    // Calendar selection closes by returning focus to the trigger. Do not let
+    // the still-empty text draft overwrite that just-selected calendar value.
+    // Explicit clearing is handled by the Clear date action below.
+    if (!draft) return true;
+    if (!dateWithinRange(draft,min,max)) return false;
+    onChange({target:{value:draft}});
+    return true;
+  };
+  return <input data-picker-autofocus className="tj-input tj-date-text-entry" aria-label={`Enter ${label} as YYYY-MM-DD`} aria-invalid={!valid || undefined} inputMode="numeric" autoComplete="off" placeholder="YYYY-MM-DD" value={draft} onChange={event=>setDraft(event.target.value)} onBlur={commit} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();if(commit())onDone();}}}/>;
 }
 
 export function ConfirmDeleteButton({children, onClick, className='', title, disabled, ...props}) {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { activeRoutineItems, normalizeRoutine, routineDayKey, routineRequired, completeRoutine, routineHistory, resetCountdown, REQUIRE_ALL, reorderRoutine, loadRoutineProfile, saveRoutineProfile } from './dailyRoutine.js';
+import { activeRoutineItems, normalizeRoutine, routineDayKey, routineRequired, completeRoutine, routineHistory, routineProgress, resetCountdown, REQUIRE_ALL, reorderRoutine, loadRoutineProfile, saveRoutineProfile } from './dailyRoutine.js';
 import { readFileSync } from 'node:fs';
 const noon=new Date('2026-10-09T12:00:00Z');
 test('profile routine card keeps only controls and labels',()=>{
@@ -10,7 +10,7 @@ test('profile routine card keeps only controls and labels',()=>{
   assert.match(card,/Start Day routine/);
   assert.match(card,/Routine items/);
   assert.doesNotMatch(card,/Your routine items/);
-  assert.match(card,/Open Management ↗/);
+  assert.match(card,/Open Journal Setup ↗/);
   assert.doesNotMatch(card,/when the Tokyo session opens/);
   assert.doesNotMatch(card,/Markups and trades open straight to their entry forms/);
   assert.doesNotMatch(card,/Edit them in Management\. The same list applies in every workspace\./);
@@ -59,8 +59,14 @@ test('weekends do not prompt the routine and Monday Tokyo open resumes it',()=>{
   assert.equal(routineRequired({},new Date('2026-10-11T12:00:00Z')),false);
   assert.equal(routineRequired({},new Date('2026-10-12T00:00:00Z')),true);
 });
-test('eight app defaults are enabled and two optional checks are off',()=>{
-  assert.equal(activeRoutineItems({}).length,8);assert.equal(normalizeRoutine().appItems.accepted_risk.enabled,false);
+test('new profiles receive the approved eleven defaults while existing profiles retain the old requirement',()=>{
+  assert.equal(activeRoutineItems({}).length,11);
+  assert.equal(normalizeRoutine().appItems.review_plan_goals.enabled,true);
+  const legacy=normalizeRoutine({appItems:{moved:{enabled:true}},completions:{'2026-10-09':{tickedIds:['moved'],total:8,savedAt:'2026-10-09T10:00:00Z'}}});
+  assert.equal(legacy.appItems.review_plan_goals.enabled,false);
+  assert.equal(legacy.appItems.reviewed_rules.enabled,false);
+  assert.equal(legacy.appItems.accepted_risk.enabled,false);
+  assert.equal(activeRoutineItems(legacy).length,8);
   assert.equal(routineRequired({},noon),true);
 });
 test('custom items default to on; pausing persists and preserves past completions',()=>{
@@ -76,15 +82,40 @@ test('custom items default to on; pausing persists and preserves past completion
   assert.equal(routineRequired(onlyCustom,new Date('2026-10-11T00:00Z')),false);
   assert.equal(activeRoutineItems({...onlyCustom,customItems:[{...r.customItems[1],enabled:true}]}).length,1);
 });
-test('zero and partial saves complete the day; next Tokyo open prompts again',()=>{
+test('saved daily progress is resumable, and full completion remains historical completion',()=>{
   assert.equal(REQUIRE_ALL,false);
-  for(const ticks of [[],['moved'],activeRoutineItems({}).map(i=>i.id)]){
-    const r=completeRoutine({},ticks,noon);
-    assert.equal(routineRequired(r,new Date('2026-10-09T23:59:59Z')),false);
-    assert.equal(routineRequired(r,new Date('2026-10-12T00:00:00Z')),true);
-    assert.deepEqual(r.completions['2026-10-09'].tickedIds,ticks);
-    assert.equal(r.completions['2026-10-09'].total,8);
-  }
+  assert.equal(routineProgress({},noon).unfinished,false, 'no header continuation before a first save');
+  const savedZero=completeRoutine({},[],noon);
+  assert.deepEqual(routineProgress(savedZero,noon),{key:'2026-10-09',started:true,tickedIds:[],total:11,ticked:0,completed:false,unfinished:true,skipped:false});
+  const partial=completeRoutine(savedZero,['moved'],noon);
+  assert.deepEqual(routineProgress(partial,noon).tickedIds,['moved']);
+  assert.equal(routineProgress(partial,noon).unfinished,true);
+  assert.equal(routineRequired(partial,noon),false);
+  const complete=completeRoutine(partial,activeRoutineItems(partial).map(item=>item.id),noon);
+  assert.equal(routineProgress(complete,noon).completed,true);
+  assert.ok(complete.completions['2026-10-09'].completedAt);
+  assert.equal(routineRequired(complete,new Date('2026-10-12T00:00:00Z')),true);
+});
+test('legacy current-day partial rows with an old completedAt stamp remain resumable',()=>{
+  const customItems=['focus','news','review'].map(id=>({id,label:id,group:'before'}));
+  const legacy=normalizeRoutine({customItems,completions:{'2026-10-09':{tickedIds:['slept_enough','ate_water','moved'],total:11,completedAt:'2026-10-09T09:00:00.000Z'}}});
+  const progress=routineProgress(legacy,noon);
+  assert.equal(progress.started,true);
+  assert.equal(progress.completed,false);
+  assert.equal(progress.unfinished,true);
+  assert.equal(progress.ticked,3);
+  assert.equal(progress.total,11);
+  assert.deepEqual(progress.tickedIds,['slept_enough','ate_water','moved']);
+  const finished=completeRoutine(legacy,activeRoutineItems(legacy).map(item=>item.id),noon);
+  assert.equal(routineProgress(finished,noon).completed,true);
+  assert.notEqual(finished.completions['2026-10-09'].completedAt,'2026-10-09T09:00:00.000Z','a legacy partial stamp is replaced when the checklist is genuinely completed');
+});
+test('changing routine items does not silently mark a previously partial save complete',()=>{
+  const partial=completeRoutine({},['moved'],noon);
+  const changed=normalizeRoutine({...partial,appItems:Object.fromEntries(Object.keys(partial.appItems).map(id=>[id,{enabled:id==='moved'}]))});
+  assert.equal(routineProgress(changed,noon).completed,false);
+  assert.equal(routineProgress(changed,noon).unfinished,true);
+  assert.equal(routineProgress({...changed,enabled:false},noon).unfinished,false);
 });
 test('disabled or empty routines skip; switching back on without a completion prompts',()=>{
   const r=normalizeRoutine();assert.equal(routineRequired({...r,enabled:false},noon),false);
@@ -97,11 +128,12 @@ test('editing, disabling and deleting items retain historical completion and do 
   const edited=normalizeRoutine({...r,customItems:[],appItems:{moved:{enabled:false}}});
   assert.equal(routineRequired(edited,noon),false);assert.deepEqual(edited.completions['2026-10-09'].tickedIds,['custom-a','moved']);
 });
-test('streak counts consecutive UTC days, not tick count; seven dots end in today',()=>{
-  let r=completeRoutine({},[],new Date('2026-10-07T21:00Z'));
-  r=completeRoutine(r,[],new Date('2026-10-08T21:00Z'));
+test('streak counts fully completed UTC days, not partial saves; seven dots end in today',()=>{
+  const all=activeRoutineItems({}).map(item=>item.id);
+  let r=completeRoutine({},all,new Date('2026-10-07T21:00Z'));
+  r=completeRoutine(r,all,new Date('2026-10-08T21:00Z'));
   assert.equal(routineHistory(r,noon).streak,2);
-  assert.equal(routineHistory(completeRoutine(r,[],noon),noon).streak,3);
+  assert.equal(routineHistory(completeRoutine(r,all,noon),noon).streak,3);
   assert.equal(routineHistory(r,new Date('2026-10-12T00:00Z')).streak,0);
   assert.equal(routineHistory(r,noon).days.length,7);assert.equal(routineHistory(r,noon).days.at(-1).today,true);
 });
@@ -125,8 +157,12 @@ test('both new-markup triggers are gated; editing and markup form stay unchanged
   assert.match(source,/routineGate\.current\.request\('markup'\)/);
   assert.match(source,/completeRoutine\(latest, tickedIds, new Date\(\)\)/);
   assert.match(source,/onClose=\{closeDailyRoutine\}/);
-  assert.match(source,/const closeDailyRoutine = \(\) => routineGate.current.cancel\(\)/);
+  assert.match(source,/setRoutineContinueOnly\(false\); routineGate\.current\.cancel\(\); setRoutineOpenMarkupAfterSave\(false\);/);
+  assert.match(source,/Routine \{routineToday\.ticked\}\/\{routineToday\.total\}/);
+  assert.match(source,/const continueDailyRoutine = \(\) => \{/);
   assert.match(source,/useDailyRoutine\(user\)/);
+  assert.match(source,/setRoutineOpenMarkupAfterSave\(true\)/);
+  assert.match(source,/await routineGate\.current\.request\('markup'\)/);
 });
 test('profile persistence re-reads other-tab completions, preserves preferences and isolates users',async()=>{
   let user={id:'a',user_metadata:{accent_color:'purple'}};let writes=0;

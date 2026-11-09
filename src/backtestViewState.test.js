@@ -40,7 +40,8 @@ test('background refresh retains open run only while it still exists',()=>{
 });
 test('navigation cache lives outside keyed page transitions and clears on session disposal',()=>{
   const journal=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(journal,/<BacktestViewSession owner=\{user.id\}>\s*<div className="tj-page-transition"/);
+  // The phone page stage sits between them; it is not keyed, so the session still outlives page changes.
+  assert.match(journal,/<BacktestViewSession owner=\{user.id\}>\s*<MobilePageStage page=\{page\} account=\{account\.id\}>\s*<div className="tj-page-transition"/);
   const session=readFileSync(new URL('./BacktestViewSession.jsx',import.meta.url),'utf8');
   assert.match(session,/useMemo\(\(\) => createBacktestViewState\(owner\), \[owner\]\)/);
   assert.match(session,/useEffect\(\(\) => \(\) => views.clear\(\), \[views\]\)/);

@@ -3,11 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=file=>readFileSync(new URL(file,import.meta.url),'utf8');
 test('phone markup list uses live counts and coverage, full-width actions and one column',()=>{
-  const source=read('./TradingJournal.jsx'),css=read('./mobileMarkups.css');
-  assert.match(source,/count=\{shown.length\} coverage=\{shownTotalCoverage\}/);
-  assert.match(css,/\.tj-phone-new-markup \{height:52px!important/);
-  assert.match(css,/\.tj-markup-card-grid \{display:grid;grid-template-columns:minmax\(0,1fr\)/);
-  assert.match(css,/\.tj-phone-markup-chips \{display:flex;flex-wrap:wrap/);
+  const source=read('./MobileMarkupsV2.jsx'),css=read('./mobileMarkupsV2.css');
+  assert.match(source,/const linkedTradeCount = linked\.reduce/);
+  assert.match(source,/const linkedPnl = linked\.reduce/);
+  assert.match(source,/Linked trades/);
+  assert.match(source,/Linked P&amp;L/);
+  assert.match(css,/\.tj-root \.tj-mk2-hero-stats \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.tj-root \.tj-mk2-create \{[^}]*min-height:46px/);
+  assert.match(css,/\.tj-root \.tj-mk2-card \{display:block;width:100%/);
 });
 test('phone markup form has pinned summary/footer and preserves its original save handler',()=>{
   const css=read('./mobileMarkups.css'),source=read('./TradingJournal.jsx');

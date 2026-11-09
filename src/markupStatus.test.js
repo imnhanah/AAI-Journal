@@ -21,3 +21,14 @@ test('desktop and phone status menus keep coloured options and labelled selectio
   }
   assert.ok(read('./TradingJournal.jsx').includes("import './markupStatus.css'"));
 });
+
+test('the redesigned Markups detail uses the effective linked status and a matching semantic pill', () => {
+  const view = read('./MarkupsRedesign.jsx');
+  const css = read('./markupsRedesign.css');
+  assert.match(view, /const statusFor=markup=>linkedFor\(markup\)\.length \? 'Executed' : markupStatus\(markup\.status\)/);
+  assert.match(view, /mk-chip--status-\$\{statusClass\(statusFor\(current\)\)\}/);
+  for (const [status, token] of [['planned', 'blue'], ['watching', 'amber'], ['executed', 'green']]) {
+    assert.match(css, new RegExp(`\\.mk-chip--status-${status}\\{--mk-status-color:var\\(--tj-${token}\\)\\}`));
+  }
+  assert.match(css, /\.mk-chip--status-not-executed\{--mk-status-color:var\(--muted\)\}/);
+});

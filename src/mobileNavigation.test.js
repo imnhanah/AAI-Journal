@@ -9,7 +9,7 @@ test('the phone More menu exposes Case Studies with the existing page route', ()
   const shell = readFileSync(new URL('./MobileShell.jsx', import.meta.url), 'utf8');
   const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
   assert.match(shell, /'case-studies':BookOpen/);
-  assert.match(shell, /const go=id=>\{onSheet\(null\);onNavigate\(id\);\}/);
+  assert.match(shell, /const go=id=>\{const via=[^;]+;onSheet\(null\);onNavigate\(id,via\);\}/);
   assert.match(journal, /\{ id: "case-studies", label: "Case Studies"/);
   assert.match(journal, /JOURNAL_PATHS\[nextPage\]/);
 });

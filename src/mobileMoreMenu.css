@@ -1,0 +1,50 @@
+/* Phone More menu. Colours come from the --phone-* tokens set in mobileApp.css. */
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-more {display:flex;flex-direction:column;max-height:90dvh;padding:0;overflow:hidden;border:0;border-top:.5px solid var(--border);border-radius:32px 32px 0 0;background:var(--bg);}
+  .tj-mobile-sheet-more * {box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-more .tj-mobile-sheet-handle {flex:none;}
+  .tj-more-body {flex:1;min-height:0;padding:4px 16px calc(18px + env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain;color:var(--text);font-size:14px;line-height:1.4;}
+  .tj-more-body button {margin:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;touch-action:manipulation;}
+  .tj-more-body button:disabled {opacity:.55;cursor:default;}
+  .tj-more-body button:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .tj-root .tj-more-body h3 {margin:16px 4px 8px;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;}
+
+  /* Account card */
+  .tj-more-body .tj-more-me {display:grid;grid-template-columns:52px minmax(0,1fr) 36px;align-items:center;gap:12px;width:100%;min-height:76px;padding:12px;border:.5px solid color-mix(in srgb,var(--phone-gain) 30%,var(--border));border-radius:26px;background:linear-gradient(135deg,color-mix(in srgb,var(--phone-gain) 20%,var(--card)),var(--card) 70%);}
+  .tj-more-avatar {display:grid;width:52px;height:52px;overflow:hidden;place-items:center;border-radius:18px;background:var(--phone-gain);color:var(--phone-plus-icon);font-size:20px;font-weight:500;}
+  .tj-more-avatar img {display:block;width:100%;height:100%;object-fit:cover;}
+  .tj-more-me>span:nth-child(2) {min-width:0;}
+  .tj-more-me strong {display:block;overflow:hidden;font-size:16px;font-weight:500;text-overflow:ellipsis;white-space:nowrap;}
+  .tj-more-me small {display:flex;align-items:center;gap:6px;min-width:0;margin-top:2px;color:var(--muted);font-size:12px;}
+  .tj-more-me small i {display:block;flex:none;width:7px;height:7px;border-radius:50%;background:var(--phone-gain);box-shadow:0 0 0 3px color-mix(in srgb,var(--phone-gain) 18%,transparent);}
+  .tj-more-go {display:grid;width:36px;height:36px;place-items:center;border-radius:50%;background:var(--phone-raised);color:var(--muted);}
+  .tj-more-go svg {width:18px;height:18px;}
+
+  /* Tones */
+  .tj-more-tiles .is-green {--tone:var(--phone-gain);--tone-text:var(--phone-profit);}
+  .tj-more-tiles .is-blue,.tj-more-list .is-blue {--tone:var(--phone-blue);--tone-text:var(--phone-blue);}
+  .tj-more-tiles .is-amber,.tj-more-list .is-amber {--tone:var(--phone-amber);--tone-text:var(--phone-amber);}
+  .tj-more-tiles .is-purple {--tone:var(--phone-purple);--tone-text:var(--phone-purple);}
+  .tj-more-list .is-red {--tone:var(--phone-drop);--tone-text:var(--phone-loss);}
+  .tj-more-icon {display:grid;flex:none;width:42px;height:42px;place-items:center;border-radius:15px;background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone-text);}
+  .tj-more-icon svg {width:21px;height:21px;}
+
+  /* Workspace tiles */
+  .tj-more-tiles {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .tj-more-body .tj-more-tiles button {display:grid;align-content:start;gap:8px;min-width:0;padding:12px;border:.5px solid var(--border);border-radius:24px;background:radial-gradient(86px 86px at 100% 0,color-mix(in srgb,var(--tone) 14%,transparent),transparent 100%),var(--card);}
+  .tj-more-body .tj-more-tiles button[aria-current=page] {border-color:var(--tone);}
+  .tj-more-tiles strong {display:block;font-size:15px;font-weight:500;letter-spacing:-.01em;}
+  .tj-more-tiles small {display:block;margin-top:2px;color:var(--muted);font-size:12px;}
+
+  /* Tools */
+  .tj-more-list {padding:4px 14px;border:.5px solid var(--border);border-radius:26px;background:var(--card);}
+  .tj-more-body .tj-more-list button {display:grid;grid-template-columns:38px minmax(0,1fr) 18px;align-items:center;gap:12px;width:100%;min-height:56px;padding:9px 0;border-bottom:.5px solid var(--border);}
+  .tj-more-body .tj-more-list button:last-child {border-bottom:0;}
+  .tj-more-list .tj-more-icon {width:38px;height:38px;border-radius:13px;}
+  .tj-more-list .tj-more-icon svg {width:20px;height:20px;}
+  .tj-more-list strong {display:block;font-size:15px;font-weight:500;}
+  .tj-more-list small {display:block;margin-top:1px;color:var(--muted);font-size:12px;}
+  .tj-more-list button>svg {width:18px;height:18px;color:var(--muted);}
+
+  /* Footer */
+}

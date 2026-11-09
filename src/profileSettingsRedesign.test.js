@@ -5,7 +5,7 @@ const source = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'u
 const dialog = readFileSync(new URL('./ProfileDeleteDialog.jsx', import.meta.url), 'utf8');
 test('profile settings stack Appearance and Region & display above the security row',()=>{
   const layout=source.slice(source.indexOf('function ProfilePreferencesLayout'),source.indexOf('function ProfileSettingsModal'));
-  assert.match(layout,/tj-profile-reference-top">\{appearance\}\{has\("tj-profile-region-display-card"\)\}<\/div>/);
+  assert.match(layout,/tj-profile-reference-top">\{appearance\}\{has\("tj-profile-region-display-card"\)\}\{has\("tj-profile-panel-position-card"\)\}<\/div>/);
   assert.match(layout,/tj-profile-security-grid">\{has\("tj-profile-sync"\)\}\{has\("tj-profile-account-security"\)\}/);
   const css=readFileSync(new URL('./profileSettingsRedesign.css',import.meta.url),'utf8');
   assert.match(css,/grid-template-columns:1\.25fr 1fr/);
@@ -30,7 +30,9 @@ test('display preferences are controlled and saved with the profile', () => {
   assert.doesNotMatch(display, /disabled/);
   assert.match(source, /\.\.\.displayMetadata\(displayDraft\)/);
   assert.match(source, /\.\.\.displayMetadata\(nextDisplay\)/);
-  assert.doesNotMatch(source, /Trade Panel Position/);
+  assert.match(source, /Trade Panel Position/);
+  assert.match(source, /trade_panel_position: panelPosition/);
+  assert.match(source, /tj-panel-position-options/);
   const finalProfileCss = source.slice(source.lastIndexOf('.tj-profile-studio-modal .tj-profile-region-display-card { container-type:inline-size;'));
   assert.match(finalProfileCss, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
   assert.match(finalProfileCss, /\.tj-regional-fields>\.tj-field \{ grid-column:auto!important; grid-row:auto!important;/);

@@ -39,7 +39,7 @@ export function migrateProfileCaseStudyLibrary(saved, accounts = []) {
   if (!pending.length) return { workspace:base, migrated:false, sourceIds:[] };
   const result = {
     ...base,
-    notebooks:[...base.notebooks], studies:[...base.studies], evidence:[...base.evidence], personalTemplates:[...base.personalTemplates],
+    notebooks:[...base.notebooks], studies:[...base.studies], evidence:[...base.evidence], personalTemplates:[...base.personalTemplates], connections:[...base.connections],
     legacyAccountLibraries:sources.map(source => ({ accountId:source.accountId, workspace:source.workspace })),
   };
   for (const source of pending) {

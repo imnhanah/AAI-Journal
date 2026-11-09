@@ -1,24 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-test('phone review keeps readable annual, two-column quarters and one-column monthly rows',()=>{
-  const css=readFileSync(new URL('./mobileReview.css',import.meta.url),'utf8');
-  for(const size of css.matchAll(/font-size:([\d.]+)px/g))assert.ok(Number(size[1])>=12);
-  assert.doesNotMatch(css,/(?:^|[;{])\s*(?:transform|filter|will-change)\s*:/m);
-  assert.match(css,/tj-review-annual-result>strong[^}]*font-size:38px/);
-  assert.match(css,/tj-review-quarter-grid[^}]*repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css,/tj-review-month-grid[^}]*grid-template-columns:1fr/);
-  assert.match(css,/tj-review-write-action[^}]*min-height:44px/);
+
+const review = readFileSync(new URL('./ReviewPage.jsx', import.meta.url), 'utf8');
+const phone = readFileSync(new URL('./MobilePeriodReviews.jsx', import.meta.url), 'utf8');
+const css = readFileSync(new URL('./mobilePeriodReviews.css', import.meta.url), 'utf8');
+
+test('phone Review uses the active period library with readable, touch-sized controls', () => {
+  assert.match(review, /if \(phone\) return <MobilePeriodReviews/);
+  assert.match(phone, /function PeriodList\(/);
+  assert.match(css, /\.tj-pr-annual-top strong \{[^}]*font-size:32px/);
+  assert.match(css, /\.tj-pr-months \{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.tj-root \.tj-pr \.tj-pr-expand \{display:grid;flex:none;width:44px;height:44px/);
 });
-test('phone review uses shorter pending tag without replacing desktop copy or review actions',()=>{
-  const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(source,/tj-review-desktop-copy">NEEDS REVIEW/);
-  assert.match(source,/tj-review-phone-copy">TO REVIEW/);
-  assert.match(source,/onClick=\{\(\) => setTradeEditor\(\{ trade \}\)\}/);
+
+test('phone Review keeps the shared period controls, save state and outstanding-trade action', () => {
+  assert.match(review, /controls=\{phoneControls\}/);
+  assert.match(review, /onReviewTrades=\{onReviewTrades\}/);
+  assert.match(phone, /onClick=\{\(\) => onReviewTrades\?\.\(review\)\}/);
+  assert.match(phone, /\{toReview\} trade\{toReview === 1 \? '' : 's'\} still need/);
+  assert.match(phone, /disabled=\{saving \|\| saveLocked \|\| !dirty\} onClick=\{onSave\}/);
 });
-test('compact month strip is a labelled status readout on phones, with desktop buttons retained',()=>{
-  const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(source,/const \[phoneReview,setPhoneReview\]=useState/);
-  assert.match(source,/tj-review-phone-copy/);
-  assert.match(source,/onClick=\{\(\) => openPeriod\(period\)\}/);
+
+test('phone Review has an explicit annual and quarterly period hierarchy', () => {
+  assert.match(phone, /className="tj-pr-annual"/);
+  assert.match(phone, /function QuarterCard\(/);
+  assert.match(phone, /function PeriodList\(/);
+  assert.match(phone, /year && <button type="button" className="tj-pr-annual"/);
+  assert.match(phone, /quarterGroups\.map\(group => <QuarterCard/);
+});
+
+test('phone Review presents unsaved state without losing the active review', () => {
+  assert.match(review, /const dirty = Object\.keys\(drafts\)\.length > 0;/);
+  assert.match(phone, /tj-pr-saved \$\{dirty \? 'is-dirty' : ''\}/);
+  assert.match(phone, /onCancel=\{onCancel\}/);
 });

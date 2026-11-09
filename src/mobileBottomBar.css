@@ -1,0 +1,79 @@
+/* Phone bottom bar: fixed to the viewport base; its progress icon stays in the bar. */
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {--mobile-bottom:calc(74px + max(14px,env(safe-area-inset-bottom,0px)));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom {right:0;bottom:0;left:0;height:var(--mobile-bottom);padding:0 6px max(14px,env(safe-area-inset-bottom,0px));grid-template-columns:minmax(0,1fr) minmax(0,1fr) 84px minmax(0,1fr) minmax(0,1fr);align-items:start;background:transparent;border:0;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bar-bg {position:absolute;inset:0;display:block;height:auto;border:0;border-top:.5px solid var(--border);border-radius:28px 28px 0 0;background:var(--card);box-shadow:0 -10px 30px color-mix(in srgb,var(--bg) 45%,transparent);}
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add) {position:relative;display:grid;justify-items:center;align-content:center;gap:4px;min-width:0;height:74px;min-height:74px;padding:6px 0 0;color:var(--muted);font-size:12px;font-weight:650;line-height:1.2;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add)::before {content:'';position:absolute;top:0;left:50%;display:block;width:0;height:3px;border-radius:0 0 3px 3px;background:var(--mp-palette-accent);translate:-50% 0;}
+  /* The active-tab bar is one shared 28px element that slides between tabs. The bar spans the
+     full screen width with 6px padding and columns 1fr 1fr 84px 1fr 1fr, so tab centres are
+     12.5vw-6px, 37.5vw-30px, 62.5vw+30px and 87.5vw+6px. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator {position:absolute;top:0;left:0;z-index:1;display:block;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--mp-palette-accent);opacity:0;pointer-events:none;transition:transform var(--dur-page) var(--ease-out),opacity var(--dur-fade) ease;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator[data-tab] {opacity:1;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator[data-tab="0"] {transform:translateX(calc(12.5vw - 20px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator[data-tab="1"] {transform:translateX(calc(37.5vw - 44px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator[data-tab="3"] {transform:translateX(calc(62.5vw + 16px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator[data-tab="4"] {transform:translateX(calc(87.5vw - 8px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add) .tj-mobile-tab-icon {display:grid;width:52px;height:32px;place-items:center;border-radius:16px;background:transparent;color:inherit;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add) .tj-mobile-tab-icon svg {width:22px;height:22px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button[aria-current=page]:not(.tj-mobile-add) {color:var(--text);font-weight:650;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button[aria-current=page]:not(.tj-mobile-add) .tj-mobile-tab-icon {background:color-mix(in srgb,var(--mp-palette-accent) 15%,transparent);color:var(--mp-palette-accent);}
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-add {position:relative;z-index:2;display:grid;align-self:start;justify-self:center;width:70px;height:70px;min-height:70px;margin-top:-35px;padding:0;place-items:center;border:0;border-radius:50%;background:linear-gradient(145deg,color-mix(in srgb,var(--mp-palette-accent) 88%,var(--color-white)),color-mix(in srgb,var(--mp-palette-accent) 78%,var(--bg)));box-shadow:0 0 0 7px var(--card),0 14px 30px color-mix(in srgb,var(--mp-palette-accent) 38%,transparent);color:var(--mp-palette-on-accent);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-add[aria-expanded=true] {background:var(--text);box-shadow:0 0 0 7px var(--card);color:var(--bg);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-add .tj-mobile-add-ring {position:absolute;inset:0;width:70px;height:70px;rotate:-90deg;pointer-events:none;}
+  .tj-mobile-add-ring circle {fill:none;stroke-width:3;}
+  .tj-mobile-add-ring .is-track {stroke:color-mix(in srgb,var(--mp-palette-on-accent) 18%,transparent);}
+  .tj-mobile-add-ring .is-progress {stroke:var(--color-white);stroke-linecap:round;stroke-dasharray:201;opacity:.95;}
+  .tj-mobile-add[aria-expanded=true] .tj-mobile-add-ring {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-add.has-due::after {top:2px;right:2px;width:16px;height:16px;border:3px solid var(--card);border-radius:50%;background:var(--phone-gain);animation:tj-mobile-add-live 2s infinite;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-add[aria-expanded=true]::after {display:none;}
+  @keyframes tj-mobile-add-live {0% {box-shadow:0 0 0 0 color-mix(in srgb,var(--phone-gain) 60%,transparent);} 70%,100% {box-shadow:0 0 0 8px transparent;}}
+
+  @media (max-width:374px) {
+    .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add) {font-weight:600;letter-spacing:-.03em;}
+  }
+
+  /* Reach the true base of the phone. On an installed iPhone app, fixed items stop at a page area
+     shorter than the screen, but normal page content draws to the edge. So the app takes the screen's
+     real height (--tj-app-height, set in phoneViewport.js) and the bar sits inside it. */
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {position:relative;height:var(--tj-app-height,100dvh);}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-main {display:flex;flex-direction:column;height:var(--tj-app-height,100dvh);min-height:0;max-height:none;overflow:hidden;}
+  /* Home Screen mode has no browser document scroll. Its one deliberate
+     scroll owner is the content row; the fixed shell and dock stay put. */
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {display:block;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scroll-padding-bottom:calc(24px + var(--mobile-bottom));}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom {position:absolute;}
+  /* Menus and full-screen items live inside that same full-height app, so they line up with the bar
+     whatever the phone reports. */
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root>:is(.tj-mobile-sheet-layer,.tj-sd-overlay,.tj-ma-layer,.tj-modal-overlay) {position:absolute;}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal.tj-modal-wide.tj-ma-modal {position:absolute;inset:0;height:100%!important;max-height:none!important;}
+  /* The content scrolls inside the app, so the page itself never bounces. Do not add overflow or
+     position to html or body here: on iPhone that cuts off everything past the page's edge. */
+  html[data-tj-display-mode="standalone"]:has(.tj-root),html[data-tj-display-mode="standalone"] body:has(.tj-root) {overscroll-behavior:none;}
+
+  /* The header overlays the content, so it can slide away without the page jumping. Headings sit below
+     the blur iOS adds around the status bar in an installed app (--tj-top-clearance). */
+  /* Keep the phone title close to the status area without entering its safe inset. */
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {--tj-header-height:calc(48px + env(safe-area-inset-top,0px));}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {position:absolute;top:0;right:0;left:0;height:var(--tj-header-height);min-height:var(--tj-header-height);max-height:var(--tj-header-height);margin:0;padding-top:env(safe-area-inset-top,0px);transition:transform .22s ease;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-1 * var(--mobile-top)));}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-1 * var(--tj-header-height)));}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {padding-top:calc(var(--tj-header-height) + 12px);}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-head {padding-top:calc(10px + env(safe-area-inset-top,0px) + var(--tj-top-clearance,0px));}
+
+  /* Account, Profile and Daily routine end above the bar, which stays visible and usable. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(.tj-ma-modal) {bottom:var(--mobile-bottom)!important;height:auto;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root:has(.tj-ma-modal) .tj-mobile-bottom {z-index:90;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-modal .tj-ma-savebar {bottom:46px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-modal .tj-mr-fab {bottom:46px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-modal .tj-ma-scroll {padding-bottom:150px;}
+
+  /* Things that sit above the bar */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-layer.is-floating .tj-mobile-sheet {bottom:calc(var(--mobile-bottom) + 12px);right:10px;left:10px;max-height:calc(var(--tj-app-height,100dvh) - var(--mobile-bottom) - 32px - env(safe-area-inset-top,0px));}
+}
+@media (max-width:767px) and (prefers-reduced-motion:reduce) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {transition:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-add.has-due::after {animation:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator {transition:none;}
+}

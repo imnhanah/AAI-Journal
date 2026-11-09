@@ -13,6 +13,8 @@ const workspace = label => ({
 
 test('profile cloud failures are classified without treating a failed response as empty',()=>{
   assert.equal(profileLibraryLoadFailure({message:'relation "profile_case_study_libraries" does not exist',code:'42P01'}).kind,'unavailable');
+  assert.equal(profileLibraryLoadFailure({message:'Could not find the revision column of profile_case_study_libraries in the schema cache'}).kind,'unavailable');
+  assert.equal(profileLibraryLoadFailure({message:'Could not find the function public.tj_save_profile_case_study_library in the schema cache',code:'PGRST202'}).kind,'unavailable');
   assert.equal(profileLibraryLoadFailure({message:'new row violates row-level security policy',code:'42501'}).kind,'authorization');
   assert.equal(profileLibraryLoadFailure({message:'Failed to fetch'}).kind,'network');
 });
@@ -51,6 +53,20 @@ test('the application gates saves and mounts a non-editable recovery view until 
   assert.match(journal,/resolveProfileCaseStudyVisibility\(\{ loaded, accounts, lastValidWorkspace \}\)/);
   assert.match(journal,/if \(profileCaseStudyState\.status !== 'ready'\) throw new Error/);
   assert.match(journal,/onRetryLoad=\{\(\)=>setProfileCaseStudyRetry/);
+  assert.match(library,/if \(libraryState\.status === 'recovery'\) return <CaseStudyRecoveryLibrary/);
   assert.match(library,/if \(libraryState\.status !== 'ready'\) return <CaseStudyLoadState/);
   assert.match(library,/saving, creating, editing, evidence changes, and template changes are disabled/i);
+});
+
+test('temporary recovery keeps its protected local-only state without rendering the retired development banner',()=>{
+  const library=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8');
+  assert.doesNotMatch(library,/Cloud sync unavailable/);
+  assert.doesNotMatch(library,/case-work-in-progress/);
+  assert.doesNotMatch(library,/Work in Progress — Coming Soon/);
+});
+
+test('ready Case Study Library keeps actionable conflict feedback without a passive header sync label',()=>{
+  const library=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8');
+  assert.match(library,/syncConflict && <p className="case-sync-conflict" role="alert">/);
+  assert.doesNotMatch(library,/case-header-actions"><span className=\{`case-save-state/);
 });

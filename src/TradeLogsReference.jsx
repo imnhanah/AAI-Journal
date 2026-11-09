@@ -168,8 +168,8 @@ function TradeDetail({ d, markups = [], renderScreenshot, onWriteReview, onEditT
           <h3>By account</h3>
           {d.accounts.map((a) => (
             <div key={a.name}>
-              <div className="tl-account"><span>{a.name}</span><b>{a.pnl}</b></div>
-              <div className="tl-bar"><i style={{ width: `${a.share}%` }} /></div>
+              <div className={`tl-account tl-account--${a.tone}`}><span>{a.name}</span><b>{a.pnl}</b></div>
+              <div className={`tl-bar tl-bar--${a.tone}`}><i style={{ width: `${a.share}%` }} /></div>
             </div>
           ))}
         </div>
@@ -259,7 +259,10 @@ export default function TradeLogs({ theme = 'light', trades = [], markups = [], 
       ],
       execution: [['Entry model', trade.entryType || '—'], ['Mood shift', `${trade.moodBefore || '—'} → ${trade.moodAfter || '—'}`], ['Mistakes', trade.mistakes?.length ? trade.mistakes.join(', ') : 'No mistakes logged']],
       rating: trade.rating || 0,
-      accounts: results.map(item => ({ name: item.accountName || 'Account', pnl: signedMoney(Number(item.netPnl ?? item.grossPnl ?? 0)), share: 50 })),
+      accounts: results.map(item => {
+        const accountPnl = Number(item.netPnl ?? item.grossPnl ?? 0);
+        return { name: item.accountName || 'Account', pnl: signedMoney(accountPnl), share: 50, tone: accountPnl > 0 ? 'profit' : accountPnl < 0 ? 'loss' : 'neutral' };
+      }),
       confluences: trade.confluence || trade.types || [], screenshots: trade.screenshots || [], note: trade.context || 'No trade note added.', linkedMarkup
     }];
   }));

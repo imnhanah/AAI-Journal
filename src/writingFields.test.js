@@ -20,7 +20,8 @@ test('the late writing layer is borderless for ordinary writing and preserves a 
   assert.match(main,/import '\.\/writingFields\.css\?writing-fields=1';/);
   assert.match(writing,/textarea\.tj-input/);
   assert.match(writing,/\.rv-editorial-field input/);
-  assert.match(writing,/\.cse-writing textarea/);
+  assert.match(writing,/:not\(\.cse-writing > textarea\)/);
+  assert.doesNotMatch(writing,/\.cse-writing textarea:not\(\[aria-invalid="true"\]\)/);
   assert.match(writing,/\.rde-content\[contenteditable="true"\]/);
   assert.match(writing,/border:0 !important;/);
   assert.match(writing,/box-shadow:none !important;/);

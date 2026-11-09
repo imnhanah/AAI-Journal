@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {compactCalendarAmount,formatCompactAmount,mobileCalendarWeeks} from './mobileCalendar.js';
+import {calendarCellAmount,compactCalendarAmount,formatCompactAmount,mobileCalendarWeeks} from './mobileCalendar.js';
 test('phone calendar amounts omit currency and cents; full values remain in the sheet',()=>{
   assert.equal(compactCalendarAmount(-8917.26),'-8.9K');
   assert.equal(compactCalendarAmount(-26417.24),'-26K');
@@ -14,13 +14,13 @@ test('phone calendar groups consecutive quiet weeks without merging active weeks
   assert.deepEqual(rows.map(({start,end})=>[start,end]),[[1,1],[2,2],[3,5]]);
   assert.deepEqual(mobileCalendarWeeks([{count:0},{count:1},{count:0}]).map(({start,end})=>[start,end]),[[1,1],[2,2],[3,3]]);
 });
-test('phone calendar styles retain readable type and separate blur behind the sheet',()=>{
+test('phone calendar styles retain readable type and a solid backdrop behind the sheet',()=>{
   const css=readFileSync(new URL('./mobileCalendar.css',import.meta.url),'utf8');
   assert.match(css,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
   assert.match(css,/max-height:min\(700px,calc\(100dvh - 32px\)\)/);assert.match(css,/overflow-x:auto/);
   assert.doesNotMatch(css,/(?:^|[;{])\s*(?:transform|filter|will-change)\s*:/m);
   for(const size of css.matchAll(/font-size:\s*([\d.]+)px/g))assert.ok(Number(size[1])>=12);
-  assert.match(css,/::before[^}]*backdrop-filter/);
+  assert.doesNotMatch(css,/backdrop-filter/);
 });
 test('shared compact amounts cover every band, negatives, rounding and invalid input',()=>{
   for(const [value,expected] of [[0,'+0'],[999,'+999'],[1000,'+1K'],[8917.26,'+8.9K'],[9999,'+10K'],[10000,'+10K'],[26350,'+26K'],[999999,'+1000K'],[1000000,'+1M'],[1222184.6,'+1.2M']]){
@@ -39,6 +39,7 @@ test('day sheets bound their height and expose exact figures, while weeks share 
   const script=readFileSync(new URL('../scripts/check-mobile.js',import.meta.url),'utf8');
   assert.match(script,/includeSheets&&route==='calendar'/);
   assert.match(script,/2026-10-02.*2026-10-06.*2026-10-08/);
+ assert.match(script,/\.tj-calendar-day-modal \.tj-modal-close/);
 });
 test('calendar keeps seven shrinkable columns while retaining a 44px-tall touch target on phone widths',()=>{
  const css=readFileSync(new URL('./mobileCalendar.css',import.meta.url),'utf8');
@@ -60,4 +61,16 @@ test('phone month controls reserve a separate quick-jump row and never restore t
  assert.match(css,/tj-attached-month-controls>strong \{[^}]*min-width:0;[^}]*text-overflow:ellipsis/);
  assert.match(css,/tj-attached-calendar-scroll \{ min-width:0; max-width:100%; overflow:hidden/);
  assert.match(css,/tj-attached-calendar-grid \{ min-width:0; grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
+});
+
+test('calendar cells show the currency sign only when the amount fits',()=>{
+  assert.equal(calendarCellAmount(102.4),'+$102');
+  assert.equal(calendarCellAmount(-28),'-$28');
+  assert.equal(calendarCellAmount(1250),'+1.3K');
+  assert.equal(calendarCellAmount(-26350),'-26K');
+});
+
+test('the calendar readout counts profitable periods when an account has no breakeven limit',()=>{
+  const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
+  assert.match(source,/function CalendarPerformanceNarrative\(\{ view, trades, cap = 0, balance/);
 });

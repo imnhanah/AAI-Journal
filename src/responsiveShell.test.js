@@ -80,7 +80,7 @@ test('actual MobileShell mounts and unmounts cleanly across repeated desktop/pho
       assert.equal(Boolean(harness.container.querySelector('.tj-mobile-bottom')), phone, `navigation state at ${width}px`);
       if (phone) {
         assert.ok(harness.container.querySelector('[aria-label="Phone navigation"]'));
-        assert.ok(harness.container.querySelector('[aria-label="Add to your day"]'));
+        assert.ok(harness.container.querySelector('[aria-label="Open quick menu"]'));
       }
     }
   } finally {

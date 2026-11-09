@@ -84,11 +84,11 @@
 .tj-root .tj-account-settings-redesign .tj-challenge-level-progress button.is-current {outline:1px solid var(--tj-accent);outline-offset:1px;background:var(--tj-accent);}
 .tj-root .tj-account-settings-redesign .tj-challenge-level-progress button:disabled {cursor:not-allowed;opacity:.82;}
 .tj-root .tj-account-settings-redesign .tj-challenge-level-labels {grid-column:1/-1;display:flex;justify-content:space-between;color:var(--tj-muted);font-size:11px;}
-/* Compact challenge layout: choose a mode, set the three controls, then read progress. */
+/* Compact challenge layout: choose a mode, set the two controls, then read progress. */
 .tj-root .tj-account-settings-redesign .tj-challenge-settings-layout {grid-template-columns:minmax(0,1fr);gap:14px;}
 .tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px;}
 .tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons button {min-height:100px;align-items:start;}
-.tj-root .tj-account-settings-redesign .tj-challenge-control-grid {grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.tj-root .tj-account-settings-redesign .tj-challenge-control-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .tj-root .tj-account-settings-redesign .tj-challenge-ratio-control>.tj-input {height:40px;min-height:40px;padding:8px 12px;border:1px solid var(--tj-border)!important;border-radius:10px;background:var(--tj-panel-alt)!important;font-weight:800;font-size:13px;}
 .tj-root .tj-account-settings-redesign .tj-challenge-plan-progress {display:grid;gap:8px;padding-top:2px;}
 .tj-root .tj-account-settings-redesign .tj-challenge-plan-progress>div {display:flex;justify-content:space-between;align-items:center;gap:12px;}

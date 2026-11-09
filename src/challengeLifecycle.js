@@ -1,5 +1,6 @@
 import {buildChallengePlan, challengeFailureFloor} from './challengeModel.js';
 import {validateAccountFinancialData} from './financialValidation.js';
+import {balanceResultNetPnl} from './balanceResultPnl.js';
 
 export const tradeLoggedAt = trade => Date.parse(trade.createdAt || `${trade.date}T${trade.time || '00:00'}`);
 export const closedChallengeTrade = trade => trade.status !== 'open' && !String(trade.context || '').includes('[aaicorefx-running-trade]');
@@ -28,8 +29,12 @@ export function scopeChallengeAccount(workspace = {}, balance = {}) {
     trades:(workspace.trades || []).flatMap(trade => {
       const result = (trade.balanceResults || []).find(item => item.balanceId === balance.id);
       if (!result) return primary && !(trade.balanceResults || []).length ? [{...trade,accountId:balance.id}] : [];
-      const open = result.status === 'open' || result.grossPnl === '' || result.grossPnl == null;
-      return [{...trade,accountId:balance.id,grossPnl:result.grossPnl,commission:result.commission,swap:result.swap,pnl:result.netPnl ?? (Number(result.grossPnl || 0)-Number(result.commission || 0)-Number(result.swap || 0)),status:open?'open':'closed',context:open?'[aaicorefx-running-trade]':'',date:result.closeDate || trade.date}];
+      const pnl = balanceResultNetPnl(result);
+      // Older per-account records can retain an "open" status after their
+      // final P&L was saved. A non-zero recorded result is closed for balance
+      // purposes; genuinely running zero-P&L targets remain excluded.
+      const open = result.grossPnl === '' || result.grossPnl == null || (result.status === 'open' && pnl === 0);
+      return [{...trade,accountId:balance.id,grossPnl:result.grossPnl,commission:result.commission,swap:result.swap,pnl,status:open?'open':'closed',context:open?'[aaicorefx-running-trade]':'',date:result.closeDate || trade.date}];
     }),
     financeMovements:(workspace.financeMovements || []).filter(item => item.balanceId === balance.id || (!item.balanceId && primary)),
   };

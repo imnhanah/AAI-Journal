@@ -1,0 +1,74 @@
+/* Phone Profile screen. It shares the header, rows, popups and save bar with Account
+   settings, and follows the chosen palette through --accent. */
+@media (max-width:767px) {
+  /* The app area overrides --accent with a neutral. The palette's own colour is captured
+     on the page root so this screen, its switches and its popups can follow the palette. */
+  :root {--mp-palette-accent:var(--accent);--mp-palette-on-accent:var(--on-accent);}
+  .tj-root .tj-mp-modal {--accent:var(--mp-palette-accent);--on-accent:var(--mp-palette-on-accent);--phone-gain:var(--accent);--phone-plus-icon:var(--on-accent);--mp-soft:color-mix(in srgb,var(--accent) 15%,transparent);}
+  .tj-mp .tj-ma-scroll {padding-bottom:calc(130px + env(safe-area-inset-bottom,0px));}
+  .tj-mp .tj-ma-icon {width:40px;height:40px;border-radius:14px;background:var(--mp-soft);color:var(--accent);}
+  .tj-mp .tj-ma-row:disabled {opacity:.45;}
+  .tj-mp-file {display:none;}
+
+  /* Hero */
+  .tj-mp-hero {position:relative;margin-top:6px;padding:22px 18px 18px;border:.5px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:32px;background:radial-gradient(circle 85px at calc(100% - 35px) 35px,color-mix(in srgb,var(--accent) 12%,transparent) 99%,transparent),linear-gradient(150deg,color-mix(in srgb,var(--accent) 26%,var(--card)),var(--card) 62%);text-align:center;}
+  .tj-mp-avatar {position:relative;width:112px;height:98px;margin:0 auto 8px;}
+  .tj-mp-avatar>span {position:absolute;top:0;left:10px;display:block;width:92px;height:92px;padding:3px;border-radius:50%;background:conic-gradient(var(--accent),color-mix(in srgb,var(--accent) 30%,transparent),var(--accent));}
+  .tj-mp-avatar i {display:grid;width:100%;height:100%;place-items:center;overflow:hidden;border:3px solid var(--card);border-radius:50%;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 35%,var(--phone-raised)),var(--phone-raised));color:var(--text);font-size:34px;font-style:normal;font-weight:800;}
+  .tj-mp-avatar img {display:block;width:100%;height:100%;object-fit:cover;}
+  .tj-mp .tj-mp-avatar>button {position:absolute;right:0;bottom:0;display:grid;width:44px;height:44px;place-items:center;}
+  .tj-mp-avatar>button>b {display:grid;width:32px;height:32px;place-items:center;border:3px solid var(--card);border-radius:50%;background:var(--accent);color:var(--on-accent);}
+  .tj-mp-name {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;}
+  .tj-root .tj-mp-name h2 {margin:0;font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.15;overflow-wrap:anywhere;}
+  .tj-mp-name>span {display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:var(--mp-soft);color:var(--accent);font-size:12px;font-weight:700;}
+  .tj-root .tj-mp-mail {margin:4px 0 14px;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere;}
+  .tj-root .tj-mp-note {margin:-6px 0 12px;color:var(--muted);font-size:12px;line-height:1.35;}
+  .tj-mp-facts {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;text-align:left;}
+  .tj-mp-facts>div {min-width:0;padding:11px 14px;border:.5px solid var(--border);border-radius:18px;background:color-mix(in srgb,var(--bg) 55%,transparent);}
+  .tj-mp-facts small {display:block;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;line-height:1.2;text-transform:uppercase;}
+  .tj-mp-facts b {display:block;margin-top:3px;font-size:14px;font-weight:700;overflow-wrap:anywhere;}
+  .tj-mp .tj-mp-edit {display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;margin-top:12px;border-radius:23px;background:var(--text);color:var(--bg);font-weight:700;text-align:center;}
+
+  /* Sections */
+  .tj-mp-sec {display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:26px 4px 10px;}
+  .tj-root .tj-mp-sec h2 {margin:0;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-mp-sec>span {color:var(--muted);font-size:12px;}
+  .tj-mp-card {padding:14px 14px 16px;overflow:hidden;border:.5px solid var(--border);border-radius:28px;background:var(--card);}
+
+  .tj-mp-seg {display:flex;padding:3px;border-radius:22px;background:var(--phone-raised);}
+  .tj-mp .tj-mp-seg button {display:flex;flex:1;align-items:center;justify-content:center;gap:7px;min-width:0;height:44px;border-radius:20px;color:var(--muted);font-size:13.5px;font-weight:650;text-align:center;}
+  .tj-mp .tj-mp-seg button[aria-pressed=true] {background:var(--text);color:var(--bg);}
+  .tj-mp-week {padding:12px 14px 14px;}
+  .tj-root .tj-mp-week p {margin:0 0 8px;font-size:15px;font-weight:650;}
+
+  /* Palettes: swipe through the real themes, each card tinted by its own tokens */
+  .tj-mp .tj-theme-gallery {margin:14px -14px 0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-mp .tg {display:flex;gap:10px;padding:2px 14px 4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding:14px;scroll-snap-type:x proximity;}
+  .tj-root.tj-root.tj-root.tj-root .tj-mp .tg-card {flex:none;width:128px;min-width:128px;padding:8px;border:1.5px solid transparent;border-radius:22px;background:var(--phone-raised);scroll-snap-align:start;}
+  .tj-root.tj-root.tj-root.tj-root .tj-mp .tg-card[aria-pressed=true] {border-color:var(--accent);}
+  .tj-root.tj-root.tj-root.tj-root .tj-mp .tg-mini {display:flex;height:62px;aspect-ratio:auto;border:0;border-radius:15px;}
+  .tj-mp .tg-side,.tj-mp .tg-lines {display:none;}
+  .tj-mp .tg-page {flex:1;align-items:flex-end;padding:9px;}
+  .tj-mp .tg-panel {padding:0;border:0;background:transparent;}
+  .tj-mp .tg-pills {gap:5px;height:9px;min-height:9px;}
+  .tj-mp .tg-name {padding:8px 4px 0;font-size:13px;font-weight:700;}
+  .tj-mp .tg-sub {padding:1px 4px 2px;font-size:12px;}
+
+  /* Sync */
+  .tj-mp-sync {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 14px;}
+  .tj-mp-sync small {min-width:0;color:var(--muted);font-size:12.5px;line-height:1.3;}
+  .tj-mp .tj-mp-sync button {display:flex;flex:none;align-items:center;min-height:44px;}
+  .tj-mp-sync b {display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:17px;background:var(--mp-soft);color:var(--accent);font-size:13px;font-weight:700;white-space:nowrap;}
+
+  .tj-mp-exit {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px;}
+  .tj-mp .tj-mp-delete {display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:54px;border-radius:27px;background:var(--phone-drop-bg);color:var(--phone-loss);font-weight:700;text-align:center;}
+
+  /* Popups live outside .tj-mp, in the modal */
+  .tj-ma-layer .tj-mp-opt {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:54px;padding:0 14px;border-radius:16px;font-size:15px;font-weight:600;}
+  .tj-ma-layer .tj-mp-opt[aria-pressed=true] {background:var(--mp-soft);color:var(--accent);}
+  .tj-ma-layer .tj-mp-opt.is-danger {color:var(--phone-loss);}
+  .tj-root .tj-mp-status {margin:12px 4px 0;color:var(--phone-profit);font-size:13px;font-weight:600;}
+  .tj-root .tj-mp-status.is-error {color:var(--phone-loss);}
+  .tj-ma-sheet:focus {outline:0;}
+  .tj-ma-sheet-body:last-child {padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));}
+}

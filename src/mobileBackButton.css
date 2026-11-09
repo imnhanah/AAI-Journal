@@ -1,0 +1,16 @@
+/* The phone Back button (Option C, soft tile). It follows the chosen palette. */
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-back {display:grid;flex:none;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0;place-items:center;border:0;border-radius:15px;background:color-mix(in srgb,var(--mp-palette-accent) 15%,transparent);color:var(--mp-palette-accent);cursor:pointer;touch-action:manipulation;transition:transform .12s ease;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-back:active {transform:scale(.92);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-back:focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-left:has(.tj-back) {align-items:center;gap:10px;}
+}
+@media (max-width:767px) and (prefers-reduced-motion:reduce) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-back {transition:none;}
+}
+@media (max-width:767px) {
+  /* The shared Back button replaces each page's own back links. */
+  .rv-back,.case-back,.cse-crumb,.cse-crumb-separator,.cv-board-header-left>button:first-child,.cv>header>button:first-child {display:none!important;}
+  /* Inside Journal Setup the list's name is in the top bar, so its own heading goes. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-phone-list .tj-management-content>*>:is(h2,.tj-bold):first-child,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-phone-list .tj-backup-safeguard-head h2 {display:none;}
+}

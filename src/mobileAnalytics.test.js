@@ -14,7 +14,7 @@ test('phone Analytics uses stacked charts, two-column facts and six factor bars 
   assert.match(css,/\.tj-analytics-equity-milestones \{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.tj-engine-metrics \{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.tj-core-breakdown-grid>section:first-child>\.recharts-responsive-container/);
-  assert.ok(source.includes('6 contributing factors'));
+  assert.ok(source.includes('Six contributing factors'));
   assert.ok([...css.matchAll(/font-size:\s*([\d.]+)px/g)].every(match=>Number(match[1])>=12));
   assert.doesNotMatch(css,/(?:^|[\s{;])(?:transform|filter|mask-image)\s*:/);
 });
@@ -27,4 +27,8 @@ test('performance chips show gradient cues only when more views are hidden',()=>
 });
 test('phone analytics period includes padding within the shared selector row',()=>{
   assert.match(read('./mobileAnalytics.css'),/tj-analytics-period \{width:100%;min-width:0;box-sizing:border-box/);
+});
+test('Vitals cards bleed evenly through both phone edges while only the rail scrolls horizontally',()=>{
+  const css=read('./mobileAnalyticsPulse.css');
+  assert.match(css,/\.tj-pulse-rail\{display:flex;gap:10px;max-width:none;margin:0 -14px;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;/);
 });

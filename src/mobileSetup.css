@@ -1,0 +1,191 @@
+/* Phone Journal Setup. Existing list and routine logic is unchanged; this file dresses it for the phone. */
+.tj-routine-filter,.tj-routine-group-seg,.tj-routine-status-chip>i,.tj-routine-restore-phone {display:none;}
+@media (max-width:767px) {
+  .tj-setup-home,.tj-setup-home *,.tj-management-reference *,.tj-setup-back {box-sizing:border-box;}
+  .tj-setup-home button,.tj-setup-back,.tj-setup-group>button,.tj-setup-chip button,.tj-routine-filter button,.tj-routine-group-seg button {padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation;}
+  .tj-setup-back {display:flex;align-items:center;gap:2px;min-height:44px;padding-right:6px;color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap;}
+
+  /* Page frame */
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference>header {margin:-4px 4px 14px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference>header :is(small,h1) {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference>header p {margin:0;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-phone-index .tj-management-layout {display:none;}
+
+  /* Home */
+  .tj-setup-home {min-width:0;color:var(--text);font-size:14px;line-height:1.4;}
+  .tj-setup-glance {margin-bottom:16px;padding:18px;overflow:hidden;border:.5px solid var(--border);border-radius:34px;background:radial-gradient(110% 100% at 100% -10%,color-mix(in srgb,var(--phone-gain) 28%,transparent),transparent 62%),var(--card);}
+  .tj-setup-glance>header {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .tj-setup-glance>header small {display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;}
+  .tj-root .tj-setup-glance h2 {margin:0;font-size:18px;font-weight:500;line-height:1.3;}
+  .tj-setup-glance>p {margin:8px 0 0;color:var(--phone-loss);font-size:12px;}
+  .tj-setup-glance>div {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px;}
+  .tj-setup-glance>div>div {min-width:0;padding:10px 12px;border-radius:18px;background:color-mix(in srgb,var(--text) 6%,transparent);}
+  .tj-setup-glance span {display:block;color:var(--muted);font-size:12px;}
+  .tj-setup-glance b {font-size:20px;font-weight:500;white-space:nowrap;}
+  .tj-setup-glance b small {color:var(--muted);font-size:12px;font-weight:400;}
+  .tj-root .tj-setup-home>h3 {margin:0 4px 8px;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;}
+  .tj-setup-list {margin-bottom:18px;overflow:hidden;border:.5px solid var(--border);border-radius:28px;background:var(--card);}
+  .tj-setup-home .tj-setup-row {--tone:var(--muted);--tone-text:var(--muted);display:grid;grid-template-columns:42px minmax(0,1fr) auto 16px;align-items:center;gap:12px;width:100%;min-height:68px;padding:13px 14px;border-bottom:.5px solid var(--border);text-align:left;}
+  .tj-setup-home .tj-setup-row:last-child {border-bottom:0;}
+  .tj-setup-row.is-green {--tone:var(--phone-gain);--tone-text:var(--phone-profit);}
+  .tj-setup-row.is-blue {--tone:var(--phone-blue);--tone-text:var(--phone-blue);}
+  .tj-setup-row.is-red {--tone:var(--phone-drop);--tone-text:var(--phone-loss);}
+  .tj-setup-row.is-purple {--tone:var(--phone-purple);--tone-text:var(--phone-purple);}
+  .tj-setup-row.is-amber {--tone:var(--phone-amber);--tone-text:var(--phone-amber);}
+  .tj-setup-row.is-slate {--tone:var(--phone-pill);--tone-text:var(--text);}
+  .tj-setup-row>i {display:grid;width:42px;height:42px;place-items:center;border-radius:14px;background:color-mix(in srgb,var(--tone) 18%,var(--card));color:var(--tone-text);}
+  .tj-setup-row>span {min-width:0;}
+  .tj-setup-row b {display:block;font-size:15px;font-weight:500;}
+  .tj-setup-row small {display:block;margin-top:1px;color:var(--muted);font-size:12px;}
+  .tj-setup-row em {display:grid;min-width:28px;height:24px;padding:0 8px;place-items:center;border-radius:12px;background:var(--phone-raised);font-size:12px;font-style:normal;font-weight:500;}
+  .tj-setup-row>svg {color:var(--muted);}
+  .tj-setup-note {margin:4px 4px 8px;color:var(--muted);font-size:12px;line-height:1.5;}
+
+  /* Switch, shared by home and routine */
+  .tj-setup-home .tj-setup-switch,.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-status-chip {position:relative;display:block;flex:none;width:50px;min-width:50px;height:44px;min-height:44px;padding:0;border:0;background:transparent;}
+  .tj-setup-switch>i,.tj-routine-status-chip>i {position:absolute;top:7px;left:0;display:block;width:50px;height:30px;border-radius:15px;background:var(--phone-track);transition:background .2s;}
+  .tj-setup-switch>i::after,.tj-routine-status-chip>i::after {content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--phone-on-switch,var(--phone-plus-icon));transition:transform .2s;}
+  .tj-setup-switch[aria-checked=true]>i,.tj-routine-status-chip[aria-checked=true]>i {background:var(--phone-gain);}
+  .tj-setup-switch[aria-checked=true]>i::after,.tj-routine-status-chip[aria-checked=true]>i::after {transform:translateX(20px);}
+  .tj-routine-status-label {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-phone-list>.tj-management-phone-back-wrap {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content {padding:0;border:0;border-radius:0;background:none!important;box-shadow:none;}
+  /* Shared list look */
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-collection h2,.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content>.tj-panel>.tj-bold {margin:0;font-size:22px!important;font-weight:500;letter-spacing:-.02em;line-height:1.25;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-count {margin:0 0 12px;color:var(--muted);font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-collection>p.tj-muted-txt {margin:-4px 2px 12px;font-size:12px;line-height:1.5;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference :is(input.tj-input,select.tj-input) {height:50px;min-height:50px;padding:0 16px;border:.5px solid var(--border)!important;border-radius:18px!important;background:var(--card)!important;color:var(--text);font-size:14px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-management-search,.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-instrument-group-select {display:block;width:100%;margin:0 0 12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference .tj-inline-add {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-reference :is(.tj-inline-add,.tj-routine-add) .tj-btn-primary,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder .tj-btn-primary {display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border:0;border-radius:25px;background:var(--phone-pill);color:var(--phone-on-pill);font-size:14px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-tiles,.tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content .tj-rule-list {display:block;margin-top:0!important;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content .tj-rule-row {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;min-height:54px;margin:0;padding:6px 10px 6px 16px;border:0;border-bottom:.5px solid var(--border);border-radius:0;background:transparent;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content .tj-rule-row:last-child {border-bottom:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content .tj-rule-row>span:first-child {font-size:14px;font-weight:500;line-height:1.35;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content :is(.tj-management-row-actions,.tj-rule-actions) {display:flex;align-items:center;gap:2px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-default {padding:3px 8px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;font-style:normal;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-more {display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:10px;border:1.5px dashed var(--border);border-radius:20px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content .tj-management-list-toggle {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content>.tj-panel {padding:0;border:0;background:none!important;box-shadow:none;}
+
+  /* Instruments */
+  .tj-instrument-group-picker {margin-bottom:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-instrument-group-picker .tj-themed-control {width:100%;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-instrument-group-picker .tj-picker-trigger {width:100%;height:50px;min-height:50px!important;padding:0 16px;border:.5px solid var(--border);border-radius:18px;background:var(--card);color:var(--text);font-size:14px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-content>.tj-management-collection {padding:0;border:0;border-radius:0;background:none!important;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-instrument-manager .tj-inline-add {grid-template-columns:minmax(0,1fr) auto;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-instrument-manager .tj-inline-add>.tj-btn-primary {grid-column:auto;width:auto;}
+  .tj-setup-group {margin-bottom:8px;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card);}
+  .tj-setup-group>button {display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 16px;text-align:left;}
+  .tj-setup-group>button b {flex:1;font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
+  .tj-setup-group>button em {display:grid;min-width:28px;height:24px;padding:0 8px;place-items:center;border-radius:12px;background:var(--phone-raised);font-size:12px;font-style:normal;font-weight:500;}
+  .tj-setup-group>button svg {color:var(--muted);transition:rotate .25s;}
+  .tj-setup-group.is-open>button svg {rotate:180deg;}
+  .tj-setup-chips {display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 16px;}
+  .tj-setup-group.is-open>.tj-setup-chips:first-child {padding-top:14px;}
+  .tj-setup-chip {display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:14px;background:var(--phone-raised);font-size:13px;font-weight:500;}
+  .tj-setup-chip.is-custom,.tj-setup-chip.is-editing {padding-right:2px;}
+  .tj-setup-chip button {display:grid;width:40px;min-height:44px;place-items:center;color:var(--muted);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-setup-chip .tj-setup-chip-delete {color:var(--phone-loss);}
+  .tj-setup-chip.is-editing {width:100%;padding-left:6px;}
+  .tj-setup-chip.is-editing input {flex:1;min-width:0;}
+  .tj-setup-empty {margin:0;padding:16px;color:var(--muted);font-size:13px;text-align:center;}
+
+  /* Risk presets */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards {display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards article {padding:16px;border:.5px solid var(--border);border-radius:30px;background:radial-gradient(110px 110px at 100% 0,color-mix(in srgb,var(--phone-gain) 18%,transparent),transparent 100%),var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards article:nth-child(3n+2) {background:radial-gradient(110px 110px at 100% 0,color-mix(in srgb,var(--phone-blue) 18%,transparent),transparent 100%),var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards article:nth-child(3n) {background:radial-gradient(110px 110px at 100% 0,color-mix(in srgb,var(--phone-amber) 18%,transparent),transparent 100%),var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards header {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards h3 {margin:0;font-size:19px;font-weight:500;letter-spacing:-.02em;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-delete {display:flex;align-items:center;gap:5px;min-height:44px;padding:0 12px;border:0;border-radius:14px;background:color-mix(in srgb,var(--phone-drop) 12%,var(--card));color:var(--phone-loss);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-metrics {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-metrics>span {padding:10px 14px;border-radius:18px;background:var(--phone-raised);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-metrics small {display:block;color:var(--muted);font-size:12px;letter-spacing:.06em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-metrics b {font-size:26px;font-weight:500;letter-spacing:-.03em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-metrics>span:last-child b {color:var(--phone-profit);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-balance i:last-child {background:var(--phone-gain);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-cards article>p {margin:8px 0 0;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:16px;border:.5px solid var(--border);border-radius:30px;background:var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder>small {grid-column:1/-1;color:var(--text);font-size:15px;font-weight:500;letter-spacing:0;text-transform:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder>label {display:block;min-width:0;color:var(--muted);font-size:12px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder>label:first-of-type,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder>button {grid-column:1/-1;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-risk-preset-builder input {width:100%;margin-top:5px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-management-device-note {margin:10px 4px 0;color:var(--muted);font-size:12px;}
+
+  /* Daily routine: the same sections, in the design's order */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management {display:flex;flex-direction:column;gap:12px;min-width:0;padding:0;border:0;background:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management>* {width:100%;min-width:0;max-width:100%;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management>header {order:0;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:0;border:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management>header>div:first-child {flex:1;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management h2 {margin:0;font-size:22px;font-weight:500;letter-spacing:-.02em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management>header p {margin:0;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-status {display:block;flex:none;width:auto;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-status .tj-btn-outline {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management>[role=alert] {order:1;color:var(--phone-loss);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-preview {order:2;position:static;display:block;padding:16px;border:.5px solid var(--border);border-radius:30px;background:var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-preview>small {position:static;display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-heading>div:first-child {min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-heading h3 {margin:0;font-size:17px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-heading p {margin:0;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-ring {flex:none;width:76px;height:76px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-ring b {font-size:16px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-ring small {font-size:12px;font-weight:400;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-stats {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-stats>div {min-width:0;padding:10px 12px;border:0;border-radius:18px;background:var(--phone-raised);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-stats small {display:block;color:var(--muted);font-size:12px;letter-spacing:.04em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-stats strong {font-size:20px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-stats span {color:var(--muted);font-size:12px;font-weight:400;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week>span {display:block;color:var(--muted);font-size:12px;font-weight:500;text-align:center;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week i {display:block;width:100%;height:36px;margin-bottom:5px;border:1.5px solid var(--border);border-radius:12px;background:transparent;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week .is-full i {border-color:var(--phone-gain);background:var(--phone-gain);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week .is-partial i {border-color:var(--muted);background:color-mix(in srgb,var(--muted) 30%,transparent);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week .is-missed i {border-color:var(--phone-drop);background:color-mix(in srgb,var(--phone-drop) 10%,transparent);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week .is-today i {border-color:var(--text);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-week .is-today {color:var(--text);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-legend {display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-legend i {display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:50%;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-legend .is-full {background:var(--phone-gain);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-legend .is-partial {background:var(--muted);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-legend .is-missed {background:var(--phone-drop);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-missed-item {margin-top:10px;padding:14px;border:.5px solid color-mix(in srgb,var(--phone-amber) 30%,var(--border));border-radius:22px;background:color-mix(in srgb,var(--phone-amber) 10%,var(--card));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-missed-item small {display:block;color:var(--phone-amber);font-size:12px;font-weight:500;letter-spacing:.06em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-missed-item strong {display:block;margin:3px 0;font-size:15px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-missed-item p {margin:0;color:var(--muted);font-size:12px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-progress-note {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-banner {order:3;display:block;padding:0 4px;border:0;background:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-banner svg {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-banner p {margin:0;color:var(--muted);font-size:12px;line-height:1.5;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management-banner strong {color:var(--phone-profit);font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-section-heading {order:5;display:flex;justify-content:flex-end;padding:0 4px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-section-heading h3 {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-section-heading small {color:var(--muted);font-size:12px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management .tj-routine-list {order:4;display:flex;flex-direction:column;gap:12px;padding:0;border:0;background:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-add {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:0;padding:0;border:0;background:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-add .tj-themed-control {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-group-seg {grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+  .tj-routine-group-seg button {min-height:44px;border-radius:14px;background:var(--phone-raised);color:var(--muted);font-size:13px;font-weight:500;text-align:center;}
+  .tj-routine-group-seg button[aria-pressed=true] {background:var(--phone-pill);color:var(--phone-on-pill);}
+  .tj-routine-filter {display:flex;gap:6px;min-width:0;}
+  .tj-routine-filter button {display:flex;flex:1 1 auto;align-items:center;min-height:44px;}
+  .tj-routine-filter span {display:block;width:100%;height:32px;padding:0 10px;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;line-height:31px;text-align:center;white-space:nowrap;}
+  .tj-routine-filter button[aria-pressed=true] span {border-color:var(--phone-pill);background:var(--phone-pill);color:var(--phone-on-pill);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom {display:block;min-width:0;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card {display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;grid-template-areas:"grip label switch actions" "grip tag switch actions";align-items:center;gap:2px 6px;margin:0;padding:8px 8px 8px 8px;border:0;border-bottom:.5px solid var(--border);border-radius:0;background:transparent;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card:last-child {border-bottom:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card.is-editing {grid-template-columns:24px minmax(0,1fr);grid-template-areas:"grip label";}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-drag-handle {grid-area:grip;display:grid;width:24px;min-height:44px;place-items:center;color:var(--muted);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-custom-label {grid-area:label;font-size:14px;font-weight:500;line-height:1.3;white-space:normal;overflow-wrap:anywhere;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-group-tag {grid-area:tag;justify-self:start;padding:3px 8px;border:0;border-radius:7px;background:color-mix(in srgb,var(--phone-gain) 16%,var(--card));color:var(--phone-profit);font-size:12px;font-weight:500;letter-spacing:.04em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-group-tag.is-pretrade {background:color-mix(in srgb,var(--phone-purple) 16%,var(--card));color:var(--phone-purple);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-settings-switch {grid-area:switch;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-item-actions {grid-area:actions;display:flex;align-items:center;gap:0;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-inline-edit {grid-area:label;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-custom-card .tj-routine-inline-edit .tj-themed-control {grid-column:1/-1;grid-row:2;width:100%;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management .tj-routine-restore-phone {order:8;display:block;align-self:center;width:auto;min-height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--phone-raised);color:var(--text);font:inherit;font-size:13px;font-weight:500;cursor:pointer;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-management .tj-routine-restore-phone:disabled {opacity:.5;}
+  @media (prefers-reduced-motion:reduce) {.tj-setup-switch>i,.tj-setup-switch>i::after,.tj-routine-status-chip>i,.tj-routine-status-chip>i::after,.tj-setup-group>button svg {transition:none;}}
+}

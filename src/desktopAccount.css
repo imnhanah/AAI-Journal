@@ -1,0 +1,97 @@
+/* Desktop Account settings in the side panel (shell v2, after aaicorefx-desktop-shell.html).
+   The settings component keeps its own markup and logic; this file only lays it out as a panel:
+   compact hero, underline tabs, one column of cards, boxed fields and the panel footer.
+   Theme tokens only. Reflows by the panel's own width (container sp-panel). */
+@media (min-width:768px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root .sp-body .tj-modal.tj-account-panel-modal.tj-account-panel-modal.tj-account-panel-modal {
+    display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;max-width:none!important;height:100%!important;max-height:none!important;
+    margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:var(--surface)!important;box-shadow:none!important;overflow:hidden!important;
+  }
+  .tj-root .sp-body .tj-account-panel-modal>:is(.tj-modal-head,.tj-trade-validation-summary) {display:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal.tj-account-panel-modal>.tj-modal-body {display:flex!important;flex:1;flex-direction:column;min-height:0;padding:0!important;overflow:hidden!important;background:transparent!important;}
+
+  /* Hero */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-account-hero.tj-settings-account-hero {
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"copy close" "sum sum";align-items:center;gap:6px 12px;
+    margin:16px var(--sp-pad) 0!important;padding:14px 16px 16px!important;border:1px solid color-mix(in oklab,var(--accent) 22%,var(--border))!important;border-radius:20px!important;
+    background:linear-gradient(160deg,color-mix(in oklab,var(--accent) 9%,var(--surface)),color-mix(in oklab,var(--accent) 3%,var(--surface)))!important;box-shadow:none!important;
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-heading {grid-area:copy;min-width:0;margin:0!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hero-badge.tj-settings-hero-badge {display:block;width:auto;margin:0 0 2px!important;padding:0!important;border:0!important;background:none!important;color:var(--muted)!important;font-size:12px!important;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-heading h2 {margin:0!important;color:var(--text);font-size:17px!important;letter-spacing:-.02em;line-height:1.25;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-account-panel-close {grid-area:close;align-self:start;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-summary {grid-area:sum;display:flex!important;flex-direction:column;align-items:flex-start!important;gap:2px;margin:0!important;padding:0!important;text-align:left!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-summary small {color:var(--muted)!important;font-size:12px!important;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-summary b {color:var(--tj-green)!important;font-size:30px!important;letter-spacing:-.04em;line-height:1.1;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-summary b.is-loss {color:var(--loss)!important;}
+
+  /* Tabs */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub.tj-settings-hub {display:flex!important;flex:1;flex-direction:column;min-height:0;margin:0!important;padding:0!important;border:0!important;background:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav.tj-settings-hub-nav {
+    position:relative;display:flex!important;flex-direction:row!important;align-items:stretch;gap:6px;width:auto!important;margin:14px 0 0!important;padding:0 var(--sp-pad)!important;
+    border:0!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav>small {display:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav :is(>button,>.tj-settings-danger-menu>button) {
+    display:flex;align-items:center;gap:8px;width:auto!important;min-height:0;margin:0 0 -1px!important;padding:10px 14px 13px!important;border:0!important;border-bottom:2.5px solid transparent!important;
+    border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--muted)!important;font-size:13.5px!important;font-weight:600;white-space:nowrap;
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav :is(>button,>.tj-settings-danger-menu>button):hover {color:var(--text)!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav>button.is-active {border-bottom-color:var(--accent)!important;color:var(--accent)!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav :is(>button,>.tj-settings-danger-menu>button) svg {display:none;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-menu {margin-left:auto;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-menu>button.is-danger {color:var(--loss)!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-menu>button.is-danger[aria-expanded=true] {border-bottom-color:var(--loss)!important;}
+
+  /* Body: one column of cards */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content.tj-settings-hub-content {flex:1;min-height:0;margin:0!important;padding:18px var(--sp-pad) 24px!important;overflow:auto;overscroll-behavior:contain;scrollbar-width:none;background:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content::-webkit-scrollbar {display:none;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content>div:not([hidden]) {display:flex;flex-direction:column;gap:16px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-pane-heading {display:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-details-row,.tj-reference-utilities-row) {display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;margin:0!important;}
+  .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-accounts-card,.tj-reference-details-card,.tj-reference-position-card,.tj-reference-challenge-card,.tj-settings-section,.tj-reference-finance-toggle,.tj-finance-settings-account) {
+    min-width:0;margin:0!important;padding:18px 20px!important;border:1px solid var(--sp-line)!important;border-radius:20px!important;background:var(--sp-card)!important;box-shadow:none!important;
+  }
+  .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-details-card,.tj-reference-position-card,.tj-reference-challenge-card,.tj-reference-finance-toggle) h4,
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-title strong,
+  .tj-root .sp-body .tj-account-panel-modal .tj-account-picker-heading strong {color:var(--text);font-size:15px!important;font-weight:650;letter-spacing:-.01em;}
+  .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-position-card,.tj-reference-challenge-card,.tj-reference-finance-toggle) header p,
+  .tj-root .sp-body .tj-account-panel-modal .tj-reference-finance-toggle p,
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-title small,
+  .tj-root .sp-body .tj-account-panel-modal .tj-account-picker-heading p {color:var(--muted)!important;font-size:12.5px!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-reference-accounts-card :is(.tj-account-balance-list,.tj-account-balance-cards,[class*=balance-grid]) {grid-template-columns:repeat(auto-fill,minmax(140px,1fr))!important;}
+
+  .tj-root .sp-body .tj-account-panel-modal .tj-reference-finance .tj-finance-settings-account.tj-finance-settings-account {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-finance-settings-account>:first-child {grid-column:1/-1;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-challenge-plan-progress span {font-size:12px!important;}
+
+  /* Boxed fields, as in the mockup */
+  .tj-root .sp-body .tj-account-panel-modal input.tj-input:not([type=checkbox]):not([type=file]),
+  .tj-root .sp-body .tj-account-panel-modal .tj-picker-trigger {
+    box-sizing:border-box;width:100%;height:44px!important;min-height:44px;padding:0 14px!important;border:1px solid var(--border)!important;border-radius:12px!important;
+    background:var(--surface)!important;color:var(--text);font-size:13.5px!important;text-align:left;box-shadow:none!important;outline:0;
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-picker-trigger {display:flex;align-items:center;justify-content:space-between;}
+  .tj-root .sp-body .tj-account-panel-modal input.tj-input:focus,.tj-root .sp-body .tj-account-panel-modal .tj-picker-trigger:focus-visible {border-color:var(--accent)!important;box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent)!important;}
+  .tj-root .sp-body .tj-account-panel-modal input.tj-input:disabled {background:var(--raised)!important;color:var(--muted);}
+  .tj-root .sp-body .tj-account-panel-modal input.tj-input::placeholder {color:var(--muted);opacity:.55;}
+
+  /* Footer */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer.tj-settings-hub-footer {
+    display:flex!important;align-items:center;gap:12px;margin:0!important;padding:14px var(--sp-pad)!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;background:var(--surface)!important;box-shadow:none!important;
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer>span {margin-right:auto;color:var(--muted);font-size:12.5px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer button {height:38px!important;min-height:0;padding:0 15px!important;border-radius:11px!important;font-size:13px!important;font-weight:600;}
+
+  /* Medium and narrow panels */
+  @container sp-panel (max-width:779px) {
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-account-hero.tj-settings-account-hero {margin-inline:22px!important;}
+  }
+  @container sp-panel (max-width:479px) {
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-account-hero.tj-settings-account-hero {margin-inline:16px!important;padding:12px!important;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-workspace-summary b {font-size:26px!important;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-nav.tj-settings-hub-nav {overflow-x:auto;scrollbar-width:none;}
+    .tj-root .sp-body .tj-account-panel-modal :is(.tj-grid2,.tj-grid3,.tj-grid4,.tj-settings-linked-grid,.tj-settings-reset-grid) {grid-template-columns:minmax(0,1fr)!important;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer>span {display:none;}
+  }
+}

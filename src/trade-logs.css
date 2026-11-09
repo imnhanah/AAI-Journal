@@ -500,9 +500,9 @@
   font-size: 13px;
 }
 
-.tl-account b {
-  color: var(--rd);
-}
+.tl-account b { color: var(--muted); }
+.tl-account--profit b { color: var(--gr); }
+.tl-account--loss b { color: var(--rd); }
 
 .tl-bar {
   height: 8px;
@@ -514,9 +514,12 @@
 .tl-bar i {
   display: block;
   height: 8px;
-  background: var(--rd);
+  background: var(--muted);
   border-radius: 4px;
 }
+
+.tl-bar--profit i { background: var(--gr); }
+.tl-bar--loss i { background: var(--rd); }
 
 .tl-chips {
   display: flex;

@@ -79,7 +79,7 @@
   .tj-root.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer button {height:48px!important;min-height:48px!important;font-size:14px;border-radius:12px;}
   .tj-root.tj-root.tj-root.tj-root .tj-profile-redesign .tj-phone-profile-delete {display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--card));border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;margin:16px 0 0;}
   .tj-root.tj-root.tj-root .tj-profile-delete-overlay {padding:20px;isolation:isolate;background:none;z-index:400;}
-  .tj-profile-delete-backdrop {display:block;position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--bg) 55%,transparent);backdrop-filter:blur(5px);}
+  .tj-profile-delete-backdrop {display:block;position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--bg) 55%,transparent);}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog {position:relative;width:100%;max-width:390px;padding:22px;max-height:calc(100dvh - 40px);border-radius:20px;}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog h3 {font-size:20px;}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog :is(p,li,label) {font-size:13px;line-height:1.5;}

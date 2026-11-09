@@ -16,12 +16,21 @@ const number = (value, fallback, min, max) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
 };
+export const DEFAULT_ANNOTATION_COLOR = '#B89AFF';
+// Desktop viewer swatches (stored on each annotation, so they are data colours, not theme colours).
+export const ANNOTATION_SWATCHES = Object.freeze(['#B89AFF', '#FBBF24', '#F87171', '#2FD6A0']);
+export const normaliseAnnotationColor = value => {
+  const source=String(value || '').trim();
+  const short=source.match(/^#([\da-f])([\da-f])([\da-f])$/i);
+  if (short) return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toUpperCase();
+  return /^#[\da-f]{6}$/i.test(source) ? source.toUpperCase() : DEFAULT_ANNOTATION_COLOR;
+};
 export const defaultStyle = tool => ({
   thickness:2,
   arrowSize:10,
   fill:'none',
   fontSize:13,
-  color:'accent',
+  color:DEFAULT_ANNOTATION_COLOR,
   ...(tool === 'text' ? { thickness:0 } : {}),
 });
 export const normaliseStyle = (tool, value = {}) => ({
@@ -31,7 +40,7 @@ export const normaliseStyle = (tool, value = {}) => ({
   arrowSize:number(value?.arrowSize, 10, 6, 24),
   fontSize:number(value?.fontSize, 13, 10, 24),
   fill:['none','transparent','soft'].includes(value?.fill) ? value.fill : 'none',
-  color:['accent','text','warn'].includes(value?.color) ? value.color : 'accent',
+  color:normaliseAnnotationColor(value?.color),
 });
 
 export const normaliseAnnotation = (value = {}) => {
@@ -106,7 +115,7 @@ export const fitBoardViewport = (value, surface) => {
   return {...board,viewport:{zoom,x:(area.width-board.image.width*zoom)/2-board.image.x*zoom,y:(area.height-board.image.height*zoom)/2-board.image.y*zoom}};
 };
 export const patchBoard = (placement, patch) => ({...placement,board:{...placement.board,...patch}});
-export const boardObject = (tool, start, end=start, text='') => ({id:globalThis.crypto?.randomUUID?.()||`board-${Date.now()}-${Math.random()}`,tool,start,end,text,style:normaliseStyle(tool==='pen'?'draw':tool,{})});
+export const boardObject = (tool, start, end=start, text='', style={}) => ({id:globalThis.crypto?.randomUUID?.()||`board-${Date.now()}-${Math.random()}`,tool,start,end,text,style:normaliseStyle(tool==='pen'?'draw':tool,style)});
 export const commitBoardText = (placement, draft) => {
   const board=normaliseBoard(placement?.board); const text=String(draft?.text ?? '').trim();
   if (!text && !draft?.id) return placement;
@@ -120,3 +129,46 @@ export const resizeBoardImage = (image, start, point, ratio) => {
   return {...image,width,height};
 };
 export const moveBoardObject = (object, offset) => ({...object,start:{x:object.start.x+offset.x,y:object.start.y+offset.y},end:{x:object.end.x+offset.x,y:object.end.y+offset.y},points:object.points?.map(point=>({x:point.x+offset.x,y:point.y+offset.y}))});
+
+const copiedBoardId = () => globalThis.crypto?.randomUUID?.() || `board-copy-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+// Copies are deliberately placement-local. Relative records receive a small
+// image-relative nudge; older absolute records receive the same visible nudge
+// in canvas pixels without changing their original record.
+export const duplicateBoardObjects = (objects = [], relativeOffset = .02, canvasOffset = 16) => objects.map(object => {
+  const offset=object?.relativeToImage ? relativeOffset : canvasOffset;
+  const movePoint=point=>object?.relativeToImage
+    ? {x:clamp(Number(point?.x || 0)+offset),y:clamp(Number(point?.y || 0)+offset)}
+    : {x:Number(point?.x || 0)+offset,y:Number(point?.y || 0)+offset};
+  return {...object,id:copiedBoardId(),start:movePoint(object?.start),end:movePoint(object?.end),points:object?.points?.map(movePoint),style:object?.style?{...object.style}:object?.style};
+});
+
+// New viewer objects are stored in image-relative coordinates. Legacy boards
+// retain their absolute canvas geometry and are rendered unchanged.
+export const imageRelativePoint = (point, image) => ({
+  x:clamp((Number(point?.x) - Number(image?.x || 0)) / Math.max(1, Number(image?.width || 1))),
+  y:clamp((Number(point?.y) - Number(image?.y || 0)) / Math.max(1, Number(image?.height || 1))),
+});
+export const imageCanvasPoint = (point, image) => ({
+  x:Number(image?.x || 0) + Number(point?.x || 0) * Math.max(1, Number(image?.width || 1)),
+  y:Number(image?.y || 0) + Number(point?.y || 0) * Math.max(1, Number(image?.height || 1)),
+});
+export const imageRelativeBoardObject = (tool, start, end, image, text = '', points = [], style = {}) => ({
+  ...boardObject(tool, imageRelativePoint(start,image), imageRelativePoint(end,image), text, style),
+  relativeToImage:true,
+  points:tool === 'pen' ? points.map(point=>imageRelativePoint(point,image)) : undefined,
+});
+export const boardObjectCanvasGeometry = (object, image) => {
+  if (!object?.relativeToImage) return object;
+  return {
+    ...object,
+    start:imageCanvasPoint(object.start,image),
+    end:imageCanvasPoint(object.end,image),
+    points:(object.points || []).map(point=>imageCanvasPoint(point,image)),
+  };
+};
+export const moveImageRelativeBoardObject = (object, canvasOffset, image) => {
+  if (!object?.relativeToImage) return moveBoardObject(object,canvasOffset);
+  const offset={x:Number(canvasOffset?.x || 0)/Math.max(1,Number(image?.width || 1)),y:Number(canvasOffset?.y || 0)/Math.max(1,Number(image?.height || 1))};
+  const shift=point=>({x:clamp(point.x+offset.x),y:clamp(point.y+offset.y)});
+  return {...object,start:shift(object.start),end:shift(object.end),points:object.points?.map(shift)};
+};

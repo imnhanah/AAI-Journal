@@ -11,6 +11,9 @@ test('application confirmations use the shared themed provider instead of native
   assert.match(provider, /createPortal/);
   assert.match(provider, /role="alertdialog"/);
   assert.match(provider, /tj-confirm-overlay/);
+  assert.match(provider, /tj-confirm-icon/);
+  assert.match(provider, /tj-confirm-close/);
+  assert.match(provider, /aria-label="Keep editing"/);
   assert.match(provider, /Escape/);
 });
 

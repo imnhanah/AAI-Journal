@@ -1,19 +1,27 @@
 /* Large Calendar day popup. All readable type is at least 12px. */
-.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal { width:640px; max-width:calc(100vw - 32px); max-height:92dvh; border-radius:24px; border:1px solid var(--border); background:var(--card); display:flex; flex-direction:column; overflow:hidden; }
-.tj-root.tj-root .tj-calendar-day-modal .tj-modal-head { padding:26px 28px 0; background:none; border:0; flex-shrink:0; align-items:flex-start; }
+.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal { width:560px; max-width:calc(100vw - 32px); max-height:86dvh; border-radius:26px; border:1px solid var(--border); background:var(--card); display:flex; flex-direction:column; overflow:hidden; box-shadow:0 40px 90px -30px color-mix(in srgb,var(--text) 55%,transparent); animation:tj-day-popup-in .35s cubic-bezier(.22,1,.36,1); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-modal-head { padding:22px 24px 0; background:none; border:0; flex-shrink:0; align-items:flex-start; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-date { gap:5px; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-date strong { font-size:26px; line-height:1.2; font-weight:800; }
-.tj-root.tj-root .tj-calendar-day-modal .tj-day-date small { font-size:14px; color:var(--muted); }
-.tj-root.tj-root .tj-calendar-day-modal .tj-modal-close { width:40px; height:40px; min-height:40px; padding:9px; border-radius:10px; background:var(--card-alt); border:1px solid var(--border); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-date small { font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-modal-close,.tj-root.tj-root .tj-calendar-day-modal .tj-day-step { width:36px; height:36px; min-height:36px; padding:8px; border-radius:11px; background:var(--card); border:1px solid var(--border); }
 .tj-root.tj-root .tj-calendar-day-modal .tj-modal-close svg { width:20px; height:20px; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-modal-head-actions .tj-modal-close { flex:0 0 40px; min-width:40px; width:40px !important; height:40px !important; min-height:40px !important; }
 .tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-modal-close svg { width:20px; height:20px; }
 .tj-root.tj-theme-dark .tj-calendar-day-modal .tj-day-trade { background:var(--bg); }
 .tj-root.tj-root.tj-root.tj-theme-light .tj-modal-overlay .tj-calendar-day-modal { background:var(--bg); }
-.tj-root.tj-root .tj-calendar-day-modal .tj-modal-body { padding:18px 28px 28px; min-height:0; overflow-y:auto; }
-.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 22px; }
-.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary>strong { font-size:46px; font-weight:800; line-height:1.15; letter-spacing:-.035em; font-variant-numeric:tabular-nums; max-width:100%; overflow-wrap:anywhere; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-modal-body { padding:16px 24px 24px; min-height:0; overflow-y:auto; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary { display:grid; gap:10px; margin:0 0 16px; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-summary-hero { position:relative; display:flex; align-items:end; justify-content:space-between; gap:12px; padding:18px 20px; overflow:hidden; border:1px solid var(--border); border-radius:20px; background:var(--card-alt); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary.is-gain .tj-day-summary-hero { border-color:color-mix(in srgb,var(--green) 22%,var(--border)); background:radial-gradient(90% 140% at 100% 0%,color-mix(in srgb,var(--green) 16%,transparent),transparent 60%),color-mix(in srgb,var(--green) 5%,var(--card)); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary.is-loss .tj-day-summary-hero { border-color:color-mix(in srgb,var(--red) 22%,var(--border)); background:radial-gradient(90% 140% at 100% 0%,color-mix(in srgb,var(--red) 14%,transparent),transparent 60%),color-mix(in srgb,var(--red) 4%,var(--card)); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-summary-hero>strong { font-size:44px; font-weight:800; line-height:1; letter-spacing:-.045em; font-variant-numeric:tabular-nums; max-width:100%; overflow-wrap:anywhere; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-summary-hero>div { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-count { padding:7px 11px; border-radius:99px; font-size:12px; font-weight:600; line-height:1.3; color:var(--muted); background:var(--card-alt); border:1px solid var(--border); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-stat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-stat-grid>div { min-width:0; padding:12px 14px; border-radius:15px; background:var(--card-alt); }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-stat-grid small { display:block; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+.tj-root.tj-root .tj-calendar-day-modal .tj-day-stat-grid b { display:block; margin-top:3px; font-size:17px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-cash-list { display:grid; gap:16px; padding:18px; margin:0; border:1px solid color-mix(in srgb,var(--tj-purple) 30%,var(--border)); border-radius:16px; background:color-mix(in srgb,var(--tj-purple) 10%,var(--card)); }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-cash-list>strong { font-size:12px; font-weight:800; letter-spacing:.1em; color:var(--tj-purple); }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-cash-item { display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:12px; font-size:16px; line-height:1.4; }
@@ -43,4 +51,6 @@
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-no-shots { display:grid; place-items:center; width:100%; min-height:88px; padding:16px; border:1px dashed var(--border); border-radius:10px; font-size:13px; color:var(--muted); }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-open-log { display:inline-flex; align-items:center; gap:6px; margin-top:16px; padding:0; background:none; border:0; font:inherit; font-size:13px; font-weight:700; color:var(--accent); cursor:pointer; }
 .tj-root.tj-root .tj-calendar-day-modal .tj-day-open-log:focus-visible { outline:2px solid var(--accent); outline-offset:5px; border-radius:3px; }
+@keyframes tj-day-popup-in { from { opacity:0; } to { opacity:1; } }
 @media(max-width:600px) { .tj-root.tj-root .tj-calendar-day-modal .tj-modal-head { padding:22px 20px 0; } .tj-root.tj-root .tj-calendar-day-modal .tj-modal-body { padding:18px 20px 22px; } .tj-root.tj-root .tj-calendar-day-modal .tj-day-cash-item { grid-template-columns:36px minmax(0,1fr); } .tj-root.tj-root .tj-calendar-day-modal .tj-day-cash-item>b { grid-column:2; } }
+@media(prefers-reduced-motion:reduce) { .tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal { animation:none; } }

@@ -1,0 +1,113 @@
+/* Phone Dashboard. Colours come from the --phone-* tokens set in mobileApp.css. */
+@media (max-width:767px) {
+  .tj-signal-page-dashboard{display:none}
+  .tj-mobile-dashboard-v6{display:grid;gap:22px;min-width:0;padding-bottom:8px;color:var(--text);font-size:14px;line-height:1.4}
+  .tj-mobile-dashboard-v6 *{box-sizing:border-box}
+  .tj-mobile-dashboard-v6 button{font:inherit;color:inherit;cursor:pointer}
+  .tj-mobile-dashboard-v6 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .tj-mobile-dashboard-v6 .is-profit{color:var(--phone-profit)}
+  .tj-mobile-dashboard-v6 .is-loss{color:var(--phone-loss)}
+
+  /* Net P&L card */
+  .tj-root .tj-md6-hero{padding:16px 18px 14px;border:.5px solid var(--phone-hero-line);border-radius:30px;background:var(--phone-hero);box-shadow:none}
+  .tj-md6-hero-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-8px 0 -8px}
+  .tj-md6-hero-head>span{color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+  .tj-root .tj-md6-hero>strong{display:block;margin:10px 0 6px;font-size:clamp(34px,10.8vw,42px);font-weight:500;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+  .tj-md6-badge{display:inline-block;padding:4px 10px;border-radius:14px;font-size:12px;font-weight:500;white-space:nowrap}
+  .tj-md6-badge.is-gain{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-mobile-dashboard-v6 .tj-md6-badge.is-loss{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-md6-spark{display:block;margin-top:4px}
+  .tj-root .tj-md6-hero footer{display:flex;margin-top:8px;padding-top:12px;border-top:.5px solid var(--phone-hero-line);color:var(--muted);font-size:12px}
+  .tj-md6-hero footer>div{flex:1;min-width:0}
+  .tj-md6-hero footer>div+div{padding-left:14px;border-left:.5px solid var(--phone-hero-line)}
+  .tj-md6-hero footer small{display:block;font-size:12px}
+  .tj-md6-hero footer b{display:block;margin-top:2px;overflow:hidden;color:var(--text);font-size:16px;font-weight:500;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tj-mobile-dashboard-v6 .tj-md6-hero footer b.is-profit{color:var(--phone-profit)}
+  .tj-mobile-dashboard-v6 .tj-md6-hero footer b.is-loss{color:var(--phone-loss)}
+
+  /* Balance picker: 28px pill inside a 44px tap target */
+  .tj-md6-account-picker{position:relative}
+  .tj-md6-account-picker>button{display:flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent}
+  .tj-md6-account-picker>button>span{display:inline-flex;align-items:center;gap:4px;max-width:150px;height:28px;padding:0 11px;overflow:hidden;border-radius:14px;background:var(--phone-hero-chip);font-size:12px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-account-picker svg{flex:none}
+  .tj-md6-account-menu{position:absolute;z-index:60;top:calc(100% - 2px);right:0;display:grid;min-width:180px;max-width:min(280px,calc(100vw - 48px));padding:6px;border:.5px solid var(--border);border-radius:16px;background:var(--card);box-shadow:0 16px 34px color-mix(in srgb,var(--bg) 60%,transparent)}
+  .tj-md6-account-menu button{min-height:44px;padding:0 10px;border:0;border-radius:11px;background:transparent;color:var(--text);text-align:left;font-size:13px}
+  .tj-md6-account-menu button[aria-selected=true]{background:var(--phone-raised)}
+
+  /* Sections and cards */
+  .tj-md6-section{min-width:0}
+  .tj-md6-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:22px;margin:0 4px 10px}
+  .tj-root .tj-md6-section-head h2{margin:0;color:var(--text);font-size:15px;font-weight:500;letter-spacing:0}
+  .tj-md6-section-head button{margin:-11px 0;padding:0;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:500;white-space:nowrap}
+  .tj-root .tj-md6-card{min-width:0;padding:14px;border:.5px solid var(--border);border-radius:24px;background:var(--card)}
+  .tj-md6-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
+  .tj-md6-no-trades{padding:20px 2px;color:var(--muted);font-size:12px;text-align:center}
+
+  /* Performance snapshot */
+  .tj-md6-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .tj-root .tj-md6-insight{display:flex;min-width:0;flex-direction:column;padding:12px 14px;border:.5px solid var(--border);border-radius:22px;background:var(--card)}
+  .tj-md6-insight>header{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
+  .tj-md6-insight>header small{font-size:12px}
+  .tj-md6-insight>header svg{flex:none}
+  .tj-root .tj-md6-insight>strong{margin:4px 0 6px;overflow:hidden;color:var(--text);font-size:26px;font-weight:500;letter-spacing:-.01em;line-height:1.25;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tj-md6-insight>strong>em{color:var(--muted);font-size:14px;font-style:normal;font-weight:500}
+  .tj-root .tj-md6-insight>strong.is-compact{display:flex;flex-wrap:wrap;align-items:center;gap:0 3px;min-height:32.5px;font-size:clamp(13px,3.85vw,16px);letter-spacing:-.015em}
+  .tj-md6-insight>strong.is-compact b{font-weight:500}
+  .tj-md6-insight>p{margin:7px 0 0;color:var(--muted);font-size:12px;letter-spacing:-.01em;line-height:1.35}
+  .tj-md6-meter{display:flex;height:5px;overflow:hidden;border-radius:3px;background:var(--phone-track)}
+  .tj-md6-meter>i{display:block;min-width:0;height:100%;background:var(--phone-gain)}
+  .tj-md6-meter>i.is-loss{background:var(--phone-drop)}
+  .tj-md6-meter.is-days{gap:3px;background:transparent}
+  .tj-md6-meter.is-days>i{flex:1;border-radius:3px}
+  .tj-md6-meter.is-days>i.is-flat{background:var(--phone-track)}
+
+  /* Challenge journey */
+  .tj-md6-challenge-head{display:grid;gap:6px;min-width:0;margin-top:-8px}
+  .tj-md6-chips{display:flex;gap:6px;min-width:0;overflow-x:auto;scrollbar-width:none}
+  .tj-md6-chips::-webkit-scrollbar{display:none}
+  .tj-md6-chips button{display:flex;flex:1 0 0;align-items:center;min-width:calc((100% - 12px) / 3);min-height:44px;padding:0;border:0;background:transparent}
+  .tj-md6-chips span{display:block;width:100%;height:34px;padding:0 10px;overflow:hidden;border-radius:17px;background:var(--phone-raised);font-size:13px;font-weight:500;line-height:34px;text-align:center;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-challenge-amount{display:flex;align-items:baseline;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px}
+  .tj-md6-challenge-amount b{color:var(--text);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tj-md6-chips button.is-on span{background:var(--phone-pill);color:var(--phone-on-pill)}
+  .tj-md6-dots{display:flex;align-items:center;margin:14px 4px 12px}
+  .tj-md6-dots>span{flex:1;height:3px;background:var(--phone-track)}
+  .tj-md6-dots>i{display:flex;flex:none;align-items:center;justify-content:center;width:26px;height:26px;border:1.5px dashed var(--muted);border-radius:50%;background:var(--card);color:var(--muted);font-size:12px;font-style:normal}
+  .tj-md6-dots>i.is-done{border:0;background:var(--phone-pill);color:var(--phone-on-pill)}
+  .tj-md6-dots>i.is-current{border:2px solid var(--phone-pill);color:var(--text);font-weight:500}
+  .tj-md6-challenge-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;color:var(--muted);font-size:12px}
+  .tj-md6-empty-challenge{display:flex;align-items:center;gap:10px;padding:16px;border:.5px solid var(--border);border-radius:24px;background:var(--card);color:var(--muted);font-size:12px}
+
+  /* Performance flow */
+  .tj-md6-segment{display:flex;width:100%;border-radius:17px;background:var(--phone-raised)}
+  .tj-md6-segment button{display:flex;flex:1 1 0;align-items:center;min-width:0;min-height:44px;padding:3px;border:0;background:transparent}
+  .tj-md6-segment span{display:block;width:100%;height:38px;overflow:hidden;border-radius:14px;color:var(--muted);font-size:13px;font-weight:500;line-height:38px;text-align:center;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-segment button.is-on span{background:var(--phone-pill);color:var(--phone-on-pill)}
+  .tj-md6-recent{margin-top:12px}
+  .tj-md6-trade{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:.5px solid var(--border)}
+  .tj-md6-trade>span{display:grid;flex:none;width:36px;height:36px;place-items:center;border-radius:12px}
+  .tj-md6-trade>span.is-gain{background:var(--phone-gain-bg);color:var(--phone-profit)}
+  .tj-md6-trade>span.is-drop{background:var(--phone-drop-bg);color:var(--phone-loss)}
+  .tj-md6-trade>div{flex:1;min-width:0}
+  .tj-md6-trade>div>strong{display:block;overflow:hidden;font-size:14px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-trade>div>strong em{color:var(--muted);font-style:normal;font-weight:400}
+  .tj-md6-trade>div>small{display:block;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-trade>b{flex:none;text-align:right;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tj-md6-trade>b>small{display:block;color:var(--muted);font-size:12px;font-weight:400;letter-spacing:.05em}
+  .tj-md6-recent-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-8px;border-top:.5px solid var(--border);color:var(--muted);font-size:12px}
+  .tj-md6-recent-foot button{min-height:44px;padding:0;border:0;background:transparent;color:var(--phone-profit);font-weight:500}
+  .tj-md6-momentum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+  .tj-md6-momentum>div{min-width:0;padding:10px 12px;border-radius:16px;background:var(--phone-raised)}
+  .tj-md6-momentum small{display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.03em}
+  .tj-md6-momentum b{display:block;margin-top:2px;overflow:hidden;font-size:15px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .tj-md6-momentum span{display:block;margin-top:1px;color:var(--muted);font-size:12px}
+
+  /* Charts */
+  .tj-md6-score{display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:14px;background:var(--phone-gain-bg);color:var(--phone-profit);font-size:18px;font-weight:500}
+  .tj-md6-radar,.tj-md6-svg{display:block;margin-top:6px}
+  .tj-md6-radar text,.tj-md6-svg text{fill:var(--muted);font-family:inherit;font-size:12px}
+  .tj-md6-score-tiles{display:flex;gap:6px}
+  .tj-md6-score-tiles>div{flex:1;min-width:0;padding:8px 2px;border-radius:14px;background:var(--phone-raised);color:var(--muted);text-align:center}
+  .tj-md6-score-tiles b{display:block;color:var(--text);font-size:15px;font-weight:500}
+  .tj-md6-score-tiles small{display:block;font-size:12px;line-height:1.2}
+}

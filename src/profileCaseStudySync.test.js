@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {cloudSyncState,planTemporaryLibraryUpload,sameProfileCaseStudyLibrary} from './profileCaseStudySync.js';
+import {cloudSyncState,planPendingLibraryRecovery,planTemporaryLibraryUpload,sameProfileCaseStudyLibrary} from './profileCaseStudySync.js';
 
 const library = id => ({studies:[{id,body:`${id} note`,evidenceIds:[`evidence-${id}`],evidencePlacements:{[`evidence-${id}`]:{annotations:[{id:`annotation-${id}`}],board:{objects:[{id:`text-${id}`,tool:'text',text:id}]}}}}],evidence:[{id:`evidence-${id}`}],notebooks:[],personalTemplates:[{id:`template-${id}`,metadata:{id}}]});
 
@@ -25,6 +25,16 @@ test('initial uploads, repeated uploads, and device-only payloads preserve compl
   assert.equal(device.studies[0].evidencePlacements['evidence-device'].board.objects[0].text,'device');
 });
 
+test('pending cloud saves are never silently replayed against a newer cloud revision',()=>{
+  const local=library('local'), cloud=library('cloud');
+  assert.deepEqual(planPendingLibraryRecovery({pending:{workspace:local,baseRevision:4},cloudLibrary:local,cloudRevision:5}),{kind:'confirmed',revision:5});
+  assert.deepEqual(planPendingLibraryRecovery({pending:{workspace:local,baseRevision:4},cloudLibrary:null,cloudRevision:4}),{kind:'retry-safe',expectedRevision:4});
+  const conflict=planPendingLibraryRecovery({pending:{workspace:local,baseRevision:4},cloudLibrary:cloud,cloudRevision:5});
+  assert.equal(conflict.kind,'reconciliation-required');
+  assert.equal(conflict.local.studies[0].id,'local');
+  assert.equal(conflict.cloud.studies[0].id,'cloud');
+});
+
 test('cloud contract uses database RPC compare-and-swap rather than unconditional upsert',()=>{
   const cloud=readFileSync(new URL('./caseStudyCloud.js',import.meta.url),'utf8');
   const sql=readFileSync(new URL('../supabase/profile_case_study_sync_concurrency.sql',import.meta.url),'utf8');
@@ -35,7 +45,8 @@ test('cloud contract uses database RPC compare-and-swap rather than unconditiona
   assert.match(sql,/where user_id=auth\.uid\(\) and revision=expected_revision/);
   assert.match(sql,/on conflict \(user_id\) do nothing/);
   assert.match(journal,/setProfileCaseStudySyncStatus\('Sync conflict'\)/);
-  assert.match(journal,/setProfileCaseStudyConflict\(\{ local:caseStudyWorkspace/);
+  assert.match(journal,/const local=caseStudySyncOutboxRef\.current\?\.pending\?\.workspace \|\| caseStudyWorkspace;\s*persistCaseStudyConflict\(local,res\.data \|\| \{\},res\.revision \?\? null\)/);
+  assert.match(journal,/persistPendingCaseStudySnapshot\(caseStudyWorkspace,profileCaseStudyRevisionRef\.current\)/);
 });
 
 test('sync statuses distinguish local saves, confirmed sync, failure, and conflict',()=>{

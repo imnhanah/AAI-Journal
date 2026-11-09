@@ -1,0 +1,234 @@
+/* Phone app design layer. Everything except the hidden date rule is phone-only.
+   Loaded last so one palette, shape and navigation style covers every screen. */
+.tj-page-date,.tj-phone-header-slot {display:none;}
+
+@media (max-width:767px) {
+  /* Every theme gets the design's shapes; these defaults take a custom theme's own colours. */
+  .tj-root {
+    --phone-bg:var(--bg);--phone-surface:var(--card);--phone-surface-deep:var(--card-alt);--phone-raised:color-mix(in srgb,var(--text) 7%,var(--card));--phone-track:var(--border);--phone-line:var(--border);--phone-text:var(--text);--phone-muted:var(--muted);
+    --phone-gain:var(--profit,var(--green));--phone-profit:var(--profit,var(--green));--phone-gain-bg:color-mix(in srgb,var(--phone-gain) 18%,var(--card));--phone-drop:var(--loss,var(--red));--phone-loss:var(--loss,var(--red));--phone-drop-bg:color-mix(in srgb,var(--phone-drop) 18%,var(--card));
+    --phone-chart:var(--accent);--phone-chart-fill:color-mix(in srgb,var(--accent) 9%,transparent);--phone-pill:var(--accent);--phone-on-pill:var(--on-accent);
+    --phone-hero:linear-gradient(165deg,color-mix(in srgb,var(--accent) 12%,var(--card)),var(--card) 60%);--phone-hero-line:var(--border);--phone-hero-chip:color-mix(in srgb,var(--text) 9%,transparent);
+    --phone-bar:color-mix(in srgb,var(--card) 72%,transparent);--phone-bar-top:color-mix(in srgb,var(--text) 10%,transparent);--phone-sheet:color-mix(in srgb,var(--card) 94%,transparent);--phone-scrim:color-mix(in srgb,var(--bg) 55%,transparent);--phone-plus:var(--accent);--phone-plus-fg:var(--on-accent);
+    --phone-purple:var(--accent);--phone-purple-bg:color-mix(in srgb,var(--accent) 18%,var(--card));--phone-purple-wash:color-mix(in srgb,var(--accent) 22%,var(--card));--phone-purple-base:var(--card);--phone-amber:var(--amber,var(--tj-amber));--phone-blue:var(--tj-blue);--phone-blue-bg:color-mix(in srgb,var(--tj-blue) 18%,var(--card));
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-dark:not([data-profile-theme]:not([data-profile-theme="default"])) {
+    --phone-bg:var(--phone-dark-bg);--phone-surface:var(--phone-dark-surface);--phone-surface-deep:var(--phone-dark-surface-deep);--phone-raised:var(--phone-dark-raised);--phone-track:var(--phone-dark-track);--phone-line:var(--phone-dark-line);--phone-text:var(--phone-dark-text);--phone-muted:var(--phone-dark-muted);--phone-gain:var(--phone-dark-gain);--phone-profit:var(--phone-dark-profit);--phone-gain-bg:var(--phone-dark-gain-bg);--phone-drop:var(--phone-dark-drop);--phone-loss:var(--phone-dark-loss);--phone-drop-bg:var(--phone-dark-drop-bg);--phone-chart:var(--phone-dark-chart);--phone-chart-fill:var(--phone-dark-chart-fill);--phone-pill:var(--phone-dark-pill);--phone-on-pill:var(--phone-dark-on-pill);--phone-hero:var(--phone-dark-hero);--phone-hero-line:var(--phone-dark-hero-line);--phone-hero-chip:var(--phone-dark-hero-chip);--phone-bar:var(--phone-dark-bar);--phone-bar-top:var(--phone-dark-bar-top);--phone-sheet:var(--phone-dark-sheet);--phone-scrim:var(--phone-dark-scrim);--phone-plus:var(--phone-dark-plus);--phone-plus-fg:var(--phone-plus-icon);--phone-purple:var(--phone-dark-purple);--phone-purple-bg:var(--phone-dark-purple-bg);--phone-purple-wash:var(--phone-dark-purple-wash);--phone-purple-base:var(--phone-dark-purple-base);--phone-amber:var(--phone-dark-amber);--phone-blue:var(--phone-dark-blue);--phone-blue-bg:var(--phone-dark-blue-bg);
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-theme-light:not([data-profile-theme]:not([data-profile-theme="default"])) {
+    --phone-bg:var(--phone-light-bg);--phone-surface:var(--phone-light-surface);--phone-surface-deep:var(--phone-light-surface-deep);--phone-raised:var(--phone-light-raised);--phone-track:var(--phone-light-track);--phone-line:var(--phone-light-line);--phone-text:var(--phone-light-text);--phone-muted:var(--phone-light-muted);--phone-gain:var(--phone-light-gain);--phone-profit:var(--phone-light-profit);--phone-gain-bg:var(--phone-light-gain-bg);--phone-drop:var(--phone-light-drop);--phone-loss:var(--phone-light-loss);--phone-drop-bg:var(--phone-light-drop-bg);--phone-chart:var(--phone-light-chart);--phone-chart-fill:var(--phone-light-chart-fill);--phone-pill:var(--phone-light-pill);--phone-on-pill:var(--phone-light-on-pill);--phone-hero:var(--phone-light-hero);--phone-hero-line:var(--phone-light-hero-line);--phone-hero-chip:var(--phone-light-hero-chip);--phone-bar:var(--phone-light-bar);--phone-bar-top:var(--phone-light-bar-top);--phone-sheet:var(--phone-light-sheet);--phone-scrim:var(--phone-light-scrim);--phone-plus:var(--phone-light-plus);--phone-plus-fg:var(--phone-plus-icon);--phone-purple:var(--phone-light-purple);--phone-purple-bg:var(--phone-light-purple-bg);--phone-purple-wash:var(--phone-light-purple-wash);--phone-purple-base:var(--phone-light-purple-base);--phone-amber:var(--phone-light-amber);--phone-blue:var(--phone-light-blue);--phone-blue-bg:var(--phone-light-blue-bg);
+  }
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root:is(.tj-theme-dark,.tj-theme-light):not([data-profile-theme]:not([data-profile-theme="default"])) {
+    --bg:var(--phone-bg)!important;--card:var(--phone-surface)!important;--card-alt:var(--phone-surface-deep)!important;--surface:var(--phone-surface)!important;--raised:var(--phone-raised)!important;--border:var(--phone-line)!important;--border-strong:color-mix(in srgb,var(--phone-line) 88%,var(--phone-text))!important;--text:var(--phone-text)!important;--muted:var(--phone-muted)!important;--profit:var(--phone-profit)!important;--loss:var(--phone-loss)!important;--green:var(--phone-profit)!important;--red:var(--phone-loss)!important;
+    --tj-bg:var(--phone-bg)!important;--tj-chrome:var(--phone-surface)!important;--tj-panel:var(--phone-surface)!important;--tj-panel-alt:var(--phone-surface-deep)!important;--tj-border:var(--phone-line)!important;--tj-text:var(--phone-text)!important;--tj-muted:var(--phone-muted)!important;--tj-green:var(--phone-profit)!important;--tj-red:var(--phone-loss)!important;
+    background:var(--phone-bg);color:var(--phone-text);
+  }
+  /* Default accent is neutral: colour is reserved for profit and loss. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root:is(.tj-theme-dark,.tj-theme-light)[data-profile-accent="default"]:not([data-profile-theme]:not([data-profile-theme="default"])) {
+    --accent:var(--phone-pill)!important;--on-accent:var(--phone-on-pill)!important;--tj-accent:var(--phone-pill)!important;--tj-primary-contrast:var(--phone-on-pill)!important;
+  }
+  /* A chosen accent still drives the tab pill, main action and charts. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root[data-profile-accent]:not([data-profile-accent="default"]) {--phone-chart:var(--accent);--phone-pill:var(--accent);--phone-on-pill:var(--on-accent);--phone-plus:var(--accent);--phone-plus-fg:var(--on-accent);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {--mobile-top:calc(64px + env(safe-area-inset-top,0px));--mobile-bottom:calc(80px + env(safe-area-inset-bottom,0px));}
+  /* Older light-theme rules pin a pale mint page colour; phones use the design's background. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root :is(.tj-main,.tj-content) {background:var(--bg)!important;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {padding-inline:14px;}
+
+  /* App header: title, today's date, account pill. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {background:var(--bg);border:0!important;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-group {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-heading {display:grid;gap:3px;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-title {font-size:20px;font-weight:500;letter-spacing:0;line-height:1.1;white-space:nowrap;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-page-date {display:block;overflow:hidden;color:var(--muted);font-size:12px;font-weight:400;line-height:1.2;text-overflow:ellipsis;white-space:nowrap;}
+  /* 34px pill inside a 44px tap target. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-switcher {gap:6px;min-width:0;height:44px;min-height:44px;padding:0 10px 0 5px;border:0;border-block:5px solid transparent;border-radius:22px;background:var(--card);background-clip:padding-box;box-shadow:none;color:var(--text);font-size:12px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-header-account-switcher .tj-account-initial {display:grid;place-items:center;width:24px;height:24px;border:0;border-radius:50%;background:var(--phone-raised);color:var(--text);font-size:12px;font-weight:500;}
+
+  /* A page's own top controls take the workspace switcher's place in the header. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-actions:has(.tj-phone-header-slot:not(:empty)) .tj-header-account-control {display:none!important;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar-actions:has(.tj-phone-header-slot:not(:empty)) {max-width:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar:has(.tj-phone-header-slot:not(:empty)) .tj-page-date {display:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot:not(:empty) {display:flex;align-items:center;justify-content:flex-end;gap:5px;min-width:0;font-family:var(--font-sans);}
+  .tj-root.tj-root.tj-root .tj-phone-header-slot button {font-family:inherit;cursor:pointer;}
+  .tj-root.tj-root.tj-root .tj-phone-header-slot button:disabled {opacity:.5;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-picker-trigger {width:auto;min-width:0;max-width:118px;height:44px;min-height:44px!important;padding:0 8px 0 5px;border:0;border-block:5px solid transparent;border-radius:22px;background:var(--card);background-clip:padding-box;box-shadow:none;color:var(--text);font-size:12px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot :is(.tj-theme-select,.tj-control-account-card,.tj-control-analytics-account) {width:auto;min-width:0;max-width:118px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-review-year-switch {display:flex;align-items:center;gap:0;margin:0 6px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-review-year-switch strong {font-size:13px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-review-year-switch .tj-icon-btn {width:44px;min-width:44px;height:44px;border:0;background:transparent;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-st6-primary {display:flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent;box-shadow:none;color:var(--phone-on-pill);}
+  .tj-phone-header-slot .tj-st6-primary>span {display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 12px 0 9px;border-radius:17px;background:var(--phone-pill);font-size:12px;font-weight:500;white-space:nowrap;}
+  .tj-phone-month-nav {display:flex;align-items:center;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-month-nav button {display:grid;place-items:center;width:44px;min-height:44px;padding:0;border:0;background:transparent;color:var(--text);}
+  .tj-phone-month-nav>strong {font-size:13px;font-weight:500;white-space:nowrap;}
+  /* Dropdown menus render outside the themed root, so they need the same palette. */
+  :root[data-theme="dark-default"] .tj-root:is(.tj-picker-portal,.tj-phone-news-alert-overlay) {--bg:var(--phone-dark-bg);--card:var(--phone-dark-surface);--card-alt:var(--phone-dark-surface-deep);--raised:var(--phone-dark-raised);--border:var(--phone-dark-line);--text:var(--phone-dark-text);--muted:var(--phone-dark-muted);--tj-panel:var(--phone-dark-surface);--tj-panel-alt:var(--phone-dark-surface-deep);--tj-border:var(--phone-dark-line);--tj-text:var(--phone-dark-text);--tj-muted:var(--phone-dark-muted);}
+  :root[data-theme="light-default"] .tj-root:is(.tj-picker-portal,.tj-phone-news-alert-overlay) {--bg:var(--phone-light-bg);--card:var(--phone-light-surface);--card-alt:var(--phone-light-surface-deep);--raised:var(--phone-light-raised);--border:var(--phone-light-line);--text:var(--phone-light-text);--muted:var(--phone-light-muted);--tj-panel:var(--phone-light-surface);--tj-panel-alt:var(--phone-light-surface-deep);--tj-border:var(--phone-light-line);--tj-text:var(--phone-light-text);--tj-muted:var(--phone-light-muted);}
+  :root[data-theme="dark-default"][data-profile-accent="default"] .tj-root:is(.tj-picker-portal,.tj-phone-news-alert-overlay) {--accent:var(--phone-dark-pill);--on-accent:var(--phone-dark-on-pill);--tj-accent:var(--phone-dark-pill);}
+  :root[data-theme="light-default"][data-profile-accent="default"] .tj-root:is(.tj-picker-portal,.tj-phone-news-alert-overlay) {--accent:var(--phone-light-pill);--on-accent:var(--phone-light-on-pill);--tj-accent:var(--phone-light-pill);}
+
+  /* Page rows left empty after their controls move up. */
+  .tj-root.tj-root.tj-root.tj-root .tj-review-redesign-controls:empty,.tj-root.tj-root.tj-root.tj-root .tj-phone-finance-account:empty {display:none;}
+
+  /* Screen intros repeat the header title and push content below the fold. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-dashboard-welcome,.tj-root.tj-root.tj-root .tj-mk2-heading {display:none;}
+
+  /* Bottom navigation stays flush with the viewport base. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom {grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px minmax(0,1fr) minmax(0,1fr);align-items:center;padding:0 6px env(safe-area-inset-bottom,0px);border:0;background:transparent;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom.is-sheet-open {z-index:130;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom::before {display:none;}
+  .tj-mobile-bar-bg {position:absolute;inset:0;border-top:.5px solid var(--phone-bar-top);border-radius:0;background:var(--phone-bar);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:not(.tj-mobile-add) {position:relative;justify-content:center;gap:4px;min-height:64px;padding:4px 0;background:transparent;color:var(--muted);font-size:12px;font-weight:400;}
+  .tj-mobile-tab-icon {display:grid;place-items:center;width:58px;max-width:100%;height:34px;border-radius:17px;transition:background .2s,transform .1s;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button:active .tj-mobile-tab-icon {transform:scale(.94);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button[aria-current=page]:not(.tj-mobile-add) {color:var(--text);font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>button[aria-current=page] .tj-mobile-tab-icon {background:var(--phone-pill);color:var(--phone-on-pill);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-add {align-self:center;width:52px;height:52px;min-height:52px;margin-top:0;padding:0;border:0;border-radius:16px;background:var(--phone-plus);box-shadow:none;color:var(--phone-plus-fg);}
+  .tj-root .tj-mobile-add .tj-mobile-add-mark {transition:transform .22s cubic-bezier(.3,1.4,.5,1);}
+  .tj-root .tj-mobile-add[aria-expanded=true] .tj-mobile-add-mark {transform:scale(.88);}
+  .tj-root .tj-mobile-add.has-due::after {content:'';position:absolute;top:0;right:0;width:16px;height:16px;box-sizing:border-box;border:3px solid var(--bg);border-radius:50%;background:var(--phone-gain);}
+  .tj-root .tj-mobile-bottom>.tj-mobile-add[aria-expanded=true]::after {display:none;}
+  /* Sheets. */
+  .tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-backdrop {background:var(--phone-scrim);}
+  .tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet {border:.5px solid var(--border);border-radius:30px 30px 0 0;background:var(--card);box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-layer.is-floating .tj-mobile-sheet {left:10px;right:10px;bottom:calc(102px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 122px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));padding:0 12px 12px;border-radius:30px;background:var(--phone-sheet);animation:tj-phone-sheet-up .32s cubic-bezier(.2,.9,.3,1.15);}
+  @keyframes tj-phone-sheet-up {from {transform:translateY(30px);opacity:0;} to {transform:none;opacity:1;}}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-layer.is-floating .tj-mobile-sheet-handle {height:44px;margin-bottom:-18px;align-items:start;padding-top:10px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-handle i {display:block;width:36px;height:4px;border-radius:2px;background:var(--border);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-more-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-more-grid>button {display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:6px 2px;border:0;border-radius:16px;background:transparent;color:var(--text);font-size:12px;font-weight:400;line-height:1.2;text-align:center;}
+  .tj-mobile-more-grid>button>span {display:grid;place-items:center;width:42px;height:42px;border-radius:17px;background:var(--phone-raised);}
+  .tj-mobile-more-grid>button svg {width:20px;height:20px;stroke-width:1.8;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-more-grid>button[aria-current=page]>span {background:var(--phone-pill);color:var(--phone-on-pill);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-more-grid>button.tj-mobile-danger {color:var(--phone-loss);}
+
+  /* Start day: a floating sheet with the user's own checklist. */
+  .tj-root.tj-root.tj-root.tj-root .tj-routine-overlay {align-items:flex-end;background:transparent;isolation:isolate;-webkit-backdrop-filter:none;backdrop-filter:none;}
+  /* The blur sits on its own layer so it never softens the sheet's text. */
+  .tj-root.tj-root.tj-root.tj-root .tj-routine-overlay::before {content:'';position:absolute;inset:0;z-index:-1;background:var(--phone-scrim);}
+
+  /* Phone surfaces intentionally use solid scrims, never glass blur. */
+  .tj-root :is(.tj-privacy-screen,.tj-sidebar,.tj-topbar,.tj-modal-overlay,.tj-image-viewer,.tj-analytics-period-popover)::before {backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-detail-toggle {min-width:44px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup {width:calc(100% - 20px);height:auto;max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));margin:0 10px calc(10px + env(safe-area-inset-bottom,0px));padding:0 14px;border:.5px solid var(--border);border-radius:30px;background:var(--card);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup :is(.tj-routine-v1-hero,.tj-routine-v1-section-label,.tj-routine-v1-sessions,.tj-routine-v1-streak,.tj-routine-v1-progress,.tj-routine-history,.tj-routine-heading-meta,.tj-routine-ring,.tj-routine-phone-confetti,footer>small,.tj-routine-heading-copy>small) {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup>header {display:block;padding:0 8px 4px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup h2 {margin:0;color:var(--text);font-size:16px;font-weight:500;line-height:1.3;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup>header p {margin:0;color:var(--muted);font-size:12px;font-weight:400;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup footer {background:transparent;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup footer::before {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup footer>.tj-btn-primary {border:0;border-radius:23px;background:var(--phone-pill);box-shadow:none;color:var(--phone-on-pill);font-size:14px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-popup footer>.tj-btn-outline {border:0;border-radius:23px;background:var(--phone-raised);color:var(--text);}
+
+  /* Journal hub and Journal Setup: calmer hero, no repeated title. */
+  .tj-root.tj-root.tj-root .tj-management-phone-index>header,.tj-root.tj-root.tj-root .tj-jh2-heading {display:none;}
+  .tj-root.tj-root.tj-root .tj-jh2-routine {border:0;border-radius:26px;background:linear-gradient(160deg,var(--raised),var(--card) 60%);box-shadow:none;color:var(--text);}
+  .tj-root.tj-root.tj-root .tj-jh2-routine::before,.tj-root.tj-root.tj-root .tj-jh2-routine::after {display:none;}
+  .tj-root.tj-root.tj-root .tj-jh2-routine-icon {opacity:.35;}
+  .tj-root.tj-root.tj-root .tj-jh2-routine-progress {position:relative;z-index:1;background:var(--bg);color:var(--text);}
+
+  /* Hero cards share the Dashboard surface instead of a bright outline. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-card--year {border:0;background:linear-gradient(160deg,var(--raised),var(--card) 60%);box-shadow:none;}
+
+  /* Log trade wizard: restyles the existing form; its fields and saving are unchanged. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal.tj-trade-composer-modal {background:var(--bg);}
+  /* Phones have no side panel: entry forms rise as a popup. Closed, it is out of view and cannot take taps. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-outer {inset:auto 0 0 0;width:100%;height:calc(100dvh - 24px - env(safe-area-inset-top,0px));overflow:hidden;border-radius:28px 28px 0 0;visibility:hidden;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.9,.3,1),visibility 0s linear .32s;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-outer.tj-entry-panel-open {width:100%;visibility:visible;transform:none;box-shadow:0 0 0 100vmax var(--phone-scrim);transition:transform .32s cubic-bezier(.2,.9,.3,1),visibility 0s;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-inner {width:100%;min-width:0;height:100%;background:var(--bg);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-inner .tj-modal.tj-entry-panel {width:100%!important;min-width:0!important;height:100%!important;max-height:100%!important;border:0;border-radius:28px 28px 0 0!important;}
+  .tj-root.tj-root.tj-root.tj-root .tj-entry-panel-grip {display:none;}
+  /* Fields scroll inside the popup; Cancel and Save stay on screen. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-inner .tj-modal.tj-entry-panel {display:flex;flex-direction:column;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-inner .tj-modal.tj-entry-panel>.tj-modal-body {display:flex;flex:1 1 0;flex-direction:column;min-height:0;overflow:hidden;padding:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-form {display:flex;flex:1 1 0;flex-direction:column;min-height:0;overflow:hidden;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-form[hidden] {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-form .tj-entry-composer {flex:1 1 0;min-height:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-form .tj-entry-composer-scroll {flex:1 1 0;min-height:0;overflow-y:auto;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-form .tj-entry-composer-footer {flex:none;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal :is(.tj-modal-head,.tj-entry-composer-footer) {border:0;background:var(--bg);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-modal-title {font-size:24px;font-weight:500;letter-spacing:-.02em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-identity {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs {gap:8px;margin:4px 16px 8px;padding:0;border:0;border-radius:0;background:transparent;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs button {flex-direction:row;align-items:flex-start;justify-content:flex-start;gap:4px;min-height:44px!important;padding:6px 0 0;box-shadow:none;border:0;border-top:5px solid var(--phone-track);border-radius:0;background:transparent;color:var(--muted);font-size:12px;font-weight:500;text-align:left;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs [aria-selected="true"] {border-top-color:var(--phone-gain);background:transparent;color:var(--text);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs button::before,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs button::after {display:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-tabs i {font-size:12px;font-style:normal;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle button {border:0;border-radius:15px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle.tj-calculation-method-toggle button[aria-pressed=true] {background:var(--phone-pill);color:var(--phone-on-pill);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle:not(.tj-calculation-method-toggle) button:first-child[aria-pressed=true] {background:var(--phone-gain);color:var(--phone-plus-icon);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle:not(.tj-calculation-method-toggle) button:last-child[aria-pressed=true] {background:var(--phone-drop);color:var(--phone-plus-icon);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk {border:0;border-radius:28px;background:linear-gradient(140deg,var(--phone-light-profit),var(--phone-light-gain) 55%,var(--phone-light-purple));color:var(--phone-plus-icon);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk :is(small,p,strong,span) {color:var(--phone-plus-icon);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-phone-trade-risk strong {font-size:34px;font-weight:500;letter-spacing:-.03em;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-reference-card {border:.5px solid var(--border);border-radius:24px;background:var(--card);box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal :is(input,textarea,select,.tj-picker-trigger) {border:.5px solid var(--border);border-radius:18px;background:var(--card);font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-trade-direction-toggle {border:0;border-radius:18px;background:var(--phone-raised);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer button {min-height:52px;border-radius:26px;font-size:15px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer .tj-btn-outline {border:.5px solid var(--border);background:var(--card);color:var(--text);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-trade-composer-modal .tj-entry-composer-footer .tj-btn-primary {border:0;background:var(--phone-gain);color:var(--phone-plus-icon);}
+
+  /* Calendar day pop-up. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal {--day-tint:var(--phone-gain);max-height:88dvh;border:0;border-radius:32px 32px 0 0;background:radial-gradient(260px 200px at 12% -4%,color-mix(in srgb,var(--day-tint) 24%,transparent),transparent 72%),var(--bg);box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal.is-day-loss {--day-tint:var(--phone-drop);}
+  .tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-modal-head {padding:12px 18px 0;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-date strong {font-size:26px;font-weight:500;letter-spacing:-.03em;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-modal-head-actions {display:flex;align-items:center;gap:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-modal-head-actions :is(.tj-day-step,.tj-modal-close) {width:44px;min-width:44px;height:44px;padding:0;border:0;background:transparent;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-step:disabled {opacity:.35;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-step:is(:hover,:active,:disabled) {background:transparent;box-shadow:none;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-daymodal-summary strong {font-size:clamp(36px,12.3vw,48px);font-weight:500;letter-spacing:-.045em;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-count {border:.5px solid var(--border);border-radius:15px;background:var(--card);font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-trade {position:relative;margin-top:10px;padding:14px 14px 14px 18px;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card);box-shadow:inset 5px 0 0 var(--phone-gain);}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-trade-loss {box-shadow:inset 5px 0 0 var(--phone-drop);}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-trade-head strong {font-size:17px;font-weight:500;}
+  .tj-root.tj-root.tj-root.tj-root .tj-calendar-day-modal .tj-day-open-log {min-height:44px;margin-top:6px;padding:0;border:0;background:transparent;color:var(--phone-profit);font-size:13px;font-weight:500;}
+
+  /* Every remaining screen: one card shape, one neutral surface. */
+  .tj-root.tj-root.tj-root .tj-content .tj-card {border-radius:22px;}
+  /* Money never breaks mid-number. */
+  .tj-root .tj-phone-log-summary strong {overflow-wrap:normal;font-size:clamp(13px,3.75vw,17px);letter-spacing:-.02em;white-space:nowrap;}
+
+  /* Comfortable tap targets, including the narrowest phones. */
+  .tj-root.tj-root.tj-root .tj-md6-week {gap:1px;margin-inline:-10px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root :is(.tj-review-year-switch .tj-icon-btn,.tj-news-event-board .tj-icon-btn,.tj-news-alert-menu-trigger) {min-width:44px;}
+
+  /* Readable small text. */
+  .tj-root.tj-root.tj-root .rv-card--month .rv-mc-head small,.tj-root.tj-root.tj-root .tj-risk-title small.tj-pill {font-size:12px;}
+
+  /* Nothing pushes the page sideways. */
+  .tj-root.tj-root.tj-root .tj-mk2-hero {overflow:hidden;}
+  .tj-root.tj-root.tj-root .tj-mk2-hero::before,.tj-root.tj-root.tj-root .tj-mk2-hero::after {display:none;}
+  .tj-root.tj-root.tj-root .tj-review-redesign,.tj-root.tj-root.tj-root .tj-review-redesign :is(.rv,.rv-md,.rv-list) {min-width:0;max-width:100%;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-md {display:block;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-list {width:100%;box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-period-group {grid-template-columns:minmax(0,1fr);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-card--quarter {grid-template-columns:minmax(0,1fr) auto;width:100%;box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-tri {grid-template-columns:repeat(3,22px);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-mgrid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-card--month {min-width:0;box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .rv-mc-head {flex-wrap:wrap;gap:4px;}
+  .tj-root.tj-root.tj-root .tj-review-redesign-controls {flex-wrap:wrap;min-width:0;max-width:100%;}
+  /* Narrowest phones: keep header controls beside the title. */
+  @media (max-width:375px) {
+    .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-picker-leading {display:none;}
+    .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-picker-trigger {padding:0 6px 0 10px;}
+    .tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-header-slot .tj-review-year-switch {margin:0;}
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-outer,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-entry-panel-outer.tj-entry-panel-open {transition:none;}
+    .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-layer.is-floating .tj-mobile-sheet {animation:none;}
+    .tj-root .tj-mobile-add .tj-mobile-add-mark,.tj-mobile-tab-icon {transition:none;}
+  }
+}
+
+/* Pickers live in a layer of their own and must sit above every phone panel and popup. */
+@media (max-width:767px) {
+  .tj-picker-portal {z-index:400001;}
+}
+
+/* Phones scroll and swipe by touch, so no scrollbar is drawn anywhere. Only the bar is hidden; scrolling is untouched. */
+@media (max-width:767px) {
+  html,body,body * {scrollbar-width:none!important;-ms-overflow-style:none;}
+  html::-webkit-scrollbar,body::-webkit-scrollbar,body *::-webkit-scrollbar {display:none!important;width:0!important;height:0!important;}
+}

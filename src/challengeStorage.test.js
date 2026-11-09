@@ -94,6 +94,26 @@ test('concurrent trade and challenge saves do not overwrite each other',async ()
   assert.equal(backup.data.challengeProgress.balance[account.balances[0].id].active_level,6);
 });
 
+test('retrying a create with the same stable trade or markup id is idempotent', async () => {
+  local.configureLocalJournal('idempotent-save-user', true);
+  const account = await createLocalAccount('idempotent-save-user');
+  const trade = { id:'retry-safe-trade', asset:'EUR/USD', pnl:12 };
+  const markup = { id:'retry-safe-markup', instrument:'EUR/USD', status:'Planned' };
+  const [firstTrade, secondTrade, firstMarkup, secondMarkup] = await Promise.all([
+    local.createTrade('idempotent-save-user', account.id, trade),
+    local.createTrade('idempotent-save-user', account.id, trade),
+    local.createMarkup('idempotent-save-user', account.id, markup),
+    local.createMarkup('idempotent-save-user', account.id, markup),
+  ]);
+  assert.equal(firstTrade.data.id, trade.id);
+  assert.equal(secondTrade.data.id, trade.id);
+  assert.equal(firstMarkup.data.id, markup.id);
+  assert.equal(secondMarkup.data.id, markup.id);
+  const saved = await local.fetchAllUserData('idempotent-save-user');
+  assert.equal(saved.data.accounts[0].trades.filter(item => item.id === trade.id).length, 1);
+  assert.equal(saved.data.markups.filter(item => item.id === markup.id).length, 1);
+});
+
 test('local challenges are user-isolated and legacy backups remain supported',async () => {
   local.configureLocalJournal('other-user',true);
   assert.ok((await db.read('account','anything','free-user')).error);

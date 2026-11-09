@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {financeOverdraftWarning} from './financialValidation.js';
 import {validateAccountFinancialData, validateFinanceMovement, validateTradeFinancialData} from './financialValidation.js';
 import {summarizeClosedTrades} from './journalStats.js';
 import {scopedFinanceProfitCycle, savingsBalance} from './financeScope.js';
@@ -90,4 +91,17 @@ test('Infinity and NaN are rejected for direct trade validation', () => {
     assert.equal(validation.valid,false,String(value));
     assert.equal(validation.issues[0].field,'pnl');
   }
+});
+
+test('a movement above what is available warns but never blocks by itself', () => {
+  const money = value => `$${value}`;
+  assert.equal(financeOverdraftWarning({type:'withdrawal', amount:50, tradingBalance:50, money}), null);
+  assert.equal(financeOverdraftWarning({type:'deposit', amount:500, tradingBalance:50, money}), null);
+  const trading = financeOverdraftWarning({type:'withdrawal', amount:100, tradingBalance:50, money});
+  assert.equal(trading.title, 'More than your available capital');
+  assert.match(trading.description, /to \$-50/);
+  assert.match(financeOverdraftWarning({type:'transfer', amount:100, tradingBalance:50, money}).title, /available capital/);
+  const savings = financeOverdraftWarning({type:'withdrawal', source:'savings', amount:100, tradingBalance:5000, savingsBalance:40, money});
+  assert.equal(savings.title, 'More than this savings balance');
+  assert.equal(financeOverdraftWarning({type:'withdrawal', source:'savings', amount:30, tradingBalance:0, savingsBalance:40, money}), null);
 });

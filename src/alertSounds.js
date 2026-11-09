@@ -1,5 +1,10 @@
+import {playSynthSound,stopSynthSound,unlockSynthSounds} from './synthSounds.js';
+import {readSavingsSoundChoice} from './savingsSoundSettings.js';
 const base=import.meta.env?.BASE_URL || '/';
-const urls={news:`${base}audio/news-alert.mp3`,challenge:`${base}audio/challenge-complete.mp3`,savings:`${base}audio/savings-alert.mp3`};
+// News keeps its recording. Savings and challenge alerts are synthesised (synthSounds.js),
+// after aaicorefx-desktop-finance-challenge-popups.html.
+const urls={news:`${base}audio/news-alert.mp3`};
+const SYNTH={savings:()=>readSavingsSoundChoice(),challenge:()=>'challenge'};
 let context;
 const buffers=new Map();
 const playing=new Map();
@@ -22,16 +27,18 @@ export async function unlockAlertSounds(){
   try{
     const ctx=audioContext();
     await ctx.resume();
-    await Promise.allSettled([load('news'),load('challenge'),load('savings')]);
+    await Promise.allSettled([load('news'),unlockSynthSounds()]);
     return ctx.state==='running';
   }catch{return false;}
 }
 
 export function stopAlertSound(kind){
+  if(SYNTH[kind]){stopSynthSound(kind);return;}
   playing.get(kind)?.stop();
   playing.delete(kind);
 }
 export async function playAlertSound(kind){
+  if(SYNTH[kind])return playSynthSound(SYNTH[kind](),kind);
   try{
     const ctx=audioContext();
     // Try automatic savings audio when browser policy permits it. A blocked
@@ -50,6 +57,25 @@ export async function playAlertSound(kind){
     playing.set(kind,source);
     source.onended=()=>{source.disconnect();if(playing.get(kind)===source)playing.delete(kind);};
     source.start(); // No duration argument: play the complete, untrimmed recording.
+    return true;
+  }catch{return false;}
+}
+
+// Short two-note tones for news alerts (Soft, Chime, Pulse). "app" plays the recorded clip.
+const ALERT_TONE_NOTES={soft:[660,880],chime:[784,1175],pulse:[520,520]};
+export async function playAlertTone(tone='app'){
+  if(!ALERT_TONE_NOTES[tone])return playAlertSound('news');
+  try{
+    const ctx=audioContext();
+    if(ctx.state!=='running'){try{await ctx.resume();}catch{}}
+    if(ctx.state!=='running')return false;
+    ALERT_TONE_NOTES[tone].forEach((frequency,index)=>{
+      const oscillator=ctx.createOscillator(),gain=ctx.createGain(),start=ctx.currentTime+index*.16;
+      oscillator.type='sine';oscillator.frequency.value=frequency;
+      oscillator.connect(gain);gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.12,start+.02);gain.gain.exponentialRampToValueAtTime(.0001,start+.5);
+      oscillator.start(start);oscillator.stop(start+.55);
+    });
     return true;
   }catch{return false;}
 }

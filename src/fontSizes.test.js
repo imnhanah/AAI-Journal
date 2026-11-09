@@ -24,7 +24,7 @@ test('application text has no explicit sub-12px font-size declarations',()=>{
   // introduce more unreadable text.
   assert.deepEqual(changes.map(({file,count})=>({file,count})),[
     {file:'src/PublicSite.jsx',count:1},{file:'src/TradingJournal.jsx',count:8},
-    {file:'src/accountSettingsRedesign.css',count:9},{file:'src/dailyRoutine.css',count:30},
+    {file:'src/accountSettingsRedesign.css',count:9},{file:'src/dailyRoutine.css',count:26},
     {file:'src/entryComposer.css',count:47},{file:'src/financialDisclaimer.css',count:3},
     {file:'src/markupsRedesign.css',count:1},{file:'src/public-site.css',count:1},
     {file:'src/reviewLibraryRedesign.css',count:19},{file:'src/trade-logs.css',count:4},

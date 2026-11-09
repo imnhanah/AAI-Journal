@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRoutineEntryGate, ROUTINE_ENTRY_STALE} from './routineEntryGate.js';
-import {normalizeRoutine, completeRoutine, APP_ROUTINE_ITEMS} from './dailyRoutine.js';
+import {normalizeRoutine, completeRoutine, routineProgress, APP_ROUTINE_ITEMS} from './dailyRoutine.js';
 
 function fixture() {
   const events=[];
@@ -36,12 +36,21 @@ test('markup and trade entry share the same daily completion',async()=>{
   assert.equal(await f.gate.request('trade'),'open');
   assert.equal(f.events.filter(([kind])=>kind==='prompt').length,1);
 });
-test('completed, disabled and empty routines open trade entry directly',async()=>{
+test('saved routine progress, disabled and empty routines open trade entry directly',async()=>{
   for(const routine of [completeRoutine({},[],new Date('2026-10-15T12:00:00Z')),normalizeRoutine({enabled:false}),normalizeRoutine({appItems:Object.fromEntries(APP_ROUTINE_ITEMS.map(item=>[item.id,{enabled:false}]))})]) {
     const f=fixture();f.setRoutine(routine);
     assert.equal(await f.gate.request('trade'),'open');
     assert.ok(!f.events.some(([kind])=>kind==='prompt'));
   }
+});
+test('a partial first save opens the requested entry but leaves resumable daily progress',async()=>{
+  const f=fixture();
+  await f.gate.request('markup');
+  await f.gate.complete(['moved']);
+  const progress=routineProgress(f.routine,new Date('2026-10-15T12:00:00Z'));
+  assert.equal(progress.unfinished,true);
+  assert.equal(progress.completed,false);
+  assert.equal(f.events.find(([kind])=>kind==='open')[1].kind,'markup');
 });
 test('UTC next-day reset prompts again without changing existing checklist completion rules',async()=>{
   const f=fixture();
@@ -121,7 +130,7 @@ test('all live trade creation entry points use the shared gate; edits and backte
   assert.match(code,/const openNewTrade = \(draft = null\) => \{/);
   assert.match(code,/routineGate\.current\.request\('trade', draft\)/);
   assert.match(code,/if \(entryPanelMode\)/);
-  assert.match(code,/onLogTrade=\{openNewTrade\}/);
+  assert.match(code,/onNewTrade=\{onNewTrade\} locked=\{locked\}/);
   assert.match(code,/onNewTrade=\{\(\) => openNewTrade\(\)\}/);
   assert.match(code,/onTrade=\{\(markup\)=>openNewTrade\(\{ premarketMarkupId/);
   assert.match(code,/onClick=\{\(\) => openNewTrade\(\)\}/);

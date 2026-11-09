@@ -14,8 +14,8 @@ test('trade entry keeps display preferences independent of panel layout', () => 
 test('static contract: trade and markup forms share one persistent panel shell', () => {
   assert.match(journal, /function PersistentEntryPanel\(/);
   assert.match(journal, /entryPanelMode/);
-  assert.match(journal, /<NewTradeModal \{\.\.\.tradeProps\} embedded/);
-  assert.match(journal, /<MarkupModal \{\.\.\.markupProps\} embedded/);
+  assert.match(journal, /<NewTradeModal key=\{`trade-editor-\$\{tradeProps\.formSession\}`\} \{\.\.\.tradeProps\} embedded/);
+  assert.match(journal, /<MarkupModal key=\{`markup-editor-\$\{markupProps\.formSession\}`\} \{\.\.\.markupProps\} embedded/);
   assert.match(journal, /const entryPanel = <PersistentEntryPanel/);
   assert.match(journal, /mode=\{entryPanelMode \|\| 'trade'\}/);
   assert.match(journal, /open=\{Boolean\(entryPanelMode\)\}/);
@@ -34,7 +34,20 @@ test('entry panels keep draft data on failures and ask before discarding changes
   assert.match(journal, /You have unsaved trade changes\. Closing now will discard them\./);
   assert.match(journal, /You have unsaved markup changes\. Closing now will discard them\./);
   assert.match(journal, /if \(res\.error\).*return false/);
-  assert.match(journal, /setModal\(null\); setEditingTrade\(null\); setNewTradeDraft\(null\);[\s\S]*return true/);
+  assert.match(journal, /setModal\(null\); setTradeEditor\(clearEntryEditor\); setTradePanelStep\(0\);[\s\S]*return true/);
+});
+
+test('persistent panel forms receive a fresh hydration boundary only for a new entry request', () => {
+  assert.match(journal, /beginEntryEditor\(current, \{ editing, draft \}\)/);
+  assert.match(journal, /key=\{`trade-editor-\$\{tradeProps\.formSession\}`\}/);
+  assert.match(journal, /key=\{`markup-editor-\$\{markupProps\.formSession\}`\}/);
+  assert.match(journal, /onEdit=\{\(t\) => \{[\s\S]*beginTradeEntry\(\{editing:t\}\)/);
+  assert.match(journal, /onEdit=\{\(markup\)=>beginMarkupEntry\(\{editing:markup\}\)\}/);
+  assert.match(journal, /editing \? "Save Changes" : "Save Trade"/);
+  assert.match(journal, /const beginTradeEntry = async/);
+  assert.match(journal, /const beginMarkupEntry = async/);
+  assert.doesNotMatch(journal, /const beginTradeEntry = useCallback/);
+  assert.doesNotMatch(journal, /const beginMarkupEntry = useCallback/);
 });
 
 test('modal focus lifecycle does not restart when a draft recreates its close callback', () => {
@@ -55,10 +68,12 @@ test('entry panel uses one CSS width reveal and a fixed-width form sibling', () 
   assert.doesNotMatch(styles, /translateX\(calc\(var\(--tj-entry-panel-content-width/);
 });
 
-test('the shared panel remains the right-side flex sibling after the workspace', () => {
+test('the shared panel is one flex sibling that can move between the sidebar and workspace', () => {
   assert.match(journal, /\n      \{entryPanel\}\n      \{modal === "backtesttrade"/);
-  assert.doesNotMatch(journal, /entryPanelPosition|entryPanelSide|tradePanelPosition/);
-  assert.doesNotMatch(styles, /entry-panel-side-left|entry-panel-left/);
+  assert.match(journal, /position=\{entryPanelPosition\}/);
+  assert.match(journal, /tj-entry-panel-position-\$\{entryPanelPosition\}/);
+  assert.match(styles, /tj-entry-panel-position-left > \.tj-entry-panel-outer \{ order:1; \}/);
+  assert.match(styles, /tj-entry-panel-position-right > \.tj-entry-panel-outer \{ order:2; \}/);
   assert.match(styles, /\.tj-root \.tj-entry-panel-outer \{ flex:0 0 auto; width:0;/);
 });
 
@@ -66,7 +81,7 @@ test('static contract: visibility, rather than side, owns the reveal lifecycle',
   assert.match(journal, /if \(!entryPanelOpen\) \{\s*setPanelOpen\(false\);/);
   assert.match(journal, /setPanelOpen\(false\);\s*const frame = requestAnimationFrame\(\(\) => setPanelOpen\(true\)\)/);
   assert.match(journal, /\[entryPanel, entryPanelOpen\]\);/);
-  assert.doesNotMatch(journal, /\[entryPanel, entryPanelOpen, entryPanelSide\]\);/);
+  assert.doesNotMatch(journal, /\[entryPanel, entryPanelOpen, entryPanelPosition\]\);/);
   assert.match(styles, /width:0;[\s\S]*transition:width 240ms cubic-bezier\(\.2,\.8,\.2,1\)/);
   assert.match(styles, /tj-entry-panel-open \{ width:var\(--tj-entry-panel-width\); \}/);
 });

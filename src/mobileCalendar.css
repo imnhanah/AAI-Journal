@@ -59,7 +59,7 @@
   .tj-root.tj-root.tj-root.tj-root .tj-phone-calendar-weeks strong { font-size:13px; }
   .tj-root.tj-root.tj-root.tj-root .tj-phone-calendar-weeks small { display:block; font-size:12px; color:var(--muted); margin-top:4px; }
   .tj-root.tj-root.tj-root.tj-root .tj-phone-calendar-weeks b { font-size:15px; }
-  .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(.tj-calendar-day-modal)::before { content:''; position:absolute; inset:0; background:color-mix(in srgb,var(--bg) 55%,transparent); backdrop-filter:blur(5px); pointer-events:none; }
+  .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(.tj-calendar-day-modal)::before { content:''; position:absolute; inset:0; background:color-mix(in srgb,var(--bg) 55%,transparent); pointer-events:none; }
   .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay:has(.tj-calendar-day-modal) { align-items:flex-end; padding:0; background:none; }
   .tj-root.tj-root.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal { position:relative; width:100%; max-width:100%; max-height:min(700px,calc(100dvh - 32px))!important; border-radius:24px 24px 0 0; margin:0; animation:tj-phone-day-enter .18s ease-out; }
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-modal-overlay .tj-calendar-day-modal { max-height:min(700px,calc(100dvh - 32px))!important; }

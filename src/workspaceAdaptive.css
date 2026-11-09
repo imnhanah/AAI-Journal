@@ -13,6 +13,8 @@
   .tj-root :is(.tj-reference-hero-grid,.tj-dashboard-analytics-grid,.tj-reference-analytics-overview>.tj-view-transition,.tj-live-analytics-grid,.tj-performance-workspace,.tj-execution-workspace,.tj-risk-workspace) { grid-template-columns:minmax(0,1fr); }
   .tj-root :is(.tj-reference-flow,.tj-dashboard-calendar,.tj-dashboard-analytics-grid>.tj-panel,.tj-reference-analytics .tj-live-panel) { min-width:0; }
   .tj-root .tj-reference-flow { grid-row:auto; }
+  /* Dashboard KPIs: 6 across, then 3 (this replaced a 1460px window rule). */
+  .tj-root.tj-root .tj-reference-dashboard .tj-reference-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
   .tj-root .tj-engine-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .tj-root :is(.tj-analytics-equity-chart,.tj-live-daily-chart,.tj-execution-weekly-chart) { min-height:220px; }
   .tj-root .tj-attached-calendar-grid { grid-template-columns:repeat(7,minmax(0,1fr)); }
@@ -26,8 +28,12 @@
   .tj-root :is(.tj-finance-summary,.tj-finance-layout,.tj-finance-hero,.tj-finance-saving) { min-width:0; }
   .case-library-layout { grid-template-columns:210px minmax(0,1fr); gap:16px; }
   .case-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .cse-layout { grid-template-columns:190px minmax(0,1fr); }
-  .cse-layout:not(.cse-layout--no-panel) .cse-panel { grid-column:1 / -1; }
+}
+
+/* Dashboard at the width the side panel leaves: KPIs 2 across, welcome stacked. */
+@container journal-workspace (max-width:1080px) {
+  .tj-root.tj-root .tj-reference-dashboard .tj-reference-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tj-root.tj-root.tj-root .tj-dashboard-welcome { grid-template-columns:minmax(0,1fr); }
 }
 
 @container journal-workspace (max-width:860px) {

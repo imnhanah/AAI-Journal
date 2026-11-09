@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import "./review.css";
+import "./desktopReview.css";
+import {useNavStep} from "./useBackNavigation.js";
+import {useStepMotion} from "./MobilePageStage.jsx";
+import {MOBILE_MEDIA} from "./mobileNavigation.js";
+import MobilePeriodReviews from "./MobilePeriodReviews.jsx";
 
 /* =====================================================================
    DATA CONTRACT. This component shows what you pass in; it never invents numbers.
@@ -300,6 +305,36 @@ function MonthCard({ review, selected, onSelect }) {
   );
 }
 
+/* ---------- desktop navigator tiles (aaicorefx-desktop-review.html) ---------- */
+const STATUS_LABEL = { done: "Done", need: "Needs review", none: "No trades" };
+function QuarterTile({ review, selected, related, onSelect }) {
+  const m = review.metrics;
+  const months = m.months || [];
+  const max = Math.max(1, ...months.map((x) => Math.abs(x.returnPct)));
+  const s = statusOf(m);
+  return (
+    <button type="button" className={`rv2-qt${related ? " is-related" : ""}`} aria-pressed={selected} onClick={onSelect}>
+      <span className="rv2-qt-head"><b>{review.label}</b><span className={`rv2-st is-${s}`}>{STATUS_LABEL[s]}</span></span>
+      <span className={`rv2-qt-ret rv-num ${m.trades ? sign(m.returnPct) : "rv-mut"}`}>{m.trades ? pct(m.returnPct) : "—"}</span>
+      <span className="rv2-qt-sub rv-num">{m.trades ? `${m.trades} trades · ${m.reviewed}/${m.trades} reviewed` : "Nothing to review"}</span>
+      <span className="rv2-mini" aria-hidden="true">{months.map((x) => (
+        <span key={x.id}><i className={!x.trades ? "is-empty" : x.returnPct < 0 ? "is-neg" : "is-pos"} style={{ height: `${x.trades ? Math.max(8, Math.abs(x.returnPct) / max * 100) : 8}%` }} />{x.name.slice(0, 1)}</span>
+      ))}</span>
+    </button>
+  );
+}
+function MonthTile({ review, selected, related, onSelect }) {
+  const m = review.metrics;
+  const s = statusOf(m);
+  return (
+    <button type="button" className={`rv2-mt ${!m.trades ? "is-empty" : m.returnPct < 0 ? "is-neg" : "is-pos"}${related ? " is-related" : ""}`} aria-pressed={selected} onClick={onSelect} disabled={!m.trades} title={`${review.name} ${review.year} · ${STATUS_LABEL[s]}`}>
+      {m.trades > 0 && <i className={`rv2-dot is-${s}`} aria-hidden="true" />}
+      <span>{review.label}</span>
+      <b className="rv-num">{m.trades ? pct(m.returnPct) : "—"}</b>
+    </button>
+  );
+}
+
 /* ---------- field helpers shared by the three layouts ---------- */
 function makeCtx(questions, val, set) {
   const used = new Set();
@@ -318,6 +353,7 @@ function makeCtx(questions, val, set) {
     </div>;
   };
   return {
+    val,
     use: (...keys) => keys.forEach((k) => used.add(k)),
     glance: () => questions.glance.map((g) => (
       <div className="rv-field" key={g.key}>
@@ -355,13 +391,171 @@ function makeCtx(questions, val, set) {
   };
 }
 
-/* ---------- monthly detail: execution workbench ---------- */
+/* ---------- weeks inside a month (Monday to Sunday, by trade date) ---------- */
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const WEEK_QUESTIONS = [
+  ["wentWell", "What went well this week?"],
+  ["fix", "What do I need to fix?"],
+  ["focus", "What is my focus for next week?"],
+];
+export const weekKey = (number, field) => `week${number}_${field}`;
+export function monthWeeks(year, monthIndex, rows = [], reviewedIds = [], returnBase = 0) {
+  const last = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const reviewed = new Set(reviewedIds);
+  const weeks = [];
+  for (let start = 1; start <= last;) {
+    const weekday = (new Date(Date.UTC(year, monthIndex, start)).getUTCDay() + 6) % 7;
+    const end = Math.min(last, start + 6 - weekday);
+    const trades = rows.filter((trade) => { const [y, m, d] = String(trade.date || "").split("-").map(Number); return y === year && m === monthIndex + 1 && d >= start && d <= end; });
+    const net = trades.reduce((sum, trade) => sum + Number(trade.pnl || 0), 0);
+    const wins = trades.filter((trade) => Number(trade.pnl) > 0).length;
+    const losses = trades.filter((trade) => Number(trade.pnl) < 0).length;
+    weeks.push({
+      number: weeks.length + 1, start, end, weekday, trades, net, wins, losses,
+      returnPct: returnBase ? net / returnBase * 100 : null,
+      winRate: trades.length ? wins / trades.length * 100 : 0,
+      avgR: trades.length ? trades.reduce((sum, trade) => sum + (Number(trade.rr) || 0), 0) / trades.length : null,
+      reviewed: trades.filter((trade) => reviewed.has(trade.id)).length,
+    });
+    start = end + 1;
+  }
+  return weeks;
+}
+const signedR = (value) => `${value < 0 ? "−" : ""}${Math.abs(value).toFixed(2)}R`;
+const weekTone = (week) => !week.trades.length ? "none" : week.net < 0 ? "neg" : "pos";
+
+function WeekDetail({ review, week, ctx }) {
+  const label = review.name.slice(0, 3);
+  const range = week.start === week.end ? `${week.start} ${label}` : `${week.start} – ${week.end} ${label}`;
+  if (!week.trades.length) return <div className="rv-pad"><div className="rv2-week-empty"><b>No trades in {range}</b>Nothing to review for this week. Pick a week with a coloured dot.</div></div>;
+  const s = week.reviewed >= week.trades.length ? "done" : "need";
+  const best = [...week.trades].sort((a, b) => Number(b.pnl) - Number(a.pnl))[0];
+  const worst = [...week.trades].sort((a, b) => Number(a.pnl) - Number(b.pnl))[0];
+  const activeDays = new Set(week.trades.map((trade) => trade.date)).size;
+  const mistakes = week.trades.reduce((count, trade) => count + (trade.mistakes?.length || 0), 0);
+  const moods = week.trades.filter((trade) => trade.moodBefore || trade.moodAfter);
+  const moodShift = moods.length ? `${moods.filter((trade) => trade.moodBefore && trade.moodAfter && trade.moodBefore !== trade.moodAfter).length} of ${moods.length} changed` : null;
+  const tradeLabel = (trade) => `${trade.asset || "Trade"} ${trade.direction || ""}`.trim();
+  const written = WEEK_QUESTIONS.filter(([field]) => String(ctx.val(weekKey(week.number, field)) || "").trim()).length;
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const day = week.start - week.weekday + index;
+    const outside = day < week.start || day > week.end;
+    const trades = outside ? [] : week.trades.filter((trade) => Number(String(trade.date).slice(8, 10)) === day);
+    const net = trades.reduce((sum, trade) => sum + Number(trade.pnl || 0), 0);
+    return { index, day, outside, trades, net };
+  });
+  const sorted = [...week.trades].sort((a, b) => `${a.date} ${a.time || ""}`.localeCompare(`${b.date} ${b.time || ""}`));
+  return (
+    <div className="rv-pad">
+      <div className="rv-mh">
+        <div><div className="rv-k">Weekly review · execution and discipline</div><h2>Week {week.number} · {range} {review.year}</h2></div>
+        <span className={`rv-pill rv-pill--${s}`}>{s === "done" ? "Review complete" : `${week.trades.length - week.reviewed} trade${week.trades.length - week.reviewed === 1 ? "" : "s"} still need review`}</span>
+      </div>
+      <div className="rv-stats">
+        <div className="rv-stat"><div className="rv-k">Net P&amp;L</div><div className={`rv-v ${sign(week.net)}`}>{money(week.net, true)}</div></div>
+        <div className="rv-stat"><div className="rv-k">Return</div><div className={`rv-v ${has(week.returnPct) ? sign(week.returnPct) : "rv-mut"}`}>{has(week.returnPct) ? pct(week.returnPct) : "—"}</div></div>
+        <div className="rv-stat"><div className="rv-k">Win rate</div><div className="rv-v">{rate(week.winRate)}</div></div>
+        <div className="rv-stat"><div className="rv-k">Trades</div><div className="rv-v">{week.trades.length}</div></div>
+        <div className="rv-stat"><div className="rv-k">Reviewed</div><div className="rv-v">{week.reviewed}/{week.trades.length}</div></div>
+      </div>
+      <div className="rv2-wgrid">
+        <div className="rv-panel rv2-wdays">
+          <h3>Days and trades<span>Mon – Sun · by trade date</span></h3>
+          <div className="rv2-days">{days.map((day) => <div key={day.index} className={`rv2-day${day.outside ? " is-out" : day.trades.length ? (day.net < 0 ? " is-neg" : " is-pos") : ""}`}>
+            <span className="rv2-day-n"><span>{WEEKDAYS[day.index]}</span><span>{day.outside ? "" : day.day}</span></span>
+            {day.trades.length ? <span><b className="rv-num">{money(day.net, true)}</b><small>{day.trades.length} trade{day.trades.length === 1 ? "" : "s"}</small></span> : <span className="rv2-day-none">{day.outside ? "" : "—"}</span>}
+          </div>)}</div>
+          <div className="rv2-trades">{sorted.map((trade) => <div className="rv2-trade" key={trade.id}><span><i className={Number(trade.pnl) < 0 ? "is-neg" : "is-pos"} aria-hidden="true" />{tradeLabel(trade)} · {Number(String(trade.date).slice(8, 10))} {label}{trade.time ? ` ${trade.time}` : ""}{Number.isFinite(Number(trade.rr)) && trade.rr !== null && trade.rr !== "" ? ` · ${signedR(Number(trade.rr))}` : ""}</span><b className={`rv-num ${sign(Number(trade.pnl))}`}>{money(Number(trade.pnl), true)}</b></div>)}</div>
+        </div>
+        <div className="rv-panel rv2-wperf">
+          <h3>Performance breakdown<span>{week.wins}W · {week.losses}L</span></h3>
+          <WinLossBar wins={week.wins} losses={week.losses} />
+          <dl className="rv-dl">
+            <KV k="Average R" v={has(week.avgR) ? signedR(week.avgR) : null} />
+            <KV k="Win rate" v={rate(week.winRate)} />
+            <KV k="Net P&L" v={money(week.net, true)} />
+            <KV k="Best trade" v={best && Number(best.pnl) > 0 ? `${tradeLabel(best)} · ${money(Number(best.pnl), true)}` : null} />
+            <KV k="Worst trade" v={worst && Number(worst.pnl) < 0 ? `${tradeLabel(worst)} · ${money(Number(worst.pnl), true)}` : null} />
+          </dl>
+        </div>
+        <div className="rv-panel rv2-wexec">
+          <h3>Execution quality</h3>
+          <dl className="rv-dl">
+            <KV k="Process score" v={`${Math.round(week.reviewed / week.trades.length * 5)}/5`} />
+            <KV k="Active days" v={`${activeDays} active day${activeDays === 1 ? "" : "s"}`} />
+            <KV k="Mistakes logged" v={String(mistakes)} />
+            <KV k="Mood shifts" v={moodShift} />
+          </dl>
+        </div>
+        <div className="rv-editorial rv-editorial--workbench rv2-wform">
+          <div className="rv-editorial-head">
+            <h3><em>Reflection</em>Weekly improvement<small>{written} of {WEEK_QUESTIONS.length} sections written</small></h3>
+            <span className="rv-editorial-steps" aria-label={`${written} of ${WEEK_QUESTIONS.length} weekly sections written`}>{WEEK_QUESTIONS.map((_, index) => <i key={index} className={index < written ? "is-done" : ""} />)}</span>
+          </div>
+          <div className="rv-editorial-columns rv2-wform-fields">
+            {WEEK_QUESTIONS.map(([field, label]) => ctx.editorialLong(weekKey(week.number, field), label, "Start writing…", 4))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- monthly detail: overview, weeks, reflection ---------- */
 function MonthDetail({ review, ctx, written, sectionCount }) {
   const m = review.metrics;
   const [w, l] = winLoss(m);
   const s = statusOf(m);
+  const [tab, setTab] = useState("overview");
+  const [year, month] = String(review.id.split(":")[1] || "").split("-").map(Number);
+  const monthIndex = (month || 1) - 1;
+  const weeks = useMemo(() => monthWeeks(year || review.year, monthIndex, m.tradeRows || [], m.reviewedIds || [], m.returnBase || 0), [year, review.year, monthIndex, m.tradeRows, m.reviewedIds, m.returnBase]);
+  const label = review.name.slice(0, 3);
+  const range = (week) => week.start === week.end ? `${week.start} ${label}` : `${week.start} – ${week.end} ${label}`;
+  const openWeek = weeks.find((week) => `week${week.number}` === tab);
+  const tabs = <div className="rv2-tabs" role="tablist" aria-label={`${review.name} review sections`}>
+    {[["overview", "Overview"], ...weeks.map((week) => [`week${week.number}`, `Week ${week.number}`, week]), ["reflection", "Reflection"]].map(([id, text, week]) => <button type="button" role="tab" key={id} aria-selected={tab === id} className={tab === id ? "is-on" : ""} onClick={() => setTab(id)}>{week && <i className={`rv2-wdot is-${weekTone(week)}`} aria-hidden="true" />}{text}</button>)}
+  </div>;
+  if (openWeek) return <>{tabs}<WeekDetail review={review} week={openWeek} ctx={ctx} /></>;
+  if (tab === "reflection") return <>{tabs}<div className="rv-pad">
+    <div className="rv-editorial rv-editorial--workbench">
+      <div className="rv-editorial-head">
+        <h3><em>Reflection</em>Monthly improvement<small>{written} of {sectionCount} sections written</small></h3>
+        <span className="rv-editorial-steps" aria-label={`${written} of ${sectionCount} reflection sections written`}>
+          {Array.from({ length: 5 }, (_, index) => <i key={index} className={index < written ? "is-done" : ""} />)}
+        </span>
+      </div>
+      <div className="rv-editorial-glance">
+        {ctx.glance()}
+      </div>
+      <div className="rv-editorial-group">
+        <span className="rv-editorial-kicker">Technical</span>
+        <div className="rv-editorial-columns rv-editorial-columns--three">
+          {ctx.editorialLong("technical0", "What commonalities were present in my winning trades?", "Start writing…", 4)}
+          {ctx.editorialLong("technical1", "What commonalities were present in my losing trades?", "Start writing…", 4)}
+          {ctx.editorialLong("technical2", "Are there any strategy rules I need to tweak, add, or remove?", "Start writing…", 4)}
+        </div>
+      </div>
+      <div className="rv-editorial-group">
+        <span className="rv-editorial-kicker">Mistakes · habits · markups</span>
+        <div className="rv-editorial-columns rv-editorial-columns--three">
+          {ctx.editorialLong("mistakes", "What mistakes did I make this month and what caused them?", "Start writing…", 4)}
+          {ctx.editorialLong("habits", "How consistently did I follow my trading routine this month?", "Start writing…", 4)}
+          {ctx.editorialLong("markups", "How accurate was my overall directional bias?", "Start writing…", 4)}
+        </div>
+      </div>
+      <div className="rv-editorial-group">
+        <span className="rv-editorial-kicker">Next month</span>
+        <div className="rv-editorial-columns rv-editorial-columns--two">
+          {ctx.editorialLong("goals", "What are my goals for next month?", "Start writing…", 4)}
+          {ctx.editorialLong("overall", "What did I do well this month?", "Start writing…", 4)}
+        </div>
+      </div>
+    </div>
+    {ctx.leftover()}
+  </div></>;
   return (
-    <div className="rv-pad">
+    <>{tabs}<div className="rv-pad">
       <div className="rv-mh">
         <div><div className="rv-k">Monthly review · execution and discipline</div><h2>{review.name} {review.year}</h2></div>
         <span className={`rv-pill rv-pill--${s}`}>{s === "done" ? "Review complete" : s === "need" ? `${m.trades - m.reviewed} trades still need review` : "No trades"}</span>
@@ -412,43 +606,16 @@ function MonthDetail({ review, ctx, written, sectionCount }) {
           </div>
         </div>
 
-        <div className="rv-editorial rv-editorial--workbench">
-          <div className="rv-editorial-head">
-            <h3><em>Reflection</em>Monthly improvement<small>{written} of {sectionCount} sections written</small></h3>
-            <span className="rv-editorial-steps" aria-label={`${written} of ${sectionCount} reflection sections written`}>
-              {Array.from({ length: 5 }, (_, index) => <i key={index} className={index < written ? "is-done" : ""} />)}
-            </span>
-          </div>
-          <div className="rv-editorial-glance">
-            {ctx.glance()}
-          </div>
-          <div className="rv-editorial-group">
-            <span className="rv-editorial-kicker">Technical</span>
-            <div className="rv-editorial-columns rv-editorial-columns--three">
-              {ctx.editorialLong("technical0", "What commonalities were present in my winning trades?", "Start writing…", 4)}
-              {ctx.editorialLong("technical1", "What commonalities were present in my losing trades?", "Start writing…", 4)}
-              {ctx.editorialLong("technical2", "Are there any strategy rules I need to tweak, add, or remove?", "Start writing…", 4)}
-            </div>
-          </div>
-          <div className="rv-editorial-group">
-            <span className="rv-editorial-kicker">Mistakes · habits · markups</span>
-            <div className="rv-editorial-columns rv-editorial-columns--three">
-              {ctx.editorialLong("mistakes", "What mistakes did I make this month and what caused them?", "Start writing…", 4)}
-              {ctx.editorialLong("habits", "How consistently did I follow my trading routine this month?", "Start writing…", 4)}
-              {ctx.editorialLong("markups", "How accurate was my overall directional bias?", "Start writing…", 4)}
-            </div>
-          </div>
-          <div className="rv-editorial-group">
-            <span className="rv-editorial-kicker">Next month</span>
-            <div className="rv-editorial-columns rv-editorial-columns--two">
-              {ctx.editorialLong("goals", "What are my goals for next month?", "Start writing…", 4)}
-              {ctx.editorialLong("overall", "What did I do well this month?", "Start writing…", 4)}
-            </div>
-          </div>
+        <div className="rv-panel rv2-weeks">
+          <h3>Weeks in {review.name}<span>Monday – Sunday · open a week</span></h3>
+          {weeks.map((week) => <button type="button" key={week.number} className="rv2-wrow" onClick={() => setTab(`week${week.number}`)}>
+            <span><b>Week {week.number}</b><small>{range(week)}</small></span>
+            <span className="rv2-wrow-mid"><i className={`rv2-wdot is-${weekTone(week)}`} aria-hidden="true" />{week.trades.length ? `${week.trades.length} trade${week.trades.length === 1 ? "" : "s"} · ${rate(week.winRate)} win` : "No trades"}</span>
+            <span className="rv2-wrow-end"><b className={`rv-num ${week.trades.length ? sign(week.net) : "rv-mut"}`}>{week.trades.length ? money(week.net, true) : "—"}</b>{week.trades.length > 0 && has(week.returnPct) && <small className="rv-num">{pct(week.returnPct)}</small>}</span>
+          </button>)}
         </div>
       </div>
-      {ctx.leftover()}
-    </div>
+    </div></>
   );
 }
 
@@ -709,7 +876,9 @@ function YearDetail({ review, ctx, questions, written, sectionCount, onJump }) {
 }
 
 /* ---------- page ---------- */
-export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId }) {
+export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
+  const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
+  useEffect(() => { const media = window.matchMedia(MOBILE_MEDIA), change = () => setPhone(media.matches); media.addEventListener("change", change); return () => media.removeEventListener("change", change); }, []);
   const years = reviews.filter((r) => r.kind === "year");
   const quarters = reviews.filter((r) => r.kind === "quarter");
   const months = reviews.filter((r) => r.kind === "month");
@@ -719,6 +888,8 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
   const [drafts, setDrafts] = useState({});
   const [pending, setPending] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  useNavStep('review-detail', showDetail, () => setShowDetail(false));
+  useStepMotion(showDetail ? 1 : 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -776,18 +947,25 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
 
   if (!review) return <div className="rv"><Empty>No reviews yet.</Empty></div>;
 
+  const switchNotice = pending && (
+    <div className="rv-guard" role="alert">
+      <span>You have unsaved changes in {review.title}. Switch to {byId[pending].title}?</span>
+      <span className="rv-bar-group">
+        <button type="button" className="rv-btn rv-btn--primary" onClick={async () => { if (await doSave()) goTo(pending); }}>Save and switch</button>
+        <button type="button" className="rv-btn" onClick={() => goTo(pending)}>Discard and switch</button>
+        <button type="button" className="rv-btn" onClick={() => setPending(null)}>Keep editing</button>
+      </span>
+    </div>
+  );
+  if (phone) return <MobilePeriodReviews showDetail={showDetail} review={review} years={years} quarterGroups={quarterGroups} questions={questions} val={val} set={set} written={written} sectionCount={sectionKeys.length} onOpen={select} onReviewTrades={onReviewTrades} onCancel={() => setDrafts({})} onSave={doSave} dirty={dirty} saving={saving} saveLocked={annualSaveLocked} error={error} pendingNotice={switchNotice} controls={phoneControls} onPhoneTitle={onPhoneTitle} h={{money, pct, has, rate, short, winLoss, statusOf, tone:sign, EquityChart, QuarterTrendChart}}/>;
+
   return (
     <div className="rv">
       <div className={`rv-md${showDetail ? " rv-md--detail" : ""}`}>
-        <nav className="rv-list" aria-label="Reviews">
-          {years.length > 0 && years.map(renderCard)}
-          {quarterGroups.map(({ quarter, months: quarterMonths }) => (
-            <div className="rv-period-group" key={quarter.id}>
-              {renderCard(quarter)}
-              {quarterMonths.length > 0 && <div className="rv-mgrid">{quarterMonths.map(renderCard)}</div>}
-            </div>
-          ))}
-          {ungroupedMonths.length > 0 && <div className="rv-mgrid">{ungroupedMonths.map(renderCard)}</div>}
+        <nav className="rv-list rv2-nav" aria-label="Reviews">
+          {years.length > 0 && <div><div className="rv2-nl">Annual</div>{years.map(renderCard)}</div>}
+          {quarters.length > 0 && <div><div className="rv2-nl">Quarters</div><div className="rv2-qg">{quarterGroups.map(({ quarter, months: quarterMonths }) => <QuarterTile key={quarter.id} review={quarter} selected={quarter.id === selId} related={review.kind === "month" && quarterMonths.some((month) => month.id === selId)} onSelect={() => select(quarter.id)} />)}</div></div>}
+          {months.length > 0 && <div><div className="rv2-nl">Months<em>Click a month to open its review</em></div><div className="rv2-mg">{months.map((month) => { const group = quarterGroups.find((item) => item.months.some((entry) => entry.id === month.id)); const related = month.id !== selId && !!group && (group.quarter.id === selId || (review.kind === "month" && group.months.some((entry) => entry.id === selId))); return <MonthTile key={month.id} review={month} selected={month.id === selId} related={related} onSelect={() => select(month.id)} />; })}</div></div>}
         </nav>
 
         <section className="rv-detail" key={selId} aria-live="polite">
@@ -803,16 +981,7 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
             </div>
           </div>
 
-          {pending && (
-            <div className="rv-guard" role="alert">
-              <span>You have unsaved changes in {review.title}. Switch to {byId[pending].title}?</span>
-              <span className="rv-bar-group">
-                <button type="button" className="rv-btn rv-btn--primary" onClick={async () => { if (await doSave()) goTo(pending); }}>Save and switch</button>
-                <button type="button" className="rv-btn" onClick={() => goTo(pending)}>Discard and switch</button>
-                <button type="button" className="rv-btn" onClick={() => setPending(null)}>Keep editing</button>
-              </span>
-            </div>
-          )}
+          {switchNotice}
 
           {review.kind === "month" && <MonthDetail review={review} ctx={ctx} written={written} sectionCount={sectionKeys.length} />}
           {review.kind === "quarter" && <QuarterDetail review={review} ctx={ctx} written={written} sectionCount={sectionKeys.length} />}
