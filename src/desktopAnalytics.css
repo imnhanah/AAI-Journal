@@ -291,6 +291,17 @@
   .tj-root.tj-root.tj-root .tj-page-transition:has(.an2)>.tj-signal-page-analytics .tj-dashboard-quote strong {display:none;}
   .tj-root.tj-root.tj-root .tj-page-transition:has(.an2)>.tj-signal-page-analytics .tj-dashboard-quote blockquote {margin:0;padding:0;border:0;color:var(--muted);font-size:12.5px;font-style:italic;line-height:1.45;}
 
+  /* Analytics v2 is content-led. Do not inherit the old dashboard-era
+     full-height tracks, which create an empty scroll region after the final
+     Overview cards when there is little data. */
+  .tj-root .tj-content:has(.an2),
+  .tj-root .tj-content-inner:has(.an2),
+  .tj-root .tj-page-transition:has(.an2),
+  .tj-root .tj-reference-analytics:has(.an2) {min-height:0;}
+  .tj-root .tj-content-inner:has(.an2),
+  .tj-root .tj-page-transition:has(.an2),
+  .tj-root .tj-reference-analytics:has(.an2) {flex:none;}
+
   /* By the page's own width (the side panel can take half the window). */
   @container journal-workspace (max-width:1700px) {
     .tj-root .an2 .an2-strip {grid-template-columns:repeat(3,minmax(0,1fr));}

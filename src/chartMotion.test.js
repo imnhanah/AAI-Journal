@@ -40,7 +40,8 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   // The desktop side panel's rule progress bar is one more fill (56).
   // The removed unreachable Trade Logs branch contained one chart and sixteen percentage
   // fills. The active surfaces, including the Analytics Edge and Rhythm views, total 17
-  // charts and 65 fills.
+  // charts and 65 fills after the unreachable legacy Review view was removed.
+  // The active per-account challenge and guardrail panels own three fill nodes.
   assert.equal(chartCount,17);assert.equal(fillCount,65);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });

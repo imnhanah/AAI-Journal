@@ -6,7 +6,6 @@ import {useConfirmation} from './ConfirmationDialog.jsx';
 import {netDayCashMovement} from './calendarDaySummary.js';
 import {MARKUP_STATUSES, markupStatus, expiredUnlinkedMarkups} from './markupLifecycle.js';
 import {applySessionRepairs, accountRemovalSnapshotMatches, STALE_ACCOUNT_MESSAGE, PARTIAL_SETTINGS_MESSAGE} from './tradeUpdateSafety.js';
-import {reviewLibrarySignals} from './reviewLibrarySummary.js';
 import {followAnalyticsPointer} from './analyticsTooltip.js';
 import {reconcileImportedBases} from './importedAccountBase.js';
 import {brokerProfitValues} from './brokerProfitColumns.js';
@@ -164,7 +163,7 @@ import { NewsAlertsProvider, NewsAlertControls, NEWS_FOCUS_EVENT_KEY } from "./N
 import { NEWS_CURRENCIES, readNewsFilters, saveNewsFilters, toggleNewsCurrency, matchesNewsFilters } from "./newsPreferences";
 import { readJournalCache, writeJournalCache } from "./journalCache";
 import { hydrateJournalImages, writeJournalImageCache } from "./journalImageCache";
-import { loadJournalImage, loadPeriodReviewContent } from "./journalCloudCache";
+import { loadJournalImage } from "./journalCloudCache";
 import { privateCache, activatePrivateUser } from './privateCacheRuntime';
 import { validateImageFile, shouldHandleImagePaste } from './mediaMutation';
 import {
@@ -3443,44 +3442,6 @@ const PERIOD_REVIEW_FIELDS = {
   ],
 };
 
-function PeriodReviewModal({ period, saved, reviews, onClose, onSave, onStartTradeReview }) {
-  const [savingPeriod, setSavingPeriod] = useState(false);
-  const initialContent = { overview: "", invalid: "", missedTrades: "", strategyPerformance: "", ...(saved?.content || {}) };
-  const [content, setContent] = useState(initialContent);
-  const [reflectionTab, setReflectionTab] = useState("technical");
-  const [showAllTrades, setShowAllTrades] = useState(false);
-  const set = (key, value) => setContent((current) => ({ ...current, [key]: value }));
-  const reviewByTrade = new Map(reviews.map((review) => [review.tradeId, review]));
-  const stat = period.stats;
-  const requiredAtAGlanceFields = ["overview", "invalid", "missedTrades", "strategyPerformance"];
-  const completedFields = requiredAtAGlanceFields.filter((key) => String(content[key] || "").trim()).length;
-  const completed = completedFields === requiredAtAGlanceFields.length;
-  const save = async () => { if (savingPeriod) return; setSavingPeriod(true); try { const success = await onSave({ type: period.type, key: period.key, content, completed }); if (success !== false) onClose(); } finally { setSavingPeriod(false); } };
-  const periodName = period.type === "monthly" ? "Month" : period.type === "quarterly" ? "Quarter" : "Year";
-  const activeDays = new Set(stat.trades.map((trade) => trade.date)).size;
-  const positiveTrades = stat.trades.filter(trade => Number(trade.pnl) > 0);
-  const negativeTrades = stat.trades.filter(trade => Number(trade.pnl) < 0);
-  const grossWins = positiveTrades.reduce((sum, trade) => sum + Number(trade.pnl), 0);
-  const grossLosses = Math.abs(negativeTrades.reduce((sum, trade) => sum + Number(trade.pnl), 0));
-  const profitFactor = grossLosses ? (grossWins / grossLosses).toFixed(2) : grossWins ? "∞" : "—";
-  const averagePayoff = positiveTrades.length && negativeTrades.length ? ((grossWins / positiveTrades.length) / (grossLosses / negativeTrades.length)).toFixed(2) : "—";
-  const dayResults = Object.values(stat.trades.reduce((days, trade) => ({...days, [trade.date]: (days[trade.date] || 0) + Number(trade.pnl || 0)}), {}));
-  const greenDays = dayResults.filter(value => value > 0).length;
-  const redDays = dayResults.filter(value => value < 0).length;
-  const reflectionTabs = [["technical","Technical"],["mistakes","Mistakes"],["habits","Habits"],["markups","Markups"],["goals","Goals"],["overall","Overall performance"]];
-  const writtenSections = reflectionTabs.filter(([id]) => PERIOD_REVIEW_FIELDS[id].some(([key]) => String(content[key] || "").trim())).length;
-  return <Modal title={`${period.label} review`} onClose={onClose} className="tj-period-review-modal tj-period-reference-modal" wide>
-    <div className="tj-period-review-summary">
-      <div className="tj-period-review-title"><div className="tj-section-label">{period.label} review</div><span>{period.year} · {stat.total} trade{stat.total === 1 ? "" : "s"} closed · {stat.reviewed} reviewed · {completed ? "analysis completed" : "analysis in progress"}</span><em className="tj-period-depth-badge">Review depth {stat.reviewed}/{stat.total}</em></div>
-      <div className="tj-period-metric-grid tj-period-metric-grid-reference"><div><small>NET RESULT</small><strong className={stat.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(stat.netPnl)}</strong><span>{stat.returnPct >= 0 ? "+" : ""}{stat.returnPct.toFixed(2)}% return across the {periodName.toLowerCase()}.</span></div><div><small>PAYOFF QUALITY</small><strong className="tj-green">{profitFactor} PF</strong><span>{averagePayoff}R average payoff</span></div><div><small>HIT RATE</small><strong className={wrColorClass(stat.winRate)}>{stat.winRate.toFixed(1)}%</strong><span>{stat.wins} wins · {stat.losses} losses · {stat.breakeven} B/E</span></div><div><small>PROCESS SCORE</small><div className="tj-period-performance"><strong>{Math.round(stat.performance)}/5</strong><span>{[1,2,3,4,5].map(dot=><i key={dot} className={dot <= Math.round(stat.performance) ? "tj-score-dot-on" : ""}/>)}</span></div><em>Auto score {Math.round(stat.performance)}/5 before any manual override.</em></div></div>
-      <div className="tj-period-meter-grid"><div><small>REVIEW DEPTH</small><i><em data-chart-fill="horizontal" style={{width:`${stat.coverage * 100}%`}}/></i><span>{stat.reviewed}/{stat.total} reviewed · {(stat.coverage * 100).toFixed(0)}% captured · {activeDays} active days</span></div><div><small>TRADE DISTRIBUTION</small><i className="tj-result-meter"><em data-chart-fill="horizontal" style={{width:`${stat.total ? stat.wins / stat.total * 100 : 0}%`}}/><strong data-chart-fill="horizontal" style={{width:`${stat.total ? stat.losses / stat.total * 100 : 0}%`}}/></i><span>{stat.wins}W · {stat.losses}L · {stat.breakeven} B/E · {greenDays} green days · {redDays} red days</span></div><div><small>BEST CONTEXT</small><b>{stat.bestSession} · {stat.strongestEdge}</b><span>{fmtMoney(stat.bestSessionPnl)} from the strongest session</span></div></div>
-    </div>
-    <section className="tj-period-at-glance"><div className="tj-bold">{periodName} At A Glance</div><div className="tj-muted-txt">Quick reads for what mattered this {periodName.toLowerCase()}.</div><Field label="My performance"><input className="tj-input" placeholder="Add a short read…" value={content.overview || ""} onChange={(event) => set("overview", event.target.value)} /></Field><Field label="Invalid"><input className="tj-input" placeholder="Add a short read…" value={content.invalid || ""} onChange={(event) => set("invalid", event.target.value)} /></Field><Field label="Missed trades"><input className="tj-input" placeholder="Add a short read…" value={content.missedTrades || ""} onChange={(event) => set("missedTrades", event.target.value)} /></Field><Field label="Strategy performance"><input className="tj-input" placeholder="Add a short read…" value={content.strategyPerformance || ""} onChange={(event) => set("strategyPerformance", event.target.value)} /></Field></section>
-    <section className="tj-period-trades"><div className="tj-period-trades-head"><div><div className="tj-bold">Trades taken</div><div className="tj-muted-txt">Top 3 shown. Open the list for all {stat.total}.</div></div><button type="button" className="tj-period-view-all" aria-expanded={showAllTrades} onClick={()=>setShowAllTrades(value=>!value)}>{showAllTrades ? "Show top 3" : `View all ${stat.total}`}</button></div>{stat.trades.length ? <div className={`tj-period-trades-scroll ${showAllTrades && stat.trades.length > 3 ? "tj-period-trades-scrollable" : ""}`}>{stat.trades.slice().sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`)).slice(0, showAllTrades ? undefined : 3).map((trade) => { const review = reviewByTrade.get(trade.id); const confluences = trade.confluence || trade.types || []; const tradeResult = classify(trade.pnl, 0); return <button type="button" className="tj-period-trade-reference-row" key={trade.id} onClick={() => onStartTradeReview(trade, review)}><div><span><strong>{trade.asset || "No instrument"}</strong><em className={trade.direction === "BUY" ? "tj-green" : "tj-red"}>{trade.direction}</em><small>{trade.entrySession || trade.session || "—"}</small><small>{trade.entryType || trade.confluenceSession || "—"}</small><b className={review ? "tj-review-status-done" : "tj-review-status-pending"}>{review ? "Reviewed" : "Needs review"}</b></span><span><small>{new Date(`${trade.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small><small>{Number(trade.rr || 0).toFixed(2)}R</small><small>{trade.mistakes?.length || 0} mistake{trade.mistakes?.length === 1 ? "" : "s"}</small>{confluences.slice(0, 3).map((item) => <em key={item}>{item}</em>)}{confluences.length > 3 && <em>+{confluences.length - 3}</em>}</span></div><strong className={tradeResult === "win" ? "tj-period-result-win" : tradeResult === "loss" ? "tj-period-result-loss" : "tj-period-result-flat"}>{tradeResult === "win" ? "WIN" : tradeResult === "loss" ? "LOSS" : "B/E"}</strong></button>; })}</div> : <div className="tj-empty">No trades were logged for this period.</div>}</section>
-    <section className="tj-period-review-longform"><header className="tj-period-reflection-heading"><div><div className="tj-bold">{periodName} reflection</div><div className="tj-muted-txt">Long-form review · {writtenSections} of 6 sections written</div></div><div className="tj-period-reflection-tabs" role="tablist" aria-label="Reflection sections">{reflectionTabs.map(([id,label]) => <button key={id} type="button" role="tab" id={`period-reflection-tab-${id}`} aria-selected={reflectionTab===id} aria-controls={`period-reflection-${id}`} onClick={()=>setReflectionTab(id)}>{label}</button>)}</div></header>{reflectionTabs.map(([id,label]) => <div key={id} role="tabpanel" id={`period-reflection-${id}`} aria-labelledby={`period-reflection-tab-${id}`} hidden={reflectionTab!==id} className="tj-period-reflection-fields">{PERIOD_REVIEW_FIELDS[id].map(([key,prompt]) => <textarea key={key} aria-label={`${label}: ${prompt}`} className="tj-input tj-textarea" placeholder={`${label}: ${prompt}`} value={content[key] || ""} onChange={event=>set(key,event.target.value)}/>)}</div>)}</section>
-    <div className="tj-modal-actions"><button className="tj-btn-outline" onClick={onClose}>Cancel</button><button className="tj-btn-primary" disabled={savingPeriod} onClick={save}>{savingPeriod ? "Saving…" : "Save review"}</button></div>
-  </Modal>;
-}
 
 /*
  * The review workspace deliberately receives only figures calculated from the
@@ -3505,6 +3466,58 @@ const REVIEW_QUESTIONS = {
     { key: "overallWell", label: "Overall performance", prompt: PERIOD_REVIEW_FIELDS.overall[0][1] },
   ],
 };
+
+// Shared by the active Dashboard and Analytics charts. It was previously
+// colocated with a removed dashboard implementation, but the current views
+// still render it as their Recharts tooltip content.
+function CompactChartTooltip({ active, payload, label, metric, neutral = false }) {
+  if (!active || !payload?.length) return null;
+  const value = Number(payload[0].value) || 0;
+  return <div className="tj-compact-chart-tooltip"><strong>{label}</strong><div><span>{metric}</span><b className={neutral ? "" : value >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(value)}</b></div></div>;
+}
+
+// Per-account challenge progress remains part of the active dashboard even
+// though the former dashboard shell that originally housed this renderer was
+// removed.
+function AccountChallengeDashboardPanel({ balance, trades, userId, workspace }) {
+  const challenge = useBalanceChallenge({ ...balance, trades, balances: workspace.balances, financeMovements: workspace.financeMovements }, userId);
+  const passed = !challenge.loading ? Object.values(challenge.state.statuses || {}).filter((status) => status === "Pass").length : 0;
+  const plan = buildChallengePlan(balance.startingBalance, challenge.state.automation?.mode || balance.challengeMode || "risk", challenge.state.automation?.levelCount, challenge.state.automation?.rewardRatio ?? balance.challengeReward);
+  const totalLevels = plan.length;
+  const complete = passed === totalLevels;
+  const level = clamp(Number(challenge.state.activeLevel) || 1, 1, totalLevels);
+  const nextRisk = complete ? null : plan[level - 1]?.risk;
+  return <section className={`tj-dashboard-account-challenge ${complete ? "tj-dashboard-account-challenge-complete" : ""}`}><div className="tj-dashboard-account-challenge-top"><span>{balance.name}</span></div><strong>{challenge.loading ? "—" : `${passed} / ${totalLevels}`}</strong><i><em data-chart-fill="horizontal" style={{ width: `${challenge.loading ? 0 : passed / totalLevels * 100}%` }}/></i><small>{complete ? "All levels complete" : nextRisk != null ? `Level ${level} · Next risk ${fmtMoney(nextRisk, balance.baseCurrency)}` : "Challenge progress is loading."}</small></section>;
+}
+
+function AccountGuardrailsPanel({ account, guardrails, stats, periodDate = new Date() }) {
+  if (!guardrails?.enabled) return null;
+  const year = periodDate.getFullYear();
+  const month = periodDate.getMonth();
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const monthStats = computeStats(account.trades.filter((trade) => trade.date?.slice(0, 7) === monthKey), account.breakevenCap);
+  const todayTrades = account.trades.filter((trade) => trade.date === localDateKey()).length;
+  const buffers = [guardrails.dailyLossLimitPct > 0 ? guardrails.dailyLossCap + Math.min(0, guardrails.dailyPnl) : null, guardrails.monthlyLossLimitPct > 0 ? guardrails.monthlyLossCap + Math.min(0, guardrails.monthlyPnl) : null].filter(Number.isFinite);
+  const nearestBuffer = buffers.length ? Math.min(...buffers) : null;
+  const paused = guardrails.tradeEntryLocked;
+  const GoalRow = ({ title, value, target, tradesTaken, tone = "green" }) => {
+    const progress = target ? clamp(Math.max(0, value) / target * 100, 0, 100) : 0;
+    const remaining = Math.max(0, target - value);
+    return <div className={`tj-account-goal-row tj-account-goal-${tone}`}><div className="tj-account-goal-row-heading"><span>{title}</span><strong>{fmtMoney(value)} <small>of {fmtMoney(target)}</small></strong></div><div className="tj-account-goal-track" role="progressbar" aria-label={title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><b data-chart-fill="horizontal" style={{width:`${progress}%`}}/></div><footer><span>{progress >= 100 ? `${fmtMoney(value - target)} above goal` : `${fmtMoney(remaining)} to goal`}</span><span>{tradesTaken} trade{tradesTaken === 1 ? "" : "s"}</span></footer></div>;
+  };
+  const LimitRow = ({ title, used, limit, tradesTaken, locked }) => {
+    const progress = limit ? clamp(used / limit * 100, 0, 100) : 0;
+    const remaining = Math.max(0, limit - used);
+    return <div className={`tj-account-goal-row tj-account-limit-row ${locked ? "tj-account-limit-locked" : ""}`}><div className="tj-account-goal-row-heading"><span>{title}</span><strong>{fmtMoney(remaining)} <small>left</small></strong></div><div className="tj-account-goal-track" role="progressbar" aria-label={title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><b data-chart-fill="horizontal" style={{width:`${progress}%`}}/></div><footer><span>{fmtMoney(used)} used of {fmtMoney(limit)}</span><span>{locked ? "Locked" : `${tradesTaken} trade${tradesTaken === 1 ? "" : "s"}`}</span></footer></div>;
+  };
+  const statusCopy = paused ? "A loss limit is reached. Trade logging resumes at the next reset." : nearestBuffer != null ? `You can lose up to ${fmtMoney(nearestBuffer)} before logging pauses.` : "Your profit goals are active. Add a loss limit in Account Settings to protect trade entry.";
+  return <Card className="tj-panel tj-guardrails"><header className={`tj-account-goals-header ${paused ? "tj-account-goals-paused" : ""}`}><div><span>ACCOUNT GOALS &amp; GUARDRAILS</span><strong>{paused ? "Trade paused" : "Clear to trade"}</strong><p>{statusCopy}</p></div><div className="tj-account-goals-balance"><small>LIVE BALANCE</small><b>{fmtMoney(guardrails.guardrailBalance)}</b></div></header><div className="tj-account-goals-layout">{(guardrails.dailyLossLimitPct > 0 || guardrails.monthlyLossLimitPct > 0) && <section className="tj-account-goals-section"><header><span>LOSS LIMITS</span><small>Based on your live balance</small></header>{guardrails.dailyLossLimitPct > 0 && <LimitRow title="Today" used={Math.max(0, -guardrails.dailyPnl)} limit={guardrails.dailyLossCap} tradesTaken={todayTrades} locked={guardrails.dailyLossHit}/>} {guardrails.monthlyLossLimitPct > 0 && <LimitRow title="This month" used={Math.max(0, -guardrails.monthlyPnl)} limit={guardrails.monthlyLossCap} tradesTaken={monthStats.total} locked={guardrails.monthlyLossHit}/>}</section>}{(guardrails.monthlyGoalPct > 0 || guardrails.yearlyGoalPct > 0) && <section className="tj-account-goals-section"><header><span>PROFIT GOALS</span><small>Closed-trade progress</small></header>{guardrails.monthlyGoalPct > 0 && <GoalRow title={`${MONTH_NAMES[month]} ${year}`} value={guardrails.monthlyPnl} target={guardrails.monthlyGoal} tradesTaken={monthStats.total}/>} {guardrails.yearlyGoalPct > 0 && <GoalRow title={String(year)} value={guardrails.yearlyPnl} target={guardrails.yearlyGoal} tradesTaken={stats.total} tone="blue"/>}</section>}</div><footer className="tj-account-goals-footer">Limits use your live balance, not your starting balance. When one is hit, trade logging pauses until the next reset; markups remain available for planning and review.</footer></Card>;
+}
+
+const AnStat = ({ label, value, sub, tone = "", extra = "" }) => <div className={`an2-st ${extra}`}><small>{label}</small><b className={`an2-num ${tone}`}>{value}</b>{sub && <span>{sub}</span>}</div>;
+const AnRing = ({ value, main, sub, size = 104 }) => { const radius = 42, circumference = 2 * Math.PI * radius; return <div className="an2-ring" style={{ width: size, height: size }}><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r={radius} className="an2-ring-track"/><circle cx="50" cy="50" r={radius} className="an2-ring-value" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - clamp(value, 0, 100) / 100)} transform="rotate(-90 50 50)"/></svg><div><b className="an2-num">{main}</b><small>{sub}</small></div></div>; };
+const anGrade = (grade) => <i className={`an2-grade is-${String(grade || "").replace("+", "p")}`}>{grade || "—"}</i>;
+const anTone = (value) => Number(value) > 0 ? "is-gain" : Number(value) < 0 ? "is-loss" : "";
 
 function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, reviews, markups = [], periodReviews, onSavePeriod, onSaveTrade, onPhoneTitle }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
@@ -3669,114 +3682,6 @@ function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, review
   </div>;
 }
 
-function LegacyReviewLibraryPage({ account: workspace, trades: workspaceTrades, reviews, periodReviews, markups = [], onSavePeriod, onSaveTrade }) {
-  const [phoneReview,setPhoneReview]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
-  useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),update=()=>setPhoneReview(media.matches);media.addEventListener('change',update);return()=>media.removeEventListener('change',update);},[]);
-  const [reviewBalanceId, setReviewBalanceId] = usePageState('reviews', 'tj-nav-reviewBalanceId', "");
-  const balances = useMemo(() => activeBalances(workspace), [workspace]);
-  useEffect(() => { if (reviewBalanceId && !balances.some(balance => balance.id === reviewBalanceId)) setReviewBalanceId(""); }, [balances, reviewBalanceId]);
-  const account = useMemo(() => {
-    const balance = balances.find(item => item.id === reviewBalanceId);
-    if (!balance) return workspace;
-    const scoped = scopeChallengeAccount(workspace, balance);
-    const originals = new Map(workspaceTrades.map(trade => [trade.id, trade]));
-    return {...scoped, balances: [balance], trades: scoped.trades.map(trade => ({...trade, context: originals.get(trade.id)?.context || "", balanceResults: (trade.balanceResults || []).filter(result => result.balanceId === balance.id)}))};
-  }, [workspace, workspaceTrades, balances, reviewBalanceId]);
-  const trades = reviewBalanceId ? account.trades : workspaceTrades;
-  const currentYear = new Date().getFullYear();
-  const [reviewYear, setReviewYear] = usePageState('reviews', 'tj-nav-reviewYear', currentYear);
-  const [activePeriod, setActivePeriod] = useState(null);
-  const [tradeEditor, setTradeEditor] = useState(null);
-  const [periodDetails, setPeriodDetails] = useState({});
-  const [periodLoadError, setPeriodLoadError] = useState('');
-  const [openingPeriod, setOpeningPeriod] = useState(false);
-  const periodRequest = useRef(0);
-  useEffect(() => {
-    periodRequest.current += 1;
-    setOpeningPeriod(false); setActivePeriod(null); setPeriodLoadError('');
-    return () => { periodRequest.current += 1; };
-  }, [workspace.id, reviewBalanceId, reviewYear]);
-  const periodRows = periodReviews.map(review => periodDetails[`${review.id}:${review.updatedAt}`] ? {...review,content:periodDetails[`${review.id}:${review.updatedAt}`],contentLoaded:true} : review);
-  const workspacePeriodReviews = new Map(periodRows.map(review => [`${review.type}:${review.key}`, review]));
-  const savedByPeriod = new Map(periodRows.map(review => {
-    const scoped = reviewBalanceId ? review.content?.accountScopes?.[reviewBalanceId] : null;
-    return [`${review.type}:${review.key}`, reviewBalanceId ? (scoped ? {...review, content: scoped.content, completed: scoped.completed} : undefined) : review];
-  }));
-  const saveSelectedPeriod = review => {
-    const previous = workspacePeriodReviews.get(`${review.type}:${review.key}`);
-    if (!reviewBalanceId) return onSavePeriod({...review, content: {...review.content, accountScopes: previous?.content?.accountScopes || {}}});
-    return onSavePeriod({...review, completed: Boolean(previous?.completed), content: {...(previous?.content || {}), accountScopes: {...(previous?.content?.accountScopes || {}), [reviewBalanceId]: {content: review.content, completed: review.completed}}}});
-  };
-  const months = MONTH_NAMES.map((name, index) => {
-    const key = `${reviewYear}-${String(index + 1).padStart(2, "0")}`;
-    return { type: "monthly", key, label: name, year: reviewYear, stats: reviewPeriodStats(trades, reviews, account, "monthly", key) };
-  });
-  const quarters = [1, 2, 3, 4].map((quarter) => {
-    const key = `${reviewYear}-Q${quarter}`;
-    return { type: "quarterly", key, label: `Q${quarter} ${reviewYear}`, year: reviewYear, stats: reviewPeriodStats(trades, reviews, account, "quarterly", key) };
-  });
-  const annual = { type: "annual", key: String(reviewYear), label: `${reviewYear} Annual`, year: reviewYear, stats: reviewPeriodStats(trades, reviews, account, "annual", String(reviewYear)) };
-  const signals = reviewLibrarySignals(months, quarters, annual);
-  const returnLabel = period => `${period.stats.returnPct >= 0 ? "+" : ""}${period.stats.returnPct.toFixed(2)}%`;
-  const statusFor = period => !period.stats.total ? "empty" : period.stats.reviewed === period.stats.total ? "done" : "pending";
-  const studioTrendScale = Math.max(1,...months.map(period => Math.abs(period.stats.returnPct || 0)));
-  const ratingFor = period => reviewLibrarySignals([], [], period).averageRating;
-  const focusPeriod = months.find(period => statusFor(period) === "pending") || months.find(period => period.stats.total) || months[new Date().getMonth()];
-  const activePeriodLive = activePeriod ? [...months, ...quarters, annual].find((period) => period.type === activePeriod.type && period.key === activePeriod.key) || activePeriod : null;
-  const reviewedIds = new Set(reviews.map((review) => review.tradeId));
-  const pending = closedTrades(trades).filter((trade) => trade.date?.slice(0, 4) === String(reviewYear) && !reviewedIds.has(trade.id)).sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`));
-  const openPeriod = async (period) => {
-    if (openingPeriod) return;
-    const request = ++periodRequest.current;
-    const ticket = privateCache.token();
-    const isCurrent = () => request === periodRequest.current && privateCache.valid(ticket);
-    setOpeningPeriod(true); setPeriodLoadError('');
-    try {
-      const saved = workspacePeriodReviews.get(`${period.type}:${period.key}`);
-      if (saved?.contentLoaded === false) {
-        const content = await loadPeriodReviewContent(saved);
-        if (!isCurrent()) return;
-        setPeriodDetails(current => ({...current,[`${saved.id}:${saved.updatedAt}`]:content}));
-      }
-      if (isCurrent()) setActivePeriod(period);
-    } catch (error) { if (isCurrent()) setPeriodLoadError(error.message || 'Review could not be loaded.'); }
-    finally { if (request === periodRequest.current) setOpeningPeriod(false); }
-  };
-  const renderPeriodCard = (period, compact = false) => {
-    const saved = savedByPeriod.get(`${period.type}:${period.key}`);
-    const stat = period.stats;
-    const rating = ratingFor(period);
-    return <button type="button" key={period.key} className={`tj-review-library-card ${compact ? "tj-review-quarter-card" : "tj-review-month-card"} tj-review-state-${statusFor(period)}`} onClick={() => openPeriod(period)}>
-      <div className="tj-review-card-top"><span>{compact ? period.label.split(" ")[0] : period.label}</span>{compact ? <em className="tj-review-status">{stat.total ? stat.reviewed === stat.total ? "✓ DONE" : <><span className="tj-review-desktop-copy">NEEDS REVIEW</span><span className="tj-review-phone-copy">TO REVIEW</span></> : "NO TRADES"}</em> : <b className={stat.netPnl >= 0 ? "tj-green" : "tj-red"}>{stat.total ? returnLabel(period) : "—"}</b>}</div>
-      {compact && <small className="tj-review-card-year">{reviewYear}</small>}
-      {stat.total ? <>
-        {compact && <strong className={`tj-review-quarter-return ${stat.netPnl >= 0 ? "tj-green" : "tj-red"}`}>{returnLabel(period)}</strong>}
-        {compact && <><div className="tj-review-quarter-summary"><span>{stat.total} trades · {stat.winRate.toFixed(0)}% win rate</span></div><div className="tj-review-quarter-progress"><i style={{"--review-progress":`${stat.coverage * 100}%`}}/></div><div className="tj-review-card-reviewline"><strong>{stat.reviewed}/{stat.total} reviewed</strong><span>{rating == null ? "Not rated" : <b>{rating.toFixed(1)}/5</b>}</span></div><div className="tj-review-quarter-months">{months.filter(month => Math.ceil(Number(month.key.slice(-2)) / 3) === Number(period.key.slice(-1))).map(month => <span key={month.key} className={`tj-review-state-${statusFor(month)}`}><b>{month.label.toUpperCase()}</b><em className={month.stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{month.stats.total ? returnLabel(month) : ""}</em><small>{month.stats.total ? `${month.stats.total} trades · ${month.stats.winRate.toFixed(0)}% win rate` : "No trades"}</small></span>)}</div></>}
-        {!compact && <><div className="tj-review-card-reviewline"><strong>{stat.reviewed === stat.total && <span aria-hidden="true">✓ </span>}{stat.reviewed}/{stat.total} reviewed</strong><span>{rating == null ? "Not rated" : <b>{rating.toFixed(1)}/5</b>}</span></div><div className="tj-review-card-foot"><span>{stat.total} trades</span><span>{stat.winRate.toFixed(0)}% win rate</span></div></>}
-      </> : <><strong className="tj-review-no-trades">No trades</strong><small>{saved?.completed ? "Reflection saved" : "Empty period"}</small></>}
-    </button>;
-  };
-  return <div className="tj-review-library tj-review-v2">
-    {openingPeriod && <small role="status">Loading saved review…</small>}
-    {periodLoadError && <small role="alert" style={{color:'var(--tj-red)'}}>{periodLoadError}</small>}
-    <Card className="tj-review-workspace">
-      <div className="tj-review-library-head"><div><div className="tj-section-label">REVIEW WORKSPACE</div><div className="tj-bold" style={{ fontSize: 23.76 }}>Review Library</div><div className="tj-muted-txt" style={{ fontSize: 14 }}>Monthly, quarterly, and annual reflection in one clear workspace.</div></div><div className="tj-review-account-period-controls">{balances.length > 1 && <ThemeSelect variant="account-card" label="Review account" value={reviewBalanceId} onChange={event => { setReviewBalanceId(event.target.value); setActivePeriod(null); setTradeEditor(null); }}><option value="">All accounts</option>{balances.map(balance => <option key={balance.id} value={balance.id}>{balance.name}</option>)}</ThemeSelect>}<div className="tj-review-year-switch"><button className="tj-icon-btn" aria-label="Previous review year" onClick={() => setReviewYear((year) => year - 1)}><ChevronLeft size={17}/></button><strong>{reviewYear}</strong><button className="tj-icon-btn" aria-label="Next review year" onClick={() => setReviewYear((year) => year + 1)}><ChevronRight size={17}/></button></div></div></div>
-      <div className="tj-review-library-content-scroll">
-      <section className="tj-review-annual-hero" aria-label="Annual review overview">
-        <button className="tj-review-annual-result" onClick={() => openPeriod(annual)}><small>{reviewYear} ANNUAL REVIEW</small><strong className={annual.stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{returnLabel(annual)}</strong><div className="tj-review-annual-stats"><span><small>TRADES</small><b>{annual.stats.total}</b></span><span><small>WIN RATE</small><b>{annual.stats.winRate.toFixed(0)}%</b></span><span><small>REVIEWED</small><b>{annual.stats.reviewed}</b></span></div></button>
-        <div className="tj-review-studio-trend" aria-label="Monthly return trend"><header><small>MONTHLY RETURN TREND</small><span>Click a month to open its review</span></header><div>{months.map(period => <button type="button" key={period.key} onClick={() => openPeriod(period)} className={`tj-review-studio-bar ${period.stats.netPnl < 0 ? "tj-review-studio-bar-loss" : ""} ${!period.stats.total ? "tj-review-studio-bar-empty" : ""}`} style={{"--review-trend-height":`${period.stats.total ? Math.max(8,Math.round(Math.abs(period.stats.returnPct || 0) / studioTrendScale * 100)) : 4}%`}} aria-label={`${period.label}: ${period.stats.total ? returnLabel(period) : "no trades"}`}><i/><small>{period.label.slice(0,1)}</small></button>)}</div><footer><span className="tj-review-legend-done">Reviewed</span><span className="tj-review-legend-pending">Needs review</span><span>No trades</span></footer></div>
-        <aside className="tj-review-focus-card"><em>NEEDS REVIEW</em><h3>{focusPeriod.label}</h3><p>{focusPeriod.stats.total} trades · {focusPeriod.stats.reviewed}/{focusPeriod.stats.total} reviewed</p><button type="button" onClick={() => openPeriod(focusPeriod)}>Start {focusPeriod.label} review</button><div className="tj-review-focus-meter"><span><small>OVERALL</small><b>{annual.stats.reviewed}/{annual.stats.total} reviewed</b></span><i style={{"--review-progress":`${annual.stats.coverage * 100}%`}}/></div><div className="tj-review-focus-rating"><small>AVERAGE RATING</small><strong>{signals.averageRating == null ? "—" : signals.averageRating.toFixed(1)}<span>/5 · {signals.ratedCount} of {annual.stats.total} rated</span></strong></div></aside>
-      </section>
-      <section className="tj-review-signals" aria-label="Quarterly signals"><div className="tj-review-section-caption"><strong>QUARTERLY</strong></div><div className="tj-review-signal-chips"><span>↗ Best quarter <b>{signals.bestQuarter?.label.split(" ")[0] || "—"}</b><b className="tj-green">{signals.bestQuarter ? returnLabel(signals.bestQuarter) : "—"}</b></span><span>Highest win rate <b>{signals.highestWinQuarter?.label.split(" ")[0] || "—"} {signals.highestWinQuarter?.stats.winRate.toFixed(0) || 0}%</b></span><span className={quarters.some(period => statusFor(period) === "pending") ? "tj-review-warning" : ""}>Needs review <b>{quarters.filter(period => statusFor(period) === "pending").map(period => period.label.split(" ")[0]).join(", ") || "None"}</b></span><span>Quarters done <b>{signals.completedQuarters}/4</b></span></div></section>
-      <div className="tj-review-phone-copy tj-review-phone-quarter-caption"><strong>QUARTERLY</strong><span>{quarters.filter(period => statusFor(period) === "pending").map(period => `${period.label.split(" ")[0]}: ${period.stats.total - period.stats.reviewed} to review`).join(" · ") || "All active quarters reviewed"}</span></div>
-      <div className="tj-review-quarter-grid">{quarters.map(period => renderPeriodCard(period, true))}</div>
-      <Card className="tj-trades-to-review"><div className="tj-period-trades-head"><div className="tj-bold">Trades to review</div><span className="tj-count-badge">{pending.length} waiting</span></div>{pending.length ? <div className="tj-review-table-wrap"><div className="tj-review-table tj-review-table-head"><span>TRADE</span><span>DATE</span><span>SESSION</span><span>ENTRY MODEL</span><span>MARKUP</span><span>CONFLUENCES</span><span>MISTAKES</span><span>RESULT</span><span>RR</span><span/></div>{pending.map((trade) => <button type="button" className="tj-review-table tj-review-table-row" key={trade.id} onClick={() => setTradeEditor({ trade })}><span><strong>{trade.asset || "No instrument"}</strong><em className={trade.direction === "BUY" ? "tj-green" : "tj-red"}>{trade.direction}</em></span><span>{new Date(`${trade.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span><span><em className="tj-sesspill">{trade.entrySession || trade.session || "—"}</em></span><span>{trade.entryType || trade.confluenceSession || "—"}</span><span><em className="tj-sesspill">{trade.premarketMarkupId ? "Linked" : "—"}</em></span><span>{(trade.confluence || trade.types || []).length}</span><span>{trade.mistakes?.length || 0}</span><span className={trade.pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(trade.pnl)}</span><span><strong>{Number(trade.rr || 0).toFixed(2)}R</strong></span><span className="tj-review-write-action">Write review</span></button>)}</div> : <div className="tj-empty">Every closed trade already has a saved review.</div>}</Card>
-      </div>
-    </Card>
-    {activePeriodLive && <PeriodReviewModal period={activePeriodLive} saved={savedByPeriod.get(`${activePeriodLive.type}:${activePeriodLive.key}`)} reviews={reviews} onClose={() => setActivePeriod(null)} onSave={saveSelectedPeriod} onStartTradeReview={(trade, existing) => setTradeEditor({ trade, existing, preview: Boolean(existing) })} />}
-    {tradeEditor && <TradeReviewEditorModal readOnly={Boolean(tradeEditor.preview)} onEdit={() => setTradeEditor(current => ({...current, preview: false}))} trade={tradeEditor.trade} trades={[tradeEditor.trade, ...pending.filter((item) => item.id !== tradeEditor.trade.id)]} existing={tradeEditor.existing || reviews.find((review) => review.tradeId === tradeEditor.trade.id)} reviews={reviews} markups={markups} account={account} onClose={() => setTradeEditor(null)} onSave={onSaveTrade} />}
-  </div>;
-}
 
 export function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = false, multiBalanceUnavailableReason = "", allowImport = true }) {
   const [challengeEnabled, setChallengeEnabled] = useState(false);

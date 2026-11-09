@@ -23,11 +23,23 @@ test('Analytics Overview uses the existing figures and opens the other tabs', ()
   assert.match(journal, /<div className="an2-bal"><b className="an2-num">\{fmtMoney\(shownCurrentEquity\)\}<\/b><span>live balance<\/span><\/div>/);
 });
 
+test('active Analytics retains its shared presentation helpers', () => {
+  assert.match(journal, /const AnStat = \(\{ label, value, sub, tone = "", extra = "" \}\)/);
+  assert.match(journal, /const AnRing = \(\{ value, main, sub, size = 104 \}\)/);
+  assert.match(journal, /const anGrade = \(grade\)/);
+  assert.match(journal, /const anTone = \(value\) => Number\(value\) > 0 \? "is-gain"/);
+});
+
 test('Analytics v2 spans the old two-column grid, keeps the banner height and reflows by page width', () => {
   assert.match(css, /display:flex;flex-direction:column;grid-column:1\/-1;/);
   assert.match(css, /\.tj-signal-page-analytics \{position:relative;display:flex;flex:none;/);
   assert.match(css, /@container journal-workspace \(max-width:1280px\) \{\n\s*\.tj-root \.an2 \.an2-a1 \{grid-template-columns:minmax\(0,1fr\);\}/);
   assert.match(css, /@media \(min-width:768px\) and \(prefers-reduced-motion:reduce\)/);
+});
+
+test('Analytics v2 does not inherit the legacy full-height scroll tracks', () => {
+  assert.match(css, /\.tj-root \.tj-content:has\(\.an2\),[\s\S]*?\.tj-root \.tj-reference-analytics:has\(\.an2\) \{min-height:0;\}/);
+  assert.match(css, /\.tj-root \.tj-content-inner:has\(\.an2\),[\s\S]*?\.tj-root \.tj-reference-analytics:has\(\.an2\) \{flex:none;\}/);
 });
 
 test('Analytics v2 Edge has entry models, instruments and markups with a section bar', () => {

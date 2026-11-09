@@ -38,3 +38,21 @@ test('active desktop Dashboard retains the performance-flow card surface', () =>
   assert.match(journal, /className="dd-row"><h3>Performance Flow<\/h3>/);
   assert.match(journal, /className="dd-tiles"/);
 });
+
+test('active Dashboard chart tooltips retain their shared renderer', () => {
+  assert.match(journal, /function CompactChartTooltip\(\{ active, payload, label, metric, neutral = false \}\)/);
+  assert.match(journal, /content=\{<CompactChartTooltip metric=\{metric\}/);
+  assert.match(journal, /content=\{<CompactChartTooltip metric="Equity" neutral\/>\}/);
+});
+
+test('active Dashboard account challenges retain their shared panel', () => {
+  assert.match(journal, /function AccountChallengeDashboardPanel\(\{ balance, trades, userId, workspace \}\)/);
+  assert.match(journal, /accountChallenges\.map\(\(balance\) => <AccountChallengeDashboardPanel/);
+  assert.match(journal, /useBalanceChallenge\(\{ \.\.\.balance, trades, balances: workspace\.balances/);
+});
+
+test('active Dashboard guardrails retain their shared panel', () => {
+  assert.match(journal, /function AccountGuardrailsPanel\(\{ account, guardrails, stats, periodDate = new Date\(\) \}\)/);
+  assert.match(journal, /<AccountGuardrailsPanel account=\{account\} guardrails=\{guardrails\} stats=\{stats\}/);
+  assert.match(journal, /ACCOUNT GOALS &amp; GUARDRAILS/);
+});

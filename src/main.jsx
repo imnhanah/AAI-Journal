@@ -5,7 +5,7 @@ import ReactDOM from "react-dom/client";
 import './themeTokens.css?theme-tokens=4';
 import './typographyTokens.css';
 import './analyticsLayout.css';
-import TradingJournal from "./TradingJournal.jsx?header-controls=156";
+import TradingJournal from "./TradingJournal.jsx?header-controls=161";
 import {ConfirmationProvider} from './ConfirmationDialog.jsx';
 import './shellAlignment.css';
 import './financeRedesign.css';

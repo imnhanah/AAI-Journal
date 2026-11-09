@@ -24,7 +24,7 @@ test('workspace and user isolation survive navigation and session disposal', () 
 });
 test('page memory covers navigation choices without retaining financial input drafts or dialogs', () => {
   const code=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  for(const [page,field] of [['finance','balanceId'],['finance','movementFilter'],['analytics','analyticsTab'],['analytics','selectedAnalyticsMonths'],['markups','open'],['tradelog','search'],['tradelog','balanceFilter'],['reviews','reviewYear'],['management','selected'],['calendar','insightView'],['news','weekOffset']]) assert.ok(code.includes(`usePageState('${page}', 'tj-nav-${field}',`),`${page}/${field}`);
+  for(const [page,field] of [['finance','balanceId'],['finance','movementFilter'],['analytics','analyticsTab'],['analytics','selectedAnalyticsMonths'],['markups','open'],['tradelog','search'],['tradelog','balanceFilter'],['reviews','reviewYear'],['management','selected'],['calendar','insightView'],['news','weekOffset']]) assert.match(code,new RegExp(`usePageState\\(([\"'])${page}\\1,\\s*([\"'])tj-nav-${field}\\2,`),`${page}/${field}`);
   assert.doesNotMatch(code,/usePageState\('finance', 'tj-nav-(?:amount|note|type|date)'/);
   assert.doesNotMatch(code,/usePageState\([^\n]*(?:'tj-nav-tradeEditor'|'tj-nav-selectedImage'|'tj-nav-selectedEvent')/);
   assert.match(code,/<NavigationSession owner=\{user.id\} workspace=\{account.id\}>/);
