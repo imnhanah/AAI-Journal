@@ -3,6 +3,7 @@
 // every figure shown here comes from the trader's own challenge.
 import { Play } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { playSynthSound, stopSynthSound, unlockSynthSounds } from './synthSounds';
 import { downloadCertificate } from './certificateExport';
 import './desktopPopups.css';
@@ -57,17 +58,19 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
   const confetti = useMemo(() => Array.from({ length: 60 }, (_, i) => ({ left: `${(i * 37 + 11) % 100}%`, color: CONFETTI[i % CONFETTI.length], d: `${3 + ((i * 7) % 25) / 10}s`, l: `${((i * 13) % 30) / 10}s`, x: `${((i * 29) % 140) - 70}px`, r: `${(i * 53) % 720}deg` })), []);
   const date = completedAt ? new Date(completedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
   const name = traderName || accountName;
+  const portalClass = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'light' ? 'tj-root tj-theme-light' : 'tj-root tj-theme-dark';
+  const inViewport = content => createPortal(<div className={portalClass}>{content}</div>, document.body);
   useEffect(() => {
     const previous = document.activeElement;
-    primary.current?.focus();
-    return () => { stopSynthSound('challenge'); if (previous?.isConnected) previous.focus?.(); };
+    primary.current?.focus({ preventScroll: true });
+    return () => { stopSynthSound('challenge'); if (previous?.isConnected) previous.focus?.({ preventScroll: true }); };
   }, []);
   useEffect(() => {
     if (started.current || !soundEnabled) return;
     started.current = true;
     playSynthSound('challenge').then((played) => setBlocked(!played));
   }, [soundEnabled]);
-  useEffect(() => { primary.current?.focus(); }, [view]);
+  useEffect(() => { primary.current?.focus({ preventScroll: true }); }, [view]);
   const keys = (event) => {
     if (event.key === 'Escape') { event.stopPropagation(); if (view === 'certificate') setView('popup'); else onClose(); }
     if (event.key === 'Tab') {
@@ -85,7 +88,7 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
     catch { setSaveError('Could not create the certificate file. Please try again.'); }
     finally { setSaving(''); }
   };
-  if (view === 'certificate') return <div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
+  if (view === 'certificate') return inViewport(<div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
     <div className="cc2-wrap">
       <div ref={certificate} className="cc2-cert">
         <i className="cc2-b1"/><i className="cc2-b2"/><i className="cc2-cn is-a"/><i className="cc2-cn is-b"/><i className="cc2-cn is-c"/><i className="cc2-cn is-d"/><i className="cc2-sh"/>
@@ -114,8 +117,8 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       </div>
       {saveError && <p className="cc2-save-error" role="alert">{saveError}</p>}
     </div>
-  </div>;
-  return <div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  </div>);
+  return inViewport(<div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="cc2">
       <div className="cc2-cf" aria-hidden="true">{confetti.map((c, i) => <i key={i} style={{ left: c.left, background: c.color, '--d': c.d, '--l': c.l, '--x': c.x, '--r': c.r }}/>)}</div>
       <div className="cc2-top">
@@ -140,5 +143,5 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
         <div className="cc2-cta"><button type="button" className="cc2-btn" onClick={onClose}>Later</button><button ref={primary} type="button" className="cc2-btn is-pri" onClick={() => setView('certificate')}>View certificate</button></div>
       </div>
     </section>
-  </div>;
+  </div>);
 }
