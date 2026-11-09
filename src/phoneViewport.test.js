@@ -36,12 +36,12 @@ test('the bar sits inside a taller app rather than being fixed, and nothing clip
   assert.doesNotMatch(css, /:has\(\.tj-root\)[^{]*\{[^}]*position:fixed/);
 });
 
-test('headings clear the status bar blur in the installed app', () => {
+test('the installed app header keeps the safe inset without an unnecessary extra gap', () => {
   const source = readFileSync(new URL('./phoneViewport.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('./mobileBottomBar.css', import.meta.url), 'utf8');
   assert.match(source, /export const TOP_CLEARANCE = 26;/);
   assert.match(source, /document\.documentElement\.dataset\.tjDisplayMode = size\.standalone \? 'standalone' : 'browser';/);
-  assert.match(css, /padding-top:calc\(env\(safe-area-inset-top,0px\) \+ var\(--tj-top-clearance,0px\)\)/);
+  assert.match(css, /padding-top:env\(safe-area-inset-top,0px\)/);
   assert.doesNotMatch(css, /:is\(\.tj-page-heading,\.tj-ma-title\)/);
 });
 

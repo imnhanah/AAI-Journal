@@ -54,8 +54,9 @@
 
   /* The header overlays the content, so it can slide away without the page jumping. Headings sit below
      the blur iOS adds around the status bar in an installed app (--tj-top-clearance). */
-  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {--tj-header-height:calc(var(--mobile-top) + var(--tj-top-clearance,0px));}
-  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {position:absolute;top:0;right:0;left:0;height:var(--tj-header-height);min-height:var(--tj-header-height);max-height:var(--tj-header-height);margin:0;padding-top:calc(env(safe-area-inset-top,0px) + var(--tj-top-clearance,0px));transition:transform .22s ease;}
+  /* Keep the phone title close to the status area without entering its safe inset. */
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root {--tj-header-height:calc(48px + env(safe-area-inset-top,0px));}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {position:absolute;top:0;right:0;left:0;height:var(--tj-header-height);min-height:var(--tj-header-height);max-height:var(--tj-header-height);margin:0;padding-top:env(safe-area-inset-top,0px);transition:transform .22s ease;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-1 * var(--mobile-top)));}
   html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-1 * var(--tj-header-height)));}
   html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content {padding-top:calc(var(--tj-header-height) + 12px);}

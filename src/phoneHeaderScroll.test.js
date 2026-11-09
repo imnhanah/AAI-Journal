@@ -9,8 +9,9 @@ test('scrolling down hides the header', () => {
   assert.equal(nextHeaderState({...base, y:220}).hidden, true);
 });
 
-test('scrolling up even slightly brings it back', () => {
-  assert.equal(nextHeaderState({...base, hidden:true, y:190}).hidden, false);
+test('a reverse gesture keeps a hidden header away until the page reaches its top edge', () => {
+  assert.equal(nextHeaderState({...base, hidden:true, y:190}).hidden, true);
+  assert.equal(nextHeaderState({...base, hidden:true, y:89}).hidden, false);
 });
 
 test('finger jitter changes nothing, but a slow scroll still adds up', () => {

@@ -28,3 +28,7 @@ test('performance chips show gradient cues only when more views are hidden',()=>
 test('phone analytics period includes padding within the shared selector row',()=>{
   assert.match(read('./mobileAnalytics.css'),/tj-analytics-period \{width:100%;min-width:0;box-sizing:border-box/);
 });
+test('Vitals cards bleed evenly through both phone edges while only the rail scrolls horizontally',()=>{
+  const css=read('./mobileAnalyticsPulse.css');
+  assert.match(css,/\.tj-pulse-rail\{display:flex;gap:10px;max-width:none;margin:0 -14px;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;/);
+});
