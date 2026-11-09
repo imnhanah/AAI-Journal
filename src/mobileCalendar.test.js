@@ -39,6 +39,7 @@ test('day sheets bound their height and expose exact figures, while weeks share 
   const script=readFileSync(new URL('../scripts/check-mobile.js',import.meta.url),'utf8');
   assert.match(script,/includeSheets&&route==='calendar'/);
   assert.match(script,/2026-10-02.*2026-10-06.*2026-10-08/);
+ assert.match(script,/\.tj-calendar-day-modal \.tj-modal-close/);
 });
 test('calendar keeps seven shrinkable columns while retaining a 44px-tall touch target on phone widths',()=>{
  const css=readFileSync(new URL('./mobileCalendar.css',import.meta.url),'utf8');

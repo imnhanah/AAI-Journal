@@ -5,6 +5,7 @@ const externalImageSource = value => typeof value === 'string' && /^(data:image|
 // without changing any stored study or evidence records.
 export const evidenceImageReference = evidence => {
   if (!evidence || typeof evidence !== 'object') return '';
+  if (typeof evidence.cloudRef === 'string' && evidence.cloudRef) return evidence.cloudRef;
   if (typeof evidence.url === 'string' && evidence.url) return evidence.url;
   if (typeof evidence.documentImageRef === 'string' && evidence.documentImageRef) return evidence.documentImageRef;
   return externalImageSource(evidence.source) ? evidence.source : '';

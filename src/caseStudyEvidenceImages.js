@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { validateEvidenceImage } from './caseStudyWorkspace.js';
 import { isDocumentImageReference, readCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
+import { isCaseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl } from './caseStudyEvidenceCloud.js';
 
 const DATABASE='tj-case-study-evidence-images';
 const STORE='images';
@@ -20,7 +21,7 @@ export const isEvidenceImageReference=value=>typeof value==='string' && value.st
 // Shared Evidence can point either at its own blob store or at the original
 // Research Notes blob. Both must wait for IndexedDB resolution; neither is a
 // browser-loadable image URL.
-export const isStoredEvidenceImageReference=value=>isEvidenceImageReference(value)||isDocumentImageReference(value);
+export const isStoredEvidenceImageReference=value=>isEvidenceImageReference(value)||isDocumentImageReference(value)||isCaseStudyEvidenceCloudReference(value);
 
 export async function saveEvidenceImage(file) {
   const error=validateEvidenceImage(file); if (error) throw new Error(error);
@@ -47,6 +48,14 @@ export function useEvidenceImageUrl(value) {
     let active=true; let objectUrl='';
     if (!isStoredEvidenceImageReference(value)) { setState({url:value||'',loading:false,missing:false}); return undefined; }
     setState({url:'',loading:true,missing:false});
+    if (isCaseStudyEvidenceCloudReference(value)) {
+      resolveCaseStudyEvidenceCloudUrl(value).then(result=>{
+        if (!active) return;
+        if (!result.url) { setState({url:'',loading:false,missing:true}); return; }
+        setState({url:result.url,loading:false,missing:false});
+      }).catch(()=>active&&setState({url:'',loading:false,missing:true}));
+      return ()=>{active=false;};
+    }
     const read=isDocumentImageReference(value) ? readCaseStudyDocumentImage : readEvidenceImageReference;
     read(value).then(blob=>{
       if (!active) return;

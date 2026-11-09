@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Check, Circle, Columns2, FileText, Minus, Move, MousePointer2, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Redo2, RectangleHorizontal, RotateCcw, Trash2, Type, Undo2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { ANNOTATION_SWATCHES, DEFAULT_ANNOTATION_COLOR, boardObjectCanvasGeometry, commitBoardText, createFittedBoard, duplicateBoardObjects, fitBoardViewport, history, imageRelativeBoardObject, imageRelativePoint, moveImageRelativeBoardObject, normaliseAnnotation, normaliseBoard, normaliseStyle, redo, screenToBoard, undo } from './chartEvidence.js';
 import { useEvidenceImageUrl } from './caseStudyEvidenceImages.js';
+import { evidenceImageReference } from './caseStudyCover.js';
 import './chartViewer.css';
 import './desktopChartViewer.css';
 
@@ -22,7 +23,7 @@ const clearDraft=draft=>{try{sessionStorage.removeItem(draftKey(draft.accountId,
 export default function ChartViewer({study,evidence,allEvidence=evidence,studies=[],activeId,accountId,saveState='Saved',onRetrySave,onBack,onUpdate}){
  // Desktop gets the v2 layout (desktopChartViewer.css); phones keep the existing viewer unchanged.
  const v2=typeof window!=='undefined'&&!!window.matchMedia?.('(min-width: 768px)').matches;
- const item=evidence?.find(entry=>entry?.id===activeId), storedSource=item?.url||item?.source, resolvedImage=useEvidenceImageUrl(storedSource), source=resolvedImage.url;
+ const item=evidence?.find(entry=>entry?.id===activeId), storedSource=evidenceImageReference(item), resolvedImage=useEvidenceImageUrl(storedSource), source=resolvedImage.url;
  const base=study?.evidencePlacements?.[activeId]||{}; const [placement,setPlacement]=useState(base),[tool,setTool]=useState('select'),[selected,setSelected]=useState(null),[selectedIds,setSelectedIds]=useState([]),[drawingColor,setDrawingColor]=useState(DEFAULT_ANNOTATION_COLOR),[draft,setDraft]=useState(null),[moving,setMoving]=useState(null),[textEditor,setTextEditor]=useState(null),[draftNotice,setDraftNotice]=useState(''),[historyState,setHistory]=useState({past:[],value:base,future:[]}),[imageState,setImageState]=useState({key:'',status:'loading',ratio:16/9,retry:0}),[panelOpen,setPanelOpen]=useState(true),[compareId,setCompareId]=useState(null),[compareOpen,setCompareOpen]=useState(false),[compareZoom,setCompareZoom]=useState(1),[comparePan,setComparePan]=useState({x:0,y:0}),[compareMoving,setCompareMoving]=useState(null);const boardRef=useRef(null),textInputRef=useRef(null),textDraftRef=useRef(null),copiedObjectsRef=useRef([]),activeKeyRef=useRef(`${study?.id}:${activeId}`),imageKeyRef=useRef(`${study?.id}:${activeId}:${source}`),initialisedBoardKeyRef=useRef(null);
  const imageKey=`${study?.id}:${activeId}:${source}`;
  imageKeyRef.current=imageKey;
@@ -33,7 +34,7 @@ export default function ChartViewer({study,evidence,allEvidence=evidence,studies
  const selectedStyle=selectedObject?normaliseStyle(selectedObject.tool,selectedObject.style):null;
  const selectedText=selectedObject?.tool==='text'?selectedObject:null;
  const compareItem=allEvidence?.find(entry=>entry?.id===compareId)||null;
- const compareImage=useEvidenceImageUrl(compareItem?.url||compareItem?.source);
+ const compareImage=useEvidenceImageUrl(evidenceImageReference(compareItem));
  useEffect(()=>{const key=`${study?.id}:${activeId}`,previous=activeKeyRef.current;if(previous!==key&&textDraftRef.current)commitText(false);activeKeyRef.current=key;initialisedBoardKeyRef.current=null;copiedObjectsRef.current=[];setImageState(current=>current.key===imageKey?current:{key:imageKey,status:'loading',ratio:16/9,retry:0});const next=study?.evidencePlacements?.[activeId]||{};const recovered=takeDraft(accountId,study?.id,activeId);setPlacement(next);setHistory({past:[],value:next,future:[]});setSelected(recovered?.id||null);setSelectedIds(recovered?.id?[recovered.id]:[]);textDraftRef.current=recovered;setTextEditor(recovered);setDraftNotice(recovered?'Recovered unsaved text draft for this placement. It has not been saved yet.':'');},[activeId,study?.id,accountId,imageKey]);
  useEffect(()=>()=>{if(textDraftRef.current)keepDraft(textDraftRef.current);},[]);
  useLayoutEffect(()=>{if(!textEditor)return;const input=textInputRef.current;input?.focus({preventScroll:true});if(input){input.style.height='0px';input.style.height=`${Math.min(input.scrollHeight,160)}px`;}},[textEditor]);

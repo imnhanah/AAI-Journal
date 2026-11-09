@@ -23,6 +23,7 @@ import {caseStudyDraftError, createCaseStudyDraft, hasCaseStudyDraftChanges, ini
 import { REVIEW_STEPS, normaliseCaseStudyReview, patchStudyReview, reviewReadiness } from './caseStudyReview.js';
 import { clearCaseStudyNavigation, readCaseStudyNavigation, writeCaseStudyNavigation } from './caseStudyNavigation.js';
 import { evidenceImageReference, resolveCaseStudyCover } from './caseStudyCover.js';
+import { synchronizeCaseStudyEvidenceImages } from './caseStudyEvidenceCloud.js';
 import { BUILT_IN_CASE_STUDY_TEMPLATES, applyTemplateToStudy, templateSectionNames, templateSections } from './caseStudyTemplates.js';
 
 const now = () => new Date().toISOString();
@@ -254,7 +255,7 @@ function Cs2StudyCard({ view, study, notebook, evidence, menuOpen, menuRootRef, 
 
 // Evidence tab (stage 2): searchable card grid with a details aside for the selected item.
 function Cs2EvidenceThumb({ item }) {
-  const source = item?.url || (item?.source?.match(/^(data:image|https?:\/\/)/) ? item.source : '');
+  const source = evidenceImageReference(item);
   const image = useEvidenceImageUrl(source);
   return image.url ? <img src={image.url} alt=""/> : <ImageIcon size={26} aria-hidden="true"/>;
 }
@@ -1101,6 +1102,13 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
       setWorkspace(currentWorkspace);
       throw new Error('Evidence could not be saved to your local library. Your selected files and details are still available to retry.');
     }
+    const imageSync=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:next});
+    if (imageSync.uploaded) {
+      workspaceRef.current=imageSync.workspace;
+      setWorkspace(imageSync.workspace);
+      await save(imageSync.workspace,true);
+    }
+    if (imageSync.failures.length) notify('Evidence saved on this device. Image upload can be retried from Backup.');
     setEvidenceDialog(false);
     return records;
   };
@@ -1111,7 +1119,11 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
     const currentWorkspace=workspaceRef.current;
     const evidence={id:uid('evidence'),title:title.trim(),source:source.trim(),url:imageRef,documentImageRef:imageRef,notes:'',tags,kind:'Chart',createdAt:now()};
     const attached=attachDocumentImageEvidence(currentWorkspace,selectedId,evidence);
-    save(attached.workspace,true);
+    const persisted=await save(attached.workspace,true);
+    if (persisted) {
+      const imageSync=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:attached.workspace});
+      if (imageSync.uploaded) { workspaceRef.current=imageSync.workspace; setWorkspace(imageSync.workspace); await save(imageSync.workspace,true); }
+    }
     return attached.evidence;
   };
   const openEvidenceLibrary=(id)=>{setEvidenceSelection(id);returnToLibrary();setLibraryView('evidence');};
@@ -1200,7 +1212,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
         <div className="cs2-h1"><span className="cs2-eb">{profileName} · Research workspace</span><h1>Case Study Library</h1><p>Explore setups, continue your research, and turn observations into tested playbooks.</p></div>
         <div className="cs2-stats"><div><b>{studies.length}</b><small>Studies</small></div><div><b className="is-gain">{validated.length}</b><small>Validated</small></div><div><b className="is-warn">{drafts.length}</b><small>In draft</small></div><div><b>{workspace.evidence.length}</b><small>Evidence</small></div></div>
         <div className="cs2-ha">
-          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { void uploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
+          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button><button type="button" role="menuitem" onClick={() => { void (async()=>{const result=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:workspaceRef.current}); if(result.uploaded){workspaceRef.current=result.workspace;setWorkspace(result.workspace);await save(result.workspace,true);} notify(result.failures.length?'Some images are still device-only. Retry after checking cloud storage.':'Evidence images synced');})(); setHeaderMenuOpen(false); }}><Upload size={15}/>Sync evidence images</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { void uploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
           <button type="button" className="cs2-btn is-pri is-lg" onClick={() => setCs2NewDialog({ templateId: null })}><Plus size={16}/>New Case Study</button>
         </div>
       </section>
@@ -1291,7 +1303,7 @@ function StudyCardActions({favorite,onToggle,onMenu,menuOpen,menuRootRef,study,o
 }
 function LibraryShelf({title,subtitle,studies,total=studies.length,emptyMessage,notebooks,evidence = [],onOpen,onViewAll,compact=false}) { return <section className={`case-shelf ${compact?'case-shelf--compact':''}`}><div className="case-shelf__heading"><div><h2>{title}</h2><p>{subtitle}</p></div>{total > studies.length&&<button className="case-button case-button--quiet" onClick={onViewAll}>View all</button>}</div><div className={`case-shelf__items ${!studies.length?'is-empty':''}`}>{studies.length ? studies.map(study=>{const notebook=notebooks.find(item=>item.id===study.notebookId);return <button key={study.id} onClick={()=>onOpen(study.id)}><div className="case-shelf__preview" aria-hidden="true"><StudyCover study={study} evidence={evidence} notebook={notebook} compact/></div><div className="case-shelf__copy"><strong>{studyTitle(study)}</strong><small>{notebook?.name || 'Notebook'} · Updated {dateLabel(study.updatedAt)}</small></div><span><i className={`case-status case-status--${study.status.toLowerCase().replaceAll(' ','-')}`}>{study.status}</i>{study.pinned&&<Pin size={13} aria-label="Pinned"/>}</span></button>;}) : <p className="case-shelf__empty"><BookOpen size={17}/>{emptyMessage}</p>}</div></section>; }
 function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const source=evidenceImageReference(cover); const image=useEvidenceImageUrl(source); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[source,image.url]); if(!cover || !image.url || failed) return <><BookOpen size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>setFailed(true)}/>; }
-function EvidenceImage({item,alt='',className=''}) { const source=item?.url || (item?.source?.match(/^(data:image|https?:\/\/)/) ? item.source : ''); const image=useEvidenceImageUrl(source); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
+function EvidenceImage({item,alt='',className=''}) { const image=useEvidenceImageUrl(evidenceImageReference(item)); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
 function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch,onRemove,onBack}) {
   const [query,setQuery]=useState(''),[kind,setKind]=useState('All'),[sort,setSort]=useState('recent'),[view,setView]=useState('grid'),[selectedId,setSelectedId]=useState(evidence[0]?.id||null),[uploadOpen,setUploadOpen]=useState(false);
   useEffect(()=>{if(!evidence.some(item=>item.id===selectedId))setSelectedId(evidence[0]?.id||null);},[evidence,selectedId]);
@@ -1305,7 +1317,7 @@ function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch
     {uploadOpen&&<EvidenceDialog onClose={()=>setUploadOpen(false)} onSave={async fields=>{await onAdd(fields);setUploadOpen(false);}}/>}
   </section>;
 }
-function EvidenceDetails({evidence,related,onPatch,onRemove}) { const [tags,setTags]=useState((evidence.tags||[]).join(', ')); const source=evidence.url||(evidence.source?.match(/^(data:image|https?:\/\/)/)?evidence.source:''); const image=useEvidenceImageUrl(source); useEffect(()=>setTags((evidence.tags||[]).join(', ')),[evidence.id]); return <aside className="case-evidence-details"><div className="case-evidence-details__preview">{image.url?<img src={image.url} alt={evidence.title}/>:<ImageIcon size={42}/>}</div><label>Title<input value={evidence.title||''} onChange={event=>onPatch(evidence.id,{title:event.target.value})}/></label><label>Source<input value={evidence.source||''} onChange={event=>onPatch(evidence.id,{source:event.target.value})} placeholder="Source or URL"/></label><label>Tags<input value={tags} onChange={event=>setTags(event.target.value)} onBlur={()=>onPatch(evidence.id,{tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="EUR/USD, liquidity"/></label><label>Research notes<textarea value={evidence.notes||''} onChange={event=>onPatch(evidence.id,{notes:event.target.value})} placeholder="What does this support or challenge?"/></label><section className="case-v2-reference-list"><h3>Linked Case Studies · {related.length}</h3>{related.length?related.map(study=><div key={study.id}><FileText size={15}/><span>{studyTitle(study)}</span><small>{study.status}</small></div>):<p>Link this shared item from a Case Study’s Evidence tab.</p>}</section><footer><span>Uploaded {dateLabel(evidence.createdAt)}</span><button className="case-button case-button--danger" onClick={()=>onRemove(evidence.id)}><Trash2 size={15}/>Delete</button></footer></aside>; }
+function EvidenceDetails({evidence,related,onPatch,onRemove}) { const [tags,setTags]=useState((evidence.tags||[]).join(', ')); const image=useEvidenceImageUrl(evidenceImageReference(evidence)); useEffect(()=>setTags((evidence.tags||[]).join(', ')),[evidence.id]); return <aside className="case-evidence-details"><div className="case-evidence-details__preview">{image.url?<img src={image.url} alt={evidence.title}/>:<ImageIcon size={42}/>}</div><label>Title<input value={evidence.title||''} onChange={event=>onPatch(evidence.id,{title:event.target.value})}/></label><label>Source<input value={evidence.source||''} onChange={event=>onPatch(evidence.id,{source:event.target.value})} placeholder="Source or URL"/></label><label>Tags<input value={tags} onChange={event=>setTags(event.target.value)} onBlur={()=>onPatch(evidence.id,{tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="EUR/USD, liquidity"/></label><label>Research notes<textarea value={evidence.notes||''} onChange={event=>onPatch(evidence.id,{notes:event.target.value})} placeholder="What does this support or challenge?"/></label><section className="case-v2-reference-list"><h3>Linked Case Studies · {related.length}</h3>{related.length?related.map(study=><div key={study.id}><FileText size={15}/><span>{studyTitle(study)}</span><small>{study.status}</small></div>):<p>Link this shared item from a Case Study’s Evidence tab.</p>}</section><footer><span>Uploaded {dateLabel(evidence.createdAt)}</span><button className="case-button case-button--danger" onClick={()=>onRemove(evidence.id)}><Trash2 size={15}/>Delete</button></footer></aside>; }
 function TemplateManager({templates,personalTemplates,onChoose,onSave,onDuplicate,onRemove,onBack}) {
   const [scope,setScope]=useState('All');
   const [query,setQuery]=useState('');

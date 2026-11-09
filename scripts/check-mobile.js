@@ -56,7 +56,7 @@ try{
     }
     if(includeSheets&&route==='calendar')for(const date of ['2026-10-02','2026-10-06','2026-10-08']){
      await page.getByRole('button',{name:new RegExp(`^${date},`)}).click();await page.locator('.tj-calendar-day-modal').waitFor();
-     await inspect(route,`day-${date}`);await page.getByRole('button',{name:'Close day details',exact:true}).click();await page.locator('.tj-calendar-day-modal').waitFor({state:'hidden'});
+     await inspect(route,`day-${date}`);await page.locator('.tj-calendar-day-modal .tj-modal-close').click();await page.locator('.tj-calendar-day-modal').waitFor({state:'hidden'});
     }
    }
   }
