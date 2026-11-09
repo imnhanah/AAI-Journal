@@ -38,10 +38,10 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   // Savings goal progress now lives in the shared Orbit card, not this page's width fills.
   // Review period cards use reviewed counts instead of decorative progress fills.
   // The desktop side panel's rule progress bar is one more fill.
-  // The removed unreachable Analytics fallback contained extra charts and percentage
-  // fills; the active Edge and Rhythm surfaces remain covered below.
+  // Removed unreachable Analytics and Markups fallbacks contained extra charts and
+  // percentage fills; the active surfaces remain covered below.
   // The active per-account challenge and guardrail panels own three fill nodes.
-  assert.equal(chartCount,10);assert.equal(fillCount,41);
+  assert.equal(chartCount,10);assert.equal(fillCount,36);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 

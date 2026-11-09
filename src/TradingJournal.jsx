@@ -10,7 +10,7 @@ import {followAnalyticsPointer} from './analyticsTooltip.js';
 import {reconcileImportedBases} from './importedAccountBase.js';
 import {brokerProfitValues} from './brokerProfitColumns.js';
 import {usePhoneTradeDialog} from './usePhoneTradeDialog.js';
-import {MobileMarkupOverview,MobileMarkupHeader,MobileMarkupForm} from './MobileMarkups.jsx';
+import {MobileMarkupOverview,MobileMarkupForm} from './MobileMarkups.jsx';
 import MobileMarkupsV2 from './MobileMarkupsV2.jsx';
 import MarkupsRedesign from './MarkupsRedesign.jsx';
 import ReviewPage, { DEFAULT_QUESTIONS as REVIEW_DEFAULT_QUESTIONS } from './ReviewPage.jsx';
@@ -2872,14 +2872,6 @@ function PersistentEntryPanel({ mode, open, closing, position = 'right', behavio
   </Modal>;
 }
 
-function MarkupsPage({ markups, trades, onNew, onEdit, onDelete }) {
-  const [open,setOpen]=useState({});
-  const slots = [["preHTF", "HTF"], ["preH4", "MTF"], ["preM15", "LTF"], ["postH4", "Post Market MTF"], ["postM15", "Post Market LTF"]];
-  return <><div className="tj-rules-head"><div><div className="tj-bold" style={{fontSize: 17.28}}>Premarket Markups</div><div className="tj-muted-txt" style={{fontSize: 14}}>Prepare context before execution, then attach the resulting trades.</div></div><button className="tj-btn-primary" onClick={onNew}><Plus size={15}/> New Markup</button></div><div className="tj-tlog-list">{markups.length ? markups.map((markup) => {
-    const linked=trades.filter((trade)=>trade.premarketMarkupId===markup.id), pnl=linked.reduce((sum,trade)=>sum+trade.pnl,0), expanded=!!open[markup.id];
-    return <Card key={markup.id} className="tj-tlog-card"><div className="tj-tlog-row" onClick={()=>setOpen((state)=>({...state,[markup.id]:!state[markup.id]}))}><div className="tj-tlog-main"><div className="tj-tlog-asset">{markup.instrument||markup.market||"Untitled markup"} <span className="tj-sesspill">{markup.bias||"No bias"}</span> <span className={`tj-markup-status tj-markup-status-${markupStatus(markup.status).toLowerCase().replace(/\s+/g, '-')}`}>{markupStatus(markup.status)}</span></div><div className="tj-muted-txt" style={{fontSize: 14}}>{formatDate(markup.date)} · {formatTime(markup.time)} · {markup.market||"No session"} · {linked.length} linked trade{linked.length===1?"":"s"}</div></div><div className={`tj-tlog-pnl ${pnl>=0?"tj-green":"tj-red"}`}>{fmtMoney(pnl)}</div><button className="tj-btn-edit" onClick={(event)=>{event.stopPropagation();onEdit(markup)}}>Edit</button><ConfirmDeleteButton className="tj-icon-btn" title="Delete markup" onClick={(event)=>{event.stopPropagation();onDelete(markup.id)}}><Trash2 size={14}/></ConfirmDeleteButton><ChevronDown size={16} style={{transform:expanded?"rotate(180deg)":"none"}}/></div>{expanded&&<div className="tj-tlog-detail"><div className="tj-tlog-detail-grid"><div><div className="tj-mlabel">STATUS</div><div>{markupStatus(markup.status)}</div></div><div><div className="tj-mlabel">LEVELS / ZONES</div><div>{markup.levels||"—"}</div></div><div><div className="tj-mlabel">STRUCTURE</div><div>{markup.structure||"—"}</div></div><div><div className="tj-mlabel">EXPECTATIONS</div><div>{markup.notes||"—"}</div></div></div><div className="tj-section-label">Markup Images</div><div className="tj-markup-images">{slots.map(([slot,label])=>{const images=markup.screenshots?.[slot]||[];return images.length?<div key={slot} className="tj-markup-image-section"><div className="tj-mlabel">{label}</div><div className="tj-tlog-shots">{images.map((src,index)=><ImagePreview key={index} src={src} alt={`${label} chart`}/>)}</div></div>:null;})}</div><div className="tj-section-label">Linked Trades</div>{linked.length?linked.map((trade)=><div key={trade.id} className="tj-rule-row"><span>{formatDate(trade.date)} · {formatTime(trade.time)} · {trade.asset} · {trade.direction} <span className="tj-muted-txt">· {trade.entryType||trade.confluenceSession||"No entry type"}</span></span><span className="tj-linked-trade-metrics"><RatingDisplay value={trade.rating} noRules={!trade.ruleEvaluations?.length&&!trade.rating}/><strong className={trade.pnl>=0?"tj-green":"tj-red"}>{fmtMoney(trade.pnl)}</strong></span></div>):<div className="tj-empty">No trades linked yet.</div>}</div>}</Card>;
-  }):<div className="tj-empty-block"><ScanLine size={32}/><div className="tj-empty-title">No premarket markups</div><button className="tj-btn-primary" onClick={onNew}>Create your first markup</button></div>}</div></>;
-}
 function useCloseOnOutside(isOpen, onClose, preserveOnNavigation = false) {
   const surfaceRef = useRef(null);
 
@@ -2917,193 +2909,6 @@ function ListPagination({ total, page, showAll, onPageChange, onShowAll, label, 
     <button type="button" className="tj-btn-outline tj-btn-small" onClick={() => onShowAll(!showAll)}>{showAll ? "Show 10 per page" : "Show all"}</button>
     {!showAll && !hideArrows && <div className="tj-pagination-arrows"><button type="button" className="tj-icon-btn" aria-label={`Previous ${label} page`} title="Previous page" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)}><ChevronLeft size={16}/></button><span>{currentPage} / {pageCount}</span><button type="button" className="tj-icon-btn" aria-label={`Next ${label} page`} title="Next page" disabled={currentPage === pageCount} onClick={() => onPageChange(currentPage + 1)}><ChevronRight size={16}/></button></div>}
   </nav>;
-}
-
-function ReferenceMarkupsPage({ markups, trades, onNew, onEdit, onDelete, onTrade }) {
-  const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
-  useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>setPhone(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
-  const openImage = React.useContext(ImageViewerContext);
-  const currentYear = String(new Date().getFullYear());
-  const [yearFilter, setYearFilter] = usePageState('markups', 'tj-nav-yearFilter', currentYear);
-  const markupYears = [...new Set([currentYear, ...markups.map(markup => String(markup.date || '').slice(0, 4)).filter(year => /^\d{4}$/.test(year))])].sort((a,b) => Number(b)-Number(a));
-  const [instrumentFilter, setInstrumentFilter] = usePageState('markups', 'tj-nav-instrumentFilter', "All");
-  const [monthFilter, setMonthFilter] = usePageState('markups', 'tj-nav-monthFilter', "All");
-  const [weekFilter, setWeekFilter] = usePageState('markups', 'tj-nav-weekFilter', "All");
-  const [alignmentFilter, setAlignmentFilter] = usePageState('markups', 'tj-nav-alignmentFilter', "All");
-  const [resultFilter, setResultFilter] = usePageState('markups', 'tj-nav-resultFilter', "All");
-  const [linkFilter, setLinkFilter] = usePageState('markups', 'tj-nav-linkFilter', "All");
-  const [sort, setSort] = usePageState('markups', 'tj-nav-sort', "newest");
-  const [open, setOpen] = usePageState('markups', 'tj-nav-open', {});
-  const [closing, setClosing] = useState({});
-  const closeTimers = useRef({});
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
-  const [selectedChart, setSelectedChart] = useState("");
-  const [expandedLinkedTrades, setExpandedLinkedTrades] = usePageState('markups', 'tj-nav-expandedLinkedTrades', {});
-  const [listPage, setListPage] = usePageState('markups', 'tj-nav-listPage', 1);
-  const [showAll, setShowAll] = usePageState('markups', 'tj-nav-showAll', false);
-  const toolbarRef = useCloseOnOutside(filtersOpen || sortOpen, () => { setFiltersOpen(false); setSortOpen(false); });
-  const preserveMarkupScroll = useDisclosureScroll(open);
-  const expandedMarkupRef = useCloseOnOutside(Object.keys(open).length > 0, () => {
-    preserveMarkupScroll(expandedMarkupRef.current?.querySelector('.tj-reference-markup-expanded')?.parentElement);
-    Object.values(closeTimers.current).forEach(window.clearTimeout);
-    setOpen({}); setClosing({});
-  }, true);
-  const slots = [["preHTF", "HTF"], ["preH4", "MTF"], ["preM15", "LTF"], ["postH4", "MTF"], ["postM15", "LTF"]];
-  const preSlots = slots.slice(0, 3);
-  const postSlots = slots.slice(3);
-  const linkedTrades = (markup) => trades.filter((trade) => trade.premarketMarkupId === markup.id);
-  const alignmentOf = (markup) => {
-    const connected = linkedTrades(markup);
-    if (!connected.length) return "Not linked";
-    const expectedDirection = /bullish/i.test(markup.bias || "") ? "BUY" : /bearish/i.test(markup.bias || "") ? "SELL" : null;
-    if (!expectedDirection) return "No bias";
-    return connected.some((trade) => trade.direction !== expectedDirection) ? "Against markup" : "Aligned";
-  };
-  const totalLinkedPnl = (markup) => linkedTrades(markup).reduce((sum, trade) => sum + trade.pnl, 0);
-  const effectiveStatus = (markup) => linkedTrades(markup).length ? "Executed" : markupStatus(markup.status);
-  const top = (items, key) => Object.entries(items.reduce((all, item) => ({ ...all, [item[key] || "Unspecified"]: (all[item[key] || "Unspecified"] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
-  const linked = markups.filter((markup) => linkedTrades(markup).length > 0);
-  const allLinkedTrades = linked.flatMap(linkedTrades);
-  const allPnl = linked.reduce((sum, markup) => sum + totalLinkedPnl(markup), 0);
-  const coverage = (predicate) => markups.length ? Math.round(markups.filter(predicate).length / markups.length * 100) : 0;
-  const countWith = (keys) => (markup) => keys.some((key) => markup.screenshots?.[key]?.length);
-  const planCoverage = coverage((markup) => markup.levels || markup.structure || markup.notes || markup.bias);
-  const preCoverage = coverage(countWith(["preHTF", "preH4", "preM15"]));
-  const postCoverage = coverage(countWith(["postH4", "postM15"]));
-  const instruments = ["All", ...Array.from(new Set(markups.map((markup) => markup.instrument).filter(Boolean))).sort()];
-  const months = ["All", ...Array.from(new Set(markups.filter(markup => yearFilter === "All" || String(markup.date || '').slice(0,4) === yearFilter).map((markup) => markup.date?.slice(0, 7)).filter(Boolean))).sort().reverse()];
-  const weekOfMonth = (date) => {
-    if (!date) return 0;
-    const parsed = new Date(`${date}T00:00:00`);
-    const firstDay = weekStartOffset(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
-    return Math.ceil((parsed.getDate() + firstDay) / 7);
-  };
-  const shown = markups.filter((markup) => {
-    const pnl = totalLinkedPnl(markup);
-    const resultMatches = resultFilter === "All" || (resultFilter === "Profit" && pnl > 0) || (resultFilter === "Loss" && pnl < 0) || (resultFilter === "Break-even" && pnl === 0 && linkedTrades(markup).length > 0) || (resultFilter === "No linked trades" && !linkedTrades(markup).length);
-    const isLinked = linkedTrades(markup).length > 0;
-    return (instrumentFilter === "All" || markup.instrument === instrumentFilter)
-      && (yearFilter === "All" || String(markup.date || '').slice(0,4) === yearFilter)
-      && (monthFilter === "All" || markup.date?.slice(0, 7) === monthFilter)
-      && (weekFilter === "All" || weekOfMonth(markup.date) === Number(weekFilter))
-      && (alignmentFilter === "All" || alignmentOf(markup) === alignmentFilter)
-      && (linkFilter === "All" || (linkFilter === "Linked" ? isLinked : !isLinked))
-      && resultMatches;
-  }).sort((a, b) => {
-    if (sort === "oldest") return `${a.date} ${a.time || ""}`.localeCompare(`${b.date} ${b.time || ""}`);
-    if (sort === "pnl") return totalLinkedPnl(b) - totalLinkedPnl(a);
-    if (sort === "links") return linkedTrades(b).length - linkedTrades(a).length;
-    return `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`);
-  });
-  const executed = markups.filter((markup) => effectiveStatus(markup) === "Executed").length;
-  const planned = markups.filter((markup) => effectiveStatus(markup) === "Planned").length;
-  const executionMatch = markups.length ? Math.round(linked.length / markups.length * 100) : 0;
-  const best = linked.length ? Math.max(...linked.map(totalLinkedPnl)) : 0;
-  const worst = linked.length ? Math.min(...linked.map(totalLinkedPnl)) : 0;
-  const profitableLinked = allLinkedTrades.filter((trade) => trade.pnl > 0).length;
-  const losingLinked = allLinkedTrades.filter((trade) => trade.pnl < 0).length;
-  const markupPageCount = Math.max(1, Math.ceil(shown.length / 10));
-  const activeMarkupPage = Math.min(listPage, markupPageCount);
-  const visibleMarkups = showAll ? shown : shown.slice((activeMarkupPage - 1) * 10, activeMarkupPage * 10);
-  const shownLinked = shown.filter((markup) => linkedTrades(markup).length > 0);
-  const shownLinkedTrades = shownLinked.flatMap(linkedTrades);
-  const shownPnl = shownLinked.reduce((sum, markup) => sum + totalLinkedPnl(markup), 0);
-  const shownBest = shownLinked.length ? Math.max(...shownLinked.map(totalLinkedPnl)) : 0;
-  const shownWorst = shownLinked.length ? Math.min(...shownLinked.map(totalLinkedPnl)) : 0;
-  const shownExecutionMatch = shown.length ? Math.round(shownLinked.length / shown.length * 100) : 0;
-  const shownCoverage = (predicate) => shown.length ? Math.round(shown.filter(predicate).length / shown.length * 100) : 0;
-  const shownPlanCoverage = shownCoverage((markup) => markup.levels || markup.structure || markup.notes || markup.bias);
-  const shownPreCoverage = shownCoverage(countWith(["preHTF", "preH4", "preM15"]));
-  const shownPostCoverage = shownCoverage(countWith(["postH4", "postM15"]));
-  const shownTotalCoverage = Math.round((shownPlanCoverage + shownPreCoverage + shownPostCoverage) / 3);
-  useEffect(() => () => Object.values(closeTimers.current).forEach(window.clearTimeout), []);
-  const toggleMarkup = (id) => {
-    Object.values(closeTimers.current).forEach(window.clearTimeout);
-    if (!open[id]) {
-      setClosing({});
-      setOpen(disclosurePair(visibleMarkups, id, disclosureColumns(expandedMarkupRef.current)));
-      return;
-    }
-    const shell = [...(expandedMarkupRef.current?.children || [])].find(item => item.dataset.disclosureId === String(id));
-    preserveMarkupScroll(shell);
-    setOpen({});
-    setClosing({});
-  };
-  useWhenChanged(() => { setListPage(1); }, [yearFilter, instrumentFilter, monthFilter, weekFilter, alignmentFilter, resultFilter, linkFilter, sort]);
-  const restoreMarkupBoard = () => {
-    setYearFilter(currentYear);
-    setInstrumentFilter("All"); setMonthFilter("All"); setWeekFilter("All"); setAlignmentFilter("All");
-    setResultFilter("All"); setLinkFilter("All"); setSort("newest"); setListPage(1); setShowAll(false);
-    setFiltersOpen(false); setSortOpen(false); setSelectedChart("");
-  };
-
-  return <div className="tj-reference-markups">
-    {phone&&<MobileMarkupOverview count={shown.length} coverage={shownTotalCoverage} plan={shownPlanCoverage} pre={shownPreCoverage} post={shownPostCoverage} onNew={onNew}/>}
-    <div className="tj-markup-overview-grid">
-      <Card className="tj-markup-overview-card tj-markup-view-card"><div className="tj-markup-overview-top"><div className="tj-stat-label">MARKUPS IN VIEW</div><span>pairs in focus</span></div><strong>{shown.length}</strong><div className="tj-markup-overview-metrics"><div><small>Leading pair</small><b>{top(shown, "instrument")}</b></div><div><small>Top session</small><b>{top(shown, "market")}</b></div></div></Card>
-      <Card className="tj-markup-overview-card tj-markup-execution-card"><div className="tj-markup-overview-top"><div className="tj-stat-label">EXECUTION MATCH</div><span>{shownLinked.length} plans linked</span></div><strong className={shownExecutionMatch >= 70 ? "tj-green" : "tj-amber-txt"}>{shownExecutionMatch}%</strong><div className="tj-markup-overview-bars"><div><small>Linked</small><i><b data-chart-fill="horizontal" style={{width: `${shown.length ? shownLinked.length / shown.length * 100 : 0}%`}}/></i><em>{shownLinked.length}</em></div><div><small>Unlinked</small><i><b data-chart-fill="horizontal" style={{width: `${shown.length ? (shown.length - shownLinked.length) / shown.length * 100 : 0}%`}}/></i><em>{shown.length - shownLinked.length}</em></div></div><small>{shownLinkedTrades.length} linked trade{shownLinkedTrades.length === 1 ? "" : "s"} across this view</small></Card>
-      <Card className="tj-markup-overview-card tj-markup-pnl-card"><div className="tj-markup-overview-top"><div className="tj-stat-label">LINKED P&amp;L</div><span>avg {fmtMoney(shownLinked.length ? shownPnl / shownLinked.length : 0)}</span></div><strong className={shownPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(shownPnl)}</strong><div className="tj-markup-overview-metrics tj-markup-outcome-cards"><div><small>Best outcome</small><b className={shownBest >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(shownBest)}</b></div><div><small>Worst outcome</small><b className={shownWorst >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(shownWorst)}</b></div></div></Card>
-      <Card className="tj-markup-overview-card tj-markup-coverage-card"><div className="tj-markup-overview-top"><div className="tj-stat-label">CAPTURE COVERAGE</div><span>markup journal complete</span></div><strong>{shownTotalCoverage}%</strong><div className="tj-markup-coverage"><div><small>Plan</small><i><b data-chart-fill="horizontal" style={{width: `${shownPlanCoverage}%`}}/></i><em>{shownPlanCoverage}%</em></div><div><small>Pre</small><i><b data-chart-fill="horizontal" style={{width: `${shownPreCoverage}%`}}/></i><em>{shownPreCoverage}%</em></div><div><small>Post</small><i><b data-chart-fill="horizontal" style={{width: `${shownPostCoverage}%`}}/></i><em>{shownPostCoverage}%</em></div></div></Card>
-    </div>
-    <div className="tj-markup-toolbar" ref={toolbarRef}>
-      <div className="tj-markup-toolbar-actions"><button className={`tj-icon-btn tj-markup-toolbar-button ${filtersOpen ? "tj-icon-btn-active" : ""}`} title="Filter markups" onClick={() => { setFiltersOpen((value) => !value); setSortOpen(false); }}>{phone&&<SlidersHorizontal size={16}/>}Filter</button><button className={`tj-icon-btn tj-markup-toolbar-button ${sortOpen ? "tj-icon-btn-active" : ""}`} title="Sort markups" onClick={() => { setSortOpen((value) => !value); setFiltersOpen(false); }}>{phone&&<ArrowDownUp size={16}/>}Sort</button><button className="tj-icon-btn tj-markup-toolbar-button" title="Restore markups board" aria-label="Restore markups board" onClick={restoreMarkupBoard}>{phone&&<RotateCcw size={16}/>}Reset</button></div>
-      <div className="tj-markup-toolbar-status">{showAll ? <b>All visible</b> : <div className="tj-pagination-arrows tj-toolbar-pagination"><button type="button" className="tj-icon-btn" aria-label="Previous markups page" title="Previous page" disabled={activeMarkupPage === 1} onClick={() => setListPage(activeMarkupPage - 1)}><ChevronLeft size={16}/></button><b>{`Page ${activeMarkupPage} of ${markupPageCount}`}</b><button type="button" className="tj-icon-btn" aria-label="Next markups page" title="Next page" disabled={activeMarkupPage === markupPageCount} onClick={() => setListPage(activeMarkupPage + 1)}><ChevronRight size={16}/></button></div>}</div>
-      {filtersOpen && <div className="tj-markup-filter-popover">
-        <div className="tj-markup-filter-head"><div><strong>Filter markups</strong></div><div className="tj-markup-filter-header-actions"><span>{shown.length} markups match</span><button type="button" className="tj-markup-clear-filters" onClick={() => { setInstrumentFilter("All"); setYearFilter("All"); setMonthFilter("All"); setWeekFilter("All"); setAlignmentFilter("All"); setResultFilter("All"); setLinkFilter("All"); setListPage(1); }}>Clear all</button><button className="tj-icon-btn" title="Close filters" onClick={() => setFiltersOpen(false)}><X size={14}/></button></div></div>
-        <div className="tj-markup-filter-grid">
-          <Field label="Instrument"><ThemeSelect compact label="Instrument" value={instrumentFilter} onChange={(event) => setInstrumentFilter(event.target.value)}>{instruments.map((item) => <option key={item} value={item}>{item === "All" ? "All Instruments" : item}</option>)}</ThemeSelect></Field>
-          <Field label="Year"><ThemeSelect compact label="Year" value={yearFilter} onChange={event=>{setYearFilter(event.target.value);setMonthFilter("All");setWeekFilter("All");setOpen({});}}><option value="All">All Years</option>{markupYears.map(year=><option key={year} value={year}>{year}</option>)}</ThemeSelect></Field>
-          <Field label="Month"><ThemeSelect compact label="Month" value={monthFilter} onChange={(event) => { setMonthFilter(event.target.value); setWeekFilter("All"); }}><option value="All">All Months</option>{months.slice(1).map((item) => <option key={item} value={item}>{formatMonthYear(item)}</option>)}</ThemeSelect></Field>
-          <Field label="Week"><ThemeSelect compact label="Week" disabled={monthFilter === "All"} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}><option value="All">{monthFilter === "All" ? "Select a month first" : "All Weeks"}</option>{[1,2,3,4,5,6].map((week) => <option key={week} value={week}>Week {week}</option>)}</ThemeSelect></Field>
-          <Field label="Alignment"><ThemeSelect compact label="Alignment" value={alignmentFilter} onChange={(event) => setAlignmentFilter(event.target.value)}><option value="All">All alignments</option><option value="Aligned">Aligned</option><option value="Against markup">Against markup</option><option value="Not linked">Not linked</option><option value="No bias">No bias</option></ThemeSelect></Field>
-          <Field label="Result"><ThemeSelect compact label="Result" value={resultFilter} onChange={(event) => setResultFilter(event.target.value)}><option value="All">All Results</option>{["Profit", "Loss", "Break-even", "No linked trades"].map((item) => <option key={item}>{item}</option>)}</ThemeSelect></Field>
-        </div>
-      </div>}
-      {sortOpen && <div className="tj-markup-sort-controls"><span>Sort markups</span><div className="tj-markup-sort-options">{[
-        ["Newest first", () => { setSort("newest"); setLinkFilter("All"); setResultFilter("All"); }, sort === "newest" && linkFilter === "All" && resultFilter === "All"],
-        ["Oldest", () => { setSort("oldest"); setLinkFilter("All"); setResultFilter("All"); }, sort === "oldest" && linkFilter === "All" && resultFilter === "All"],
-        ["Linked", () => { setSort("newest"); setLinkFilter("Linked"); setResultFilter("All"); }, linkFilter === "Linked" && resultFilter === "All"],
-        ["Unlinked", () => { setSort("newest"); setLinkFilter("Unlinked"); setResultFilter("All"); }, linkFilter === "Unlinked"],
-        ["Profit", () => { setSort("pnl"); setLinkFilter("Linked"); setResultFilter("Profit"); }, resultFilter === "Profit"],
-        ["Loss", () => { setSort("pnl"); setLinkFilter("Linked"); setResultFilter("Loss"); }, resultFilter === "Loss"],
-      ].map(([label, apply, active]) => <button type="button" key={label} className={`tj-markup-sort-option ${active ? "tj-markup-sort-option-active" : ""}`} aria-pressed={active} onClick={apply}>{label}</button>)}</div></div>}
-    </div>
-    <div className="tj-markup-card-grid" ref={expandedMarkupRef}>{shown.length ? visibleMarkups.map((markup) => {
-      const related = linkedTrades(markup), pnl = totalLinkedPnl(markup), expanded = !!open[markup.id], isClosing = !!closing[markup.id], visible = expanded || isClosing;
-      const status = effectiveStatus(markup);
-      const chartCount = slots.reduce((count, [key]) => count + (markup.screenshots?.[key]?.length || 0), 0);
-      const planFields = [markup.structure, markup.levels, markup.notes];
-      const planFilled = Math.round(planFields.filter((value) => String(value || "").trim()).length / planFields.length * 100);
-      const renderChartGroup = (groupSlots, emptyText) => {
-        const chartItems = groupSlots.flatMap(([key, label]) => (markup.screenshots?.[key] || []).map((screenshot, index) => ({ key: `${markup.id}:${key}:${index}`, label, source: screenshotSource(screenshot), caption: screenshotCaption(screenshot) })));
-        return <div className="tj-markup-chart-group">{chartItems.length ? chartItems.map((chart) => <div key={chart.key} className={`tj-markup-chart-card ${selectedChart === chart.key ? "tj-markup-chart-card-selected" : ""}`}><ImagePreview src={chart.source} alt={chart.caption || chart.label} onSelect={() => setSelectedChart(chart.key)}/><strong>{chart.caption || chart.label}</strong>{chart.caption && <small>{chart.label}</small>}</div>) : <div className="tj-markup-chart-empty">{emptyText}</div>}</div>;
-      };
-      return <div key={markup.id} data-disclosure-id={markup.id} className="tj-markup-card-shell"><Card className={`tj-tlog-card tj-reference-markup-card tj-markup-reference-${status.toLowerCase().replace(/\s+/g, '-')} ${visible ? "tj-reference-markup-expanded" : ""}`}>
-        <div className="tj-reference-markup-row" onPointerDown={event => {if (expanded && (!event.target.closest('button, a, input, select, textarea, details') || event.target.closest('button[title="Collapse markup"]'))) preserveMarkupScroll(event.currentTarget.closest('.tj-markup-card-shell'));}} onClick={() => toggleMarkup(markup.id)}>
-          {phone ? <MobileMarkupHeader markup={markup} status={status} pnl={pnl} money={fmtMoney(pnl)} date={formatDate(markup.date)} time={formatTime(markup.time)} related={related.length} plan={planFilled} charts={chartCount} expanded={expanded} onToggle={()=>toggleMarkup(markup.id)} onTrade={()=>onTrade(markup)} onEdit={()=>onEdit(markup)} onDelete={()=>onDelete(markup.id)} DeleteIcon={Trash2}/> : <>{expanded ? <div className="tj-reference-markup-identity"><div><strong>{markup.instrument || "Untitled markup"}</strong><span>{markup.bias || "No bias"}</span><span className={`tj-markup-status tj-markup-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>{status}</span></div><small>{formatDate(markup.date)} · {formatTime(markup.time)} · {markup.market || "No session"} · {related.length} linked trade{related.length === 1 ? "" : "s"}</small></div> : <div className="tj-reference-markup-identity tj-markup-card-identity">
-            <small className="tj-markup-card-date">{formatDate(markup.date)} · {formatTime(markup.time)}</small>
-            <strong className="tj-markup-card-instrument">{markup.instrument || "Untitled markup"}</strong>
-            <div className="tj-markup-card-status"><span>{markup.bias || "No bias"}</span><span className={`tj-markup-status tj-markup-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>{status}</span></div>
-            <div className="tj-markup-card-metrics"><div><span>SESSION</span><strong>{markup.market || "—"}</strong></div><div><span>PLAN</span><strong>{planFilled}%</strong></div><div><span>CHARTS</span><strong>{chartCount}</strong></div><div><span>TRADES</span><strong>{related.length}</strong></div></div>
-            <p className="tj-markup-card-structure">{markup.structure || "No structure note added yet."}</p>
-          </div>}
-          <div className="tj-reference-markup-actions"><div className="tj-markup-pnl"><strong className={pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(pnl)}</strong><span>{related.length ? "linked P&L" : "No linked P&L"}</span></div>{expanded && <><button className="tj-markup-trade-button" onClick={(event) => { event.stopPropagation(); onTrade(markup); }}><Plus size={14}/> Trade</button><button className="tj-markup-round-button" title="Edit markup" onClick={(event) => { event.stopPropagation(); onEdit(markup); }}><Pencil size={14}/></button><details className="tj-trade-actions-menu" onClick={event=>event.stopPropagation()}><summary className="tj-markup-round-button" aria-label="More markup actions">···</summary><div><ConfirmDeleteButton className="tj-btn-outline tj-trade-menu-delete" title="Delete markup" onClick={(event) => { event.stopPropagation(); onDelete(markup.id); }}><Trash2 size={14}/> Delete markup</ConfirmDeleteButton></div></details></>}<button className="tj-markup-round-button" title={expanded ? "Collapse markup" : "Expand markup"} onClick={(event) => { event.stopPropagation(); toggleMarkup(markup.id); }}>{expanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}</button></div>
-        </>}
-        </div>
-        <div className={`tj-reference-markup-detail ${visible ? "tj-reference-markup-detail-open" : ""} ${isClosing ? "tj-reference-detail-closing" : ""}`} aria-hidden={!visible}><div className="tj-reference-markup-detail-inner">
-          <div className="tj-markup-detail-top"><div><div className="tj-mlabel">SESSION</div><strong>{markup.market || "—"}</strong></div><div><div className="tj-mlabel">PLAN FILLED</div><strong>{planFilled}%</strong></div><div><div className="tj-mlabel">LINKED TRADES</div><strong>{related.length}</strong></div><div><div className="tj-mlabel">CHARTS SAVED</div><strong>{chartCount}</strong></div></div>
-          <div className="tj-markup-expanded-grid">
-            <section className="tj-markup-plan-card"><div className="tj-markup-detail-heading"><span>Pre-session plan</span><div><em>{markup.market || "—"}</em><em>{markup.bias || "—"}</em><em className={`tj-markup-status tj-markup-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>{status}</em><em className={pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(pnl)}</em></div></div>{planFields.some(Boolean) ? <div className="tj-markup-plan-rows"><div><span>STRUCTURE</span><strong>{markup.structure || "—"}</strong></div><div><span>LEVELS / ZONES</span><strong>{markup.levels || "—"}</strong></div><div><span>EXPECTATIONS</span><strong>{markup.notes || "—"}</strong></div></div> : <div className="tj-markup-panel-empty">No extra notes added yet.</div>}</section>
-            <section className="tj-markup-linked-card"><div className="tj-markup-detail-heading"><span>Linked trades</span><small>{related.length} linked</small></div>{related.length ? <div className={`tj-linked-markup-trades ${expandedLinkedTrades[markup.id] && related.length > 3 ? "tj-linked-markup-trades-scroll" : ""}`}>{related.slice(0,expandedLinkedTrades[markup.id] ? undefined : 3).map((trade) => <div className="tj-linked-markup-trade" key={trade.id}><div><strong>{trade.asset} · {trade.direction}</strong><span>{formatDate(trade.date)} · {formatTime(trade.time)} · R:R {trade.rr ? `${Number(trade.rr).toFixed(2)}R` : "—"}</span></div><div><strong className={trade.pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(trade.pnl)}</strong></div></div>)}</div> : <div className="tj-markup-panel-empty">No trade linked</div>}{related.length > 3 && <button type="button" className="tj-markup-show-linked" aria-expanded={!!expandedLinkedTrades[markup.id]} onClick={()=>setExpandedLinkedTrades(current=>({...current,[markup.id]:!current[markup.id]}))}>{expandedLinkedTrades[markup.id] ? "Show less" : `Show ${related.length-3} more`}</button>}</section>
-          </div>
-          <div className="tj-markup-reference-chart-row">{[[preSlots,"Pre-session charts","No pre-session charts yet"],[postSlots,"Post-session charts","No post-session charts yet"]].map(([chartSlots,title,emptyText]) => <section className="tj-markup-charts-card" key={title}><div className="tj-markup-detail-heading"><span>{title}</span><small>{chartSlots.reduce((count,[key])=>count+(markup.screenshots?.[key]?.length||0),0)} charts</small></div>{renderChartGroup(chartSlots,emptyText)}</section>)}</div>
-        </div></div>
-      </Card></div>;
-    }) : <div className="tj-empty-block"><ScanLine size={32} color="var(--tj-muted)"/><div className="tj-empty-title">No markups match these filters</div><button className="tj-btn-primary" onClick={onNew}>Create a markup</button></div>}</div>
-    <ListPagination total={shown.length} page={activeMarkupPage} showAll={showAll} onPageChange={setListPage} onShowAll={(next) => { setShowAll(next); if (!next) setListPage(1); }} label="markups" hideArrows={!phone}/>
-    <button className="tj-fab" onClick={onNew}><Plus size={16}/> New Markup</button>
-  </div>;
 }
 
 const periodMatchesTrade = (trade, type, key) => {

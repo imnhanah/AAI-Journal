@@ -24,14 +24,18 @@ test('workspace and user isolation survive navigation and session disposal', () 
 });
 test('page memory covers navigation choices without retaining financial input drafts or dialogs', () => {
   const code=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  for(const [page,field] of [['finance','balanceId'],['finance','movementFilter'],['analytics','analyticsTab'],['analytics','selectedAnalyticsMonths'],['markups','open'],['tradelog','search'],['tradelog','balanceFilter'],['reviews','reviewYear'],['management','selected'],['calendar','insightView'],['news','weekOffset']]) assert.match(code,new RegExp(`usePageState\\(([\"'])${page}\\1,\\s*([\"'])tj-nav-${field}\\2,`),`${page}/${field}`);
+  for(const [page,field] of [['finance','balanceId'],['finance','movementFilter'],['analytics','analyticsTab'],['analytics','selectedAnalyticsMonths'],['tradelog','search'],['tradelog','balanceFilter'],['reviews','reviewYear'],['management','selected'],['calendar','insightView'],['news','weekOffset']]) assert.match(code,new RegExp(`usePageState\\(([\"'])${page}\\1,\\s*([\"'])tj-nav-${field}\\2,`),`${page}/${field}`);
+  const mobileMarkups=readFileSync(new URL('./MobileMarkupsV2.jsx',import.meta.url),'utf8');
+  assert.match(mobileMarkups,/usePageState\('markups-mobile-v2', 'selectedId', null\)/,'active Markups selection');
   assert.doesNotMatch(code,/usePageState\('finance', 'tj-nav-(?:amount|note|type|date)'/);
   assert.doesNotMatch(code,/usePageState\([^\n]*(?:'tj-nav-tradeEditor'|'tj-nav-selectedImage'|'tj-nav-selectedEvent')/);
   assert.match(code,/<NavigationSession owner=\{user.id\} workspace=\{account.id\}>/);
 });
 test('pagination and active Trade Logs filters reset without retaining legacy view state', () => {
   const code=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(code,/useWhenChanged\(\(\) => \{ setListPage\(1\); \}, \[yearFilter/);
+  const markups=readFileSync(new URL('./MarkupsRedesign.jsx',import.meta.url),'utf8');
+  assert.match(markups,/onChange=\{event=>\{setYearFilter\(event\.target\.value\);setMonthFilter\('All'\);setWeekFilter\('All'\);\}\}/);
+  assert.match(markups,/onClick=\{\(\)=>\{resetFilters\(\);setFiltersOpen\(false\);setSortOpen\(false\);\}\}>Reset<\/button>/);
   assert.match(code,/className="tl2-small" onClick=\{\(\) => \{ setSearch\(""\); setBalanceFilter\(""\); setAssetFilter\("All"\); setSessionFilter\("All"\); setResultFilter\("All"\); setMonthFilters\(\[\]\); setYearFilter\("All"\); \}\}/);
   assert.match(code,/useWhenChanged\(\(\) => \{\s*setSelectedAnalyticsMonths\(\[\]\)/);
   assert.match(code,/preserveOnNavigation &&[\s\S]*?\.tj-sidebar, \.tj-mobile-bottom/);
