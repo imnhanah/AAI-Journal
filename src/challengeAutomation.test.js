@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {emptyChallenge,CHALLENGE_PLAN,changeChallengeStatus} from './challengeModel.js';
+import {emptyChallenge,CHALLENGE_PLAN,buildChallengePlan,changeChallengeStatus} from './challengeModel.js';
 import {fundedChallengeLevel} from './challengeLifecycle.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
@@ -151,6 +151,33 @@ test('bounds stop at level one and complete after level thirty',()=>{
   assert.equal(replay(start('risk'),[row(1,-10)]).activeLevel,1);
   const state=replay(start('risk',30),[row(1,CHALLENGE_PLAN[29].profit),row(2,-100000)]);
   assert.equal(state.activeLevel,31);
+});
+test('an earned final target completes a challenge when the preceding trade overperformed',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  // The first eight targets are earned exactly. The Level 9 trade exceeds
+  // its own target and takes actual capital past the Level 10 end balance.
+  // It still advances just one rung, so the final-target reconciliation must
+  // finish the challenge without treating a deposit as a pass.
+  const profits=[...plan.slice(0,8).map(item=>item.profit),plan[8].profit+plan[9].profit];
+  const trades=profits.map((profit,index)=>row(index+1,profit,{pnl:profit}));
+  const state=replayChallenge(baseline,{...account,balance:20,trades});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.statuses[10],'Pass');
+  assert.equal(state.activeLevel,11);
+});
+test('a deposit cannot complete the final challenge level',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const trades=plan.slice(0,9).map((item,index)=>row(index+1,item.profit,{pnl:item.profit}));
+  const state=replayChallenge(baseline,{...account,balance:20,trades,financeMovements:[{
+    type:'deposit',amount:plan[9].profit,createdAt:new Date(2026,8,14,12).toISOString()
+  }]});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.statuses[10],'In progress');
+  assert.equal(state.activeLevel,10);
 });
 test('chronological replay is stable regardless of input order',()=>{
   const trades=[row(1,-.1),row(2,.1),row(3,-.1)];
