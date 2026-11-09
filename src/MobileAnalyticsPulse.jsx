@@ -5,6 +5,7 @@ import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
 import {markupStatus} from './markupLifecycle.js';
 import {mobileChartLine, mobileSmoothPath} from './mobileDashboardV6.js';
 import {pulseBreakdown, pulseInsights, pulseMoney, pulseMonthly, pulseTicks} from './mobileAnalyticsPulse.js';
+import {scrollPhoneTo} from './phoneScroll.js';
 import './mobileAnalyticsPulse.css';
 
 const tone = value => Number(value) > 0 ? 'pos' : Number(value) < 0 ? 'neg' : '';
@@ -196,7 +197,7 @@ export default function MobileAnalyticsPulse({account, balances, selectedBalance
   const chooseBy = id => { setBy(id); setOpen(null); };
   const runNote = note => {
     if(note.settings) return onOpenAccountSettings?.();
-    if(note.jump?.top) return rootRef.current?.closest('.tj-content')?.scrollTo({top:0, behavior:'smooth'});
+    if(note.jump?.top) return scrollPhoneTo(rootRef.current,{top:0,behavior:'smooth'});
     setBy(note.jump.by); setOpen(note.jump.id);
     requestAnimationFrame(() => listRef.current?.scrollIntoView({behavior:'smooth', block:'start'}));
     return undefined;

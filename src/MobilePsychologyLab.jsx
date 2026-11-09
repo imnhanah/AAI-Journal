@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {ArrowRight, Brain, ChevronDown, Coins, Flag, Shield, Star, Target, TrendingUp} from 'lucide-react';
 import {growthChart, holdComparison, holdWidths, moodBarTone} from './mobilePsychologyModel.js';
+import {scrollPhoneTo} from './phoneScroll.js';
 import './mobilePsychologyLab.css';
 
 const percentage = value => value == null ? '—' : `${value.toFixed(0)}%`;
@@ -116,7 +117,7 @@ function InsightsTab({insights,briefing,money,formatRatio}) {
 
 export default function MobilePsychologyLab({data,money,moneyShort,risk,riskStats,insights,briefing,formatRatio,onOpenReview}) {
   const [tab,setTab] = useState('psychology'), root = useRef(null);
-  const choose = value => { setTab(value); root.current?.closest('.tj-content')?.scrollTo({top:0}); };
+  const choose = value => { setTab(value); scrollPhoneTo(root.current,{top:0}); };
   const tabs = [['psychology','Psychology'],['risk','Risk'],['insights','Insights']], index = tabs.findIndex(([value]) => value === tab);
   return <main className="tj-psy" ref={root} aria-label="Psychology">
     <div className="tj-psy-tabs" role="tablist" aria-label="Psychology sections" style={{'--i':index}}><i aria-hidden="true"/>{tabs.map(([value,label]) => <button type="button" role="tab" key={value} aria-selected={tab === value} onClick={() => choose(value)}>{label}</button>)}</div>

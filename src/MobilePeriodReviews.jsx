@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {AlertTriangle, Check, ChevronDown, ChevronLeft, ChevronRight} from 'lucide-react';
 import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
 import {useLeaveGuard} from './useLeaveGuard.js';
+import {scrollPhoneTo} from './phoneScroll.js';
 import './mobilePeriodReviews.css';
 
 // The phone view of Review. ReviewPage still owns the drafts, questions and saving; this only lays
@@ -105,7 +106,7 @@ function Detail({review, h, questions, val, set, written, sectionCount, onJump, 
   const sections = detailSections({review, h, onJump, reflection, nextSteps});
   const root = useRef(null);
   // A review always opens at its top, wherever the list had been scrolled to.
-  useEffect(() => { root.current?.closest('.tj-content')?.scrollTo(0, 0); }, [review.id]);
+  useEffect(() => { scrollPhoneTo(root.current,{top:0}); }, [review.id]);
   const jump = index => root.current?.querySelector(`[data-pr-section="${index}"]`)?.scrollIntoView({block:'start'});
   const eyebrow = {year:'Annual trading performance', quarter:`${review.label} · ${review.year}`, month:`Net P&L · ${review.label} ${review.year}`}[review.kind];
   const stats = review.kind === 'year'

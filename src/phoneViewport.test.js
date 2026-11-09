@@ -28,9 +28,9 @@ test('the keyboard is not mistaken for the gap', () => {
 
 test('the bar sits inside a taller app rather than being fixed, and nothing clips it', () => {
   const css = readFileSync(new URL('./mobileBottomBar.css', import.meta.url), 'utf8');
-  assert.match(css, /position:relative;height:var\(--tj-app-height,100dvh\)/);
+  assert.match(css, /html\[data-tj-display-mode="standalone"\].*position:relative;height:var\(--tj-app-height,100dvh\)/);
   assert.doesNotMatch(css, /100dvh \+ var\(--tj-viewport-gap/);
-  assert.match(css, /\.tj-mobile-bottom \{position:absolute;\}/);
+  assert.match(css, /html\[data-tj-display-mode="standalone"\].*\.tj-mobile-bottom \{position:absolute;\}/);
   assert.match(css, /overscroll-behavior:none/);
   assert.doesNotMatch(css, /:has\(\.tj-root\)[^{]*\{[^}]*overflow:hidden/);
   assert.doesNotMatch(css, /:has\(\.tj-root\)[^{]*\{[^}]*position:fixed/);
@@ -40,6 +40,7 @@ test('headings clear the status bar blur in the installed app', () => {
   const source = readFileSync(new URL('./phoneViewport.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('./mobileBottomBar.css', import.meta.url), 'utf8');
   assert.match(source, /export const TOP_CLEARANCE = 26;/);
+  assert.match(source, /document\.documentElement\.dataset\.tjDisplayMode = size\.standalone \? 'standalone' : 'browser';/);
   assert.match(css, /padding-top:calc\(env\(safe-area-inset-top,0px\) \+ var\(--tj-top-clearance,0px\)\)/);
   assert.doesNotMatch(css, /:is\(\.tj-page-heading,\.tj-ma-title\)/);
 });

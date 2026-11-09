@@ -1,6 +1,7 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
 import {getBackNavigation} from './useBackNavigation.js';
+import {phoneScrollTarget, usesDocumentPhoneScroll} from './phoneScroll.js';
 
 // Phone page motion. The page that was on screen is kept as a still picture (a copy of its
 // DOM) while the new one moves in, so only one live page ever exists. The direction comes
@@ -88,7 +89,7 @@ export default class MobilePageStage extends React.Component {
   }
 
   live() { return this.ghost.current?.parentElement?.querySelector(':scope > .tj-page-transition') || null; }
-  scroller() { return this.ghost.current?.closest('.tj-content') || null; }
+  scroller() { return phoneScrollTarget(this.ghost.current); }
 
   getSnapshotBeforeUpdate(previous) {
     if (previous.page === this.props.page) return null;
@@ -102,7 +103,9 @@ export default class MobilePageStage extends React.Component {
   // The picture of what is on screen now, before it changes. Null when nothing should move.
   capture(kind) {
     const layer = this.live(), scroller = this.scroller();
-    if (!this.state.phone || !KINDS.includes(kind) || !layer || !scroller) return null;
+    // Do not clip a document-scroll gesture for page motion in browser Safari.
+    // The existing installed-app transition remains unchanged.
+    if (usesDocumentPhoneScroll() || !this.state.phone || !KINDS.includes(kind) || !layer || !scroller) return null;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
     const box = scroller.getBoundingClientRect(), place = layer.getBoundingClientRect();
     return {kind, picture:stillPicture(layer), box, left:place.left - box.left, top:place.top - box.top, width:place.width};

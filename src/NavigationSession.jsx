@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {createNavigationState} from './navigationState.js';
+import {scrollPhoneTo} from './phoneScroll.js';
 
 const NavigationContext = createContext(null);
 export function NavigationSession({owner, workspace, children}) {
@@ -43,7 +44,7 @@ export function PageScrollMemory({page}) {
     if (!scroller) return;
     // A new page should open from its own top edge. Restoring a previous
     // scroll offset made headings appear clipped beneath the shell.
-    scroller.scrollTop = 0;
+    scrollPhoneTo(scroller,{top:0});
   }, [page]);
   return null;
 }

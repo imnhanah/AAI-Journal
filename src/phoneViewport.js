@@ -35,6 +35,7 @@ export function installPhoneViewport() {
   document.body.appendChild(probe);
   const apply = () => {
     const size = {standalone:standalone(), innerWidth:window.innerWidth, innerHeight:window.innerHeight, fixedBottom:probe.getBoundingClientRect().bottom, screenWidth:window.screen.width, screenHeight:window.screen.height};
+    document.documentElement.dataset.tjDisplayMode = size.standalone ? 'standalone' : 'browser';
     gap = viewportGap(size);
     const height = installedAppHeight(size);
     if (height) document.documentElement.style.setProperty('--tj-app-height', `${height}px`);

@@ -5,6 +5,7 @@ import {useNavStep} from './useBackNavigation.js';
 import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
 import {DEFAULT_NEWS_FILTERS, NEWS_CURRENCIES, toggleNewsCurrency} from './newsPreferences.js';
 import {newsDayTiming, newsEventTiming, newsFilterCount, newsImpactDots, newsWeekTitle} from './mobileNews.js';
+import {phoneScrollTarget, scrollPhoneTo} from './phoneScroll.js';
 import './mobileNewsScreen.css';
 
 const FF_URL = 'https://www.forexfactory.com/calendar';
@@ -59,7 +60,7 @@ export default function MobileNews({tab, onTab, feed, dayKeys, byDay, count, fil
   const todayKey = new Date().toDateString();
   const keys = useMemo(() => today ? dayKeys.filter(key => key === todayKey) : dayKeys, [today, dayKeys, todayKey]);
   const shownCount = today ? (byDay[todayKey] || []).length : count;
-  const scroller = () => rootRef.current?.closest('.tj-content');
+  const scroller = () => phoneScrollTarget(rootRef.current);
   const closeSheet = useCallback(() => setSheet(false), []);
   useNavStep('news-filters', sheet, closeSheet);
   const chooseWeek = offset => { setToday(false); setActiveDay(''); onWeek(offset); };
@@ -81,7 +82,7 @@ export default function MobileNews({tab, onTab, feed, dayKeys, byDay, count, fil
     content.addEventListener('scroll', onScroll, {passive:true});
     return () => { content.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); };
   }, [tab]);
-  const jumpToDay = key => { setActiveDay(key); const content = scroller(), section = rootRef.current?.querySelector(`[data-news-day="${key}"]`); if(content && section) content.scrollTo({top:content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top - 104, behavior:'smooth'}); };
+  const jumpToDay = key => { setActiveDay(key); const content = scroller(), section = rootRef.current?.querySelector(`[data-news-day="${key}"]`); if(!content || !section) return; const top=content===document.scrollingElement ? window.scrollY+section.getBoundingClientRect().top-104 : content.scrollTop+section.getBoundingClientRect().top-content.getBoundingClientRect().top-104; scrollPhoneTo(rootRef.current,{top,behavior:'smooth'}); };
   const first = keys[0] ? new Date(keys[0]) : null, last = keys.length ? new Date(keys.at(-1)) : null;
   const current = keys.includes(activeDay) ? activeDay : keys[0];
   return <main className="tj-nx" aria-label="News" ref={rootRef}>

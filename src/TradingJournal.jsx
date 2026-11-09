@@ -2665,7 +2665,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
   useEffect(() => { if (routineRequest && routineRequest !== handledRoutineRequest) {setSelected("daily-routine");setPhoneIndex(false);setHandledRoutineRequest(routineRequest);} }, [routineRequest,handledRoutineRequest]);
   useEffect(() => { if (rulesRequest) { setSelected("rules"); setPhoneIndex(false); } }, [rulesRequest]);
   useEffect(() => { if (selected === "playbooks") { setSelected(activeSection); setPhoneIndex(false); } }, [selected, activeSection]);
-  useWhenChanged(()=>{if(window.matchMedia(MOBILE_MEDIA).matches)managementRef.current?.closest('.tj-content')?.scrollTo({top:0});},[activeSection,phoneIndex]);
+  useWhenChanged(()=>{if(window.matchMedia(MOBILE_MEDIA).matches){const target=managementRef.current?.closest('.tj-content');if(document.documentElement.dataset.tjDisplayMode==='browser')window.scrollTo({top:0});else target?.scrollTo({top:0});}},[activeSection,phoneIndex]);
   const lists = [
     ["instruments", "Instruments", DEFAULT_INSTRUMENTS.length + instruments.length],
     ["mistakes", "Mistakes", allMistakeTags(mistakeTags).length],
@@ -7469,15 +7469,25 @@ export function TradingJournalApp({ user, onLogout }) {
   const [headerHidden, setHeaderHidden] = useState(false);
   const headerScroll = useRef({hidden:false, anchorY:0});
   useEffect(() => {
+    const isBrowserDocument = () => document.documentElement.dataset.tjDisplayMode !== 'standalone';
+    const updateHeader = ({y, viewport, height}) => {
+      const header = document.querySelector('.tj-topbar');
+      headerScroll.current = nextHeaderState({...headerScroll.current, y, headerHeight:header?.offsetHeight || 0, atBottom:y + viewport >= height - 2});
+      setHeaderHidden(headerScroll.current.hidden);
+    };
     const onScroll = (event) => {
       const content = event.target;
       if (!content?.classList?.contains('tj-content') || !window.matchMedia(MOBILE_MEDIA).matches) return;
-      const header = document.querySelector('.tj-topbar');
-      headerScroll.current = nextHeaderState({...headerScroll.current, y:content.scrollTop, headerHeight:header?.offsetHeight || 0, atBottom:content.scrollTop + content.clientHeight >= content.scrollHeight - 2});
-      setHeaderHidden(headerScroll.current.hidden);
+      updateHeader({y:content.scrollTop, viewport:content.clientHeight, height:content.scrollHeight});
+    };
+    const onDocumentScroll = () => {
+      if (!window.matchMedia(MOBILE_MEDIA).matches || !isBrowserDocument()) return;
+      const root = document.documentElement;
+      updateHeader({y:window.scrollY, viewport:window.innerHeight, height:root.scrollHeight});
     };
     document.addEventListener('scroll', onScroll, {capture:true, passive:true});
-    return () => document.removeEventListener('scroll', onScroll, {capture:true});
+    window.addEventListener('scroll', onDocumentScroll, {passive:true});
+    return () => { document.removeEventListener('scroll', onScroll, {capture:true}); window.removeEventListener('scroll', onDocumentScroll); };
   }, []);
   useEffect(() => { headerScroll.current = {hidden:false, anchorY:0}; setHeaderHidden(false); }, [page, activeId]);
   useEffect(() => {

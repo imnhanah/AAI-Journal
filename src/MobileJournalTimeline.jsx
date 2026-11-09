@@ -4,6 +4,7 @@ import {ThemeSelect} from './JournalControls.jsx';
 import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
 import {useNavStep} from './useBackNavigation.js';
 import {useStepMotion} from './MobilePageStage.jsx';
+import {phoneScrollTarget} from './phoneScroll.js';
 import {PHONE_LOG_TITLE, PHONE_REVIEW_NEEDED} from './mobileTradeFilters.js';
 import {journalActiveFilters, journalClearFilter, journalFilterOptions, journalHeldLabel, journalMonths, journalNewestFirst, journalTradeMoney} from './mobileJournalTimeline.js';
 import './mobileJournalTimeline.css';
@@ -133,7 +134,7 @@ export default function MobileJournalTimeline({trades, allTrades, decorate, netP
   useNavStep('trade-detail', !!selected, () => setSelected(null));
   const rows = useMemo(() => journalNewestFirst(trades).map(decorate), [trades, decorate]);
   const options = useMemo(() => journalFilterOptions(allTrades), [allTrades]);
-  const content = () => rootRef.current?.closest('.tj-content');
+  const content = () => phoneScrollTarget(rootRef.current);
   const position = rows.findIndex(row => row.trade.id === selected);
   useStepMotion(position >= 0 ? 1 : 0);
   const open = id => { listScroll.current = content()?.scrollTop || 0; setSelected(id); };

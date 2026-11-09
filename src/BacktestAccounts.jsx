@@ -14,6 +14,7 @@ import JournalSignalHeader from './JournalSignalHeader';
 import {followAnalyticsPointer} from './analyticsTooltip.js';
 import {compactBacktestMoney} from './mobileBacktest.js';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
+import {phoneScrollTarget, scrollPhoneTo} from './phoneScroll.js';
 import {readBacktestMobileDisclosure,writeBacktestMobileDisclosure,mobileDefaultExpandedRunId} from './backtestMobileDisclosure.js';
 import MobileStrategyTestingV6 from './MobileStrategyTestingV6.jsx';
 import DesktopStrategyTesting,{StrategySetupDrawer} from './DesktopStrategyTesting.jsx';
@@ -95,11 +96,11 @@ export default function BacktestAccounts({user,initialData=null,legacyTrades=[],
  const previousActive=useRef(active),previousScreen=useRef({active,phoneLog});
  useEffect(()=>{if(previousActive.current!==active){previousActive.current=active;setPhoneLog(false);}},[active]);
  useEffect(()=>{if(!loaded||!window.matchMedia(MOBILE_MEDIA).matches||disclosurePreference.current.manual)return;setExpanded(current=>{if(Object.keys(current).length)return current;const id=mobileDefaultExpandedRunId(data.runs,run=>backtestStats(run,tradesFor(run.id)),disclosurePreference.current.lastOpenedId);return id?{[id]:true}:current;});},[loaded,data]);
- useEffect(()=>{const previous=previousScreen.current;previousScreen.current={active,phoneLog};if((previous.active!==active || previous.phoneLog!==phoneLog)&&window.matchMedia(MOBILE_MEDIA).matches)library.current?.closest('.tj-content')?.scrollTo({top:0});},[active,phoneLog]);
+ useEffect(()=>{const previous=previousScreen.current;previousScreen.current={active,phoneLog};if((previous.active!==active || previous.phoneLog!==phoneLog)&&window.matchMedia(MOBILE_MEDIA).matches)scrollPhoneTo(library.current,{top:0});},[active,phoneLog]);
  const latestView=useRef(null);
  latestView.current={data,loaded,active,expanded,phoneLog};
  useLayoutEffect(()=>{
-   const scroller=library.current?.closest('.tj-content');
+   const scroller=phoneScrollTarget(library.current);
    if(!scroller)return;
    scroller.scrollTop=initial?.scrollTop || 0;
    let scrollTop=scroller.scrollTop;

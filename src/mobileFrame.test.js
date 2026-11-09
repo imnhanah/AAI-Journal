@@ -67,16 +67,20 @@ test('mobile header keeps the account chooser, hides only duplicate entry action
   assert.match(css,/@media \(max-width:375px\)[\s\S]*?\.tj-header-account-switcher>span:not\(\.tj-account-initial\) \{display:none;/);
 });
 
-test('phone shell has a self-contained flex height budget when crossing the breakpoint',()=>{
+test('browser phones use document scrolling while the installed-app layout remains contained',()=>{
   const css=readFileSync(new URL('./mobileFrame.css',import.meta.url),'utf8');
   const main=css.match(/\.tj-main \{([^}]+)\}/)?.[1] || '';
   const content=css.match(/\.tj-content \{([^}]+)\}/)?.[1] || '';
-  assert.match(main,/display:flex;flex-direction:column/);
-  assert.match(main,/height:100dvh;min-height:0;max-height:100dvh/);
+  assert.match(main,/display:block/);
+  assert.match(main,/height:auto;min-height:100dvh;max-height:none/);
   assert.match(main,/padding:0/);
-  assert.match(main,/overflow:hidden/);
-  assert.match(content,/flex:1 1 auto;min-height:0/);
-  assert.match(content,/overflow-y:auto;overflow-x:hidden/);
+  assert.match(main,/overflow:visible/);
+  assert.match(content,/display:block;min-height:calc\(100dvh - var\(--mobile-top\)\)/);
+  assert.match(content,/overflow:visible;overscroll-behavior-y:auto/);
+  const dock=readFileSync(new URL('./mobileBottomBar.css',import.meta.url),'utf8');
+  assert.match(dock,/html\[data-tj-display-mode="standalone"\] .*\.tj-main \{display:flex;flex-direction:column;height:var\(--tj-app-height,100dvh\);min-height:0;max-height:none;overflow:hidden;/);
+  assert.match(dock,/html\[data-tj-display-mode="standalone"\] .*\.tj-mobile-bottom \{position:absolute;/);
+  assert.match(dock,/html\[data-tj-display-mode="standalone"\] .*\.tj-content \{display:block;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scroll-padding-bottom:calc\(24px \+ var\(--mobile-bottom\)\);/);
   const app=readFileSync(new URL('./mobileApp.css',import.meta.url),'utf8');
   assert.match(app,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) 64px/);
   assert.match(app,/\.tj-mobile-bar-bg \{[^}]*border-radius:0/);

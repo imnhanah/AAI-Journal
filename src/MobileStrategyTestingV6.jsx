@@ -7,6 +7,7 @@ import {ArrowRight, CheckCircle2, ChevronDown, ChevronLeft, Edit3, FlaskConical,
 import {ConfirmDeleteButton} from './JournalControls.jsx';
 import {backtestStats, isClosedTest, orderTestTrades, testType, testTypeLabel} from './backtestModel.js';
 import {strategyEquityPath, strategyResult, strategyStreakTitle, strategyTotals, strategyTradeMeta} from './mobileStrategyTestingModel.js';
+import {scrollPhoneTo} from './phoneScroll.js';
 import './mobileStrategyTestingV6.css';
 
 const money = (value, currency = 'USD') => new Intl.NumberFormat(undefined, {style:'currency', currency, maximumFractionDigits:2, minimumFractionDigits:2}).format(Number(value) || 0);
@@ -155,7 +156,7 @@ export default function MobileStrategyTestingV6({runs=[],getTrades,busy=false,er
   useStepMotion(activeRun ? 1 : 0);
   const [detailTab,setDetailTab] = useState('overview'), [historyFilter,setHistoryFilter] = useState('all'), [instrument,setInstrument] = useState('all'), [timeframe,setTimeframe] = useState('all'), [selectedTradeId,setSelectedTradeId] = useState(null);
   const [showAll,setShowAll] = useState(false), [filtersOpen,setFiltersOpen] = useState(false), [deleting,setDeleting] = useState(null), [detailsId,setDetailsId] = useState(null);
-  useEffect(() => { setDetailTab('overview'); setHistoryFilter('all'); setInstrument('all'); setTimeframe('all'); setSelectedTradeId(null); setShowAll(false); setFiltersOpen(false); document.querySelector('.tj-content')?.scrollTo(0,0); },[activeRun?.id]);
+  useEffect(() => { setDetailTab('overview'); setHistoryFilter('all'); setInstrument('all'); setTimeframe('all'); setSelectedTradeId(null); setShowAll(false); setFiltersOpen(false); scrollPhoneTo(document.querySelector('.tj-content'),{top:0}); },[activeRun?.id]);
   const errorBanner = error && <div className="tj-st6-error" role="alert"><span>{error}</span><button type="button" onClick={onRetry}>Retry</button></div>;
   const deleteSheet = deleting && <Sheet label="Delete test" title="Delete this test?" onClose={() => setDeleting(null)}><p className="tj-st6-foot">{deleting.instrument} · {deleting.timeframe} and its {getTrades(deleting.id).length} trades will be removed. Your live journal is not affected.</p><div className="tj-st6-sheet-actions"><button type="button" className="is-danger" disabled={busy} onClick={async () => { await onDeleteRun(deleting); setDeleting(null); }}>{busy ? 'Deleting…' : 'Delete test'}</button><button type="button" onClick={() => setDeleting(null)}>Cancel</button></div></Sheet>;
 

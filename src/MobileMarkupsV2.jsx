@@ -6,6 +6,7 @@ import {loadJournalImage} from './journalCloudCache.js';
 import {usePageState} from './NavigationSession.jsx';
 import {useNavStep} from './useBackNavigation.js';
 import {useStepMotion} from './MobilePageStage.jsx';
+import {scrollPhoneTo} from './phoneScroll.js';
 import './mobileMarkupsV2.css';
 
 const SLOT_LABELS = {
@@ -104,8 +105,8 @@ export default function MobileMarkupsV2({markups = [], trades = [], currency = '
   const executed = markups.filter(markup => statusFor(markup) === 'Executed').length;
   const linkedTradeCount = linked.reduce((total, markup) => total + linkedFor(markup).length, 0);
   const linkedPnl = linked.reduce((total, markup) => total + pnlFor(markup), 0);
-  const openDetail = id => { setSelectedId(id); window.requestAnimationFrame(() => document.querySelector('.tj-content')?.scrollTo({top:0, behavior:'smooth'})); };
-  const closeDetail = () => { setSelectedId(null); window.requestAnimationFrame(() => document.querySelector('.tj-content')?.scrollTo({top:0, behavior:'smooth'})); };
+  const openDetail = id => { setSelectedId(id); window.requestAnimationFrame(() => scrollPhoneTo(document.querySelector('.tj-content'),{top:0,behavior:'smooth'})); };
+  const closeDetail = () => { setSelectedId(null); window.requestAnimationFrame(() => scrollPhoneTo(document.querySelector('.tj-content'),{top:0,behavior:'smooth'})); };
   useNavStep('markup-detail', !!selectedId, closeDetail);
 
   if (selected) {

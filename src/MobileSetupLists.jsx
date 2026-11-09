@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {AlertTriangle, ChevronRight, Layers, Plus, Scale, Search, ShieldCheck, TrendingUp, X} from 'lucide-react';
 import {ConfirmDeleteButton} from './JournalControls';
 import {Popup, TextField} from './MobileAccountSettings';
+import {phoneScrollTarget, scrollPhoneTo} from './phoneScroll.js';
 import './mobileProfileSettings.css';
 import './mobileDailyRoutine.css';
 import './mobileSetupLists.css';
@@ -59,7 +60,7 @@ export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelet
     if (sheet.row) { await onRename(sheet.row.id, text); setSheet(null); showToast('Saved'); return; }
     await onAdd(text);
     setSheet(null); setSearch(''); setExpanded(true); showToast('Added');
-    requestAnimationFrame(() => root.current?.closest('.tj-content')?.scrollTo({top:root.current.closest('.tj-content').scrollHeight, behavior:'smooth'}));
+    requestAnimationFrame(() => { const scroller=phoneScrollTarget(root.current); scrollPhoneTo(root.current,{top:scroller?.scrollHeight,behavior:'smooth'}); });
   };
   const remove = async () => { await onDelete(sheet.row.id); setSheet(null); showToast('Deleted'); };
 
