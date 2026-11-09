@@ -167,7 +167,7 @@ test('an earned final target completes a challenge when the preceding trade over
   assert.equal(state.statuses[10],'Pass');
   assert.equal(state.activeLevel,11);
 });
-test('a deposit cannot complete the final challenge level',()=>{
+test('a deposit-funded final target completes the challenge and remains labelled as funded',()=>{
   const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
   const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
   const plan=buildChallengePlan(20,'risk',10,1.5);
@@ -176,8 +176,20 @@ test('a deposit cannot complete the final challenge level',()=>{
     type:'deposit',amount:plan[9].profit,createdAt:new Date(2026,8,14,12).toISOString()
   }]});
   assert.equal(state.liveBalance,plan.at(-1).end);
-  assert.equal(state.statuses[10],'In progress');
-  assert.equal(state.activeLevel,10);
+  assert.equal(state.statuses[10],'Jumped');
+  assert.equal(state.activeLevel,11);
+  assert.match(state.fundingJumps[10],/available capital/);
+});
+test('a deposit can fund the entire challenge without being presented as trading profit',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const state=replayChallenge(baseline,{...account,balance:20,financeMovements:[{
+    type:'deposit',amount:plan.at(-1).end-20,createdAt:new Date(2026,8,14,12).toISOString()
+  }]});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.activeLevel,11);
+  assert.equal(Object.values(state.statuses).filter(status=>status==='Jumped').length,10);
 });
 test('chronological replay is stable regardless of input order',()=>{
   const trades=[row(1,-.1),row(2,.1),row(3,-.1)];

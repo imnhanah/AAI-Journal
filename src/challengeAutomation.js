@@ -160,24 +160,22 @@ export function replayChallenge(baseline, account) {
     state.levelPnl=0;
     state.lossStreak=0;
   }
-  // A trade can outperform a rung's target. Progress still moves only one
-  // rung at a time, but at the last rung there is nowhere left to carry that
-  // surplus. When every earlier rung was earned and the trade-only capital
-  // has reached the plan's final target, complete the challenge instead of
-  // leaving a visibly-funded final rung in progress.
-  //
-  // Deposits are deliberately removed from this check: funding can make a
-  // level affordable, but it must never turn into a trading pass.
+  // The full plan target is the finish line. A trade can outperform a rung's
+  // target and a deposit can fund several rungs; either is valid progress.
+  // Keep the origin visible in the status history, but never leave the last
+  // rung in progress once available capital has reached the final target.
   const finalLevel=plan[totalLevels-1];
-  const earlierLevelsEarned=plan.slice(0,-1).every(row=>state.statuses[row.level] === 'Pass');
-  const depositedAfterCheckpoint=cashRows
-    .filter(item=>item.eventAt>=startTime && item.type === 'deposit')
-    .reduce((sum,item)=>sum+Math.max(0,cashImpact(item)),0);
-  const tradeOnlyCapital=live/100-depositedAfterCheckpoint;
-  if (state.activeLevel === totalLevels && state.statuses[totalLevels] === 'In progress' &&
-      !state.fundingJumps[totalLevels] && earlierLevelsEarned &&
-      tradeOnlyCapital >= finalLevel.end && state.liveBalance >= finalLevel.end) {
-    state.statuses[totalLevels]='Pass';
+  const hasDepositFunding = Object.values(state.statuses).some(status=>status === 'Jumped') ||
+    cashRows.some(item=>item.eventAt>=startTime && item.type === 'deposit' && cashImpact(item)>0);
+  if (!state.failed && state.liveBalance >= finalLevel.end) {
+    for (const row of plan) {
+      if (state.statuses[row.level] === 'Pass') continue;
+      // A deposit-funded path remains distinguishable from an earned one in
+      // the level history, while both count toward the completed challenge.
+      state.statuses[row.level]=hasDepositFunding ? 'Jumped' : 'Pass';
+      if (hasDepositFunding) state.fundingJumps[row.level]='Reached through available capital';
+      else delete state.fundingJumps[row.level];
+    }
     state.activeLevel=totalLevels+1;
     state.levelPnl=0;
     state.lossStreak=0;

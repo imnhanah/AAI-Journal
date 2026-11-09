@@ -114,7 +114,8 @@ export default function DesktopChallengeCard(p) {
   const [selected, setSelected] = useState(current.level);
   const [rulesAnchor, setRulesAnchor] = useState(null);
   // The selection stays where the trader put it; "Go to current level" jumps back.
-  const passed = Object.values(state.statuses || {}).filter((status) => status === 'Pass').length;
+  const reached = Object.values(state.statuses || {}).filter((status) => status === 'Pass' || status === 'Jumped').length;
+  const funded = Object.values(state.statuses || {}).filter((status) => status === 'Jumped').length;
   const mid = plan[Math.min(Math.ceil(plan.length / 2) - 1, plan.length - 1)];
   const all = range === 'all';
   const shownRange = all ? { start: 1, end: plan.length } : ranges.find((item) => item.key === range) || ranges[0];
@@ -144,7 +145,7 @@ export default function DesktopChallengeCard(p) {
         <div className="ch2-ovl"><span className="ch2-eb2">Challenge progress</span><div className="ch2-lv"><b>{complete ? 'Complete' : `Level ${current.level}`}</b><span>of {plan.length}</span></div>
           <div className="ch2-seg" style={{ '--n': plan.length }}>{plan.map((item) => { const v = visual(item.level); return <i key={item.level} title={`Level ${item.level} · ${LABEL[v]}`} className={item.level === current.level && !complete ? 'is-cur' : v === 'funded' ? 'is-fund' : v === 'passed' ? 'is-pass' : v === 'step' ? 'is-stp' : ''}/>; })}</div>
           <div className="ch2-sgl"><span>1</span><span>{mid?.level}</span><span>{plan.length}</span></div>
-          <p>{passed} of {plan.length} levels passed · Deposit-funded levels are not trading passes</p></div>
+          <p>{reached} of {plan.length} levels reached{funded ? ` · ${funded} deposit-funded` : ''}</p></div>
         <div className="ch2-bx"><small>Available trading capital</small><b className={life.liveBalance >= (plan[0]?.start || 0) ? 'is-gain' : 'is-loss'}>{fmt(life.liveBalance)}</b><span>This level · {fmt(current.start)} <ArrowRight size={12} strokeWidth={2.4}/> {fmt(current.end)}</span></div>
         <div className="ch2-bx"><small>Full challenge target</small><b>{fmt(plan.at(-1).end)}</b><Spark plan={plan} current={current}/><span>Planned across {plan.length} levels</span></div>
       </div>
