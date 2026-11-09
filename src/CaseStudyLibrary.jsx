@@ -894,6 +894,34 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   const headerMenuRoot = useRef(null);
   saveWorkspaceRef.current=onSaveWorkspace;
 
+  const libraryCounts = value => ({
+    studies:Array.isArray(value?.studies) ? value.studies.length : 0,
+    evidence:Array.isArray(value?.evidence) ? value.evidence.length : 0,
+    connections:Array.isArray(value?.connections) ? value.connections.length : 0,
+    templates:Array.isArray(value?.personalTemplates) ? value.personalTemplates.length : 0,
+  });
+  const countSummary = counts => `${counts.studies} ${counts.studies === 1 ? 'study' : 'studies'}, ${counts.evidence} evidence item${counts.evidence === 1 ? '' : 's'}, ${counts.connections} connection${counts.connections === 1 ? '' : 's'}, and ${counts.templates} personal template${counts.templates === 1 ? '' : 's'}`;
+  const uploadDeviceLibrary = async () => {
+    if (!onUploadDeviceLibrary) return;
+    const prepared=await onUploadDeviceLibrary(workspaceRef.current);
+    if (!prepared || prepared.kind==='nothing-to-upload' || prepared.kind==='already-synced') return;
+    const localSummary=countSummary(libraryCounts(prepared.local));
+    const cloudSummary=countSummary(libraryCounts(prepared.cloud));
+    const replacesCloud=prepared.kind==='reconciliation-required';
+    const confirmed=await confirm({
+      title:replacesCloud ? 'Replace the cloud Case Study Library?' : 'Upload this device library?',
+      description:replacesCloud
+        ? `This device has ${localSummary}. The cloud already has ${cloudSummary}. Replacing the cloud copy is permanent for other browsers, but this device copy remains protected. Only continue if this device has the version you want to keep.`
+        : `This device has ${localSummary}. Cloud storage is empty. Upload it so your signed-in browsers load the same library. Your device copy remains protected.`,
+      confirmLabel:replacesCloud ? 'Replace cloud copy' : 'Upload device library',
+      cancelLabel:'Keep current copies',
+      variant:replacesCloud ? 'destructive' : 'default',
+    });
+    if (!confirmed) return;
+    const result=await prepared.upload();
+    if (result?.kind==='synced') notify('Case Study Library synced');
+  };
+
   useEffect(() => {
     clearTimeout(saveTimer.current);
     saveVersion.current+=1;
@@ -1172,7 +1200,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
         <div className="cs2-h1"><span className="cs2-eb">{profileName} · Research workspace</span><h1>Case Study Library</h1><p>Explore setups, continue your research, and turn observations into tested playbooks.</p></div>
         <div className="cs2-stats"><div><b>{studies.length}</b><small>Studies</small></div><div><b className="is-gain">{validated.length}</b><small>Validated</small></div><div><b className="is-warn">{drafts.length}</b><small>In draft</small></div><div><b>{workspace.evidence.length}</b><small>Evidence</small></div></div>
         <div className="cs2-ha">
-          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { onUploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
+          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { void uploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
           <button type="button" className="cs2-btn is-pri is-lg" onClick={() => setCs2NewDialog({ templateId: null })}><Plus size={16}/>New Case Study</button>
         </div>
       </section>

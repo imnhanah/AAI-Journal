@@ -14,7 +14,7 @@ test('temporary Case Study workspace persists separately per user and never shar
 });
 test('recovery renders the normal editable library only through the isolated temporary save handler',()=>{
   const journal=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(journal,/profileCaseStudyState\.status === 'recovery' && temporaryCaseStudyWorkspaceOwnerRef\.current === user\.id \? temporaryCaseStudyWorkspace/);
+  assert.match(journal,/profileCaseStudyState\.status === 'recovery' \? \(temporaryCaseStudyWorkspaceOwnerRef\.current === user\.id \? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace\)/);
   assert.match(journal,/profileCaseStudyState\.status === 'recovery' \? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace/);
   assert.match(journal,/saveTemporaryCaseStudyLibrary\(user\.id, caseStudyWorkspace\)/);
   assert.doesNotMatch(journal,/handleSaveTemporaryCaseStudyWorkspace[\s\S]{0,280}setTemporaryCaseStudyWorkspace\(saved\.data\)/);

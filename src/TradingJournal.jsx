@@ -8058,22 +8058,35 @@ export function TradingJournalApp({ user, onLogout }) {
     setProfileCaseStudySyncStatus('Saved locally');
     return saved.data;
   };
-  const uploadTemporaryCaseStudyLibrary = async () => {
-    const temporary=temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : null;
+  const prepareCaseStudyLibraryUpload = async (workspace) => {
+    const temporary=workspace || (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : null);
+    if (!temporary) return {kind:'nothing-to-upload'};
     const loaded=await loadProfileCaseStudyLibrary(user.id);
-    if (loaded.error) { setProfileCaseStudySyncStatus('Sync failed'); return showError(loaded.error); }
+    if (loaded.error) { setProfileCaseStudySyncStatus(loaded.failure?.kind==='network' ? 'Sync failed' : 'Cloud unavailable'); showError(loaded.error); return null; }
     const plan=planTemporaryLibraryUpload({temporaryLibrary:temporary,cloudLibrary:loaded.data,cloudRevision:loaded.revision});
-    if (plan.kind === 'nothing-to-upload' || plan.kind === 'already-synced') { setProfileCaseStudySyncStatus('Synced'); return showInfo('Your device-only Case Study Library already matches cloud storage.'); }
-    if (plan.kind === 'reconciliation-required') {
-      setProfileCaseStudyConflict({local:plan.local,cloud:plan.cloud,cloudRevision:plan.expectedRevision}); setProfileCaseStudySyncStatus('Sync conflict');
-      return showError('Cloud storage already contains a different Case Study Library. Both copies are preserved; reconciliation requires your explicit approval.');
-    }
-    setProfileCaseStudySyncStatus('Syncing');
-    const saved=await saveProfileCaseStudyLibrary(user.id, temporary, plan.expectedRevision);
-    if (saved.conflict) { setProfileCaseStudyConflict({local:temporary,cloud:saved.data,cloudRevision:saved.revision}); setProfileCaseStudySyncStatus('Sync conflict'); return showError('Cloud storage changed during upload. Both copies are preserved.'); }
-    if (saved.error) { setProfileCaseStudySyncStatus('Sync failed'); return showError(saved.error); }
-    setProfileCaseStudyWorkspace(saved.data); profileCaseStudyWorkspaceRef.current=saved.data; profileCaseStudyWorkspaceOwnerRef.current=user.id; setProfileCaseStudyRevision(saved.revision); setProfileCaseStudySyncStatus('Synced');
-    showInfo('Device-only Case Study Library uploaded. The device copy remains available until you explicitly remove it.');
+    if (plan.kind === 'nothing-to-upload' || plan.kind === 'already-synced') { setProfileCaseStudySyncStatus('Synced'); showInfo('Your device-only Case Study Library already matches cloud storage.'); return plan; }
+    return {...plan,local:temporary,cloud:loaded.data,upload:async()=>{
+      caseStudySaveSeqRef.current+=1;
+      try {
+        persistPendingCaseStudySnapshot(temporary, plan.expectedRevision);
+        setProfileCaseStudySyncStatus('Uploading');
+        const saved=await saveProfileCaseStudyLibrary(user.id, temporary, plan.expectedRevision);
+        if (saved.conflict) {
+          persistCaseStudyConflict(temporary,saved.data || {},saved.revision);
+          showError('Cloud storage changed before the upload completed. Both copies remain protected; choose a version again before retrying.');
+          return {kind:'conflict'};
+        }
+        if (saved.error) { setProfileCaseStudySyncStatus('Sync failed'); showError(saved.error); return {kind:'failed'}; }
+        setProfileCaseStudyWorkspace(saved.data); profileCaseStudyWorkspaceRef.current=saved.data; profileCaseStudyWorkspaceOwnerRef.current=user.id;
+        profileCaseStudyRevisionRef.current=saved.revision; setProfileCaseStudyRevision(saved.revision);
+        setProfileCaseStudyState({status:'ready',workspace:saved.data,message:''});
+        profileCaseStudyConflictRef.current=null; setProfileCaseStudyConflict(null);
+        clearConfirmedCaseStudySnapshot(temporary);
+        setProfileCaseStudySyncStatus('Synced');
+        showInfo('Case Study Library uploaded and confirmed in cloud storage. The device copy remains protected.');
+        return {kind:'synced'};
+      } finally { caseStudySaveSeqRef.current+=1; }
+    }};
   };
   const retryPendingCaseStudyLibrarySync = async () => {
     const pending=caseStudySyncOutboxRef.current?.pending;
@@ -8748,7 +8761,7 @@ export function TradingJournalApp({ user, onLogout }) {
           {page === "management" && <ManagementPage onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
           {page === "markups" && (phoneCalendar ? <MobileMarkupsV2 markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} currency={account.baseCurrency} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} /> : <MarkupsRedesign markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} />)}
           {page === "reviews" && <ReviewLibraryPage onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />}
-          {page === "case-studies" && <CaseStudyLibrary sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' && temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyState.status === 'recovery' ? null : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={profileCaseStudyState.status === 'ready' && temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace ? uploadTemporaryCaseStudyLibrary : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />}
+          {page === "case-studies" && <CaseStudyLibrary sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />}
           </div>
           </MobilePageStage>
           </BacktestViewSession>
