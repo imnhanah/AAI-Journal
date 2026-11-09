@@ -1,143 +1,245 @@
-const textEncoder = new TextEncoder();
-
-const copyComputedStyles = (source, target) => {
-  const style = getComputedStyle(source);
-  target.style.cssText = Array.from(style).map(name => `${name}:${style.getPropertyValue(name)}!important`).join(';');
-  target.style.animation = 'none';
-  target.style.transition = 'none';
-  [...source.children].forEach((child, index) => copyComputedStyles(child, target.children[index]));
-};
-
-const toBytes = value => typeof value === 'string' ? textEncoder.encode(value) : value;
-const joinBytes = values => {
-  const chunks = values.map(toBytes);
-  const result = new Uint8Array(chunks.reduce((size, chunk) => size + chunk.length, 0));
+// AAI Journal certificate exporter.
+// Public API: downloadCertificate(element, name, 'image' | 'pdf')
+const encoder = new TextEncoder();
+const bytes = value => typeof value === 'string' ? encoder.encode(value) : value;
+function concat(parts) {
+  const chunks = parts.map(bytes);
+  const output = new Uint8Array(chunks.reduce((n, chunk) => n + chunk.length, 0));
   let offset = 0;
-  chunks.forEach(chunk => { result.set(chunk, offset); offset += chunk.length; });
-  return result;
-};
+  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
+  return output;
+}
 
-async function certificateCanvas(element) {
-  const box = element.getBoundingClientRect();
-  const width = Math.max(1, Math.round(box.width));
-  const height = Math.max(1, Math.round(box.height));
+function inlineStyles(source, target) {
+  const computed = getComputedStyle(source);
+  for (const property of computed) {
+    // CSS animations, transforms, and filters can interfere with SVG capture.
+    if (/^(animation|transition)/.test(property)) continue;
+    target.style.setProperty(property, computed.getPropertyValue(property), 'important');
+  }
+  target.style.setProperty('animation', 'none', 'important');
+  target.style.setProperty('transition', 'none', 'important');
+  for (let i = 0; i < source.children.length; i++) {
+    inlineStyles(source.children[i], target.children[i]);
+  }
+}
+
+async function svgCanvas(element) {
+  await document.fonts?.ready;
+  const bounds = element.getBoundingClientRect();
+  const width = Math.round(bounds.width);
+  const height = Math.round(bounds.height);
+  if (!width || !height) throw new Error('Certificate has no visible dimensions.');
   const clone = element.cloneNode(true);
-  copyComputedStyles(element, clone);
+  inlineStyles(element, clone);
   clone.style.width = `${width}px`;
   clone.style.height = `${height}px`;
   clone.style.margin = '0';
+  clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
   const markup = new XMLSerializer().serializeToString(clone);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`;
-  const image = new Image();
-  const url = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml;charset=utf-8'}));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="100%" height="100%">${markup}</foreignObject></svg>`;
+  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
   try {
-    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = url; });
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('Browser rejected SVG foreignObject certificate capture.'));
+      image.src = url;
+    });
     const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
     const canvas = document.createElement('canvas');
-    canvas.width = width * scale;
-    canvas.height = height * scale;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const context = canvas.getContext('2d');
+    if (!context) throw new Error('Canvas 2D context is unavailable.');
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    // Detect tainted canvases before returning them to the export pipeline.
+    context.getImageData(0, 0, 1, 1);
     return canvas;
   } finally {
     URL.revokeObjectURL(url);
   }
 }
 
-// Canvas is the dependable fallback for browsers that reject SVG foreignObject
-// rasterisation. It deliberately reads the visible certificate copy and theme
-// tokens, so the saved asset still matches the user's active light/dark theme.
+// Draws a clean, self-contained certificate when a browser cannot rasterize
+// the original DOM. Uses text and theme colors from the actual certificate.
 function fallbackCanvas(element) {
-  const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
   const width = 1600, height = 1130;
+  const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
   const canvas = document.createElement('canvas');
-  canvas.width = width * scale; canvas.height = height * scale;
-  const ctx = canvas.getContext('2d'); ctx.scale(scale, scale); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const resolve = (variable, fallback) => {
-    const probe = document.createElement('i'); probe.style.cssText = `position:absolute;color:var(${variable},${fallback})`; element.append(probe);
-    const value = getComputedStyle(probe).color; probe.remove(); return value || fallback;
-  };
-  const text = resolve('--text', '#13221b'), muted = resolve('--muted', '#607168'), accent = resolve('--accent', '#087e51'), gold = resolve('--celebrate-gold', '#d4a72c'), surface = resolve('--surface', '#fffaf0');
-  const round = (x, y, w, h, r) => {
-    // Avoid CanvasRenderingContext2D.roundRect: some Chromium builds used by
-    // the desktop app still expose an older 2D canvas implementation.
-    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
-  };
-  const centered = (value, x, y, maxWidth, gap = 30) => {
-    const words = String(value || '').split(' '); const lines = []; let line = '';
-    words.forEach(word => { const next = line ? `${line} ${word}` : word; if (line && ctx.measureText(next).width > maxWidth) { lines.push(line); line = word; } else line = next; });
-    if (line) lines.push(line); lines.forEach((lineValue, index) => ctx.fillText(lineValue, x, y + index * gap)); return lines.length;
-  };
-  const gradient = ctx.createRadialGradient(width / 2, 0, 20, width / 2, 0, width); gradient.addColorStop(0, '#fffdf8'); gradient.addColorStop(1, surface); ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = gold; ctx.lineWidth = 3; round(25, 25, width - 50, height - 50, 28); ctx.stroke(); ctx.globalAlpha = .55; ctx.lineWidth = 1; round(46, 46, width - 92, height - 92, 18); ctx.stroke(); ctx.globalAlpha = 1;
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context is unavailable.');
+  ctx.scale(scale, scale);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
   const get = selector => element.querySelector(selector)?.textContent?.trim() || '';
-  ctx.fillStyle = accent; ctx.font = '700 19px Arial'; ctx.fillText(get('.cc2-brand'), width / 2, 94);
-  ctx.fillStyle = text; ctx.font = '600 60px Georgia'; centered(get('.cc2-ttl'), width / 2, 154, 1000, 60);
+  const color = (variable, defaultColor) => {
+    const probe = document.createElement('span');
+    probe.style.cssText = `position:absolute;pointer-events:none;color:var(${variable},${defaultColor})`;
+    element.appendChild(probe);
+    try { return getComputedStyle(probe).color || defaultColor; }
+    finally { probe.remove(); }
+  };
+  const text = color('--text', '#13221b');
+  const muted = color('--muted', '#607168');
+  const accent = color('--accent', '#087e51');
+  const gold = color('--celebrate-gold', '#d4a72c');
+  const surface = color('--surface', '#fffaf0');
+
+  const round = (x, y, w, h, r) => {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+  };
+  const centered = (value, x, y, maxWidth, lineHeight = 30) => {
+    const words = String(value || '').split(/\s+/);
+    const lines = []; let line = '';
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(candidate).width > maxWidth) { lines.push(line); line = word; }
+      else line = candidate;
+    }
+    if (line) lines.push(line);
+    lines.forEach((value, i) => ctx.fillText(value, x, y + i * lineHeight, maxWidth));
+    return lines.length;
+  };
+
+  const background = ctx.createRadialGradient(width / 2, 0, 20, width / 2, 0, width);
+  background.addColorStop(0, '#fffdf8'); background.addColorStop(1, surface);
+  ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = gold; ctx.lineWidth = 3;
+  round(25, 25, width - 50, height - 50, 28); ctx.stroke();
+  ctx.globalAlpha = .55; ctx.lineWidth = 1;
+  round(46, 46, width - 92, height - 92, 18); ctx.stroke(); ctx.globalAlpha = 1;
+
+  ctx.fillStyle = accent; ctx.font = '700 19px Arial';
+  ctx.fillText(get('.cc2-brand'), width / 2, 94, 1100);
+  ctx.fillStyle = text; ctx.font = '600 60px Georgia';
+  centered(get('.cc2-ttl'), width / 2, 154, 1100, 60);
   ctx.fillStyle = gold; ctx.font = '700 20px Arial'; ctx.fillText('◆', width / 2, 285);
   ctx.fillStyle = muted; ctx.font = '700 17px Arial'; ctx.fillText('THIS CERTIFIES THAT', width / 2, 338);
-  ctx.fillStyle = text; ctx.font = 'italic 600 100px Georgia'; ctx.fillText(get('.cc2-nm'), width / 2, 435);
-  ctx.fillStyle = muted; ctx.font = '500 21px Arial'; centered(get('.cc2-txt'), width / 2, 505, 1120, 30);
-  const stats = [...element.querySelectorAll('.cc2-row div')].map(item => [item.querySelector('b')?.textContent, item.querySelector('span')?.textContent]); const rowX = 265, rowY = 620, rowW = 1070, rowH = 115, col = rowW / 4;
-  ctx.globalAlpha = .55; ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(rowX, rowY); ctx.lineTo(rowX + rowW, rowY); ctx.moveTo(rowX, rowY + rowH); ctx.lineTo(rowX + rowW, rowY + rowH); for (let index = 1; index < 4; index += 1) { ctx.moveTo(rowX + col * index, rowY); ctx.lineTo(rowX + col * index, rowY + rowH); } ctx.stroke(); ctx.globalAlpha = 1;
-  stats.forEach(([value, label], index) => { const x = rowX + col * (index + .5); ctx.fillStyle = text; ctx.font = '700 31px Georgia'; ctx.fillText(value || '—', x, rowY + 43); ctx.fillStyle = muted; ctx.font = '700 15px Arial'; ctx.fillText(String(label || '').toUpperCase(), x, rowY + 78); });
-  const bars = [...element.querySelectorAll('.cc2-bars i')], chartX = 265, chartY = 820, chartW = 1070, chartH = 78, gap = 5, barW = (chartW - gap * Math.max(0, bars.length - 1)) / Math.max(1, bars.length); ctx.fillStyle = '#81928a'; ctx.fillRect(chartX, chartY + chartH - 2, chartW, 2);
-  bars.forEach((bar, index) => { const h = Math.max(5, chartH * (Number.parseFloat(bar.style.getPropertyValue('--h')) / 40 || .2)); const fill = ctx.createLinearGradient(0, chartY + chartH - h, 0, chartY + chartH); fill.addColorStop(0, accent); fill.addColorStop(1, `${accent}55`); ctx.fillStyle = fill; ctx.fillRect(chartX + index * (barW + gap), chartY + chartH - h, barW, h); });
-  const date = get('.cc2-foot .cc2-sg:first-child .cc2-l'), issuer = get('.cc2-foot .cc2-sg:last-child .cc2-l'); ctx.strokeStyle = muted; ctx.globalAlpha = .65; ctx.beginPath(); ctx.moveTo(165, 995); ctx.lineTo(455, 995); ctx.moveTo(1145, 995); ctx.lineTo(1435, 995); ctx.stroke(); ctx.globalAlpha = 1; ctx.fillStyle = text; ctx.font = 'italic 600 32px Georgia'; ctx.fillText(date, 310, 966); ctx.fillText(issuer, 1290, 966); ctx.fillStyle = muted; ctx.font = '700 14px Arial'; ctx.fillText('DATE COMPLETED', 310, 1023); ctx.fillText('ISSUED BY', 1290, 1023); ctx.fillText(get('.cc2-cid'), width / 2, 1060);
+  ctx.fillStyle = text; ctx.font = 'italic 600 100px Georgia';
+  ctx.fillText(get('.cc2-nm'), width / 2, 435, 1200);
+  ctx.fillStyle = muted; ctx.font = '500 21px Arial';
+  centered(get('.cc2-txt'), width / 2, 505, 1120, 30);
+
+  const stats = [...element.querySelectorAll('.cc2-row div')].map(item => [
+    item.querySelector('b')?.textContent || '—', item.querySelector('span')?.textContent || ''
+  ]);
+  const rowX = 265, rowY = 620, rowW = 1070, rowH = 115, col = rowW / 4;
+  ctx.globalAlpha = .55; ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.beginPath();
+  ctx.moveTo(rowX, rowY); ctx.lineTo(rowX + rowW, rowY);
+  ctx.moveTo(rowX, rowY + rowH); ctx.lineTo(rowX + rowW, rowY + rowH);
+  for (let i = 1; i < 4; i++) { ctx.moveTo(rowX + col * i, rowY); ctx.lineTo(rowX + col * i, rowY + rowH); }
+  ctx.stroke(); ctx.globalAlpha = 1;
+  stats.slice(0, 4).forEach(([value, label], i) => {
+    const x = rowX + col * (i + .5);
+    ctx.fillStyle = text; ctx.font = '700 31px Georgia'; ctx.fillText(value, x, rowY + 43, col - 12);
+    ctx.fillStyle = muted; ctx.font = '700 15px Arial'; ctx.fillText(label.toUpperCase(), x, rowY + 78, col - 12);
+  });
+
+  const bars = [...element.querySelectorAll('.cc2-bars i')];
+  const chartX = 265, chartY = 820, chartW = 1070, chartH = 78, gap = 5;
+  const barW = (chartW - gap * Math.max(0, bars.length - 1)) / Math.max(1, bars.length);
+  ctx.fillStyle = muted; ctx.globalAlpha = .5;
+  ctx.fillRect(chartX, chartY + chartH - 2, chartW, 2); ctx.globalAlpha = 1;
+  bars.forEach((bar, i) => {
+    const fraction = Number.parseFloat(bar.style.getPropertyValue('--h')) / 40;
+    const h = Math.min(chartH, Math.max(5, chartH * (Number.isFinite(fraction) ? fraction : .2)));
+    const gradient = ctx.createLinearGradient(0, chartY + chartH - h, 0, chartY + chartH);
+    gradient.addColorStop(0, accent);
+    // Do NOT concatenate '55' to a computed rgb()/color() value: that is invalid CSS.
+    gradient.addColorStop(1, accent);
+    ctx.globalAlpha = .75;
+    ctx.fillStyle = gradient;
+    ctx.fillRect(chartX + i * (barW + gap), chartY + chartH - h, Math.max(1, barW), h);
+    ctx.globalAlpha = 1;
+  });
+
+  const date = get('.cc2-foot .cc2-sg:first-child .cc2-l');
+  const issuer = get('.cc2-foot .cc2-sg:last-child .cc2-l');
+  ctx.strokeStyle = muted; ctx.globalAlpha = .65; ctx.beginPath();
+  ctx.moveTo(165, 995); ctx.lineTo(455, 995);
+  ctx.moveTo(1145, 995); ctx.lineTo(1435, 995);
+  ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.fillStyle = text; ctx.font = 'italic 600 32px Georgia';
+  ctx.fillText(date, 310, 966, 350); ctx.fillText(issuer, 1290, 966, 350);
+  ctx.fillStyle = muted; ctx.font = '700 14px Arial';
+  ctx.fillText('DATE COMPLETED', 310, 1023);
+  ctx.fillText('ISSUED BY', 1290, 1023);
+  ctx.fillText(get('.cc2-cid'), width / 2, 1060, 1100);
   return canvas;
+}
+
+function canvasBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    try {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error(`Canvas could not encode ${type}.`)), type, quality);
+    } catch (error) { reject(error); }
+  });
 }
 
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.style.display = 'none';
-  document.body.append(link);
+  link.href = url; link.download = filename; link.style.display = 'none';
+  document.body.appendChild(link);
   link.click();
-  setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 0);
+  // iOS/Safari may start the download asynchronously; do not revoke immediately.
+  setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 60000);
 }
 
 function imagePdf(jpeg, width, height) {
-  const ratio = width / height;
   const pageWidth = 842;
-  const pageHeight = Math.round(pageWidth / ratio);
-  const content = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Certificate Do\nQ\n`;
+  const pageHeight = Math.round(pageWidth * height / width);
+  const stream = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Certificate Do\nQ\n`;
   const objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
     `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Certificate 4 0 R >> >> /Contents 5 0 R >>`,
-    joinBytes([`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`, jpeg, '\nendstream']),
-    `<< /Length ${textEncoder.encode(content).length} >>\nstream\n${content}endstream`,
+    concat([`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`, jpeg, '\nendstream']),
+    `<< /Length ${encoder.encode(stream).length} >>\nstream\n${stream}endstream`
   ];
-  const head = '%PDF-1.4\n%\xFF\xFF\xFF\xFF\n';
-  const chunks = [head];
+  // Exact bytes, including the binary marker, so xref offsets are valid.
+  const header = concat([encoder.encode('%PDF-1.4\n%'), new Uint8Array([0xff, 0xff, 0xff, 0xff]), encoder.encode('\n')]);
+  const chunks = [header];
   const offsets = [0];
-  let size = textEncoder.encode(head).length;
+  let length = header.length;
   objects.forEach((object, index) => {
-    offsets.push(size);
-    const objectBytes = joinBytes([`${index + 1} 0 obj\n`, object, '\nendobj\n']);
+    offsets.push(length);
+    const objectBytes = concat([`${index + 1} 0 obj\n`, object, '\nendobj\n']);
     chunks.push(objectBytes);
-    size += objectBytes.length;
+    length += objectBytes.length;
   });
-  const xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${size}\n%%EOF`;
-  return new Blob([...chunks, xref], {type:'application/pdf'});
+  const xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${length}\n%%EOF\n`;
+  return new Blob([...chunks, encoder.encode(xref)], { type: 'application/pdf' });
 }
 
 export async function downloadCertificate(element, name, kind) {
   if (!element) throw new Error('Certificate preview is unavailable.');
+  if (kind !== 'image' && kind !== 'pdf') throw new Error(`Unsupported certificate export type: ${kind}`);
   const safeName = String(name || 'certificate').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'certificate';
   let canvas;
-  try { canvas = await certificateCanvas(element); }
-  catch { canvas = fallbackCanvas(element); }
+  try {
+    canvas = await svgCanvas(element);
+  } catch (primaryError) {
+    console.warn('[certificateExport] SVG capture failed; trying Canvas fallback:', primaryError);
+    try {
+      canvas = fallbackCanvas(element);
+    } catch (fallbackError) {
+      console.error('[certificateExport] Canvas fallback also failed:', fallbackError);
+      throw new Error(`Certificate capture failed: ${fallbackError.message}`, { cause: fallbackError });
+    }
+  }
   if (kind === 'image') {
-    const image = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!image) throw new Error('Could not create certificate image.');
-    download(image, `${safeName}-certificate.png`);
+    download(await canvasBlob(canvas, 'image/png'), `${safeName}-certificate.png`);
     return;
   }
-  const jpeg = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .96));
-  if (!jpeg) throw new Error('Could not create certificate PDF.');
+  const jpeg = await canvasBlob(canvas, 'image/jpeg', .96);
   download(imagePdf(new Uint8Array(await jpeg.arrayBuffer()), canvas.width, canvas.height), `${safeName}-certificate.pdf`);
 }
