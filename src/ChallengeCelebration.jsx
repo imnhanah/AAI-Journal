@@ -64,7 +64,7 @@ export default function ChallengeCompletionCelebration({ accountName, totalLevel
       <div className="tj-challenge-completion-stats">
         <div><small>STARTING BALANCE</small><strong>{formatMoney(startingBalance)}</strong></div>
         <div><small>FINAL BALANCE</small><strong>{formatMoney(finalBalance)}</strong></div>
-        <div><small>TRADING GROWTH</small><strong>{growth===null?'—':`${growth>0?'+':''}${growth.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}%`}</strong></div>
+        <div><small>GROWTH</small><strong>{growth===null?'—':`${growth>0?'+':''}${growth.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}%`}</strong></div>
       </div>
       {soundBlocked && <button type="button" className="tj-btn-outline" onClick={async()=>{const ready=await unlockAlertSounds();if(ready)setSoundBlocked(!await playAlertSound('challenge'));}}>Play celebration sound</button>}
       <div className="tj-challenge-completion-actions"><button type="button" className="tj-btn-outline" onClick={onViewJourney || onClose}>View journey</button><button ref={continueButton} type="button" className="tj-btn-primary" onClick={onClose}>Continue</button></div>

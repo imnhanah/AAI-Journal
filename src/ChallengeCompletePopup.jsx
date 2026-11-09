@@ -4,6 +4,7 @@
 import { Play } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSynthSound, stopSynthSound, unlockSynthSounds } from './synthSounds';
+import { downloadCertificate } from './certificateExport';
 import './desktopPopups.css';
 
 const CONFETTI = ['var(--celebrate-gold)', 'var(--accent)', 'var(--tj-blue)', 'var(--celebrate-gold-hi)', 'var(--tj-green)', 'var(--loss)', 'var(--tj-purple)'];
@@ -47,7 +48,9 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
   const { traderName, accountName, totalLevels, modeName, rewardLabel, finalTarget, daysTaken, trades, stepBacks, growth, completedAt, certificateId } = facts;
   const [view, setView] = useState('popup');
   const [blocked, setBlocked] = useState(false);
-  const started = useRef(false), primary = useRef(null), dialog = useRef(null);
+  const [saving, setSaving] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const started = useRef(false), primary = useRef(null), dialog = useRef(null), certificate = useRef(null);
   const shown = useCountUp(finalTarget || 0);
   const levels = Math.max(1, totalLevels || 1);
   const bars = useMemo(() => Array.from({ length: levels }, (_, i) => 8 + Math.pow(levels === 1 ? 1 : i / (levels - 1), 1.9) * 64), [levels]);
@@ -75,10 +78,16 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   };
-  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `${growth > 0 ? '+' : ''}${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`, 'Trading growth']];
+  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `${growth > 0 ? '+' : ''}${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`, 'Growth']];
+  const saveCertificate = async (kind) => {
+    setSaving(kind); setSaveError('');
+    try { await downloadCertificate(certificate.current, name, kind); }
+    catch { setSaveError('Could not create the certificate file. Please try again.'); }
+    finally { setSaving(''); }
+  };
   if (view === 'certificate') return <div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
     <div className="cc2-wrap">
-      <div className="cc2-cert">
+      <div ref={certificate} className="cc2-cert">
         <i className="cc2-b1"/><i className="cc2-b2"/><i className="cc2-cn is-a"/><i className="cc2-cn is-b"/><i className="cc2-cn is-c"/><i className="cc2-cn is-d"/><i className="cc2-sh"/>
         <div className="cc2-cin">
           <div className="cc2-brand">AAICOREFX · Trading Journal</div>
@@ -98,10 +107,12 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
         </div>
       </div>
       <div className="cc2-bar">
-        <button ref={primary} type="button" className="cc2-cbtn is-pri" onClick={() => { try { window.print(); } catch { /* printing unavailable */ } }}>Save as PDF</button>
+        <button ref={primary} type="button" className="cc2-cbtn is-pri" disabled={!!saving} onClick={() => saveCertificate('pdf')}>{saving === 'pdf' ? 'Saving…' : 'Save PDF'}</button>
+        <button type="button" className="cc2-cbtn" disabled={!!saving} onClick={() => saveCertificate('image')}>{saving === 'image' ? 'Saving…' : 'Save image'}</button>
         <button type="button" className="cc2-cbtn" onClick={() => setView('popup')}>Back</button>
         <button type="button" className="cc2-cbtn" onClick={onClose}>Close</button>
       </div>
+      {saveError && <p className="cc2-save-error" role="alert">{saveError}</p>}
     </div>
   </div>;
   return <div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>

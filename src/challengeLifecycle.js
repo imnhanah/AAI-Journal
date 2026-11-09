@@ -17,6 +17,15 @@ export function linkedChallengeTrades(state, account) {
   return (account.trades || []).filter(trade => !excluded.has(trade.id) && (!trade.accountId || trade.accountId === account.id) &&
     (included.has(trade.id) || tradeLoggedAt(trade) >= Date.parse(config.startedAt)));
 }
+// The completion card measures days by the same dated trading activity shown
+// in Calendar: one day for each distinct close/date, not elapsed wall-clock
+// time since the challenge was created.
+export function challengeTradingDays(trades = []) {
+  return new Set(trades.filter(closedChallengeTrade).map(trade => {
+    const value = trade.closeDate || trade.date || trade.createdAt;
+    return String(value || '').slice(0, 10);
+  }).filter(Boolean)).size;
+}
 export function scopeChallengeAccount(workspace = {}, balance = {}) {
   const balances = Array.isArray(workspace.balances) ? workspace.balances.filter(item => item && typeof item === 'object') : [];
   const primary = balances.filter(item => item.isActive !== false)[0]?.id === balance.id;

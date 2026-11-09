@@ -12,7 +12,7 @@ import {ThemeSelect} from './JournalControls';
 import {targetAmount,changeSetupTarget} from './challengeSetupTargets';
 import {activeBalances,isMultiBalanceWorkspace} from './balanceModel';
 import {buildChallengePlan, challengeFailureFloor, isAdaptiveBalanceMode} from './challengeModel';
-import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance,closedChallengeTrade} from './challengeLifecycle';
+import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance,closedChallengeTrade,challengeTradingDays} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import useBalanceChallenge from './useBalanceChallenge';
 import JournalSignalHeader from './JournalSignalHeader';
@@ -169,11 +169,10 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   const celebrationFacts=()=>{
     const trades=linkedChallengeTrades(state,account);
     const lastClose=trades.map(trade=>Date.parse(trade.closeDate||trade.date)).filter(Number.isFinite).sort((a,b)=>b-a)[0];
-    const started=Date.parse(state.automation?.startedAt);
     const completedAt=lastClose || Date.now();
     return {traderName, accountName:account.name, totalLevels:plan.length, modeName, rewardLabel,
       finalTarget:plan.at(-1)?.end ?? life.liveBalance, trades:trades.length,
-      daysTaken:Number.isFinite(started)?Math.max(1,Math.ceil((completedAt-started)/864e5)):null,
+      daysTaken:challengeTradingDays(trades),
       stepBacks:state.stepBacks ?? Object.values(state.statuses || {}).filter(status=>status==='Step back').length,
       growth:challengeBalance>0?challengeTradingPnl/challengeBalance*100:null, completedAt,
       certificateId:`AF-${String(account.id || account.name || '').replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase()}-${plan.length}`};

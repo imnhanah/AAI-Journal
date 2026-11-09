@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildChallengePlan,emptyChallenge,canUseLossStreak} from './challengeModel.js';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle,liveChallengeBalance} from './challengeLifecycle.js';
+import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle,liveChallengeBalance,challengeTradingDays} from './challengeLifecycle.js';
 import {accountLossGuardrails} from './accountRisk.js';
 const base=()=>resetAutomation(emptyChallenge(),[],'risk',1,new Date('2026-10-06T09:00:00Z'));
 const account={id:'a',balance:20,challengeEnabled:true};
@@ -94,6 +94,15 @@ test('activating a challenge leaves previously logged trades outside the new cha
   const afterActivation={...loss,id:'new-trade',createdAt:'2026-10-06T10:00:00Z'};
   assert.deepEqual(linkedChallengeTrades(activated,{...account,trades:[historical,afterActivation]}).map(trade=>trade.id),['new-trade']);
   assert.equal(challengeLifecycle(activated,{...account,trades:[historical,afterActivation]}).settingsLocked,true);
+});
+test('completion days count distinct challenge trading dates, not elapsed time',()=>{
+  const trades=[
+    {...loss,id:'one',date:'2026-10-06',closeDate:'2026-10-06'},
+    {...loss,id:'two',date:'2026-10-06',closeDate:'2026-10-06'},
+    {...loss,id:'three',date:'2026-10-12',closeDate:'2026-10-12'},
+    {...loss,id:'running',date:'2026-10-13',closeDate:'2026-10-13',status:'open'},
+  ];
+  assert.equal(challengeTradingDays(trades),2);
 });
 test('shared-trade removal preserves other accounts and recalculates aggregate totals',()=>{
   const workspace={trades:[{id:'shared',pnl:8,balanceResults:[{balanceId:'a',grossPnl:10,netPnl:9,commission:1},{balanceId:'b',grossPnl:-1,netPnl:-1}]}]};

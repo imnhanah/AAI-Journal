@@ -148,25 +148,13 @@
 .cc2-bar {display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px;}
 .tj-root .cc2-cbtn {height:44px;min-height:0;padding:0 20px;border:1px solid color-mix(in oklab,var(--text) 15%,transparent);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer;}
 .tj-root .cc2-cbtn.is-pri {border:0;background:linear-gradient(135deg,var(--accent),color-mix(in oklab,var(--accent) 70%,var(--text)));color:var(--on-accent);box-shadow:0 10px 24px -8px color-mix(in oklab,var(--accent) 70%,transparent);}
+.tj-root .cc2-cbtn:disabled {cursor:wait;opacity:.65;}
+.cc2-save-error {margin:10px 0 0;color:var(--loss);font-size:13px;font-weight:600;text-align:center;}
 @container (max-width:640px) {.cc2-cin {padding:18px 40px 10px;} .cc2-cert {aspect-ratio:auto;}}
 @keyframes cc2-in {from {opacity:0;transform:translateY(20px) scale(.97);}}
 @keyframes cc2-shn {60%,100% {transform:translateX(100%);}}
 @keyframes cc2-seal {from {opacity:0;transform:scale(2.4) rotate(-25deg);}}
 
-/* Save as PDF prints the certificate alone. */
-@media print {
-  @page {size:landscape;margin:0;}
-  html,body {width:100%!important;height:100%!important;margin:0!important;overflow:hidden!important;}
-  body * {visibility:hidden;}
-  .cc2-cv,.cc2-cv * {visibility:visible;}
-  .cc2-cv {position:fixed;inset:0;width:100vw;height:100vh;padding:0;overflow:hidden;background:var(--surface);backdrop-filter:none;}
-  .cc2-wrap {width:100vw;height:100vh;}
-  .cc2-cert {box-sizing:border-box;width:100vw;height:100vh;min-height:0;aspect-ratio:auto;overflow:hidden;border-radius:0;box-shadow:none;break-inside:avoid;page-break-inside:avoid;}
-  .cc2-cin {box-sizing:border-box;height:100%;padding:4vh 8vw 2.5vh;}
-  .cc2-nm {background:none!important;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;}
-  .cc2-foot {margin-top:auto;}
-  .cc2-bar {display:none;}
-}
 @media (prefers-reduced-motion:reduce) {
   :is(.sv2,.sv2 *,.sv2-scrim,.cc2,.cc2 *,.cc2-cert,.cc2-cert *) {animation-duration:.01s!important;animation-iteration-count:1!important;}
 }
