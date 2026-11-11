@@ -98,7 +98,7 @@
 .tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li {height:16px;min-width:0;border-radius:4px;background:color-mix(in srgb,var(--tj-border) 76%,var(--tj-panel));}
 .tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li.is-passed {background:var(--tj-green);}
 .tj-root .tj-account-settings-redesign .tj-challenge-plan-progress li.is-current {border:1px solid var(--tj-accent);outline:1px solid color-mix(in srgb,var(--tj-accent) 30%,transparent);outline-offset:1px;background:color-mix(in srgb,var(--tj-accent) 42%,var(--tj-panel));}
-.tj-root .tj-account-settings-redesign .tj-challenge-activation-message {margin:12px 0 0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 45%,var(--tj-border));border-radius:10px;background:color-mix(in srgb,var(--red) 8%,var(--tj-panel));color:var(--red);font-size:var(--text-min);line-height:1.45;}
+.tj-root .tj-account-settings-redesign .tj-challenge-activation-message {margin-top:12px;}
 @media(min-width:768px) {
   .tj-root .tj-account-settings-redesign .tj-challenge-mode-buttons {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
 }

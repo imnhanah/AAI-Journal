@@ -99,6 +99,7 @@ test('phone dock keeps the agreed pages and routes logging to its dedicated libr
   assert.doesNotMatch(shell,/label:'New markup'|label:'Log trade'/);
   assert.match(shell,/quickTile\('markups',Pencil,'Markup'/);
   assert.match(shell,/quickTile\('journal',NotebookText,'Trade Logs'/);
+  for(const detail of ['Plan before execution','Track every trade','Turn trades into lessons','Build your account'])assert.ok(shell.includes(detail),detail);
 });
 
 test('mobile More sheet keeps every destination and logging out moved to Profile',()=>{

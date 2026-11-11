@@ -28,7 +28,10 @@ test('performance chips show gradient cues only when more views are hidden',()=>
 test('phone analytics period includes padding within the shared selector row',()=>{
   assert.match(read('./mobileAnalytics.css'),/tj-analytics-period \{width:100%;min-width:0;box-sizing:border-box/);
 });
-test('Vitals cards bleed evenly through both phone edges while only the rail scrolls horizontally',()=>{
+test('Vitals and breakdown rows snap to complete mobile card groups without edge clipping',()=>{
   const css=read('./mobileAnalyticsPulse.css');
-  assert.match(css,/\.tj-pulse-rail\{display:flex;gap:10px;max-width:none;margin:0 -14px;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;/);
+  assert.match(css,/\.tj-pulse-rail\{display:flex;gap:10px;max-width:100%;margin:0;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;/);
+  assert.match(css,/\.tj-pulse-vital\{[^}]*flex:0 0 calc\(\(100% - 10px\) \/ 2\)/);
+  assert.match(css,/\.tj-pulse-chips\{display:flex;gap:8px;max-width:100%;margin:-6px 0 0;padding:0;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory/);
+  assert.match(css,/\.tj-pulse-chips button\{display:flex;flex:0 0 calc\(\(100% - 16px\) \/ 3\)/);
 });

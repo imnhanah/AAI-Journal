@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildChallengePlan,emptyChallenge,canUseLossStreak} from './challengeModel.js';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle,liveChallengeBalance} from './challengeLifecycle.js';
+import {scopeChallengeAccount,pruneChallengeTrades,linkedChallengeTrades,challengeLifecycle,liveChallengeBalance,challengeTradingDays} from './challengeLifecycle.js';
 import {accountLossGuardrails} from './accountRisk.js';
 const base=()=>resetAutomation(emptyChallenge(),[],'risk',1,new Date('2026-10-06T09:00:00Z'));
 const account={id:'a',balance:20,challengeEnabled:true};
@@ -32,6 +32,11 @@ test('one dollar below the minimum fails; only a restoring deposit reactivates',
   const profit={...loss,id:'later',grossPnl:20,pnl:20,createdAt:'2026-10-06T11:00:00Z'};
   assert.equal(replayChallenge(base(),{...account,trades:[loss,profit]}).failed,true);
 });
+test('Adaptive Balance fails at, not only below, its configured drawdown floor',()=>{
+  const baseline=resetAutomation({...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:10,adaptiveDrawdownPct:50}},[],'adaptive',1,new Date('2026-10-06T09:00:00Z'),30,100);
+  const atFloor={...loss,id:'adaptive-floor',grossPnl:-50,pnl:-50};
+  assert.equal(challengeLifecycle(baseline,{...account,balance:100,trades:[atFloor]}).failed,true);
+});
 test('deposits select the highest affordable starting level, without trading passes',()=>{
   const baseline={...base(),automation:{...base().automation,mode:'streak'}};
   const result=replayChallenge(baseline,{...account,trades:[],financeMovements:[deposit(80)]});
@@ -59,6 +64,20 @@ test('deposit jump preserves earned passes and replay removes labels when deposi
   assert.equal(removed.statuses[1],'Pass');
   assert.equal(removed.statuses[2],'In progress');
   assert.deepEqual(removed.fundingJumps,{});
+});
+test('recovery ignores a prior high-water mark and returns to the balance-funded rung',()=>{
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const initial={...emptyChallenge(),activeLevel:7,statuses:{1:'Pass',2:'Pass',3:'Pass',4:'Pass',5:'Pass',6:'Pass',7:'In progress'},automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',7,new Date('2026-10-06T09:00:00Z'),10,100);
+  const failure={...loss,id:'fail',grossPnl:-81,pnl:-81,createdAt:'2026-10-06T10:00:00Z'};
+  const recovery={...deposit(10),id:'recover',createdAt:'2026-10-06T12:00:00Z'};
+  const result=replayChallenge(baseline,{...account,balance:100,trades:[failure],financeMovements:[recovery]});
+  assert.equal(result.failed,false);
+  assert.equal(result.activeLevel,2);
+  assert.equal(result.statuses[2],'In progress');
+  assert.equal(result.statuses[7],undefined);
+  assert.equal(result.liveBalance,29);
+  assert.ok(plan[1].start<=29 && plan[2].start>29);
 });
 test('open linked trades lock settings without contributing to balance or progression',()=>{
   const open={...loss,status:'open',pnl:-100,grossPnl:-100};
@@ -94,6 +113,15 @@ test('activating a challenge leaves previously logged trades outside the new cha
   const afterActivation={...loss,id:'new-trade',createdAt:'2026-10-06T10:00:00Z'};
   assert.deepEqual(linkedChallengeTrades(activated,{...account,trades:[historical,afterActivation]}).map(trade=>trade.id),['new-trade']);
   assert.equal(challengeLifecycle(activated,{...account,trades:[historical,afterActivation]}).settingsLocked,true);
+});
+test('completion days count distinct challenge trading dates, not elapsed time',()=>{
+  const trades=[
+    {...loss,id:'one',date:'2026-10-06',closeDate:'2026-10-06'},
+    {...loss,id:'two',date:'2026-10-06',closeDate:'2026-10-06'},
+    {...loss,id:'three',date:'2026-10-12',closeDate:'2026-10-12'},
+    {...loss,id:'running',date:'2026-10-13',closeDate:'2026-10-13',status:'open'},
+  ];
+  assert.equal(challengeTradingDays(trades),2);
 });
 test('shared-trade removal preserves other accounts and recalculates aggregate totals',()=>{
   const workspace={trades:[{id:'shared',pnl:8,balanceResults:[{balanceId:'a',grossPnl:10,netPnl:9,commission:1},{balanceId:'b',grossPnl:-1,netPnl:-1}]}]};

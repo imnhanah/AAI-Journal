@@ -43,5 +43,6 @@ export function createPrivateCache(store) {
       return task;
     },
     async read(key) { const ticket = token(); await barrier; assert(ticket); const value = await store.read(key); assert(ticket); return value; },
+    async write(key, value) { const ticket = token(); await barrier; assert(ticket); await store.write(key, value, () => valid(ticket)); assert(ticket); },
   };
 }

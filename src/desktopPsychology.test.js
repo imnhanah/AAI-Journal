@@ -27,6 +27,11 @@ test('Psychology v2 has the section nav, chart layers and an honest verdict with
   assert.match(view, /\(points\.length <= 40 \|\| hover === i\) && <circle/);
 });
 
+test('Psychology briefing does not dereference finance data when Finance is disabled', () => {
+  assert.match(journal, /finance\?\.savings > 0/);
+  assert.match(journal, /fmtMoney\(finance\?\.tradingBalance\)/);
+});
+
 test('Psychology v2 styles are desktop-only, hide the duplicate banner and reflow by page width', () => {
   assert.match(css, /\.tj-page-transition:has\(\.ps2\)>\.tj-signal-page-psychology \{display:none;\}/);
   assert.match(css, /^@media \(min-width:768px\) \{/m);

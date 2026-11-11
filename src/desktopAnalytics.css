@@ -152,6 +152,12 @@
   .an2-sech h2 {font-size:22px;letter-spacing:-.028em;}
   .an2-sech>span {color:var(--muted);font-size:13px;}
   .an2-sech .an2-seg {align-self:center;margin-left:auto;}
+  .an2-chart-pager {display:flex;align-items:center;gap:7px;margin-left:auto;}
+  .tj-root .an2 .an2-chart-pager button {min-height:30px;padding:5px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font:inherit;font-size:12px;font-weight:650;cursor:pointer;}
+  .tj-root .an2 .an2-chart-pager button:hover:not(:disabled) {border-color:color-mix(in oklab,var(--accent) 45%,var(--border));color:var(--accent);}
+  .tj-root .an2 .an2-chart-pager button:disabled {opacity:.45;cursor:default;}
+  .an2-chart-pager span {color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .an2-rhythm .an2-plan-chart {touch-action:pan-y;}
   .an2-a2 {grid-template-columns:repeat(2,minmax(0,1fr));}
   .an2-a2b {grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);}
   .an2-kpi4 {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
@@ -183,6 +189,36 @@
   .an2-ig {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
   .an2-bw {display:flex;justify-content:space-between;gap:12px;padding:13px 18px;border-radius:14px;background:var(--raised);color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
   .an2-bw b {margin-left:8px;font-size:15px;letter-spacing:0;}
+  /* Multiple instruments share one concise card: swipe or use the pager to compare
+     each market without turning this section into a long vertical report. */
+  .an2-inst-carousel {overflow:hidden;padding:0;}
+  .an2-inst-viewport {overflow:hidden;touch-action:pan-y;}
+  .an2-inst-track {display:flex;transition:transform .32s cubic-bezier(.22,1,.36,1);will-change:transform;}
+  .an2-inst-compact {flex:0 0 50%;display:flex;flex-direction:column;align-items:stretch;gap:13px;min-width:0;padding:17px 18px;border-right:1px solid var(--border);}
+  .an2-inst-compact:last-child {border-right:0;}
+  .an2-inst-compact-head {display:flex;align-items:center;min-width:0;}
+  .an2-inst-compact-head h3 {margin:2px 0 1px;font-size:23px;letter-spacing:-.03em;}
+  .an2-inst-compact-head .an2-num {display:inline-block;margin-right:7px;font-size:17px;font-weight:700;}
+  .an2-inst-compact-head small {color:var(--muted);font-size:12px;}
+  .an2-inst-compact-metrics {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;background:var(--raised);overflow:hidden;}
+  .an2-inst-compact-metrics>span {display:flex;flex-direction:column;gap:3px;min-width:0;padding:10px 13px;border-right:1px solid var(--border);}
+  .an2-inst-compact-metrics>span:nth-child(2n) {border-right:0;}
+  .an2-inst-compact-metrics>span:nth-child(-n+2) {border-bottom:1px solid var(--border);}
+  .an2-inst-compact-metrics small {overflow:hidden;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.09em;text-overflow:ellipsis;text-transform:uppercase;white-space:nowrap;}
+  .an2-inst-compact-metrics b {overflow:hidden;font-size:14px;text-overflow:ellipsis;white-space:nowrap;}
+  .an2-inst-compact-best {display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .an2-inst-compact-best b {margin-left:5px;font-size:13px;letter-spacing:0;}
+  .an2-inst-carousel-controls {display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px 13px;}
+  .tj-root .an2 .an2-inst-carousel-controls>button {display:grid;width:28px;height:28px;place-items:center;padding:0;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);cursor:pointer;}
+  .tj-root .an2 .an2-inst-carousel-controls>button:disabled {opacity:.38;cursor:default;}
+  .an2-inst-dots {display:flex;align-items:center;justify-content:center;gap:6px;min-width:72px;}
+  .tj-root .an2 .an2-inst-dots button {width:6px;height:6px;min-height:0;padding:0;border:0;border-radius:99px;background:var(--border);cursor:pointer;transition:width .2s ease,background .2s ease;}
+  .tj-root .an2 .an2-inst-dots button.is-active {width:20px;background:var(--accent);}
+  .an2-two-up-carousel {overflow:hidden;}
+  .an2-two-up-viewport {overflow:hidden;margin:0 -8px;touch-action:pan-y;}
+  .an2-two-up-track {display:flex;transition:transform .32s cubic-bezier(.22,1,.36,1);will-change:transform;}
+  .an2-two-up-slide {flex:0 0 50%;min-width:0;padding:0 8px;}
+  .an2-two-up-slide>.an2-card {height:100%;}
 
   /* Edge: markups */
   .an2-plan-chart {min-width:0;}
@@ -225,6 +261,18 @@
   .an2-wr em {color:var(--muted);font-size:12px;font-style:normal;text-align:right;}
   .an2-wr.is-off {opacity:.55;}
   .an2-sml {margin-top:14px!important;font-size:12.5px;}
+  .an2-rhythm-snapshot {background:linear-gradient(120deg,color-mix(in oklab,var(--accent) 8%,var(--surface)),var(--surface) 62%);}
+  .an2-session-list {display:flex;flex-direction:column;}
+  .an2-session-row {display:grid;grid-template-columns:32px minmax(130px,1fr) minmax(160px,1.1fr) minmax(88px,.55fr);align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--border);}
+  .an2-session-row:last-child {border-bottom:0;}
+  .an2-session-rank {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;}
+  .an2-session-name {display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .an2-session-name b {overflow:hidden;font-size:14px;text-overflow:ellipsis;white-space:nowrap;}
+  .an2-session-name small,.an2-session-quality small {color:var(--muted);font-size:12px;}
+  .an2-session-quality {display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .an2-session-quality>div:first-child {display:flex;justify-content:space-between;gap:10px;}
+  .an2-session-quality b {font-size:12px;white-space:nowrap;}
+  .an2-session-row>.an2-num {font-size:15px;text-align:right;white-space:nowrap;}
 
 
   /* Discipline & Risk */
@@ -294,13 +342,17 @@
   /* Analytics v2 is content-led. Do not inherit the old dashboard-era
      full-height tracks, which create an empty scroll region after the final
      Overview cards when there is little data. */
-  .tj-root .tj-content:has(.an2),
-  .tj-root .tj-content-inner:has(.an2),
-  .tj-root .tj-page-transition:has(.an2),
-  .tj-root .tj-reference-analytics:has(.an2) {min-height:0;}
-  .tj-root .tj-content-inner:has(.an2),
-  .tj-root .tj-page-transition:has(.an2),
-  .tj-root .tj-reference-analytics:has(.an2) {flex:none;}
+  .tj-root.tj-root .tj-content:has(.an2),
+  .tj-root.tj-root .tj-content-inner:has(.an2),
+  .tj-root.tj-root .tj-page-transition:has(.an2),
+  .tj-root.tj-root .tj-reference-analytics:has(.an2) {min-height:0;}
+  .tj-root.tj-root .tj-content-inner:has(.an2),
+  .tj-root.tj-root .tj-page-transition:has(.an2),
+  .tj-root.tj-root .tj-reference-analytics:has(.an2) {flex:none;}
+  .tj-root.tj-root .tj-reference-analytics-overview>.tj-view-transition {
+    grid-template-rows:none;
+    grid-auto-rows:auto;
+  }
 
   /* By the page's own width (the side panel can take half the window). */
   @container journal-workspace (max-width:1700px) {
@@ -321,11 +373,16 @@
     .tj-root .an2 .an2-eng-top {flex-wrap:wrap;}
     .tj-root .an2 .an2-cg {grid-template-columns:minmax(0,1fr);}
     .tj-root .an2 .an2-a2 {grid-template-columns:minmax(0,1fr);}
+    .tj-root .an2 .an2-session-row {grid-template-columns:28px minmax(120px,1fr) minmax(130px,1fr) auto;gap:12px;}
     .tj-root .an2 :is(.an2-ig,.an2-mdg) {grid-template-columns:repeat(2,minmax(0,1fr));}
     .tj-root .an2 .an2-pth {display:none;}
     .tj-root .an2 .an2-ptr {grid-template-columns:repeat(2,minmax(0,1fr));}
     .tj-root .an2 .an2-ih {flex-wrap:wrap;}
+    .tj-root .an2 .an2-inst-compact {padding:15px 13px;}
     .tj-root .an2 .an2-sech {flex-wrap:wrap;}
+    .tj-root .an2 .an2-chart-pager {width:100%;margin-left:0;justify-content:space-between;}
+    .tj-root .an2 .an2-session-row {grid-template-columns:28px minmax(0,1fr) auto;gap:10px;}
+    .tj-root .an2 .an2-session-quality {grid-column:2/-1;}
     .tj-root .an2 :is(.an2-fgs,.an2-rc,.an2-nt3) {grid-template-columns:repeat(2,minmax(0,1fr));}
     .tj-root .an2 .an2-sc2 {flex-direction:column;align-items:stretch;}
     .tj-root .an2 .an2-lp {justify-content:flex-start;}

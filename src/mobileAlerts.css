@@ -1,0 +1,38 @@
+@media (max-width:767px) {
+  .tj-mobile-alert {
+    position:fixed;
+    z-index:450000;
+    right:12px;
+    bottom:calc(var(--mobile-bottom,88px) + 14px + env(safe-area-inset-bottom,0px));
+    left:12px;
+    display:grid;
+    grid-template-columns:38px minmax(0,1fr) 32px;
+    align-items:center;
+    gap:10px;
+    min-height:62px;
+    padding:10px 8px 10px 10px;
+    border:1px solid var(--tj-border);
+    border-radius:17px;
+    background:color-mix(in srgb,var(--tj-panel) 94%,var(--tj-bg));
+    color:var(--tj-text);
+    box-shadow:0 18px 38px color-mix(in srgb,var(--tj-text) 22%,transparent);
+    animation:tj-mobile-alert-in .22s cubic-bezier(.22,1,.36,1);
+  }
+  .tj-mobile-alert-icon {display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--tj-accent) 13%,var(--tj-panel));color:var(--tj-accent)}
+  .tj-mobile-alert-copy {display:grid;gap:2px;min-width:0;font-size:13px;line-height:1.35}
+  .tj-mobile-alert-copy strong {font-size:13px;font-weight:760}
+  .tj-mobile-alert-copy span {color:var(--tj-muted)}
+  .tj-mobile-alert button {display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--tj-muted)}
+  .tj-mobile-alert button:active {background:var(--tj-panel-alt);color:var(--tj-text)}
+  .tj-mobile-alert.is-warning {border-color:color-mix(in srgb,var(--tj-amber) 55%,var(--tj-border))}
+  .tj-mobile-alert.is-warning .tj-mobile-alert-icon {background:color-mix(in srgb,var(--tj-amber) 14%,var(--tj-panel));color:var(--tj-amber)}
+  .tj-mobile-alert.is-error {border-color:color-mix(in srgb,var(--tj-red) 58%,var(--tj-border))}
+  .tj-mobile-alert.is-error .tj-mobile-alert-icon {background:color-mix(in srgb,var(--tj-red) 13%,var(--tj-panel));color:var(--tj-red)}
+  .tj-mobile-alert.is-info .tj-mobile-alert-icon {background:color-mix(in srgb,var(--tj-green) 13%,var(--tj-panel));color:var(--tj-green)}
+
+  /* Every app-wide save/sync notice follows the same safe bottom position. */
+  .tj-toast {top:auto;bottom:calc(var(--mobile-bottom,88px) + 14px + env(safe-area-inset-bottom,0px));width:auto;max-width:none;margin:0 12px;border-radius:17px;padding:11px 10px 11px 13px;animation:tj-mobile-alert-in .22s cubic-bezier(.22,1,.36,1)}
+}
+@keyframes tj-mobile-alert-in {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce) {.tj-mobile-alert,.tj-toast{animation:none!important}}
+@media (min-width:768px) {.tj-mobile-alert{display:none!important}}

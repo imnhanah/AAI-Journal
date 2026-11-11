@@ -9,11 +9,11 @@ const sources = ['TradingJournal.jsx', 'TradeLogsReference.jsx', 'MarkupsRedesig
 test('application confirmations use the shared themed provider instead of native dialogs', () => {
   for (const source of sources) assert.doesNotMatch(source, /window\.confirm\s*\(/);
   assert.match(provider, /createPortal/);
-  assert.match(provider, /role="alertdialog"/);
+  assert.match(provider, /role=\{o\.kind==='alert'\?'alertdialog':'dialog'\}/);
   assert.match(provider, /tj-confirm-overlay/);
   assert.match(provider, /tj-confirm-icon/);
   assert.match(provider, /tj-confirm-close/);
-  assert.match(provider, /aria-label="Keep editing"/);
+  assert.match(provider, /aria-label=\{o\.kind==='prompt'\?o\.cancelLabel:'Close'\}/);
   assert.match(provider, /Escape/);
 });
 

@@ -1,6 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {AlertTriangle, Check, ChevronDown, ChevronUp, Info, Minus, Plus, X} from 'lucide-react';
 import {Popup, TextField} from './MobileAccountSettings';
+import {useMobileAlert} from './MobileAlert.jsx';
 import BackButton from './BackButton.jsx';
 import {activeRoutineItems, addRoutineItem, deleteRoutineItem, reorderRoutine, restoreRoutineItems, routineItems, routineWeekStats, updateRoutineItem} from './dailyRoutine.js';
 import './mobileProfileSettings.css';
@@ -43,11 +44,10 @@ function ItemSheet({item, busy, error, onClose, onSubmit, onDelete}) {
 }
 
 export default function MobileDailyRoutine({routine, onUpdate, summaryRef}) {
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [toast, setToast] = useState('');
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [tab, setTab] = useState('all'), [reordering, setReordering] = useState(false);
   const [sheet, setSheet] = useState(null); // null, 'new', or the id of the item being edited
-  const timer = useRef(null);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const showToast = useMobileAlert();
 
   const items = routineItems(routine);
   const activeCount = activeRoutineItems(routine).length;
@@ -62,7 +62,7 @@ export default function MobileDailyRoutine({routine, onUpdate, summaryRef}) {
     setBusy(true); setError('');
     try {
       await onUpdate(change);
-      if (message) { setToast(message); clearTimeout(timer.current); timer.current = setTimeout(() => setToast(''), 1600); }
+      if (message) showToast(message);
       return true;
     } catch (reason) { setError(reason.message || 'Your routine could not be saved.'); return false; } finally { setBusy(false); }
   };
@@ -131,7 +131,6 @@ export default function MobileDailyRoutine({routine, onUpdate, summaryRef}) {
     </div>
 
     {on && <button type="button" className="tj-mr-fab" onClick={() => setSheet('new')}><Plus size={22} aria-hidden="true"/>Add item</button>}
-    {toast && <div className="tj-mr-toast" role="status">{toast}</div>}
     {(sheet === 'new' || editingItem) && <ItemSheet item={editingItem} busy={busy} error={error} onClose={closeSheet} onSubmit={submitSheet} onDelete={removeItem}/>}
   </div>;
 }

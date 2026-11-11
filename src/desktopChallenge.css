@@ -54,6 +54,10 @@
   .ch2-alert {margin:0;padding:12px 14px;border:1px solid color-mix(in oklab,var(--ch2-loss) 30%,var(--border));border-radius:14px;background:color-mix(in oklab,var(--ch2-loss) 8%,transparent);color:var(--text);font-size:13px;line-height:1.45;}
   .ch2-alert b {color:var(--ch2-loss);}
   .tj-root .ch2-page .ch2-alert button {min-height:0;margin-left:6px;padding:3px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:12px;cursor:pointer;}
+  .ch2-complete {display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px;border:1px solid color-mix(in oklab,var(--ch2-gain) 42%,var(--border));border-radius:16px;background:linear-gradient(100deg,color-mix(in oklab,var(--ch2-gain) 12%,var(--surface)),var(--surface) 68%);}
+  .ch2-complete > div {display:grid;gap:3px;min-width:0;}
+  .ch2-complete strong {font-size:15px;letter-spacing:-.01em;}
+  .ch2-complete p {margin:0;color:var(--muted);font-size:12.5px;}
   .ch2-ovg {display:grid;grid-template-columns:1.5fr 1fr 1.2fr;gap:14px;}
   .ch2-ovl {display:flex;flex-direction:column;gap:10px;padding:4px 22px 4px 0;border-right:1px solid var(--border);}
   .ch2-lv {display:flex;align-items:baseline;gap:8px;}
@@ -164,13 +168,13 @@
   .ch2-ov {position:fixed;inset:0;z-index:300;}
   .ch2-bk {position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 55%,transparent);backdrop-filter:blur(5px);animation:ch2-fade .3s both;}
   @keyframes ch2-fade {from {opacity:0;}}
-  .ch2-dr {position:absolute;top:12px;right:12px;bottom:12px;display:flex;flex-direction:column;width:470px;max-width:calc(100vw - 24px);min-height:0;overflow:hidden;border:1px solid var(--border);border-radius:26px;background:var(--surface);box-shadow:0 40px 90px -20px color-mix(in srgb,var(--text) 45%,transparent);animation:ch2-slide .45s cubic-bezier(.2,.9,.2,1) both;}
+  .ch2-dr {position:absolute;top:12px;right:12px;display:flex;flex-direction:column;width:470px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);min-height:0;overflow:hidden;border:1px solid var(--border);border-radius:26px;background:var(--surface);box-shadow:0 40px 90px -20px color-mix(in srgb,var(--text) 45%,transparent);animation:ch2-slide .45s cubic-bezier(.2,.9,.2,1) both;}
   @keyframes ch2-slide {from {opacity:0;transform:translateX(50px);}}
   .ch2-dr > header {display:flex;align-items:center;gap:14px;padding:24px 24px 16px 28px;background:radial-gradient(100% 140% at 0% 0%,color-mix(in oklab,var(--accent) 13%,transparent),transparent 70%);}
   .ch2-dr > header > div {flex:1;min-width:0;}
   .ch2-dr h2 {margin:4px 0 0;overflow:hidden;font-size:26px;letter-spacing:-.03em;text-overflow:ellipsis;white-space:nowrap;}
   .ch2-av2 {display:grid;flex:none;width:48px;height:48px;place-items:center;border-radius:15px;background:var(--accent);color:var(--on-accent);font-size:20px;font-weight:800;}
-  .ch2-db {display:flex;flex:1;flex-direction:column;gap:22px;min-height:0;padding:6px 28px 20px;overflow-y:auto;overscroll-behavior:contain;}
+  .ch2-db {display:flex;flex:0 1 auto;flex-direction:column;gap:22px;min-height:0;padding:6px 28px 20px;overflow-y:auto;overscroll-behavior:contain;}
   .ch2-db section {display:flex;flex-direction:column;gap:12px;}
   .ch2-db h4 {display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase;}
   .ch2-lkb {display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;background:var(--ch2-soft);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;}
@@ -212,6 +216,7 @@
   }
   @container journal-workspace (max-width:700px) {
     .tj-root .ch2-page :is(.ch2-str,.ch2-tl,.ch2-ovg) {grid-template-columns:minmax(0,1fr);}
+    .ch2-complete {align-items:flex-start;flex-direction:column;}
     .tj-root .ch2-page .ch2-bal {grid-template-columns:minmax(0,1fr);}
     .tj-root .ch2-page .ch2-bal .is-r {text-align:left;}
     .tj-root .ch2-page .ch2-trk.is-all {grid-template-columns:repeat(6,minmax(0,1fr));}

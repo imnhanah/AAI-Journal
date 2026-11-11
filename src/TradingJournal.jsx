@@ -43,6 +43,7 @@ import DesktopFinanceV2 from './DesktopFinance.jsx';
 import MobilePsychologyLab from './MobilePsychologyLab.jsx';
 import DesktopPsychologyV2 from './DesktopPsychology.jsx';
 import DesktopJournalSetup from './DesktopJournalSetup.jsx';
+import CertificateArchive from './CertificateArchive.jsx';
 import DesktopProfilePanel from './DesktopProfilePanel.jsx';
 import './desktopShell.css';
 import './desktopAccount.css';
@@ -144,8 +145,8 @@ import { DEFAULT_INSTRUMENTS, INSTRUMENT_GROUPS, instrumentGroup, normalizeInstr
 import { calculatePositionSize, getInstrumentSpec } from './positionSizing.js';
 import useChallenge from './useChallenge';
 import useBalanceChallenge from './useBalanceChallenge';
-import ChallengeModeSettings from './ChallengeModeSettings';
-import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule } from "./challengeModel";
+import ChallengeModeSettings, {ChallengeCompatibleDialog} from './ChallengeModeSettings';
+import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule } from "./challengeModel";
 import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import {psychologyMetrics} from './psychologyMetrics';
@@ -165,6 +166,7 @@ import { readJournalCache, writeJournalCache } from "./journalCache";
 import { hydrateJournalImages, writeJournalImageCache } from "./journalImageCache";
 import { loadJournalImage } from "./journalCloudCache";
 import { privateCache, activatePrivateUser } from './privateCacheRuntime';
+import { clearPendingTradeSave, pendingTradeSaves, queueTradeSave } from './tradeSaveOutbox';
 import { validateImageFile, shouldHandleImagePaste } from './mediaMutation';
 import {
   fetchAllUserData as cloudFetchAllUserData, createAccount as cloudCreateAccount, updateAccount as cloudUpdateAccount, addRewardPreset as cloudAddRewardPreset, deleteAccount as cloudDeleteAccount, resetAccountData as cloudResetAccountData,
@@ -176,6 +178,17 @@ import { createAccountPatch, mergeAccountPatch } from './accountPatch.js';
 import { challengeDb } from './challengeDb';
 
 const journalStorage = (local, cloud) => (...args) => localJournal.isLocalJournal() ? local(...args) : cloud(...args);
+const mergePendingTradeSaves = (accounts, pending) => (accounts || []).map(account => {
+  const queued = (pending || []).filter(item => item.accountId === account.id).map(item => ({
+    ...item.trade,
+    _syncState: 'failed',
+    _pendingCreate: item.kind === 'create',
+    _pendingUpdate: item.kind === 'update',
+  }));
+  if (!queued.length) return account;
+  const queuedIds = new Set(queued.map(item => item.id));
+  return { ...account, trades:[...(account.trades || []).filter(item => !queuedIds.has(item.id)), ...queued] };
+});
 const fetchAllUserData = journalStorage(localJournal.fetchAllUserData, cloudFetchAllUserData);
 const createAccount = journalStorage(localJournal.createAccount, cloudCreateAccount);
 const updateAccount = journalStorage(localJournal.updateAccount, cloudUpdateAccount);
@@ -1036,30 +1049,6 @@ function readImageData(file) {
   });
 }
 
-function resizeProfileImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = reject;
-      image.onload = () => {
-        const maxSide = 320;
-        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-        const width = Math.max(1, Math.round(image.width * scale));
-        const height = Math.max(1, Math.round(image.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(image, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, emptyLabel = null }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -1888,7 +1877,8 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   const settingsChallengeReward=multiBalanceWorkspace
     ? (selectedBalance?.challengeReward ?? (selectedBalance?.challengeMode==='streak' ? 3.1 : null))
     : (challengeDraft?.rewardRatio ?? challenge.state.automation?.rewardRatio);
-  const challengeActivationIssue=settingsChallengeEnabled ? challengeModeActivationRule({mode:settingsChallengeMode,reward:settingsChallengeReward,balance:settingsLiveBalance}) : null;
+  const settingsChallengeLevelCount=multiBalanceWorkspace ? (selectedBalance?.challengeLevelCount ?? 30) : (challengeDraft?.levelCount ?? challenge.state.automation?.levelCount ?? 30);
+  const challengeActivationIssue=settingsChallengeEnabled ? challengeModeActivationRule({mode:settingsChallengeMode,reward:settingsChallengeReward,balance:settingsLiveBalance,levelCount:settingsChallengeLevelCount}) : null;
   const selectedBalanceChallenge = useBalanceChallenge({...selectedBalance || balanceDrafts[0],trades:account.trades,balances:account.balances,financeMovements:account.financeMovements}, userId);
   const selectedBalanceChallengeState = startingNewBalanceChallenge
     ? {...selectedBalanceChallenge.state, settingsLocked:false}
@@ -2001,11 +1991,16 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   const setScopedMonthlyLossLimit = (value) => editSettingsSection("guardrails", () => multiBalanceWorkspace ? updateSelectedBalance({ guardrails: { ...selectedBalance.guardrails, monthlyLossLimitPct: value } }) : setMonthlyLossLimitPct(value));
   const setScopedDailyLossAmount = (value) => multiBalanceWorkspace ? setScopedDailyLossLimit(percentageFromMoney(value, guardrailBase)) : editSettingsSection("guardrails", () => setDailyLossMoney(value));
   const setScopedMonthlyLossAmount = (value) => multiBalanceWorkspace ? setScopedMonthlyLossLimit(percentageFromMoney(value, guardrailBase)) : editSettingsSection("guardrails", () => setMonthlyLossMoney(value));
-  const saveSettings = () => {
+  const saveSettings = async () => {
     if (!name.trim() || !baseCurrency || savingSettings) return;
     if (multiBalanceWorkspace && (balanceDrafts.length < 2 || balanceDrafts.some((item) => !item.name.trim() || !(Number(item.startingBalance) >= 0)))) return;
     const standardChallengeBalance = Number(balance) || 0;
-    void onSave({ ...account, workspaceType, challengeEnabled: !multiBalanceWorkspace && challengeEnabled && standardChallengeBalance > 0, challengeStartingBalance: !multiBalanceWorkspace && challengeEnabled ? standardChallengeBalance : 0, financeEnabled, platform, name: name.trim() || "Main Account", icon: baseCurrency, balance: multiBalanceWorkspace ? multiBalanceTotal : (parseFloat(balance) || 0), breakevenCap: parseFloat(beCap) || 0, defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, positionSizing, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, defaultRiskMethod }, challengeDraft, { enabled: financeEnabled, savingsAccounts: savingsDraft }, [], balanceDrafts.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0 })));
+    setSavingSettings(true);
+    try {
+      await onSave({ ...account, workspaceType, challengeEnabled: !multiBalanceWorkspace && challengeEnabled && standardChallengeBalance > 0, challengeStartingBalance: !multiBalanceWorkspace && challengeEnabled ? standardChallengeBalance : 0, financeEnabled, platform, name: name.trim() || "Main Account", icon: baseCurrency, balance: multiBalanceWorkspace ? multiBalanceTotal : (parseFloat(balance) || 0), breakevenCap: parseFloat(beCap) || 0, defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, positionSizing, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, defaultRiskMethod }, challengeDraft, { enabled: financeEnabled, savingsAccounts: savingsDraft }, [], balanceDrafts.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0 })), selectedBalance?.id || null);
+    } finally {
+      setSavingSettings(false);
+    }
   };
   const prepareSettingsImport = async file => { setImportFile(file); setImportError(""); setImportPreview([]); setImportProgress(0); if (!file) return; try { const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); } catch { setImportError("Could not read this trade file. Please choose another file."); } };
   const importTradeField = <div className="tj-settings-import-field"><label className="tj-settings-import-drop" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); void prepareSettingsImport(event.dataTransfer.files?.[0] || null); }}><input aria-label="Choose trade import file" type="file" accept=".html,.htm,.csv,.txt,.tsv" onChange={event => void prepareSettingsImport(event.target.files?.[0] || null)}/><strong>Choose a file</strong><span>or drop a CSV here</span></label>{importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades ready${importPreview.cashMovements?.length ? ` · ${importPreview.cashMovements.length} cash movement${importPreview.cashMovements.length === 1 ? "" : "s"}` : ""}` : ""}</div>}{importError && <div className="tj-import-error">{importError}</div>}{importPreview.trades?.length > 0 && <button type="button" className="tj-btn-primary tj-btn-small tj-import-button" disabled={importingTrades} onClick={async () => { setImportingTrades(true); setImportProgress(0); const ok = await onImport(importPreview, setImportProgress); if (ok) { setImportFile(null); setImportPreview([]); } setImportingTrades(false); }}>{importingTrades ? <><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing trades</> : `Import ${importPreview.trades.length} trades now`}</button>}</div>;
@@ -2255,7 +2250,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
     if (!file) return;
     const validation = validateImageFile(file);
     if (validation) { setProfilePhotoMessage(validation); return; }
-    try { setProfileImage(await resizeProfileImage(file)); setProfilePhotoMessage('Profile preview uses an optimized 320-pixel avatar. Your original file is unchanged.'); } catch (error) { setProfilePhotoMessage('Photo could not be read. Your current avatar is unchanged.'); }
+    try { setProfileImage(await readImageData(file)); setProfilePhotoMessage('Original image quality will be kept.'); } catch (error) { setProfilePhotoMessage('Photo could not be read. Your current avatar is unchanged.'); }
   };
   const save = () => {
     if (!displayName.trim() || saving) return;
@@ -2666,6 +2661,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
   useEffect(() => { if (rulesRequest) { setSelected("rules"); setPhoneIndex(false); } }, [rulesRequest]);
   useEffect(() => { if (selected === "playbooks") { setSelected(activeSection); setPhoneIndex(false); } }, [selected, activeSection]);
   useWhenChanged(()=>{if(window.matchMedia(MOBILE_MEDIA).matches){const target=managementRef.current?.closest('.tj-content');if(document.documentElement.dataset.tjDisplayMode==='browser')window.scrollTo({top:0});else target?.scrollTo({top:0});}},[activeSection,phoneIndex]);
+  const certificates = [...(account.challengeCertificates || []), ...(account.balances || []).flatMap(balance => balance.challengeCertificates || [])];
   const lists = [
     ["instruments", "Instruments", DEFAULT_INSTRUMENTS.length + instruments.length],
     ["mistakes", "Mistakes", allMistakeTags(mistakeTags).length],
@@ -2674,6 +2670,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
     ["rules", "Trading rules", (account.rules || []).length],
     ["risk-presets", "Risk presets", riskPresets.length],
     ["mappings", "Import mappings", ""],
+    ["certificates", "Certificates", certificates.length],
     ["backup", "Data & backup", ""]
   ];
   const activeLabel = activeSection === "daily-routine" ? "Daily routine" : lists.find(([id]) => id === activeSection)?.[1] || "Journal Setup";
@@ -2685,7 +2682,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
   // A list slides in over the Setup index. Daily routine is a screen on top with its own slide.
   useStepMotion(phoneListOpen ? 1 : 0);
   useEffect(() => { onPhoneTitle?.(phoneListOpen ? activeLabel : ''); return () => onPhoneTitle?.(''); }, [phoneListOpen, activeLabel]);
-  if (SETUP_V2 && !phone) return <DesktopJournalSetup section={activeSection} onSection={chooseList} userId={userId} account={account} typeTags={typeTags} mistakeTags={mistakeTags} mistakeDefaults={DEFAULT_MISTAKE_TAGS} confluenceSessions={confluenceSessions} instruments={instruments} riskPresets={riskPresets} onRiskPresets={onRiskPresets} onTypeTags={onTypeTags} onMistakes={onMistakes} onConfluence={onConfluence} onInstruments={onInstruments} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule} onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly} routine={routine} onUpdateRoutine={onUpdateRoutine}/>;
+  if (SETUP_V2 && !phone) return <DesktopJournalSetup section={activeSection} onSection={chooseList} userId={userId} account={account} certificates={certificates} typeTags={typeTags} mistakeTags={mistakeTags} mistakeDefaults={DEFAULT_MISTAKE_TAGS} confluenceSessions={confluenceSessions} instruments={instruments} riskPresets={riskPresets} onRiskPresets={onRiskPresets} onTypeTags={onTypeTags} onMistakes={onMistakes} onConfluence={onConfluence} onInstruments={onInstruments} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule} onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly} routine={routine} onUpdateRoutine={onUpdateRoutine}/>;
   return <Card className={`tj-management-reference ${phoneShowsIndex?'tj-management-phone-index':'tj-management-phone-list'} ${activeSection === "daily-routine" ? "tj-management-routine-view" : ""}`}><div ref={managementRef} className="tj-management-phone-back-wrap"/><header><small>JOURNAL SETUP</small><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></header>{phone&&phoneShowsIndex&&<MobileSetupHome routine={routine} onUpdateRoutine={onUpdateRoutine} lists={lists} onChoose={chooseList}/>}<div className="tj-management-layout">
     <nav className="tj-management-nav" aria-label="Journal Setup lists"><button type="button" aria-pressed={activeSection === "daily-routine"} onClick={() => chooseList("daily-routine")}><span>Daily routine</span><em>{activeRoutineItems(routine).length}</em><ChevronRight className="tj-management-phone-chevron" size={16} aria-hidden="true"/></button>{lists.map(([id,label,count]) => <button type="button" key={id} aria-pressed={activeSection === id} onClick={() => chooseList(id)}><span>{label}</span><em>{count}</em><ChevronRight className="tj-management-phone-chevron" size={16} aria-hidden="true"/></button>)}</nav>
     <div className="tj-management-content">
@@ -2697,6 +2694,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
       {activeSection === "rules" && <RulesPage managementView phone={phone} account={account} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule}/>} 
       {activeSection === "mappings" && <ImportMappingsManager userId={userId} instruments={[...DEFAULT_INSTRUMENTS, ...instruments.map(customInstrumentSymbol)]}/>} 
       {activeSection === "risk-presets" && <RiskPresetsManager presets={riskPresets} onSave={onRiskPresets} phone={phone}/>} 
+      {activeSection === "certificates" && <CertificateArchive certificates={certificates} currency={account.baseCurrency}/>} 
       {activeSection === "backup" && <DataBackupManager onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/>} 
     </div>
   </div></Card>;
@@ -3278,7 +3276,7 @@ const REVIEW_QUESTIONS = {
 function CompactChartTooltip({ active, payload, label, metric, neutral = false }) {
   if (!active || !payload?.length) return null;
   const value = Number(payload[0].value) || 0;
-  return <div className="tj-compact-chart-tooltip"><strong>{label}</strong><div><span>{metric}</span><b className={neutral ? "" : value >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(value)}</b></div></div>;
+  return <div className="tj-compact-chart-tooltip"><header><small>{metric}</small><span>Chart point</span></header><div><strong>{label}</strong><b className={neutral ? "" : value >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(value)}</b></div></div>;
 }
 
 // Per-account challenge progress remains part of the active dashboard even
@@ -3323,6 +3321,60 @@ const AnStat = ({ label, value, sub, tone = "", extra = "" }) => <div className=
 const AnRing = ({ value, main, sub, size = 104 }) => { const radius = 42, circumference = 2 * Math.PI * radius; return <div className="an2-ring" style={{ width: size, height: size }}><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r={radius} className="an2-ring-track"/><circle cx="50" cy="50" r={radius} className="an2-ring-value" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - clamp(value, 0, 100) / 100)} transform="rotate(-90 50 50)"/></svg><div><b className="an2-num">{main}</b><small>{sub}</small></div></div>; };
 const anGrade = (grade) => <i className={`an2-grade is-${String(grade || "").replace("+", "p")}`}>{grade || "—"}</i>;
 const anTone = (value) => Number(value) > 0 ? "is-gain" : Number(value) < 0 ? "is-loss" : "";
+
+function CompactInstrumentCarousel({ items, stats }) {
+  const [active,setActive] = useState(0);
+  const touchStart = useRef(null);
+  const count = items.length;
+  const maxActive = Math.max(0, count - 2);
+  const hasPager = count > 2;
+  useEffect(() => setActive(index => Math.min(index, maxActive)), [maxActive]);
+  const move = direction => setActive(index => Math.max(0, Math.min(maxActive, index + direction)));
+  const endSwipe = event => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (start == null) return;
+    const distance = event.changedTouches[0].clientX - start;
+    if (Math.abs(distance) < 36) return;
+    move(distance < 0 ? 1 : -1);
+  };
+  return <section className="an2-card an2-pad an2-inst-carousel" aria-roledescription={hasPager ? "carousel" : undefined} aria-label="Instrument performance">
+    <div className="an2-inst-viewport" onTouchStart={event => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={endSwipe}>
+      <div className="an2-inst-track" style={{ transform:`translateX(-${active * 50}%)` }}>
+        {items.map((item, index) => { const share = stats.netPnl ? item.netPnl / stats.netPnl * 100 : 0; return <article className="an2-inst-compact" key={item.asset} aria-hidden={index < active || index > active + 1}>
+          <div className="an2-inst-compact-head"><div><div className="an2-eb">{String(index + 1).padStart(2, "0")} · Market signal</div><h3>{item.asset}</h3><span className={`an2-num ${anTone(item.netPnl)}`}>{fmtMoney(item.netPnl)}</span><small>{item.count} trade{item.count === 1 ? "" : "s"} · {share.toFixed(0)}% of net P&amp;L</small></div></div>
+          <div className="an2-inst-compact-metrics"><span><small>Net outcome</small><b className={`an2-num ${anTone(item.netPnl)}`}>{fmtMoney(item.netPnl)}</b></span><span><small>Quality</small><b className={`an2-num ${item.winRate >= 50 ? "is-gain" : "is-warn"}`}>{item.winRate.toFixed(0)}% WR</b></span><span><small>Sample</small><b>{item.count} trade{item.count === 1 ? "" : "s"}</b></span><span><small>Cadence</small><b className="an2-num">{fmtMoney(item.count ? item.netPnl / item.count : 0)} / trade</b></span></div>
+          <div className="an2-inst-compact-best"><span>Best <b className="an2-num is-gain">{fmtMoney(item.best)}</b></span><span>Worst <b className="an2-num is-loss">{fmtMoney(item.worst)}</b></span></div>
+        </article>; })}
+      </div>
+    </div>
+    {hasPager && <div className="an2-inst-carousel-controls"><button type="button" onClick={() => move(-1)} disabled={active === 0} aria-label="Previous instruments"><ChevronLeft size={17}/></button><div className="an2-inst-dots" aria-label={`Instrument cards ${active + 1} and ${active + 2} of ${count}`}>{items.slice(0, maxActive + 1).map((item, index) => <button key={item.asset} type="button" aria-label={`Show ${item.asset} and ${items[index + 1].asset}`} aria-current={index === active ? "true" : undefined} className={index === active ? "is-active" : ""} onClick={() => setActive(index)}/>)}</div><button type="button" onClick={() => move(1)} disabled={active === maxActive} aria-label="Next instruments"><ChevronRight size={17}/></button></div>}
+  </section>;
+}
+
+function TwoUpCardCarousel({ items, label, children }) {
+  const [active,setActive] = useState(0);
+  const touchStart = useRef(null);
+  const count = items.length;
+  const maxActive = Math.max(0, count - 2);
+  const hasPager = count > 2;
+  useEffect(() => setActive(index => Math.min(index, maxActive)), [maxActive]);
+  const move = direction => setActive(index => Math.max(0, Math.min(maxActive, index + direction)));
+  const endSwipe = event => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (start == null) return;
+    const distance = event.changedTouches[0].clientX - start;
+    if (Math.abs(distance) >= 36) move(distance < 0 ? 1 : -1);
+  };
+  if (!hasPager) return <div className="an2-g an2-a2">{items.map(children)}</div>;
+  return <section className="an2-two-up-carousel" aria-roledescription="carousel" aria-label={label}>
+    <div className="an2-two-up-viewport" onTouchStart={event => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={endSwipe}>
+      <div className="an2-two-up-track" style={{transform:`translateX(-${active * 50}%)`}}>{items.map((item,index) => <div className="an2-two-up-slide" key={item.tag || item.asset} aria-hidden={index < active || index > active + 1}>{children(item,index)}</div>)}</div>
+    </div>
+    <div className="an2-inst-carousel-controls"><button type="button" onClick={() => move(-1)} disabled={active === 0} aria-label={`Previous ${label}`}><ChevronLeft size={17}/></button><div className="an2-inst-dots" aria-label={`${label} cards ${active + 1} and ${active + 2} of ${count}`}>{items.slice(0,maxActive + 1).map((item,index) => <button type="button" key={item.tag || item.asset} aria-label={`Show ${item.tag || item.asset} and ${items[index + 1].tag || items[index + 1].asset}`} aria-current={index === active ? "true" : undefined} className={index === active ? "is-active" : ""} onClick={() => setActive(index)}/>)}</div><button type="button" onClick={() => move(1)} disabled={active === maxActive} aria-label={`Next ${label}`}><ChevronRight size={17}/></button></div>
+  </section>;
+}
 
 function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, reviews, markups = [], periodReviews, onSavePeriod, onSaveTrade, onPhoneTitle }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
@@ -3770,7 +3822,7 @@ function DdCalendar({ account, monthCursor, setMonthCursor, onDayClick, balances
             {traded ? <span className="dd-day-value"><span className="dd-num">{short(cell.pnl)}</span><em>{cell.count}</em></span> : cash ? <span className="dd-day-value"><span className="dd-num">{short(cell.cash)}</span><em aria-label="Cash movement">↔</em></span> : null}
           </button>;
         })}
-        {(() => { const snapshot = snapshots[weekIndex]; const percent = account.balance ? snapshot.pnl / account.balance * 100 : 0; return <div key={`wk-${weekIndex}`} className={`dd-week ${snapshot.count ? snapshot.pnl >= 0 ? "is-win" : "is-loss" : ""}`}>Week {weekIndex + 1}<b className="dd-num">{snapshot.count ? formatAccountBasePercent(percent) : "0.00%"}</b>{snapshot.count ? `${snapshot.count}d · ${snapshot.winRate.toFixed(0)}% win` : "Quiet week"}</div>; })()}
+        {(() => { const snapshot = snapshots[weekIndex]; const percent = account.balance ? snapshot.pnl / account.balance * 100 : 0; const percentLabel = snapshot.count ? formatAccountBasePercent(percent) : "0.00%"; return <div key={`wk-${weekIndex}`} className={`dd-week ${snapshot.count ? snapshot.pnl >= 0 ? "is-win" : "is-loss" : ""}`}>Week {weekIndex + 1}<b className="dd-num" title={percentLabel}>{percentLabel}</b>{snapshot.count ? `${snapshot.count}d · ${snapshot.winRate.toFixed(0)}% win` : "Quiet week"}</div>; })()}
       </React.Fragment>)}
     </div>
   </>;
@@ -4166,7 +4218,7 @@ function ImportTradesModal({ account, onClose, onImport }) {
   </Modal>;
 }
 
-function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: editWorkspaceTrade, onDelete, onNewTrade, onLinkMarkup: linkWorkspaceMarkup, onSaveReview, locked = false }) {
+function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: editWorkspaceTrade, onDelete, onNewTrade, onLinkMarkup: linkWorkspaceMarkup, onSaveReview, onRetrySave, locked = false }) {
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   const [phoneFilters,setPhoneFilters]=usePageState('tradelog', 'tj-nav-phoneFilters', emptyPhoneTradeFilters);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),update=()=>setPhone(media.matches);media.addEventListener('change',update);return()=>media.removeEventListener('change',update);},[]);
@@ -4313,6 +4365,7 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
     const t = selectedTrade;
     if (!t) return null;
     const running = isRunningTrade(t), pnl = Number(t.pnl) || 0, win = pnl >= 0;
+    const pendingSave = t._syncState === 'saving' || t._syncState === 'failed';
     const reviewed = reviewedTradeIds.has(t.id);
     const results = t.balanceResults || [];
     const gross = results.length ? results.reduce((total, result) => total + Number(result.grossPnl ?? result.netPnl ?? 0), 0) : (t.grossPnl === "" || t.grossPnl == null ? null : Number(t.grossPnl));
@@ -4329,10 +4382,11 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
         <div>
           <h2>{t.asset || "No instrument"}<span className={`tl2-side ${t.direction === "SELL" ? "is-sell" : "is-buy"}`}>{t.direction}</span></h2>
           <div className={`tl2-big tl2-num ${running ? "is-warn" : win ? "is-gain" : "is-loss"}`}>{running ? "Running" : signedMoney(pnl)}</div>
-          <span className={`tl2-pill ${running ? "is-warn" : win ? "is-gain" : "is-loss"} tl2-num`}>{running ? "Open trade" : `${t._return >= 0 ? "+" : "−"}${Math.abs(t._return).toFixed(2)}% net return`}</span>
+          <span className={`tl2-pill ${pendingSave || running ? "is-warn" : win ? "is-gain" : "is-loss"} tl2-num`}>{pendingSave ? (t._syncState === 'saving' ? 'Saving…' : 'Cloud save failed') : running ? "Open trade" : `${t._return >= 0 ? "+" : "−"}${Math.abs(t._return).toFixed(2)}% net return`}</span>
         </div>
         <div>
           <div className="tl2-actions">
+            {t._syncState === 'failed' && <button type="button" className="tl2-btn is-primary" onClick={() => onRetrySave?.(t)}>Retry save</button>}
             <button type="button" className="tl2-btn is-primary" disabled={running} title={running ? "This trade is still open and cannot be reviewed yet" : undefined} onClick={() => setLogReviewEditor({ trade:workspace.trades.find((item) => item.id === t.id) || t, preview:reviewed })}>{reviewed ? <><CheckCircle2 size={15}/>View review</> : "Write review"}</button>
             <button type="button" className="tl2-icon" aria-label="Edit trade" title={locked ? "Trade changes are locked by the account loss limit" : "Edit trade"} disabled={locked} onClick={() => onEdit(t)}><Pencil size={16}/></button>
             <details className="tl2-more"><summary className="tl2-icon" aria-label="More trade actions">···</summary><div><ConfirmDeleteButton className="tl2-menu-delete" disabled={locked} title="Delete trade" onClick={() => onDelete(t.id)}><Trash2 size={14}/> Delete trade</ConfirmDeleteButton></div></details>
@@ -4461,6 +4515,32 @@ function AnSectionNav({ items }) {
 }
 const AnSectionHead = ({ id, title, sub, children }) => <div className="an2-sech" id={`an2-sec-${id}`}><h2>{title}</h2><span>{sub}</span>{children}</div>;
 
+function AnRhythmSection({ id, title, sub, rows = [], unit, labels, chartTitle, chartSub, average, control, side, chartTouchHandlers }) {
+  const total = rows.reduce((sum, row) => sum + (Number(row.pnl) || 0), 0);
+  const positive = rows.filter((row) => Number(row.pnl) > 0).length;
+  const best = rows.length ? rows.reduce((current, row) => Number(row.pnl) > Number(current.pnl) ? row : current) : null;
+  const worst = rows.length ? rows.reduce((current, row) => Number(row.pnl) < Number(current.pnl) ? row : current) : null;
+  const averagePnl = rows.length ? total / rows.length : 0;
+  const kpis = [
+    { label: labels[0], value: fmtMoney(total), tone: anTone(total), sub: `${rows.length} ${unit}` },
+    { label: labels[1], value: `${positive}/${rows.length || 0}`, tone: positive >= Math.ceil(rows.length / 2) ? "is-gain" : "is-warn", sub: "positive periods" },
+    { label: labels[2], value: best ? fmtMoney(best.pnl) : "—", tone: best ? anTone(best.pnl) : "", sub: best?.full || best?.label || "" },
+    { label: labels[3], value: worst ? fmtMoney(worst.pnl) : "—", tone: worst ? anTone(worst.pnl) : "", sub: worst?.full || worst?.label || "" },
+  ];
+  return <section>
+    <AnSectionHead id={id} title={title} sub={sub}>{control}</AnSectionHead>
+    <div className="an2-kpi4">{kpis.map((kpi) => <AnStat key={kpi.label} extra="is-lg" {...kpi}/>)}</div>
+    {id !== "month" && <div className={`an2-g ${side ? "an2-a2" : "an2-a1"}`}>
+      <section className="an2-card an2-pad">
+        <div className="an2-sh"><div><h3>{chartTitle}</h3><small>{chartSub}</small></div><span className={`an2-pill ${anTone(averagePnl)}`}>{average} {fmtMoney(averagePnl)}</span></div>
+        {rows.length ? <div className="an2-plan-chart" {...chartTouchHandlers}><ResponsiveContainer width="100%" height={260} debounce={100}><BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}><CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 12 }}/><YAxis width={58} tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 12 }} tickFormatter={(value) => fmtMoneyShort(value)}/><ReferenceLine y={0} stroke="var(--muted)" strokeOpacity={.45}/><Tooltip cursor={false} content={<CompactChartTooltip metric={chartTitle}/>} /><Bar {...getChartAnimation("bar")} dataKey="pnl" radius={[5, 5, 5, 5]} maxBarSize={54}>{rows.map((row) => <Cell key={row.key || row.label} fill={Number(row.pnl) > 0 ? "var(--tj-green)" : Number(row.pnl) < 0 ? "var(--loss)" : "var(--border)"}/>)}</Bar></BarChart></ResponsiveContainer></div> : <div className="an2-empty">No completed {unit} in this period yet.</div>}
+      </section>
+      {side}
+    </div>}
+    {id === "month" && rows.length > 0 && <section className="an2-card an2-pad"><div className="an2-sh"><div><h3>Period detail</h3><small>{rows.length} {unit} in the selected range</small></div></div><div className="an2-wd">{rows.map((row) => <div key={row.key || row.label} className="an2-wr"><b>{row.label}</b><div className="an2-bar2"><i data-chart-fill="horizontal" className={Number(row.pnl) >= 0 ? "is-gain" : "is-loss"} style={{ width: `${Math.max(4, Math.abs(Number(row.pnl) || 0) / Math.max(1, ...rows.map((item) => Math.abs(Number(item.pnl) || 0))) * 100)}%` }}/></div><span className={`an2-num ${anTone(row.pnl)}`}>{fmtMoney(row.pnl)}</span><em>{row.count ? `${row.count} trade${row.count === 1 ? "" : "s"}${row.winRate == null ? "" : ` · ${Math.round(row.winRate)}% WR`}` : ""}</em></div>)}</div></section>}
+  </section>;
+}
+
 function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], cap, stats, tagStats, confluenceStats, pairingStats, instrumentStats, onOpenTradeReview, onViewMarkups }) {
   const mostActiveInstrument = instrumentStats.slice().sort((a, b) => b.count - a.count)[0];
   const bestQualityInstrument = instrumentStats.slice().sort((a, b) => b.winRate - a.winRate)[0];
@@ -4481,15 +4561,13 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
     const item = payload[0].payload;
     const instrument = item.markup.instrument || item.markup.market || "Plan";
     const date = formatDate(item.markup.date);
-    const tone = item.pnl > 0 ? "profit" : item.pnl < 0 ? "loss" : "flat";
-    const outcome = item.count ? (item.pnl > 0 ? "WINNING PLAN" : item.pnl < 0 ? "LOSING PLAN" : "FLAT PLAN") : "UNEXECUTED PLAN";
+    const outcome = item.count ? (item.pnl > 0 ? "Winning plan" : item.pnl < 0 ? "Losing plan" : "Flat plan") : "Unexecuted";
+    const bias = /bull/i.test(item.markup.bias || "") ? "Bullish" : /bear/i.test(item.markup.bias || "") ? "Bearish" : item.markup.bias || "No bias";
     return <div className="tj-markup-chart-tooltip">
-      <small>MARKUP PLAN · {instrument} {date}</small>
-      <div className={`tj-daily-bar-tooltip tj-reference-result-tooltip tj-markup-result-tooltip tj-result-tooltip-${tone}`}>
-        <header><strong>{instrument} ·<br/>{date}</strong><b className="tj-result-tooltip-badge">{outcome}</b></header>
-        <div><span>EXECUTION</span><b>{item.count} trade{item.count === 1 ? "" : "s"}</b></div>
-        <div><span>WIN RATE</span><b className={wrColorClass(item.winRate)}>{item.winRate.toFixed(0)}%</b></div>
-        <div className="tj-result-tooltip-balance"><span>REALISED P&amp;L</span><b className={item.pnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(item.pnl)}</b></div>
+      <div className="tj-markup-hover-card">
+        <header><div><small>MARKUP PLAN</small><strong>{instrument}</strong><span>{date}</span></div><b className={`tj-markup-hover-status ${item.count ? "is-executed" : ""}`}>{outcome}</b></header>
+        <div className="tj-markup-hover-metrics"><div><small>EXECUTION</small><b>{item.count} trade{item.count === 1 ? "" : "s"}</b></div><div><small>PLANNED BIAS</small><b>{bias}</b></div><div><small>WIN RATE</small><b className={item.count ? wrColorClass(item.winRate) : ""}>{item.count ? `${item.winRate.toFixed(0)}%` : "—"}</b></div><div><small>DIRECTION MATCH</small><b>{item.count ? `${Math.round(item.directionMatch)}%` : "—"}</b></div></div>
+        <footer><div><small>REALISED P&amp;L</small><b className={item.pnl > 0 ? "tj-green" : item.pnl < 0 ? "tj-red" : ""}>{fmtMoney(item.pnl)}</b></div><span>{item.count ? "Linked result" : "Awaiting a linked trade"}</span></footer>
       </div>
     </div>;
   };
@@ -4506,9 +4584,11 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
     const planQueue = markupRows.filter((row) => !row.count);
     const queueCounts = planQueue.reduce((all, row) => { const state = markupStatus(row.markup.status); all[state] = (all[state] || 0) + 1; return all; }, {});
     const planChart = [...markupRows].sort((a, b) => String(a.markup.date || "").localeCompare(String(b.markup.date || ""))).slice(-16).map((row) => ({ ...row, label: row.markup.date ? new Date(`${row.markup.date}T00:00:00`).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" }) : "—" }));
-    const planRows = markupRows.slice().sort((a, b) => String(b.markup.date || "").localeCompare(String(a.markup.date || ""))).slice(0, 6);
+    const planRows = markupRows.slice().sort((a, b) => String(b.markup.date || "").localeCompare(String(a.markup.date || ""))).slice(0, 5);
+    const topMarkup = markupRows.length ? markupRows[0] : null;
+    const reviewMarkup = markupRows.length ? markupRows[markupRows.length - 1] : null;
     const biasClass = (bias) => /bull/i.test(bias || "") ? "is-bull" : /bear/i.test(bias || "") ? "is-bear" : "";
-    return <div className="an2 an2-edge">
+    return <div className="an2 an2-edge" id="analytics-performance">
       <AnSectionNav items={[["models", "Entry models"], ["instruments", "Instruments"], ["markups", "Markups"]]}/>
       <AnSectionHead id="models" title="Entry models" sub={edgeLead ? `${edgeLead.tag} leads` : "No entry models tagged yet"}/>
       {edgeModels.length ? <>
@@ -4520,14 +4600,14 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
           <section className="an2-card an2-pad"><div className="an2-sh"><div><h3>Net P&amp;L by model</h3><small>Realised contribution</small></div></div>{edgeModels.map((item) => <div className="an2-hb" key={item.tag}><span>{item.tag}</span><div className="an2-bar2"><i data-chart-fill="horizontal" className={item.netPnl >= 0 ? "is-gain" : "is-loss"} style={{ width: `${Math.abs(item.netPnl) / edgeMaxPnl * 100}%` }}/></div><b className={`an2-num ${anTone(item.netPnl)}`}>{fmtMoney(item.netPnl)}</b></div>)}</section>
           <section className="an2-card an2-pad"><div className="an2-sh"><div><h3>Win rate by model</h3><small>Repeatability</small></div></div>{edgeModels.map((item) => <div className="an2-hb" key={item.tag}><span>{item.tag}</span><div className="an2-bar2"><i data-chart-fill="horizontal" className={item.winRate >= 50 ? "is-gain" : "is-warn"} style={{ width: `${item.winRate}%` }}/></div><b className={`an2-num ${item.winRate >= 50 ? "is-gain" : "is-warn"}`}>{item.winRate.toFixed(0)}%</b></div>)}</section>
         </div>
-        <div className="an2-g an2-a2">{edgeModels.map((item, index) => { const rows = modelTrades(item.tag); const best = rows.length ? Math.max(...rows.map((trade) => Number(trade.pnl) || 0)) : null; const worst = rows.length ? Math.min(...rows.map((trade) => Number(trade.pnl) || 0)) : null; return <section key={item.tag} className={`an2-card an2-pad an2-mdl ${index === 0 ? "is-lead" : ""}`}><div className="an2-row"><h3>{item.tag}</h3>{anGrade(getGrade(item.winRate, item.netPnl, item.count))}</div><div className="an2-mdg">
+        <TwoUpCardCarousel items={edgeModels} label="Entry models">{(item, index) => { const rows = modelTrades(item.tag); const best = rows.length ? Math.max(...rows.map((trade) => Number(trade.pnl) || 0)) : null; const worst = rows.length ? Math.min(...rows.map((trade) => Number(trade.pnl) || 0)) : null; return <section key={item.tag} className={`an2-card an2-pad an2-mdl ${index === 0 ? "is-lead" : ""}`}><div className="an2-row"><h3>{item.tag}</h3>{anGrade(getGrade(item.winRate, item.netPnl, item.count))}</div><div className="an2-mdg">
           <AnStat label="Net P&L" value={fmtMoney(item.netPnl)} tone={anTone(item.netPnl)}/>
           <AnStat label="Win rate" value={`${item.winRate.toFixed(0)}%`} tone={item.winRate >= 50 ? "is-gain" : "is-warn"}/>
           <AnStat label="Best trade" value={best === null ? "—" : fmtMoney(best)} tone={anTone(best)}/>
           <AnStat label="Trades" value={item.count}/>
           <AnStat label="Avg RR" value={`${item.avgRR.toFixed(2)}R`}/>
           <AnStat label="Worst trade" value={worst === null ? "—" : fmtMoney(worst)} tone={anTone(worst)}/>
-        </div></section>; })}</div>
+        </div></section>; }}</TwoUpCardCarousel>
       </> : <div className="an2-card an2-pad"><div className="an2-empty">Tag an entry model when you log trades to compare models here.</div></div>}
 
       <AnSectionHead id="instruments" title="Instruments" sub={`${instrumentStats.length} instrument${instrumentStats.length === 1 ? "" : "s"}${edgeLeader ? ` · ${edgeLeader.asset} leads` : ""}`}/>
@@ -4538,7 +4618,7 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
           <AnStat extra="is-lg" label="Best quality" value={bestQualityInstrument.asset} sub={`${bestQualityInstrument.winRate.toFixed(0)}% WR · ${bestQualityInstrument.avgRR.toFixed(2)} avg RR`}/>
           <AnStat extra="is-lg" label="Review first" value={reviewInstrument.asset} sub={`${fmtMoney(reviewInstrument.netPnl)} realised · ${reviewInstrument.winRate.toFixed(0)}% win rate`} tone="is-warn"/>
         </div>
-        {edgeInstruments.slice(0, 3).map((item, index) => { const share = stats.netPnl ? item.netPnl / stats.netPnl * 100 : 0; return <section key={item.asset} className="an2-card an2-pad an2-inst">
+        {edgeInstruments.length > 1 ? <CompactInstrumentCarousel items={edgeInstruments} stats={stats}/> : edgeInstruments.map((item, index) => { const share = stats.netPnl ? item.netPnl / stats.netPnl * 100 : 0; return <section key={item.asset} className="an2-card an2-pad an2-inst">
           <div className="an2-ih"><AnRing value={item.winRate} main={`${item.winRate.toFixed(0)}%`} sub="Win rate" size={118}/><div><div className="an2-eb">{String(index + 1).padStart(2, "0")} · Market signal</div><h2>{item.asset}</h2><span className="an2-mut">{fmtMoney(item.netPnl)} realised across {item.count} trade{item.count === 1 ? "" : "s"}</span></div></div>
           <div className="an2-ig">
             <AnStat label="Net outcome" value={fmtMoney(item.netPnl)} sub={stats.netPnl ? `${share.toFixed(0)}% of total net P&L` : "No net P&L yet"} tone={anTone(item.netPnl)}/>
@@ -4582,14 +4662,10 @@ function PerformanceMetricsView({ account, trades, monthlyYear, markups = [], ca
     </div>;
   }
 
-function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
+function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear, sessionStats = [] }) {
   const [range, setRange] = useState("year");
-  const dayLabel = (date) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const days = stats.dayClasses.map((day) => {
-    const dayTrades = trades.filter((trade) => trade.date === day.date);
-    const wins = dayTrades.filter((trade) => classify(trade.pnl, cap) === "win").length;
-    return { key: day.date, label: dayLabel(day.date), full: new Date(`${day.date}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }), pnl: day.pnl, count: dayTrades.length, winRate: dayTrades.length ? wins / dayTrades.length * 100 : 0 };
-  });
+  const [weekPage, setWeekPage] = useState(0);
+  const weekSwipeStart = useRef(null);
   const weeks = Object.values(trades.reduce((map, trade) => {
     const start = startOfDisplayWeek(new Date(`${trade.date}T00:00:00`));
     const end = new Date(start); end.setDate(start.getDate() + 6);
@@ -4602,6 +4678,24 @@ function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
     const short = (date) => date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     return { ...week, label: short(week.start), full: `${short(week.start)} – ${short(week.end)}`, winRate: week.count ? week.wins / week.count * 100 : 0 };
   });
+  const weekPageCount = Math.max(1, Math.ceil(weeks.length / 26));
+  const safeWeekPage = Math.min(weekPage, weekPageCount - 1);
+  const visibleWeeks = weeks.slice(Math.max(0, weeks.length - (safeWeekPage + 1) * 26), weeks.length - safeWeekPage * 26);
+  const visibleWeekStart = visibleWeeks.length ? weeks.indexOf(visibleWeeks[0]) + 1 : 0;
+  const visibleWeekEnd = visibleWeeks.length ? visibleWeekStart + visibleWeeks.length - 1 : 0;
+  useEffect(() => { setWeekPage((page) => Math.min(page, weekPageCount - 1)); }, [weekPageCount]);
+  const showOlderWeeks = () => setWeekPage((page) => Math.min(weekPageCount - 1, page + 1));
+  const showNewerWeeks = () => setWeekPage((page) => Math.max(0, page - 1));
+  const weekChartTouchHandlers = weekPageCount > 1 ? {
+    onTouchStart: (event) => { weekSwipeStart.current = event.touches[0]?.clientX ?? null; },
+    onTouchEnd: (event) => {
+      if (weekSwipeStart.current == null) return;
+      const delta = event.changedTouches[0]?.clientX - weekSwipeStart.current;
+      weekSwipeStart.current = null;
+      if (Math.abs(delta) < 42) return;
+      if (delta < 0) showOlderWeeks(); else showNewerWeeks();
+    },
+  } : undefined;
   const monthly = monthlyPnlRange(closedTrades(account.trades), { balance: account.balance, year: monthlyYear, range, isWin: (pnl) => classify(pnl, cap) === "win" });
   const months = monthly.rows.map((month) => { const date = new Date(`${month.key}-01T00:00:00`); return { ...month, label: date.toLocaleDateString(undefined, { month: "short", ...(range === "year" ? {} : { year: "2-digit" }) }), full: date.toLocaleDateString(undefined, { month: "long", year: "numeric" }) }; });
   // Weekday edge, Monday to Sunday.
@@ -4614,25 +4708,79 @@ function AnalyticsRhythmV2({ account, trades, cap, stats, monthlyYear }) {
   const weekdayMax = Math.max(1, ...weekdays.map((row) => Math.abs(row.pnl)));
   const tradedDays = weekdays.filter((row) => row.count);
   const strongest = tradedDays.length ? tradedDays.reduce((a, b) => b.pnl > a.pnl ? b : a) : null;
+  const weakest = tradedDays.length ? tradedDays.reduce((a, b) => b.pnl < a.pnl ? b : a) : null;
   const weakDays = tradedDays.filter((row) => row.pnl < 0).map((row) => row.name);
   const longName = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+  const rankedSessions = [...sessionStats].sort((a, b) => b.netPnl - a.netPnl);
+  const bestSession = rankedSessions[0] || null;
+  const runLabel = stats.streak ? `${stats.streak}${stats.streakType === "loss" ? "L" : "W"}` : "—";
+  const runSub = stats.streak ? `${stats.streakType === "loss" ? "Loss" : "Win"} streak in the selected range` : "No active result streak";
+  const entryHour = (time) => {
+    const match = String(time || "").match(/^(\d{1,2}):(\d{2})/);
+    return match ? Number(match[1]) : null;
+  };
+  const timingBands = [
+    { key: "overnight", label: "Overnight", sub: "00:00–05:59", test: (hour) => hour < 6 },
+    { key: "london", label: "London open", sub: "06:00–10:59", test: (hour) => hour >= 6 && hour < 11 },
+    { key: "ny-open", label: "New York open", sub: "11:00–15:59", test: (hour) => hour >= 11 && hour < 16 },
+    { key: "late", label: "Late session", sub: "16:00–23:59", test: (hour) => hour >= 16 },
+  ];
+  const timedTrades = trades.map((trade) => ({ ...trade, entryHour: entryHour(trade.time) })).filter((trade) => trade.entryHour !== null);
+  const entryTiming = timingBands.map((band) => {
+    const rows = timedTrades.filter((trade) => band.test(trade.entryHour));
+    const wins = rows.filter((trade) => classify(trade.pnl, cap) === "win").length;
+    const pnl = rows.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
+    return { ...band, count: rows.length, pnl, winRate: rows.length ? wins / rows.length * 100 : 0 };
+  }).filter((band) => band.count);
+  const sessionQuality = (session) => Math.max(0, Math.min(100, session.winRate));
   const weekdayCard = <section className="an2-card an2-pad">
     <div className="an2-sh"><div><h3>Weekday edge</h3><small>Where your results come from</small></div><span className="an2-pill">{tradedDays.length} trading day{tradedDays.length === 1 ? "" : "s"}</span></div>
     <div className="an2-wd">{weekdays.map((row) => <div key={row.name} className={`an2-wr ${row.count ? "" : "is-off"}`}><b>{row.name}</b><div className="an2-bar2"><i data-chart-fill="horizontal" className={row.pnl >= 0 ? "is-gain" : "is-loss"} style={{ width: `${row.count ? Math.max(4, Math.abs(row.pnl) / weekdayMax * 100) : 0}%` }}/></div><span className={`an2-num ${row.count ? anTone(row.pnl) : ""}`}>{row.count ? fmtMoney(row.pnl) : "—"}</span><em>{row.count ? `${Math.round(row.winRate)}% WR` : ""}</em></div>)}</div>
     {strongest && <p className="an2-mut an2-sml">{longName[strongest.name]} carries the account{weakDays.length ? `. ${weakDays.map((name) => longName[name]).join(" and ")} ${weakDays.length === 1 ? "is" : "are"} net negative so far.` : "."}</p>}
   </section>;
   const rangeSwitch = <div className="an2-seg" role="group" aria-label="Monthly range">{[["year", String(monthlyYear)], ["12m", "12M"], ["3y", "3Y"], ["all", "All"]].map(([id, label]) => <button key={id} type="button" aria-pressed={range === id} className={range === id ? "is-on" : ""} onClick={() => setRange(id)}>{label}</button>)}</div>;
-  return <div className="an2 an2-rhythm">
-    <AnSectionNav items={[["day", "Day"], ["week", "Week"], ["month", "Month"]]}/>
-    <AnRhythmSection id="day" title="Daily growth" sub={`${days.length} trading day${days.length === 1 ? "" : "s"}`} rows={days} unit="trading days" labels={["Range outcome", "Consistency", "Best impulse", "Risk session"]} chartTitle="Daily realised P&L" chartSub="One bar per trading day" average="Average day"/>
-    <AnRhythmSection id="week" title="Weekly cadence" sub={`${weeks.length} week${weeks.length === 1 ? "" : "s"}`} rows={weeks} unit="weeks" labels={["Range outcome", "Consistency", "Best week", "Weakest week"]} chartTitle="Weekly cadence" chartSub="Monday to Sunday" average="Average week" side={weekdayCard}/>
-    <AnRhythmSection id="month" title="Monthly P&L" sub={`${monthly.activeCount} month${monthly.activeCount === 1 ? "" : "s"} with trades`} rows={months} unit="months" labels={["Range outcome", "Positive months", "Best month", "Worst month"]} chartTitle="Monthly P&L evolution" chartSub="Realised P&L per calendar month" average="Average month" control={rangeSwitch}/>
+  const weekPageControl = weekPageCount > 1 ? <div className="an2-chart-pager" aria-label="Weekly chart pages"><button type="button" onClick={showNewerWeeks} disabled={safeWeekPage === 0}>Newer</button><span aria-live="polite">Weeks {visibleWeekStart}–{visibleWeekEnd} of {weeks.length}</span><button type="button" onClick={showOlderWeeks} disabled={safeWeekPage === weekPageCount - 1}>Older</button></div> : null;
+  return <div className="an2 an2-rhythm" id="analytics-rhythm">
+    <AnSectionNav items={[["week", "Week"], ["sessions", "Sessions"], ["timing", "Timing"], ["month", "Month"]]}/>
+    <section className="an2-card an2-pad an2-rhythm-snapshot">
+      <div className="an2-sh"><div><h3>Execution rhythm</h3><small>Signals from your completed trade history</small></div><span className="an2-pill">{stats.total} trade{stats.total === 1 ? "" : "s"}</span></div>
+      <div className="an2-kpi4">
+        <AnStat extra="is-lg" label="Best weekday" value={strongest ? longName[strongest.name] : "—"} sub={strongest ? `${fmtMoney(strongest.pnl)} · ${Math.round(strongest.winRate)}% win rate` : "Log completed trades to measure"} tone={strongest ? anTone(strongest.pnl) : ""}/>
+        <AnStat extra="is-lg" label="Best session" value={bestSession?.session || "—"} sub={bestSession ? `${fmtMoney(bestSession.netPnl)} · ${bestSession.count} trade${bestSession.count === 1 ? "" : "s"}` : "Tag a session on trades"} tone={bestSession ? anTone(bestSession.netPnl) : ""}/>
+        <AnStat extra="is-lg" label="Current run" value={runLabel} sub={runSub} tone={stats.streakType === "loss" ? "is-loss" : stats.streak ? "is-gain" : ""}/>
+        <AnStat extra="is-lg" label="Review first" value={weakest ? longName[weakest.name] : "—"} sub={weakest ? `${fmtMoney(weakest.pnl)} · ${Math.round(weakest.winRate)}% win rate` : "More trading data needed"} tone={weakest && weakest.pnl < 0 ? "is-loss" : "is-warn"}/>
+      </div>
+    </section>
+    <AnRhythmSection id="week" title="Weekly cadence" sub={`${weeks.length} week${weeks.length === 1 ? "" : "s"}`} rows={visibleWeeks} unit="weeks" labels={["Range outcome", "Consistency", "Best week", "Weakest week"]} chartTitle="Weekly cadence" chartSub={weekPageCount > 1 ? "Swipe the chart for earlier weeks" : "Monday to Sunday"} average="Average week" control={weekPageControl} side={weekdayCard} chartTouchHandlers={weekChartTouchHandlers}/>
+    <section>
+      <AnSectionHead id="sessions" title="Session performance" sub="Ranked by realised net P&amp;L"/>
+      <section className="an2-card an2-pad">
+        {rankedSessions.length ? <div className="an2-session-list">{rankedSessions.map((session, index) => <div className="an2-session-row" key={session.session}>
+          <span className="an2-session-rank">{String(index + 1).padStart(2, "0")}</span>
+          <div className="an2-session-name"><b>{session.session}</b><small>{session.count} trade{session.count === 1 ? "" : "s"}</small></div>
+          <div className="an2-session-quality"><div><small>Quality</small><b>{Math.round(session.winRate)}% WR</b></div><div className="an2-bar2 is-s"><i data-chart-fill="horizontal" className={session.winRate >= 50 ? "is-gain" : "is-warn"} style={{ width: `${sessionQuality(session)}%` }}/></div></div>
+          <b className={`an2-num ${anTone(session.netPnl)}`}>{fmtMoney(session.netPnl)}</b>
+        </div>)}</div> : <div className="an2-empty">Tag a session when logging a trade to compare execution windows here.</div>}
+      </section>
+    </section>
+    <section>
+      <AnSectionHead id="timing" title="Entry-time analysis" sub="Grouped from each trade’s logged opening time"/>
+      <section className="an2-card an2-pad">
+        {entryTiming.length ? <div className="an2-session-list">{entryTiming.map((band, index) => <div className="an2-session-row" key={band.key}>
+          <span className="an2-session-rank">{String(index + 1).padStart(2, "0")}</span>
+          <div className="an2-session-name"><b>{band.label}</b><small>{band.sub} · {band.count} trade{band.count === 1 ? "" : "s"}</small></div>
+          <div className="an2-session-quality"><div><small>Quality</small><b>{Math.round(band.winRate)}% WR</b></div><div className="an2-bar2 is-s"><i data-chart-fill="horizontal" className={band.winRate >= 50 ? "is-gain" : "is-warn"} style={{ width: `${band.winRate}%` }}/></div></div>
+          <b className={`an2-num ${anTone(band.pnl)}`}>{fmtMoney(band.pnl)}</b>
+        </div>)}</div> : <div className="an2-empty">Add an opening time to trades to compare the cleanest entry window here.</div>}
+      </section>
+    </section>
+    <AnRhythmSection id="month" title="Monthly P&L" sub={`${monthly.activeCount} month${monthly.activeCount === 1 ? "" : "s"} with trades`} rows={months} unit="months" labels={["Range outcome", "Positive months", "Best month", "Worst month"]} control={rangeSwitch}/>
   </div>;
 }
 
 
-function ExecutionRhythmView({ account, trades, cap, stats, monthlyYear }) {
-  return <AnalyticsRhythmV2 account={account} trades={trades} cap={cap} stats={stats} monthlyYear={monthlyYear}/>;
+function ExecutionRhythmView({ account, trades, cap, stats, monthlyYear, sessionStats }) {
+  return <AnalyticsRhythmV2 account={account} trades={trades} cap={cap} stats={stats} monthlyYear={monthlyYear} sessionStats={sessionStats}/>;
 }
 
 function RiskGuardrailsView({ account, trades, cap, stats, confluenceStats, instrumentStats, onOpenAccountSettings }) {
@@ -4721,7 +4869,7 @@ function RiskGuardrailsView({ account, trades, cap, stats, confluenceStats, inst
     const usedTone = (used) => used >= 100 ? "is-loss" : used >= 75 ? "is-warn" : "is-gain";
     const dayLabel = (date) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
     const settingsLink = onOpenAccountSettings && <button type="button" className="an2-lnk" onClick={onOpenAccountSettings}>Set a cap in Account Settings <ArrowRight size={14} aria-hidden="true"/></button>;
-    return <div className="an2 an2-disc">
+    return <div className="an2 an2-disc" id="analytics-guardrails">
       <div className="an2-g an2-a5">
         <section className="an2-card an2-pad"><div className="an2-sh"><div><h3>Execution score</h3><small>How your results hold up</small></div><span className={`an2-pill ${score >= 60 ? "is-gain" : score >= 40 ? "is-warn" : "is-loss"}`}>{scoreLabel}</span></div>
           <div className="an2-sc2"><div className="an2-scn"><b className="an2-num">{score}</b><span>/100</span></div><div className="an2-radar"><ResponsiveContainer width="100%" height={260} debounce={100}><RadarChart data={factors} outerRadius="72%"><PolarGrid stroke="var(--border)"/><PolarAngleAxis dataKey="metric" tick={{ fill: "var(--muted)", fontSize: 12 }}/><Radar dataKey="value" stroke="var(--accent)" fill="var(--accent)" fillOpacity={.2} strokeWidth={2} dot={{ r: 3.5, fill: "var(--accent)" }}/></RadarChart></ResponsiveContainer></div></div>
@@ -5472,7 +5620,7 @@ function AnalyticsPage({ account, balances = [], selectedBalanceId = "", onSelec
       </Card>
 
       <div className="tj-view-transition" key={analyticsTab}>
-      {analyticsTab === "performance" ? <PerformanceMetricsView account={account} trades={trades} monthlyYear={pickerYear} markups={analyticsMarkups} cap={cap} stats={stats} tagStats={tagStats} confluenceStats={confluenceStats} pairingStats={pairingStats} instrumentStats={instrumentStats} onViewMarkups={onViewMarkups} onOpenTradeReview={(trade) => setTradeEditor({ trade })}/> : analyticsTab === "rhythm" ? <ExecutionRhythmView account={account} trades={trades} cap={cap} stats={stats} monthlyYear={pickerYear}/> : analyticsTab === "guardrails" ? <RiskGuardrailsView onOpenAccountSettings={onOpenAccountSettings} account={account} trades={trades} cap={cap} stats={stats} confluenceStats={confluenceStats} instrumentStats={instrumentStats}/> : overviewV2}
+      {analyticsTab === "performance" ? <PerformanceMetricsView account={account} trades={trades} monthlyYear={pickerYear} markups={analyticsMarkups} cap={cap} stats={stats} tagStats={tagStats} confluenceStats={confluenceStats} pairingStats={pairingStats} instrumentStats={instrumentStats} onViewMarkups={onViewMarkups} onOpenTradeReview={(trade) => setTradeEditor({ trade })}/> : analyticsTab === "rhythm" ? <ExecutionRhythmView account={account} trades={trades} cap={cap} stats={stats} monthlyYear={pickerYear} sessionStats={sessionStats}/> : analyticsTab === "guardrails" ? <RiskGuardrailsView onOpenAccountSettings={onOpenAccountSettings} account={account} trades={trades} cap={cap} stats={stats} confluenceStats={confluenceStats} instrumentStats={instrumentStats}/> : overviewV2}
       </div>
       {tradeEditor && <TradeReviewEditorModal readOnly trade={tradeEditor.trade} trades={trades} existing={reviews.find((review) => review.tradeId === tradeEditor.trade.id)} reviews={reviews} markups={markups} account={account} onClose={() => setTradeEditor(null)} onSave={onSaveTradeReview}/>} 
     </div>
@@ -5872,7 +6020,7 @@ function journalBriefingData({ account, trades, stats, bestTag, bestSession, cha
     { key:'edge', className:'tj-insight-card-edge', show:true, label:<>EXECUTION EDGE</>, title:<>{bestSession ? `${bestSession.session} is the strongest execution window.` : "Session data needs a larger sample."}</>, body:<>{bestSession ? <><b>{bestSession.session}</b> has returned <b className="tj-green">{fmtMoney(bestSession.netPnl)}</b> from {bestSession.count} trades at {bestSession.winRate.toFixed(0)}% win rate. </> : null}{bestTag ? <><b>{bestTag.tag}</b> is the strongest tagged setup at <b className="tj-green">{fmtMoney(bestTag.netPnl)}</b> across {bestTag.count} trades. </> : "Tag setups and sessions to isolate the repeatable edge. "}Best winning run: {stats.bestWinStreak} trades; maximum losing run: {stats.bestLossStreak} trades.</> },
     { key:'goals', className:'tj-insight-card-goals', show:true, label:<>RISK &amp; GOALS</>, title:<>{guardrails.tradeEntryLocked ? "Risk limit reached — trading is paused." : guardrails.enabled ? "Goals and guardrails are actively monitoring the account." : "No account goals or loss caps are enabled."}</>, body:<>{guardrails.monthlyGoal ? <>Monthly goal: <b>{fmtMoney(guardrails.monthlyGoal)}</b>; current month: <b className={guardrails.monthlyPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoney(guardrails.monthlyPnl)}</b> ({goalProgress.toFixed(0)}% complete). </> : "No monthly profit target is set. "}{guardrails.yearlyGoal ? <>Yearly goal progress is {yearProgress.toFixed(0)}%. </> : null}{guardrails.dailyLossCap ? <>Daily loss buffer: <b>{fmtMoney(Math.max(0, guardrails.dailyLossCap + Math.min(0, guardrails.dailyPnl)))}</b> remaining. </> : "No daily loss cap is set. "}{guardrails.monthlyLossCap ? <>Monthly buffer: <b>{fmtMoney(Math.max(0, guardrails.monthlyLossCap + Math.min(0, guardrails.monthlyPnl)))}</b> remaining.</> : null}</> },
     { key:'challenge', className:'tj-insight-card-challenge', show:challengeOn, label:<>CHALLENGE STATUS</>, title:<>{challenge?.loading ? "Challenge progress is loading." : `Level ${activeLevel} is the current challenge focus.`}</>, body:<>Challenge mode uses this account’s balance of <b>{fmtMoney(account.balance)}</b>. {challenge?.loading ? "Progress will appear when the challenge record is ready." : <>{passedLevels} of {challengeLevelCount} levels have passed. Keep trade risk aligned with the current level rather than using the journal’s strongest historic result as a sizing signal.</>}</> },
-    { key:'finance', className:'tj-insight-card-finance', show:financeOn, label:<>CAPITAL &amp; FINANCE</>, title:<>{finance.savings > 0 ? "Trading capital and savings are being tracked separately." : "Finance tracking is active for this account."}</>, body:<>Live trading capital is <b>{fmtMoney(finance.tradingBalance)}</b>; savings total <b>{fmtMoney(finance.savings)}</b>; combined capital is <b className="tj-green">{fmtMoney(finance.totalCapital)}</b>. Deposits total {fmtMoney(finance.deposits)} and withdrawals total {fmtMoney(finance.withdrawals)}. Trading P&amp;L remains separate from cash movements.</> },
+    { key:'finance', className:'tj-insight-card-finance', show:financeOn, label:<>CAPITAL &amp; FINANCE</>, title:<>{finance?.savings > 0 ? "Trading capital and savings are being tracked separately." : "Finance tracking is active for this account."}</>, body:<>Live trading capital is <b>{fmtMoney(finance?.tradingBalance)}</b>; savings total <b>{fmtMoney(finance?.savings)}</b>; combined capital is <b className="tj-green">{fmtMoney(finance?.totalCapital)}</b>. Deposits total {fmtMoney(finance?.deposits)} and withdrawals total {fmtMoney(finance?.withdrawals)}. Trading P&amp;L remains separate from cash movements.</> },
     { key:'discipline', className:'tj-insight-card-discipline', show:!challengeOn, label:<>PROCESS DISCIPLINE</>, title:<>{stats.consistency >= 70 ? "Your execution is becoming more consistent." : "Consistency needs more attention than the result."}</>, body:<>Your consistency score is <b className={stats.consistency >= 70 ? "tj-green" : "tj-amber-txt"}>{stats.consistency.toFixed(0)}%</b>. Best winning run: <b>{stats.bestWinStreak} trades</b>; maximum losing run: <b>{stats.bestLossStreak} trades</b>. Keep size and setup selection stable through the next sample.</> },
     { key:'focus', className:'tj-local-briefing-focus', show:true, label:<>NEXT FOCUS</>, title:<>Use the evidence before the next trade.</>, body:<>{nextFocus}</> },
   ].filter(section => section.show);
@@ -6614,6 +6762,13 @@ export function TradingJournalApp({ user, onLogout }) {
   });
   const [privacyLocked, setPrivacyLocked] = useState(false);
   const [accounts, setAccounts] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    void pendingTradeSaves(user.id).then((pending) => {
+      if (!cancelled && pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
+    });
+    return () => { cancelled = true; };
+  }, [user.id]);
   const [challengeProgress, setChallengeProgress] = useState(null);
   const [backtestSnapshot, setBacktestSnapshot] = useState(null);
   const [challengeProgressReady, setChallengeProgressReady] = useState(false);
@@ -6891,7 +7046,8 @@ export function TradingJournalApp({ user, onLogout }) {
 
     return () => window.cancelAnimationFrame(frame);
   }, [modal, sidebarOpen]);
-  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'warning'|'info', text }
+  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'warning'|'info'|'challenge', text }
+  const [challengeSetupPrompt, setChallengeSetupPrompt] = useState(null);
   const [migration, setMigration] = useState({ checked: false, pending: null, busy: false });
 
   const showError = useCallback((text) => {
@@ -6910,6 +7066,18 @@ export function TradingJournalApp({ user, onLogout }) {
     setToast({ type: "warning", text });
     setTimeout(() => setToast((t) => (t && t.text === text ? null : t)), 6000);
   }, []);
+  const showChallengeSetupAttention = useCallback((issue, context) => {
+    const recommendation = issue?.recommendations?.[0] || null;
+    const next = {
+      type: 'challenge',
+      kicker: 'CHALLENGE SETUP NEEDS ATTENTION',
+      text: issue?.message || 'This challenge setup needs attention before it can be saved.',
+      recommendation,
+      context,
+    };
+    setToast(next);
+    setTimeout(() => setToast((current) => current === next ? null : current), 9000);
+  }, []);
 
   useEffect(() => {
     const updateClock = () => setJournalClock(Date.now());
@@ -6927,6 +7095,9 @@ export function TradingJournalApp({ user, onLogout }) {
 
   const applyJournalData = useCallback((data) => {
     setAccounts(data.accounts);
+    void pendingTradeSaves(user.id).then((pending) => {
+      if (pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
+    });
     setTypeTags(data.typeTags || []);
     setMistakeTags(data.mistakeTags || []);
     setConfluenceSessions(data.confluenceSessions || []);
@@ -7698,31 +7869,49 @@ export function TradingJournalApp({ user, onLogout }) {
       showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period.");
       return;
     }
-    let persistedTrade = trade;
-    try {
-      if (exists) {
-        setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((t) => (t.id === trade.id ? trade : t)) })));
-        const res = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: account.id });
-        if (res.error) { setAccounts(items => items.map(item => item.id !== account.id ? item : {...item,trades:item.trades.map(row => row.id === trade.id ? previousTrade : row)})); showError(res.error); return false; }
-        persistedTrade = res.data || trade;
-        setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((t) => (t.id === trade.id ? { ...persistedTrade, balanceResults: trade.balanceResults || t.balanceResults || [] } : t)) })));
-      } else {
-        setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: [...a.trades, trade] })));
-        const res = await createTrade(user.id, account.id, trade);
-        if (res.error) { setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.filter((item) => item.id !== trade.id) }))); showError(res.error); return false; }
-        persistedTrade = res.data || trade;
-        setAccounts((accs) => accs.map((a) => (a.id !== account.id ? a : { ...a, trades: a.trades.map((item) => item.id === trade.id ? { ...persistedTrade, balanceResults: trade.balanceResults || [] } : item) })));
+    // Keep the completed entry visible immediately, then let the cloud write
+    // finish in the background. If it cannot finish, its full form remains in
+    // the encrypted browser cache and can be reopened or retried unchanged.
+    const retryingCreate = !!trade._pendingCreate;
+    const writesExistingTrade = exists && !retryingCreate;
+    const optimisticTrade = {
+      ...trade,
+      _syncState: 'saving',
+      ...(writesExistingTrade ? {} : { _pendingCreate:true }),
+    };
+    setAccounts((items) => items.map((item) => {
+      if (item.id !== account.id) return item;
+      const present = item.trades.some(row => row.id === optimisticTrade.id);
+      return { ...item, trades:present ? item.trades.map(row => row.id === optimisticTrade.id ? optimisticTrade : row) : [...item.trades, optimisticTrade] };
+    }));
+    // Queue before the request starts, not after it fails. A tab refresh or a
+    // connection drop during the request therefore still leaves a retryable,
+    // fully populated trade on this device.
+    void queueTradeSave(user.id, account.id, optimisticTrade, writesExistingTrade ? 'update' : 'create').catch(() => undefined);
+    setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0);
+    showInfo('Saving trade…');
+    void (async () => {
+      let persistedTrade = optimisticTrade;
+      try {
+        if (writesExistingTrade) {
+          const res = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: account.id });
+          if (res.error) throw new Error(res.error);
+          persistedTrade = res.data || trade;
+        } else {
+          const res = await createTrade(user.id, account.id, trade);
+          if (res.error) throw new Error(res.error);
+          persistedTrade = res.data || trade;
+        }
+        persistedTrade = { ...persistedTrade, balanceResults: trade.balanceResults || previousTrade?.balanceResults || [] };
+        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id ? persistedTrade : row) }));
+        await clearPendingTradeSave(user.id, account.id, trade.id);
+      } catch (error) {
+        const failedTrade = { ...optimisticTrade, _syncState:'failed', ...(writesExistingTrade ? { _pendingUpdate:true, _pendingCreate:false } : { _pendingCreate:true }) };
+        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id ? failedTrade : row) }));
+        await queueTradeSave(user.id, account.id, failedTrade, writesExistingTrade ? 'update' : 'create');
+        showWarning('Trade is saved on this device but could not reach cloud. Retry save or edit it without re-entering anything.');
+        return;
       }
-    } catch (error) {
-      setAccounts((items) => items.map((item) => {
-        if (item.id !== account.id) return item;
-        return exists
-          ? { ...item, trades:item.trades.map((row) => row.id === trade.id ? previousTrade : row) }
-          : { ...item, trades:item.trades.filter((row) => row.id !== trade.id) };
-      }));
-      showError(`Trade could not be saved to this device. ${error?.message || 'Retry Save Trade.'}`);
-      return false;
-    }
     if (isMultiBalanceWorkspace(account)) {
       const resultSave = await saveTradeBalanceResults(user.id, persistedTrade.id, trade.balanceResults || []);
       if (resultSave.error) { showWarning(`Trade saved, but account-result synchronization needs attention: ${resultSave.error}`); }
@@ -7764,8 +7953,8 @@ export function TradingJournalApp({ user, onLogout }) {
     const markupResults = await Promise.all(markupIdsToSynchronize.map((markupId) => synchronizeMarkupLinkStatus(markupId, tradesAfterSave)));
     if (markupResults.some((saved) => !saved)) showWarning('Trade saved, but its linked markup status could not yet be synchronized. The trade link remains saved and can be retried safely.');
     await persistCustomInstrument(trade.asset);
-    setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0);
     showSuccess(exists ? 'Trade updated.' : 'Trade saved.');
+    })();
     return true;
   };
 
@@ -8180,6 +8369,35 @@ export function TradingJournalApp({ user, onLogout }) {
   const handleRecordFinanceMovement = async (movement) => {
     const movementValidation = validateFinanceMovement(movement);
     if (!movementValidation.valid || !financialValidation.valid) { showError(financialValidationMessage(movementValidation.valid ? financialValidation.issues : movementValidation.issues)); return false; }
+    // Enforce the challenge funding limit at the persistence boundary. A
+    // warning in Finance is useful, but this check is what prevents an
+    // invalid deposit from ever being written to the ledger.
+    if (movement.type === 'deposit' && Number(movement.amount) > 0) {
+      const targetBalance=movement.balanceId ? (account.balances || []).find(item=>item.id===movement.balanceId) : null;
+      const scoped=targetBalance ? scopeChallengeAccount(account,targetBalance) : account;
+      if (scoped.challengeEnabled) {
+        const record=await challengeDb.read(targetBalance ? 'balance' : 'account',targetBalance?.id || account.id,user.id);
+        if (record.error) { showError(record.error.message); return false; }
+        const baseState=record.data ? {activeLevel:record.data.active_level,statuses:record.data.statuses || {},notes:record.data.notes || {},automation:record.data.automation || null} : null;
+        if (baseState?.automation?.startedAt) {
+          const replayed=replayChallenge(baseState,scoped);
+          const currentBalance=Number(liveChallengeBalance(scoped));
+          const resultingBalance=Math.round((currentBalance+Number(movement.amount))*100)/100;
+          const config=baseState.automation;
+          const linked=linkedChallengeTrades(baseState,scoped).length>0;
+          const rule=challengeDepositFundingRule({mode:config.mode,reward:config.rewardRatio ?? scoped.challengeReward,balance:resultingBalance,levelCount:config.levelCount,activeLevel:replayed.activeLevel,failed:replayed.failed,linked,startingBalance:config.startingBalance});
+          if (!rule.allowed) {
+            if (rule.reason==='active-cap') {
+              showError(`Deposits are unavailable after Level ${rule.maxLevel} in this ${rule.totalLevels}-level challenge. Continue through trading to progress further.`);
+            } else {
+              const maximum=Math.max(0,Math.floor((rule.firstProhibitedStart-currentBalance-0.01)*100)/100);
+              showError(`Deposit exceeds challenge funding limit. This deposit would fund Level ${rule.fundedLevel}, but your ${rule.totalLevels}-level challenge only allows deposit-funded progression up to Level ${rule.maxLevel}. Reduce the deposit to ${fmtMoney(maximum)} or less to continue.`);
+            }
+            return false;
+          }
+        }
+      }
+    }
     const result = await createFinanceMovement(user.id, account.id, movement);
     if (result.error) { showError(`${result.error} Apply supabase/finance_migration.sql if this is a new database.`); return false; }
     setAccounts((items) => items.map((item) => item.id === account.id ? {...item, financeMovements:[result.data, ...(item.financeMovements || [])]} : item));
@@ -8201,15 +8419,20 @@ export function TradingJournalApp({ user, onLogout }) {
     const adaptiveDrawdownPct=Number(patch.adaptiveDrawdownPct);
     if(!patch.name?.trim() || !Number.isFinite(nextBalance) || nextBalance<=0 || (nextReward!==null && (!Number.isFinite(nextReward) || nextReward<=0))){showError('Enter a name, positive starting balance, and positive reward ratio.');return false;}
     if(nextMode==='adaptive' && (!Number.isFinite(adaptiveRiskPct) || adaptiveRiskPct<=0 || adaptiveRiskPct>100 || !Number.isFinite(adaptiveDrawdownPct) || adaptiveDrawdownPct<0 || adaptiveDrawdownPct>=100)){showError('Adaptive Balance needs a risk between 0 and 100%, and a drawdown from 0 to 99.99%.');return false;}
-    const activationIssue=challengeModeActivationRule({mode:nextMode,reward:nextReward,balance:nextBalance});
-    if(activationIssue){showError(activationIssue.message);return false;}
+    const activationIssue=challengeModeActivationRule({mode:nextMode,reward:nextReward,balance:nextBalance,levelCount:nextCount});
+    if(activationIssue){showChallengeSetupAttention(activationIssue,{balanceId,state,patch});return false;}
     const goals={monthlyGoalPct:Number(patch.monthlyGoalPct ?? scoped.monthlyGoalPct ?? 0),yearlyGoalPct:Number(patch.yearlyGoalPct ?? scoped.yearlyGoalPct ?? 0)};
     const guardrails={dailyLossLimitPct:Number(patch.dailyLossLimitPct ?? scoped.dailyLossLimitPct ?? 0),monthlyLossLimitPct:Number(patch.monthlyLossLimitPct ?? scoped.monthlyLossLimitPct ?? 0)};
     if(Object.values(goals).some(value=>!Number.isFinite(value)||value<0) || Object.values(guardrails).some(value=>!Number.isFinite(value)||value<0||value>100)){showError('Goals must be non-negative. Loss limits must be between 0 and 100%.');return false;}
     if(nextMode==='streak' && !canUseLossStreak(nextReward)){showError('Two-Loss Streak requires a reward above 1:2.8.');return false;}
     const protectedChanged=(state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='streak'?3.1:0))!==Number(nextReward) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
-    if(state.settingsLocked && protectedChanged){showError('This challenge has linked trades. Its starting balance, mode, plan length and reward are locked.');return false;}
-    const nextState=protectedChanged ? resetAutomation({...state,automation:{...(state.automation || {}),rewardRatio:nextReward,adaptiveRiskPct:nextMode==='adaptive'?adaptiveRiskPct:undefined,adaptiveDrawdownPct:nextMode==='adaptive'?adaptiveDrawdownPct:undefined}},scoped.trades || [],nextMode,Math.min(state.activeLevel || 1,nextCount),new Date(),nextCount,nextBalance) : state;
+    // Completing a challenge closes that run. Starting Adaptive afterwards is
+    // intentionally a fresh run at Level 1, so its historical linked trades
+    // remain in the journal but cannot lock the new setup or reopen the old
+    // completion ceremony.
+    const restartCompleted=patch.restartCompleted===true;
+    if(state.settingsLocked && protectedChanged && !restartCompleted){showError('This challenge has linked trades. Its starting balance, mode, plan length and reward are locked.');return false;}
+    const nextState=(protectedChanged || restartCompleted) ? resetAutomation({...state,statuses:restartCompleted?{}:state.statuses,notes:restartCompleted?{}:state.notes,stepBacks:restartCompleted?0:state.stepBacks,lossStreak:restartCompleted?0:state.lossStreak,failed:false,automation:{...(state.automation || {}),rewardRatio:nextReward,adaptiveRiskPct:nextMode==='adaptive'?adaptiveRiskPct:undefined,adaptiveDrawdownPct:nextMode==='adaptive'?adaptiveDrawdownPct:undefined}},scoped.trades || [],nextMode,restartCompleted?1:Math.min(state.activeLevel || 1,nextCount),new Date(),nextCount,nextBalance) : state;
     if(balance) {
       // Keep the complete adaptive challenge configuration on the balance row.
       // The database mapper stores these values in risk_settings, so omitting
@@ -8229,10 +8452,23 @@ export function TradingJournalApp({ user, onLogout }) {
       const persisted=await challengeDb.save('account',{account_id:account.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation});
       if(persisted.error){showError(persisted.error.message);return false;}
       setAccounts(items=>items.map(item=>item.id===account.id?mergeAccountPatch(item,saved.data || settingsPatch):item));
-      await challenge.reload();
+      window.dispatchEvent(new CustomEvent('aaicorefx:account-challenge-updated',{detail:{accountId:account.id,state:nextState}}));
     }
-    showInfo('Challenge settings saved.');
+    showInfo(restartCompleted ? 'Adaptive challenge started at Level 1.' : 'Challenge settings saved.');
     return true;
+  };
+
+  const applyChallengeSetupRecommendation = async (recommendation) => {
+    const pending = challengeSetupPrompt;
+    if (!pending?.context || !recommendation) return;
+    setChallengeSetupPrompt(null);
+    const patch = {
+      ...pending.context.patch,
+      mode: recommendation.mode,
+      levelCount: recommendation.levelCount,
+      ...(recommendation.reward != null ? {reward:recommendation.reward} : {}),
+    };
+    await handleSaveChallengeSetup(pending.context.balanceId, pending.context.state, patch);
   };
 
   const handleDeleteChallenge = async (balanceId, state) => {
@@ -8252,6 +8488,28 @@ export function TradingJournalApp({ user, onLogout }) {
     setAccounts(items=>items.map(item=>item.id!==account.id?item:{...item,...(balance?{balances:item.balances.map(target=>target.id===balanceId?{...target,challengeEnabled:false}:target)}:{challengeEnabled:false})}));
     if(!balance)await challenge.reload();
     showInfo('Challenge deleted. Your account and trade history were kept.');
+    return true;
+  };
+
+  const handleCompleteChallenge = async (balanceId, scopedChallenge, facts) => {
+    const certificate = { ...facts, id:`${facts.certificateId}-${facts.completedAt}`, archivedAt:new Date().toISOString() };
+    if (balanceId) {
+      const balance = account.balances.find(item => item.id === balanceId);
+      if (!balance) return false;
+      const next = { ...balance, challengeCertificates:[...(balance.challengeCertificates || []).filter(item => item.id !== certificate.id), certificate] };
+      const saved = await updateWorkspaceBalance(user.id, account.id, next);
+      if (saved.error) { showError(saved.error); return false; }
+      setAccounts(items => items.map(item => item.id === account.id ? { ...item, balances:item.balances.map(row => row.id === balanceId ? { ...row, ...saved.data } : row) } : item));
+    } else {
+      const next = { ...account, challengeCertificates:[...(account.challengeCertificates || []).filter(item => item.id !== certificate.id), certificate] };
+      const saved = await updateAccount(account.id, createAccountPatch(next));
+      if (saved.error) { showError(saved.error); return false; }
+      setAccounts(items => items.map(item => item.id === account.id ? mergeAccountPatch(item, saved.data || createAccountPatch(next)) : item));
+    }
+    // Persist the acknowledgement only after the certificate metadata is
+    // confirmed. A failed archive write must leave the completion dialog retryable.
+    if (!await scopedChallenge.acknowledgeCompletion?.(facts)) return false;
+    showInfo('Challenge completed and certificate saved in Journal Setup.');
     return true;
   };
 
@@ -8307,7 +8565,7 @@ export function TradingJournalApp({ user, onLogout }) {
     return true;
   };
 
-  const handleSaveAccountSettings = async (updated, draft, financeDraft, importedTrades = [], balanceDrafts) => {
+  const handleSaveAccountSettings = async (updated, draft, financeDraft, importedTrades = [], balanceDrafts, editedBalanceId = null) => {
     const settingsValidation = validateAccountFinancialData({ ...updated, balances:balanceDrafts || updated.balances || [], trades:[], financeMovements:[] });
     if (!settingsValidation.valid) { showError(financialValidationMessage(settingsValidation.issues)); return false; }
     const removingAccounts = isMultiBalanceWorkspace(account) && (!isMultiBalanceWorkspace(updated)
@@ -8336,8 +8594,14 @@ export function TradingJournalApp({ user, onLogout }) {
       return !Number.isInteger(minutes) || minutes < 1 || minutes > 10080;
     })) { showError("Enter a savings reminder interval from 1 to 10,080 whole minutes."); return false; }
     if (financialValidation.valid && guardrails.tradeEntryLocked) { showInfo("Account settings are locked while this account is paused by its loss limit."); return false; }
+    // In a multi-account workspace, settings are edited one account at a time.
+    // Another balance's existing challenge must not prevent the selected balance
+    // from being saved or make its warning appear in this editor.
+    const balancesToValidate=isMultiBalanceWorkspace(updated)
+      ? (account.balances || []).filter(item=>item.id===editedBalanceId)
+      : (account.balances || []);
     // Validate challenge locks before any local or database settings changes.
-    for (const oldBalance of account.balances || []) {
+    for (const oldBalance of balancesToValidate) {
       if (!oldBalance.challengeEnabled) continue;
       const prior=await challengeDb.read('balance',oldBalance.id,user.id);
       if(prior.error){showError(prior.error.message);return false;}
@@ -8355,12 +8619,13 @@ export function TradingJournalApp({ user, onLogout }) {
     const nextAdaptiveDrawdown = Number(draft?.adaptiveDrawdownPct ?? challenge.state.automation?.adaptiveDrawdownPct ?? 10);
     if (isMultiBalanceWorkspace(updated)) {
       const validationWorkspace={...updated,balances:balanceDrafts || updated.balances || [],trades:account.trades || [],financeMovements:account.financeMovements || []};
-      for (const candidate of validationWorkspace.balances.filter(item=>item.challengeEnabled)) {
-        const issue=challengeModeActivationRule({mode:candidate.challengeMode,reward:candidate.challengeReward,balance:liveChallengeBalance(scopeChallengeAccount(validationWorkspace,candidate))});
+      const candidate=validationWorkspace.balances.find(item=>item.id===editedBalanceId);
+      if (candidate?.challengeEnabled) {
+        const issue=challengeModeActivationRule({mode:candidate.challengeMode,reward:candidate.challengeReward,balance:liveChallengeBalance(scopeChallengeAccount(validationWorkspace,candidate)),levelCount:candidate.challengeLevelCount});
         if (issue) { showError(`${candidate.name}: ${issue.message}`); return false; }
       }
     } else if (enabled) {
-      const issue=challengeModeActivationRule({mode:nextMode,reward:nextReward,balance:liveChallengeBalance({...updated,trades:account.trades || [],financeMovements:account.financeMovements || []})});
+      const issue=challengeModeActivationRule({mode:nextMode,reward:nextReward,balance:liveChallengeBalance({...updated,trades:account.trades || [],financeMovements:account.financeMovements || []}),levelCount:nextLevelCount});
       if (issue) { showError(issue.message); return false; }
     }
     const rewardChanged = nextReward !== challenge.state.automation?.rewardRatio;
@@ -8688,7 +8953,8 @@ export function TradingJournalApp({ user, onLogout }) {
       <style>{CSS}</style>
     {loadError && <div role="alert" style={{position:"fixed",bottom:16,right:16,zIndex:200,maxWidth:440,padding:16,border:"1px solid var(--tj-border)",borderRadius:12,background:"var(--tj-panel)",color:"var(--tj-text)"}}><strong>Cloud sync needs attention</strong><p style={{fontSize:12}}>{loadError}</p><button type="button" className="tj-btn-secondary" onClick={loadFromServer}>Retry sync</button><button type="button" className="tj-btn-secondary" onClick={() => setLoadError("")}>Dismiss</button></div>}
       
-      {toast && <div className={`tj-toast tj-toast-${toast.type}`} role={toast.type==='error'?'alert':'status'} aria-live={toast.type==='error'?'assertive':'polite'}><span>{toast.type==='success'?<CheckCircle2 size={16}/>:toast.type==='warning'?<AlertTriangle size={16}/>:toast.type==='error'?<X size={16}/>:<CircleCheck size={16}/>}</span><p>{toast.text}</p><button type="button" aria-label="Dismiss notification" onClick={()=>setToast(null)}><X size={15}/></button></div>}
+      {toast && <div className={`tj-toast tj-toast-${toast.type}`} role={toast.type==='error'?'alert':'status'} aria-live={toast.type==='error'?'assertive':'polite'}><span>{toast.type==='success'?<CheckCircle2 size={16}/>:toast.type==='challenge'||toast.type==='warning'?<AlertTriangle size={16}/>:toast.type==='error'?<X size={16}/>:<CircleCheck size={16}/>}</span><div>{toast.kicker&&<small>{toast.kicker}</small>}<p>{toast.text}</p></div>{toast.type==='challenge'&&toast.recommendation&&<button type="button" className="tj-toast-challenge-action" onClick={()=>{setToast(null);setChallengeSetupPrompt({recommendation:toast.recommendation,context:toast.context});}}>View compatible setup</button>}<button type="button" aria-label="Dismiss notification" onClick={()=>setToast(null)}><X size={15}/></button></div>}
+      {challengeSetupPrompt&&<ChallengeCompatibleDialog recommendation={challengeSetupPrompt.recommendation} onClose={()=>setChallengeSetupPrompt(null)} onApply={applyChallengeSetupRecommendation}/>} 
       <SidebarShell open={sidebarOpen} page={page} v2={SHELL_V2}>
         <div className="tj-sidebar-header">
           <button type="button" className="tj-sidebar-profile" aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"} aria-expanded={sidebarOpen} onClick={(event) => { event.stopPropagation(); updateSidebarOpen((open) => !open); }}>
@@ -8747,12 +9013,12 @@ export function TradingJournalApp({ user, onLogout }) {
           <PageScrollMemory page={page}/>
           {page !== "management" && page !== "journal" && page !== "challenge" && page !== "backtest" && page !== "reviews" && page !== "case-studies" && <JournalSignalHeader key={page} page={page} trades={page === "dashboard" ? dashboardAccount.trades : page === "backtest" ? backtestTrades : account.trades} markups={markups.filter(m=>m.accountId===account.id)} reviews={reviews.filter(r=>r.accountId===account.id)} guardrails={guardrails} monthCursor={monthCursor} challenge={challenge} loginQuote={loginQuote}/>} 
           {page === "dashboard" && (financialValidation.valid ? <DashboardSurface routine={routineStore.routine} onStartDay={openNewMarkup} routineBusy={routineTriggerBusy} account={dashboardAccount} workspace={account} stats={dashboardStats} liveBalance={financeTotals(dashboardAccount).tradingBalance} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} guardrails={dashboardGuardrails || guardrails} displayName={displayName} loginQuote={loginQuote} challenge={challenge} userId={user.id} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} onViewTrades={() => { window.history.pushState({}, "", JOURNAL_PATHS.tradelog); setPage("tradelog"); }} onViewCalendar={() => navigateMobile('calendar')} onViewChallenge={() => navigateMobile('challenge')} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {(page === "tradelog" || page === "journal") && <TradeLogPage account={account} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveReview={handleSaveReview} onNewTrade={() => openNewTrade()} onEdit={(t) => { if (guardrails.tradeEntryLocked) return showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period."); beginTradeEntry({editing:t}); }} onDelete={handleDeleteTrade} onLinkMarkup={(trade, markupId) => saveTrade({ ...trade, premarketMarkupId: markupId })} locked={guardrails.tradeEntryLocked} />}
+          {(page === "tradelog" || page === "journal") && <TradeLogPage account={account} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveReview={handleSaveReview} onNewTrade={() => openNewTrade()} onEdit={(t) => { if (guardrails.tradeEntryLocked) return showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period."); beginTradeEntry({editing:t}); }} onRetrySave={(trade) => { void saveTrade(trade); }} onDelete={handleDeleteTrade} onLinkMarkup={(trade, markupId) => saveTrade({ ...trade, premarketMarkupId: markupId })} locked={guardrails.tradeEntryLocked} />}
           
           {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
           {page === "analytics" && (financialValidation.valid ? <AnalyticsPage account={dashboardAccount} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveTradeReview={handleSaveReview} onViewMarkups={() => setPage("markups")} onOpenAccountSettings={guardrails.tradeEntryLocked ? undefined : () => setModal("account")} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "finance" && account.finance?.enabled && (financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {page === "challenge" && (isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled)) && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
+          {page === "challenge" && (isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled)) && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
           {page === "calendar" && (phoneCalendar
             ? <MobileCalendarV2 account={dashboardAccount} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} formatMoney={fmtMoney} formatDate={formatDate} cashImpact={financeTradingImpact} renderReadout={view => <CalendarPerformanceNarrative phone view={view} trades={dashboardAccount.trades} cap={dashboardAccount.breakevenCap} balance={dashboardAccount.balance}/>}/>
             : <CalendarPage account={account} markups={markups.filter((markup)=>markup.accountId===account.id)} reviews={reviews.filter((review)=>review.accountId===account.id)} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails}/>) }
@@ -8814,6 +9080,11 @@ html:has(.tj-root) { font-size: 93.75%; }
 .tj-toast { align-items:center; background:var(--tj-panel); border:1px solid var(--tj-border); border-radius:11px; box-shadow:0 12px 30px var(--color-shadow-29); color:var(--tj-text); display:flex; font-size:.9rem; font-weight:650; gap:9px; left:0; margin-inline:auto; max-width:min(90vw,520px); padding:10px 11px 10px 13px; position:fixed; right:0; text-align:left; top:16px; transform:none; width:max-content; z-index:200000; }
 .tj-toast > span { align-items:center; display:flex; flex:0 0 auto; }.tj-toast p { margin:0; min-width:0; }.tj-toast button { align-items:center; background:transparent; border:0; border-radius:6px; color:inherit; cursor:pointer; display:flex; margin-left:3px; padding:4px; }.tj-toast button:hover,.tj-toast button:focus-visible { background:var(--tj-accent-muted); outline:0; }
 .tj-toast-error { border-color:var(--tj-red); color:var(--tj-red); }.tj-toast-warning { border-color:var(--tj-amber); color:var(--tj-amber); }.tj-toast-success { border-color:var(--tj-accent); color:var(--tj-accent); }.tj-toast-info { border-color:var(--tj-green); color:var(--tj-green); }
+/* This stylesheet is injected after imported mobile CSS. Keep phone toasts out of
+   the desktop top/bottom constraint so a workspace switch remains a short bar. */
+@media (max-width:767px) {
+  .tj-toast { top:auto; right:12px; bottom:calc(var(--mobile-bottom,88px) + 14px + env(safe-area-inset-bottom,0px)); left:12px; width:auto; max-width:none; min-height:0; height:auto; margin:0; border-radius:17px; padding:11px 10px 11px 13px; animation:tj-mobile-alert-in .22s cubic-bezier(.22,1,.36,1); }
+}
 .tj-privacy-screen { position: fixed; inset: 0; z-index: 300000; display: grid; place-items: center; cursor: default; background: color-mix(in srgb, var(--tj-chrome) 24%, transparent); backdrop-filter:none; -webkit-backdrop-filter:none; user-select: none; }
 :root {
   --tj-bg: var(--color-surface-5); --tj-panel: var(--color-surface-33); --tj-panel-alt: var(--color-surface-34); --tj-chrome: var(--color-surface-35); --tj-border: var(--color-border-7);
@@ -11750,6 +12021,17 @@ export default function AppRoot() {
     return () => { cancelled = true; unsubscribe(); };
   }, []);
 
+  // iOS standalone launches can reopen the installed app at `/` rather than
+  // its last in-app route. Restore the signed-in person's remembered page
+  // before PublicSite is allowed to render.
+  useEffect(() => {
+    if (!user || JOURNAL_PAGES_BY_PATH[window.location.pathname]) return;
+    const destination = requestedPage.current || resolveStartPage(user.user_metadata, readActivePage(user.id));
+    const destinationPath = JOURNAL_PATHS[destination] || JOURNAL_PATHS.dashboard;
+    window.history.replaceState(window.history.state, "", destinationPath);
+    setUser(current => current ? { ...current } : current);
+  }, [user?.id]);
+
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) {
@@ -11787,6 +12069,10 @@ export default function AppRoot() {
         }}
       />;
     }
+  }
+
+  if (user && !JOURNAL_PAGES_BY_PATH[window.location.pathname]) {
+    return <JournalPreloader theme={sessionTheme} />;
   }
 
   if (!user || !JOURNAL_PAGES_BY_PATH[window.location.pathname]) {

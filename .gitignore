@@ -18,3 +18,6 @@ artifacts/
 # Preserved recovery copies; never delete them as part of this task.
 src/* 2.*
 scripts/* 2.*
+
+# Backup taken before copying the mobile redesign in.
+mobile-redesign-backup-*/

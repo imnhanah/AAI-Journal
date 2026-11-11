@@ -1512,3 +1512,30 @@
 /* Celebration gold for the challenge-complete popup and certificate (desktopPopups.css). */
 [data-theme^="light-"], :root {--celebrate-gold:#e0a526;--celebrate-gold-hi:#ffe08a;--celebrate-gold-deep:#a96f08;--celebrate-on:#ffffff;}
 [data-theme^="dark-"] {--celebrate-gold:#f2bd45;--celebrate-gold-hi:#ffe08a;--celebrate-gold-deep:#b87a0b;--celebrate-on:#fff6cf;}
+
+/* Public landing pages (landing.css): a fixed dark palette that does not follow the app theme. */
+:root {
+  --lp-bg: #060a09;
+  --lp-panel: #0d1412;
+  --lp-ink: #eef3f0;
+  --lp-ink-2: #c9d3ce;
+  --lp-ink-3: #dbe4df;
+  --lp-muted: #a9b6b0;
+  --lp-faint: #97a59e;
+  --lp-white: #f2f6f4;
+  --lp-on-white: #06100d;
+  --lp-plate: #f4f6f5;
+  --lp-shadow: #000000;
+  --lp-mint: #7fe3c0;
+  --lp-green: #50c6a0;
+  --lp-green-deep: #1d3a30;
+  --lp-amber: #f0b04a;
+  --lp-amber-ink: #f6c87a;
+  --lp-amber-deep: #3a2e14;
+  --lp-red: #f39a92;
+  --lp-red-bar: #f0857d;
+  --lp-brand-red: #f0343f;
+  --lp-brand-green: #3fa856;
+  --lp-brand-blue: #2f80d4;
+  --lp-brand-gold: #d9a521;
+}

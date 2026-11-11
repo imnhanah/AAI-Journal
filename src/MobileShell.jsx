@@ -3,6 +3,7 @@ import {LayoutDashboard, Calendar, NotebookText, Briefcase, Pencil, BookOpen, Ci
 import {MOBILE_MEDIA, MOBILE_MORE_PAGES, mobileRoutineStatus} from './mobileNavigation.js';
 import {translate} from './localization';
 import {isRoutineTradingDay} from './dailyRoutine.js';
+import {useMobileAlert} from './MobileAlert.jsx';
 import './mobileMoreMenu.css';
 import './mobileQuickActions.css';
 import './mobileBottomBar.css';
@@ -25,9 +26,7 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
   const [phone,setPhone] = useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   const [failedAvatar,setFailedAvatar] = useState(null);
   const sheetRef = useRef(null), dragStart = useRef(null), opener = useRef(null);
-  const [quickNote, setQuickNote] = useState(''), quickNoteTimer = useRef(null);
-  const showQuickNote = text => { setQuickNote(text); clearTimeout(quickNoteTimer.current); quickNoteTimer.current = setTimeout(() => setQuickNote(''), 1600); };
-  useEffect(() => () => clearTimeout(quickNoteTimer.current), []);
+  const showQuickNote = useMobileAlert();
   useEffect(()=>{
     const media=window.matchMedia(MOBILE_MEDIA);
     const change=()=>{setPhone(media.matches);if(!media.matches)onSheet(null);};
@@ -64,7 +63,7 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
   const activeTab=sheet==='more'||moreActive?4:current('dashboard')?0:current('analytics')?1:current('calendar')?3:null;
   const toggle=name=>event=>{if(sheet===name){onSheet(null);return;}opener.current=event.currentTarget;onSheet(name);};
   // Tiles open their library, where creating happens. A locked tile explains itself instead.
-  const quickTile=(id,Icon,label,tone,{lock='',note=''}={})=><button type="button" key={id} className={`tj-qa-tile ${tone} ${lock?'is-locked':''}`} aria-disabled={lock?'true':undefined} aria-current={current(id)} onClick={()=>lock?showQuickNote(lock):go(id)}>
+  const quickTile=(id,Icon,label,tone,{lock='',note=''}={})=><button type="button" key={id} className={`tj-qa-tile ${tone} ${lock?'is-locked':''}`} aria-disabled={lock?'true':undefined} aria-current={current(id)} onClick={()=>lock?showQuickNote({type:'warning',title:'Action unavailable',message:lock}):go(id)}>
     {lock&&<span className="tj-qa-lock"><Lock size={13} aria-hidden="true"/></span>}
     <span className="tj-qa-icon"><Icon size={22} aria-hidden="true"/></span>
     <span><strong>{label}</strong>{note&&<small>{note}</small>}</span>
@@ -103,16 +102,15 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
             <span className="tj-qa-ring" style={{'--ring':`${status.total?Math.round(status.ticked/status.total*100):0}%`}}><i>{status.ticked}/{status.total}</i></span>
           </button>}
           <div className="tj-qa-grid">
-            {quickTile('markups',Pencil,'Markup','is-blue',{lock:startDayLock})}
-            {quickTile('journal',NotebookText,'Trade Logs','is-purple',{lock:startDayLock,note:tradeLocked?'Trade Locked':''})}
-            {quickTile('reviews',ClipboardCheck,'Review','is-accent')}
-            {quickTile('challenge',Trophy,'Challenge','is-amber',{lock:challengeEnabled?'':'Enable it in Account settings'})}
+            {quickTile('markups',Pencil,'Markup','is-blue',{lock:startDayLock,note:'Plan before execution'})}
+            {quickTile('journal',NotebookText,'Trade Logs','is-purple',{lock:startDayLock,note:tradeLocked?'Trade locked':'Track every trade'})}
+            {quickTile('reviews',ClipboardCheck,'Review','is-accent',{note:'Turn trades into lessons'})}
+            {quickTile('challenge',Trophy,'Challenge','is-amber',{lock:challengeEnabled?'':'Enable it in Account settings',note:'Build your account'})}
           </div>
         </div>}
         {sheet==='search' && <><header className="tj-mobile-sheet-title"><h2>Search</h2><button type="button" aria-label="Close search" onClick={()=>onSheet(null)}><X/></button></header>{search}</>}
         {sheet==='workspace' && <><h2>Switch journal</h2><div className="tj-mobile-journals">{accounts.map(item=><button type="button" key={item.id} aria-current={item.id===account.id?'true':undefined} onClick={()=>{onSelectAccount(item.id);onSheet('more');}}><span>{item.name}</span>{item.id===account.id && <CircleCheck/>}</button>)}</div><button type="button" className="tj-mobile-cancel" onClick={action(onAddAccount)}>Add account</button><button type="button" className="tj-mobile-cancel" onClick={()=>onSheet('more')}>Back</button></>}
       </section>
-      {sheet==='add'&&quickNote&&<div className="tj-qa-toast" role="status">{quickNote}</div>}
     </div>}
   </>;
 }

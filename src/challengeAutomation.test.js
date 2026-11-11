@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
-import {emptyChallenge,CHALLENGE_PLAN,changeChallengeStatus} from './challengeModel.js';
+import {emptyChallenge,CHALLENGE_PLAN,buildChallengePlan,changeChallengeStatus} from './challengeModel.js';
 import {fundedChallengeLevel} from './challengeLifecycle.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
@@ -41,17 +41,38 @@ test('Adaptive Balance stays at Level 1 after a loss and fails only at its confi
   const failed=replayChallenge(baseline,{...account,balance:100,trades:[failedLoss]});
   assert.equal(failed.failed,true);
 });
-test('the active level reconciles to the current live balance when a loss does not trigger a streak step-back',()=>{
+test('Adaptive Balance targets each trade from the real live balance, not its projected ladder',()=>{
+  const baseline=resetAutomation({...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:10,adaptiveDrawdownPct:50}},[],'adaptive',1,now,30,100);
+  const state=replayChallenge(baseline,{...account,balance:100,trades:[
+    row(1,30,{pnl:30}),       // 30% of $100: Level 1 passes, balance $130.
+    row(2,-13,{pnl:-13}),     // Level 2 steps back, balance $117.
+    row(3,35.1,{pnl:35.1}),   // 30% of $117: Level 1 passes, balance $152.10.
+    row(4,45.63,{pnl:45.63})  // 30% of $152.10: Level 2 passes.
+  ]});
+  assert.equal(state.activeLevel,3);
+  assert.equal(state.statuses[1],'Pass');
+  assert.equal(state.statuses[2],'Pass');
+  assert.equal(state.stepBacks,1);
+  assert.equal(state.liveBalance,197.73);
+});
+test('Adaptive Balance fails exactly at its configured drawdown floor',()=>{
+  const baseline=resetAutomation({...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:10,adaptiveDrawdownPct:50}},[],'adaptive',1,now,30,100);
+  const state=replayChallenge(baseline,{...account,balance:100,trades:[row(1,-50,{pnl:-50})]});
+  assert.equal(state.liveBalance,50);
+  assert.equal(state.failed,true);
+});
+test('Mode 2 keeps its funded level after one loss until the second consecutive loss',()=>{
   const loss=row(1,-1,{pnl:-9});
   const baseline=resetAutomation(emptyChallenge(),[],'streak',1,now,30,55.99);
   const state=replayChallenge(baseline,{...account,balance:55.99,trades:[loss]});
-  // In the Mode 2 ladder, $46.99 is above level 2's start ($33.95) but
-  // below level 3's start ($52.55), so it belongs at level 2.
+  // The opening balance funds level 3. A single loss is recorded as a
+  // streak but must not trigger a funding-based step-back.
   assert.equal(state.liveBalance,46.99);
-  assert.equal(state.activeLevel,2);
+  assert.equal(state.activeLevel,3);
   assert.equal(state.statuses[1],'Jumped');
-  assert.equal(state.statuses[2],'In progress');
-  assert.equal(state.statuses[3],'Step back');
+  assert.equal(state.statuses[2],'Jumped');
+  assert.equal(state.statuses[3],'In progress');
+  assert.equal(state.lossStreak,1);
 });
 test('a risk-limit step-back is never re-promoted by the remaining funded balance',()=>{
   const baseline=resetAutomation(emptyChallenge(),[],'risk',1,now,30,100);
@@ -111,14 +132,28 @@ test('Mode 2 steps back on any two losses, including tiny ones',()=>{
   assert.equal(state.activeLevel,3);assert.equal(state.lossStreak,0);
   assert.equal(replay(start('streak',4),[row(1,-100)]).activeLevel,4);
 });
+test('Mode 2 follows the win, loss, loss, win transition sequence',()=>{
+  const base=start('streak');
+  const afterWin=replay(base,[row(1,13.95)]);
+  assert.equal(afterWin.activeLevel,2);assert.equal(afterWin.lossStreak,0);
+  const afterFirstLoss=replay(base,[row(1,13.95),row(2,-4.5)]);
+  assert.equal(afterFirstLoss.activeLevel,2);assert.equal(afterFirstLoss.lossStreak,1);
+  const afterSecondLoss=replay(base,[row(1,13.95),row(2,-4.5),row(3,-4.5)]);
+  assert.equal(afterSecondLoss.activeLevel,1);assert.equal(afterSecondLoss.lossStreak,0);assert.equal(afterSecondLoss.stepBacks,1);
+  const afterRecoveryWin=replay(base,[row(1,13.95),row(2,-4.5),row(3,-4.5),row(4,13.95)]);
+  assert.equal(afterRecoveryWin.activeLevel,2);assert.equal(afterRecoveryWin.lossStreak,0);assert.equal(afterRecoveryWin.stepBacks,1);
+});
 test('Mode 2 uses the 3.1R target while retaining its two-loss step-back rule',()=>{
   assert.equal(replay(start('streak'),[row(1,6)]).activeLevel,1);
   assert.equal(replay(start('streak'),[row(1,13.95)]).activeLevel,2);
 });
-test('breakeven preserves streak; a win resets it',()=>{
-  assert.equal(replay(start('streak',4),[row(1,-1),row(2,0),row(3,-1)]).activeLevel,3);
+test('Mode 2 keeps a loss count through breakeven and resets it only on a passing win',()=>{
+  const breakeven=replay(start('streak',4),[row(1,-1),row(2,0),row(3,-1)]);
+  assert.equal(breakeven.activeLevel,3);assert.equal(breakeven.lossStreak,0);assert.equal(breakeven.stepBacks,1);
   const state=replay(start('streak',4),[row(1,-1),row(2,.1),row(3,-1)]);
-  assert.equal(state.activeLevel,4);assert.equal(state.lossStreak,1);
+  assert.equal(state.activeLevel,3);assert.equal(state.lossStreak,0);assert.equal(state.stepBacks,1);
+  const passed=replay(start('streak',4),[row(1,-1),row(2,32),row(3,-1)]);
+  assert.equal(passed.activeLevel,5);assert.equal(passed.lossStreak,1);
 });
 test('manual checkpoint freezes prior progress and resets counters',()=>{
   const trades=[row(1,-1)];
@@ -149,8 +184,78 @@ test('gross edits and deletions replay; close date and time changes have no effe
 });
 test('bounds stop at level one and complete after level thirty',()=>{
   assert.equal(replay(start('risk'),[row(1,-10)]).activeLevel,1);
-  const state=replay(start('risk',30),[row(1,CHALLENGE_PLAN[29].profit),row(2,-100000)]);
+  const state=replay(start('risk'),CHALLENGE_PLAN.map((item,index)=>row(index+1,item.profit,{pnl:item.profit})));
   assert.equal(state.activeLevel,31);
+});
+test('available capital does not complete the final level without its trade-earned pass',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  // The first eight targets are earned exactly. The Level 9 trade exceeds
+  // its own target and takes actual capital past the Level 10 end balance.
+  // It still advances just one rung; the final level remains a trade-earned
+  // requirement rather than an available-capital auto-completion.
+  const profits=[...plan.slice(0,8).map(item=>item.profit),plan[8].profit+plan[9].profit];
+  const trades=profits.map((profit,index)=>row(index+1,profit,{pnl:profit}));
+  const state=replayChallenge(baseline,{...account,balance:20,trades});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.statuses[10],'In progress');
+  assert.equal(state.activeLevel,10);
+});
+test('the final level completes only after every target is earned through trading and real equity reaches the final target',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const state=replayChallenge(baseline,{...account,balance:20,trades:plan.map((item,index)=>row(index+1,item.profit,{pnl:item.profit}))});
+  assert.equal(state.statuses[10],'Pass');
+  assert.equal(state.activeLevel,11);
+});
+test('the final level remains active until real equity reaches the final target',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',10,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  // Gross P&L can clear the last rung while net equity remains below the
+  // challenge target (for example after costs or earlier setbacks).
+  const state=replayChallenge(baseline,{...account,balance:20,trades:[
+    row(1,plan[9].profit,{pnl:0})
+  ]});
+  assert.ok(state.liveBalance < plan.at(-1).end);
+  assert.equal(state.activeLevel,10);
+  assert.equal(state.statuses[10],'In progress');
+});
+test('an earned final pass remains complete when earlier losses exist',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',10,now,10,1000);
+  const plan=buildChallengePlan(1000,'risk',10,1.5);
+  const state=replayChallenge(baseline,{...account,balance:1000,trades:[
+    row(1,0,{pnl:-1}),
+    row(2,plan[9].profit,{pnl:plan[9].profit})
+  ]});
+  assert.equal(state.statuses[10],'Pass');
+  assert.equal(state.activeLevel,11);
+});
+test('a deposit cannot pass or complete the final level',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const trades=plan.slice(0,9).map((item,index)=>row(index+1,item.profit,{pnl:item.profit}));
+  const state=replayChallenge(baseline,{...account,balance:20,trades,financeMovements:[{
+    type:'deposit',amount:plan[9].profit,createdAt:new Date(2026,8,14,12).toISOString()
+  }]});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.statuses[10],'In progress');
+  assert.equal(state.activeLevel,10);
+});
+test('a deposit beyond the halfway cap does not alter challenge progression',()=>{
+  const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
+  const baseline=resetAutomation(initial,[],'risk',1,now,10,20);
+  const plan=buildChallengePlan(20,'risk',10,1.5);
+  const state=replayChallenge(baseline,{...account,balance:20,financeMovements:[{
+    type:'deposit',amount:plan.at(-1).end-20,createdAt:new Date(2026,8,14,12).toISOString()
+  }]});
+  assert.equal(state.liveBalance,plan.at(-1).end);
+  assert.equal(state.activeLevel,1);
+  assert.equal(Object.values(state.statuses).filter(status=>status==='Jumped').length,0);
 });
 test('chronological replay is stable regardless of input order',()=>{
   const trades=[row(1,-.1),row(2,.1),row(3,-.1)];

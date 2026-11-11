@@ -19,5 +19,29 @@ test('execution labels wrap inside content-sized score and uniform three-column 
   const journal=fs.readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
   assert.match(journal,/<h3>Execution score<\/h3>/);
   assert.doesNotMatch(journal,/EXECUTION<br\/>QUALITY/);
-  assert.match(source,/recharts-tooltip-wrapper \{\s*transform:none !important/);
+  // Tooltip placement is now owned by each responsive chart, rather than a
+  // global transform override which broke desktop hover positioning.
+  assert.doesNotMatch(source,/recharts-tooltip-wrapper \{\s*transform:none !important/);
+});
+
+test('multiple instruments use one compact, paged card while a single instrument keeps the detailed card',()=>{
+  const journal=fs.readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
+  const desktop=fs.readFileSync(new URL('./desktopAnalytics.css',import.meta.url),'utf8');
+  assert.match(journal,/edgeInstruments\.length > 1 \? <CompactInstrumentCarousel items=\{edgeInstruments\} stats=\{stats\}\/>/);
+  assert.match(journal,/function CompactInstrumentCarousel\(\{ items, stats \}\)/);
+  assert.match(journal,/const maxActive = Math\.max\(0, count - 2\)/);
+  assert.match(journal,/onTouchStart=.*touchStart\.current/);
+  assert.match(journal,/aria-label="Next instruments"/);
+  assert.match(desktop,/\.an2-inst-compact \{flex:0 0 50%/);
+  assert.match(desktop,/\.an2-inst-track \{display:flex;transition:transform/);
+  assert.match(desktop,/\.an2-inst-dots button\.is-active/);
+});
+
+test('entry-model cards keep their original design and page only after the second card',()=>{
+  const journal=fs.readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
+  const desktop=fs.readFileSync(new URL('./desktopAnalytics.css',import.meta.url),'utf8');
+  assert.match(journal,/<TwoUpCardCarousel items=\{edgeModels\} label="Entry models">/);
+  assert.match(journal,/if \(!hasPager\) return <div className="an2-g an2-a2">\{items\.map\(children\)\}<\/div>/);
+  assert.match(journal,/const hasPager = count > 2/);
+  assert.match(desktop,/\.an2-two-up-slide \{flex:0 0 50%/);
 });

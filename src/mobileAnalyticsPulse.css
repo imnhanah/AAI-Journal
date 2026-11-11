@@ -36,11 +36,11 @@
   .tj-root .tj-pulse-section h2{margin:0;color:var(--text);font-size:17px;font-weight:500;letter-spacing:-.01em}
   .tj-pulse-section span{color:var(--muted);font-size:12px}
 
-  /* Match the Vitals rail's left and right edges: cards may pass cleanly out
-     through either edge while the page itself remains horizontally locked. */
-  .tj-pulse-rail{display:flex;gap:10px;max-width:none;margin:0 -14px;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;scroll-snap-type:x mandatory;scrollbar-width:none}
+  /* Each resting position is two complete cards. Swiping advances one card, never
+     leaving a permanently clipped card at either edge of the page. */
+  .tj-pulse-rail{display:flex;gap:10px;max-width:100%;margin:0;padding:2px 0 6px;overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-inline:0;scroll-snap-type:x mandatory;scrollbar-width:none}
   .tj-pulse-rail::-webkit-scrollbar,.tj-pulse-chips::-webkit-scrollbar,.tj-pulse-notes::-webkit-scrollbar{display:none}
-  .tj-pulse-vital{position:relative;display:flex;flex:0 0 150px;flex-direction:column;justify-content:space-between;height:132px;padding:14px;border:.5px solid var(--border);border-radius:28px;background:linear-gradient(160deg,color-mix(in srgb,var(--pulse-tone) 16%,var(--card)),var(--card) 70%);scroll-snap-align:start;transition:opacity .12s linear}
+  .tj-pulse-vital{position:relative;display:flex;flex:0 0 calc((100% - 10px) / 2);min-width:0;flex-direction:column;justify-content:space-between;height:132px;padding:14px;border:.5px solid var(--border);border-radius:28px;background:linear-gradient(160deg,color-mix(in srgb,var(--pulse-tone) 16%,var(--card)),var(--card) 70%);scroll-snap-align:start;scroll-snap-stop:always}
   .tj-pulse-vital.is-purple{--pulse-tone:var(--phone-purple)}
   .tj-pulse-vital.is-amber{--pulse-tone:var(--phone-amber)}
   .tj-pulse-vital.is-drop{--pulse-tone:var(--phone-drop)}
@@ -55,9 +55,10 @@
   .tj-pulse-dots i{display:block;width:6px;height:6px;border-radius:3px;background:var(--phone-track);transition:all .25s}
   .tj-pulse-dots i.is-on{width:18px;background:var(--phone-pill)}
 
-  .tj-pulse-chips{display:flex;gap:6px;max-width:none;margin:-6px -14px 0;padding:0 14px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none}
-  .tj-pulse-chips button{display:flex;flex:none;align-items:center;min-height:44px;padding:0;border:0;background:transparent;scroll-snap-align:center}
-  .tj-pulse-chips span{display:block;height:32px;padding:0 13px;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:13px;font-weight:500;line-height:31px;white-space:nowrap;transition:background .2s,color .2s}
+  /* Three complete filters are visible at once; the row snaps one filter forward. */
+  .tj-pulse-chips{display:flex;gap:8px;max-width:100%;margin:-6px 0 0;padding:0;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .tj-pulse-chips button{display:flex;flex:0 0 calc((100% - 16px) / 3);min-width:0;align-items:center;min-height:44px;padding:0;border:0;background:transparent;scroll-snap-align:start;scroll-snap-stop:always}
+  .tj-pulse-chips span{display:block;width:100%;height:32px;overflow:hidden;padding:0 8px;border:.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--muted);font-size:12px;font-weight:500;line-height:31px;text-align:center;text-overflow:ellipsis;white-space:nowrap;transition:background .2s,color .2s}
   .tj-pulse-chips button.is-on span{border-color:var(--phone-pill);background:var(--phone-pill);color:var(--phone-on-pill)}
   .tj-pulse-list{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;margin-top:4px;scroll-margin-top:12px}
   .tj-pulse-row{min-width:0;overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card)}
@@ -96,5 +97,5 @@
   .tj-pulse-note-go{display:flex;align-items:center;gap:4px;margin-top:10px;color:var(--note-tone);font-size:12px;font-weight:500}
 }
 @media (max-width:767px) and (prefers-reduced-motion: reduce) {
-  .tj-pulse-lens>i,.tj-pulse-vital,.tj-pulse-dots i,.tj-pulse-chips span{transition:none}
+  .tj-pulse-lens>i,.tj-pulse-dots i,.tj-pulse-chips span{transition:none}
 }

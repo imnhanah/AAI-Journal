@@ -1,0 +1,69 @@
+/* Sign in, sign up and password reset. Shares the landing page palette and
+   helpers (landing.css); colours come from the --lp-* tokens only. */
+.lpa { position: relative; display: flex; flex-direction: column; }
+.lpa .lp-backdrop { inset: 0 0 auto; height: 760px; }
+.lpa-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 24px; }
+.lpa-top-actions { display: flex; align-items: center; gap: 8px; }
+.lpa-back { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--lp-ink-2); font-size: 15px; font-weight: 500; }
+.lpa-main { position: relative; flex: 1; display: grid; place-items: center; padding: 16px 16px 64px; }
+.lpa-card { display: flex; flex-direction: column; gap: 22px; width: 100%; max-width: 470px; padding: clamp(24px, 6vw, 38px); border-radius: 28px; }
+
+.lpa-head { display: flex; flex-direction: column; gap: 8px; }
+.lpa-head h1 { font-size: 32px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em; }
+.lpa-head h1 span { color: var(--lp-mint); }
+.lpa-head p { font-size: 15px; color: var(--lp-muted); }
+
+.lpa form { display: flex; flex-direction: column; gap: 16px; }
+.lpa-names { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; }
+.lpa form label { display: flex; flex-direction: column; gap: 7px; color: var(--lp-ink-3); font-size: 14px; font-weight: 500; }
+.lpa form input:not([type="checkbox"]) { width: 100%; height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--w20); background: var(--w5); color: var(--lp-ink); font-size: 15px; font-weight: 400; transition: border-color .2s ease, box-shadow .2s ease; }
+.lpa form input::placeholder { color: var(--lp-faint); }
+.lpa form input:not([type="checkbox"]):focus { outline: 0; border-color: var(--lp-mint); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lp-mint) 18%, transparent); }
+.lpa-password { position: relative; display: block; }
+.lpa-password input { padding-right: 52px !important; }
+.lpa-password button { position: absolute; top: 2px; right: 4px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 10px; background: none; color: var(--lp-muted); }
+
+.lpa form label.lpa-check { flex-direction: row; align-items: flex-start; gap: 12px; color: var(--lp-muted); font-size: 13.5px; font-weight: 400; line-height: 1.55; }
+.lpa-check input { flex: 0 0 auto; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--lp-mint); }
+.lpa-check button, .lpa-switch button, .lpa-forgot { padding: 0; border: 0; background: none; color: var(--lp-mint); font-size: inherit; font-weight: 600; }
+.lpa-check button { text-decoration: underline; }
+.lpa-forgot { align-self: flex-end; min-height: 32px; margin-top: -6px; font-size: 14px; font-weight: 500; }
+
+.lpa-message { padding: 11px 14px; border-radius: 12px; border: 1px solid var(--mint-35); background: var(--mint-10); color: var(--lp-ink-3); font-size: 14px; line-height: 1.5; }
+.lpa-error { border-color: var(--red-35); background: var(--red-12); }
+.lpa-submit { width: 100%; min-height: 48px; border: 0; }
+.lpa :is(.lpa-submit, .lpa-google):disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.lpa-divider { display: flex; align-items: center; gap: 14px; color: var(--lp-faint); font-family: var(--lp-mono); font-size: 12px; letter-spacing: .14em; }
+.lpa-divider::before, .lpa-divider::after { content: ''; flex: 1; height: 1px; background: var(--w11); }
+.lpa-google { width: 100%; min-height: 48px; gap: 10px; font-size: 15px; }
+.lpa-google svg { width: 18px; height: 18px; }
+.lpa-switch { text-align: center; font-size: 14.5px; color: var(--lp-muted); }
+
+/* Phone: the form sits straight on the page, with larger fields and buttons */
+@media (max-width: 760px) {
+  .lpa { min-height: 100dvh; }
+  .lpa .lp-backdrop { height: 420px; }
+  .lpa .lp-grid { display: none; }
+  .lpa-top { padding: 10px 12px; }
+  .lpa-top .lp-brand span { display: none; }
+  .lpa-top .lp-brand { position: absolute; left: 50%; transform: translateX(-50%); }
+  .lpa-top .lp-brand img { width: 40px; height: 40px; }
+  .lpa-top-actions { flex: 1; justify-content: space-between; }
+  .lpa-back { width: 44px; padding: 0; justify-content: center; border-radius: 14px; border: 1px solid var(--w11); background: var(--w5); color: var(--lp-ink); }
+  .lpa-back span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .lpa .pub-language { margin-left: 0; }
+  .lpa .pub-language .tj-picker-trigger { border-radius: 14px; padding: 0 12px; }
+  .lpa-main { place-items: start stretch; padding: 22px 20px 28px; }
+  .lpa-card { max-width: 430px; margin-inline: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; gap: 20px; }
+  .lpa-head h1 { font-size: 36px; line-height: 1.02; letter-spacing: -.04em; }
+  .lpa-head p { font-size: 15.5px; }
+  .lpa form { gap: 14px; }
+  .lpa-names { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .lpa form input:not([type="checkbox"]) { height: 52px; border-radius: 14px; font-size: 16px; }
+  .lpa-password button { top: 4px; }
+  .lpa form label.lpa-check { padding: 12px; border-radius: 14px; border: 1px solid var(--w9); background: var(--w3); }
+  .lpa-check input { width: 22px; height: 22px; margin-top: 1px; }
+  .lpa-submit { min-height: 52px; font-size: 16px; }
+  .lpa-google { min-height: 52px; font-size: 16px; }
+  .lpa-switch { font-size: 15px; }
+}

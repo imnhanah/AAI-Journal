@@ -1,5 +1,5 @@
 import { Component, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import {ConfirmationContext, useConfirmation} from './ConfirmationDialog.jsx';
+import {ConfirmationContext, useAlert, useConfirmation, usePrompt} from './ConfirmationDialog.jsx';
 import {useNavStep} from './useBackNavigation.js';
 import {useStepMotion} from './MobilePageStage.jsx';
 import { ArrowRight, Bold, ChevronRight, ClipboardCheck, Eye, Focus, Heading1, Heading2, Heading3, ImagePlus, Italic, LayoutGrid, List, ListOrdered, Minus, Quote, Redo2, RemoveFormatting, ShieldCheck, Strikethrough, Underline as UnderlineIcon, Undo2, Unlink, Upload } from 'lucide-react';
@@ -857,6 +857,8 @@ function Cs2RestoreDialog({ onClose, onImport }) {
 }
 
 function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncActionLabel='Upload device library', syncConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace }) {
+  const prompt=usePrompt();
+  const alert=useAlert();
   const confirm=useConfirmation();
   const notify=useCs2Toast();
   const [cs2Desktop, setCs2Desktop] = useState(() => typeof window === 'undefined' || window.matchMedia(CS2_DESKTOP).matches);
@@ -1128,8 +1130,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   };
   const openEvidenceLibrary=(id)=>{setEvidenceSelection(id);returnToLibrary();setLibraryView('evidence');};
   const patchStudy = (id, partial) => save({ ...workspace, studies: workspace.studies.map((study) => study.id === id ? { ...study, ...partial, updatedAt:now() } : study) }, true);
-  const createNotebook = () => {
-    const name = window.prompt('Notebook name');
+  const createNotebook = async () => {
+    const name = await prompt({title:'New notebook',description:'Create a private place for related studies, evidence, and research notes.',label:'Notebook name',placeholder:'e.g. London session research',confirmLabel:'Create notebook',promptType:'notebook',hint:'You can rename it later. Existing studies stay where they are.'});
     if (name?.trim()) save({ ...workspace, notebooks:[...workspace.notebooks,{id:uid('notebook'),name:name.trim()}] }, true);
   };
   const exportStudy = () => {
@@ -1167,7 +1169,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   };
   const importLibrary = async (file, conflict) => {
     try { const parsed=JSON.parse(await file.text()); if (parsed?.kind !== 'aaicorefx-case-study-library' || !parsed.workspace) throw new Error(); save(mergeCaseStudyWorkspace(workspace, parsed.workspace, {conflict}), true); setRestoreDialog(false); return true; }
-    catch { if (!cs2Desktop) window.alert('Choose a Case Study Library backup created by this journal.'); return false; }
+    catch { await alert({title:'That backup can’t be restored',description:'Choose a Case Study Library backup created by AAI Journal. Nothing in your current library has changed.',confirmLabel:'Choose another file'}); return false; }
   };
   if (screen === 'editor' && selected) return <>
     <StudyEditor study={selected} workspace={workspace} templates={creationTemplates} profileName={profileName} storageNotice={temporaryNotice ? 'Saved only on this device. Your recovered legacy library is unchanged.' : ''} syncStatus={syncStatus} trades={trades} markups={markups} saveState={saveState} onRetrySave={retrySave} initialMode={editorNavigation.mode} initialReviewStep={editorNavigation.reviewStep} initialViewerId={editorViewer} onNavigationChange={setEditorNavigation} onBack={returnToLibrary} onUpdate={updateStudy} onRemove={removeStudy} onDuplicate={duplicateStudy} onToggle={toggleSelection} onAddEvidence={()=>setEvidenceDialog(true)} onSaveDocumentImage={saveDocumentImageToEvidence} onViewEvidence={openEvidenceLibrary} onExport={exportStudy} onApplyTemplate={template=>applyTemplate(selected.id,template)} onSaveTemplate={(name)=>savePersonalTemplate({name:name||`${studyTitle(selected)} template`,description:`Based on ${studyTitle(selected)}.`,sections:selected.sections||[]})} onCreateConnection={addConnection} onEditConnection={editConnection} onDeleteConnection={deleteConnection} onOpenStudy={openEditor}/>

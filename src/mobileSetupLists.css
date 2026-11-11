@@ -55,8 +55,6 @@
   .tj-root .tj-ml-device {margin:12px 4px 0;color:var(--muted);font-size:12px;text-align:center;}
 
   .tj-root .tj-ml .tj-ml-fab {position:fixed;z-index:60;right:16px;bottom:calc(var(--mobile-bottom,88px) + 40px - var(--tj-viewport-gap,0px));display:flex;align-items:center;gap:8px;height:56px;padding:0 22px 0 18px;border-radius:28px;background:var(--ml-accent);color:var(--ml-on-accent);font-size:15px;font-weight:700;}
-  .tj-ml-toast {position:fixed;z-index:70;top:calc(var(--mobile-top,64px) + 8px);left:50%;max-width:calc(100% - 32px);padding:10px 16px;border-radius:20px;background:var(--text);color:var(--bg);font-size:13px;font-weight:650;translate:-50% 0;white-space:nowrap;}
-
   /* Popups on this page open over the whole app, dock included */
   .tj-root>.tj-ma-layer {z-index:400000;--accent:var(--mp-palette-accent);--on-accent:var(--mp-palette-on-accent);--phone-gain:var(--accent);--phone-plus-icon:var(--on-accent);--mp-soft:color-mix(in srgb,var(--accent) 15%,transparent);}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-input textarea {display:block;width:100%;height:110px;padding:14px 16px;border:1.5px solid transparent!important;border-radius:18px!important;outline:0;background:var(--phone-raised)!important;color:var(--text);font-size:16px;line-height:1.4;resize:none;}

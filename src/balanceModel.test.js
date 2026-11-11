@@ -19,7 +19,7 @@ test('keeps standard workspaces limited to one target', () => {
 
 test('normalises a balance without borrowing invalid values', () => {
   assert.deepEqual(normaliseBalance({ name: '  Alpha  ', startingBalance: -20, challengeEnabled: true, challengeStartingBalance: 0 }, workspace), {
-    id: undefined, workspaceId: 'strategy', name: 'Alpha', startingBalance: 0, baseCurrency: 'USD', goals: {}, riskSettings: {}, guardrails: {}, challengeEnabled: false, challengeStartingBalance: 0, challengeLevelCount: 30, challengeMode: 'risk', challengeAdaptiveRiskPct: 1, challengeAdaptiveDrawdownPct: 10, isActive: true,
+    id: undefined, workspaceId: 'strategy', name: 'Alpha', startingBalance: 0, baseCurrency: 'USD', goals: {}, riskSettings: {}, guardrails: {}, challengeEnabled: false, challengeStartingBalance: 0, challengeLevelCount: 30, challengeMode: 'risk', challengeCertificates: [], challengeAdaptiveRiskPct: 1, challengeAdaptiveDrawdownPct: 10, isActive: true,
   });
 });
 

@@ -1,8 +1,9 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {AlertTriangle, ChevronRight, Layers, Plus, Scale, Search, ShieldCheck, TrendingUp, X} from 'lucide-react';
 import {ConfirmDeleteButton} from './JournalControls';
 import {Popup, TextField} from './MobileAccountSettings';
 import {phoneScrollTarget, scrollPhoneTo} from './phoneScroll.js';
+import {useMobileAlert} from './MobileAlert.jsx';
 import './mobileProfileSettings.css';
 import './mobileDailyRoutine.css';
 import './mobileSetupLists.css';
@@ -17,13 +18,6 @@ const PREVIEW_ROWS = 9;
 const RISK_CHOICES = [0.25, 0.5, 1, 2];
 const CARD_TONES = ['is-accent', 'is-entry', 'is-amber'];
 const plural = (count, one) => `${count} ${one}${count === 1 ? '' : 's'}`;
-
-function useToast() {
-  const [text, setText] = useState(''), timer = useRef(null);
-  useEffect(() => () => clearTimeout(timer.current), []);
-  const show = message => { setText(message); clearTimeout(timer.current); timer.current = setTimeout(() => setText(''), 1600); };
-  return [text, show];
-}
 
 const Hero = ({Glyph, count, text}) => <section className="tj-ml-hero"><span><Glyph size={22} aria-hidden="true"/></span><div><b>{count}</b><p>{text}</p></div></section>;
 
@@ -50,7 +44,7 @@ function ItemSheet({kind, row, initial, rows, onClose, onSubmit, onDelete}) {
 export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelete}) {
   const kind = KINDS[type];
   const [search, setSearch] = useState(''), [expanded, setExpanded] = useState(false), [sheet, setSheet] = useState(null);
-  const [toast, showToast] = useToast();
+  const showToast = useMobileAlert();
   const root = useRef(null);
   const query = search.trim().toLowerCase();
   const matches = rows.map((row, index) => ({...row, number:index + 1})).filter(row => row.label.toLowerCase().includes(query));
@@ -87,7 +81,6 @@ export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelet
     {matches.length > shown.length && <button type="button" className="tj-ml-more" onClick={() => setExpanded(true)}>Show {matches.length - shown.length} more</button>}
 
     <Fab label="Add" onClick={() => setSheet({})}/>
-    {toast && <div className="tj-ml-toast" role="status">{toast}</div>}
     {sheet && <ItemSheet kind={kind} row={sheet.row} initial={sheet.initial} rows={rows} onClose={() => setSheet(null)} onSubmit={submit} onDelete={remove}/>}
   </section>;
 }
@@ -114,7 +107,7 @@ function PresetSheet({preset, presets, onClose, onSubmit, onDelete}) {
 
 export function MobileRiskPresets({presets, onSave}) {
   const [sheet, setSheet] = useState(null); // null, 'new', or the index being edited
-  const [toast, showToast] = useToast();
+  const showToast = useMobileAlert();
   const editing = typeof sheet === 'number' ? presets[sheet] : null;
   const submit = change => {
     onSave(editing ? presets.map((item, index) => index === sheet ? {...item, ...change} : item) : [...presets, change]);
@@ -133,7 +126,6 @@ export function MobileRiskPresets({presets, onSave}) {
     </button>)}
     <p className="tj-ml-device">Saved on this device.</p>
     <Fab label="New preset" onClick={() => setSheet('new')}/>
-    {toast && <div className="tj-ml-toast" role="status">{toast}</div>}
     {(sheet === 'new' || editing) && <PresetSheet preset={editing} presets={presets} onClose={() => setSheet(null)} onSubmit={submit} onDelete={remove}/>}
   </section>;
 }

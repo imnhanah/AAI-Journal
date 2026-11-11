@@ -12,7 +12,7 @@ import {ThemeSelect} from './JournalControls';
 import {targetAmount,changeSetupTarget} from './challengeSetupTargets';
 import {activeBalances,isMultiBalanceWorkspace} from './balanceModel';
 import {buildChallengePlan, challengeFailureFloor, isAdaptiveBalanceMode} from './challengeModel';
-import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance} from './challengeLifecycle';
+import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance,closedChallengeTrade,challengeTradingDays} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import useBalanceChallenge from './useBalanceChallenge';
 import JournalSignalHeader from './JournalSignalHeader';
@@ -30,6 +30,7 @@ const challengeRules={
       ['Step-back','When the level’s combined trade result reaches its planned risk amount, the challenge steps back one level.'],
       ['Balance floor','The challenge is paused if live trading capital falls below the original Level 1 balance.'],
       ['Funding','Deposits can fund forward progress. Withdrawals and transfers can move the challenge back.'],
+      ['Planned and live balance','The final planned balance is the clean-path target. Re-passing levels after a step-back adds to realised equity again, so live balance can finish above the plan.'],
       ['Lock process','Once a trade is linked to this challenge, its mode, plan length, reward and setup rules are locked.'],
     ],
   },
@@ -40,6 +41,7 @@ const challengeRules={
       ['Two-loss rule','Two consecutive losing trades trigger a step-back. A winning trade resets the loss streak; breakeven does not change it.'],
       ['Balance floor','The challenge is paused if live trading capital falls below the original Level 1 balance.'],
       ['Funding','Deposits can fund forward progress. Withdrawals and transfers can move the challenge back.'],
+      ['Planned and live balance','The final planned balance is the clean-path target. Re-passing levels after a step-back adds to realised equity again, so live balance can finish above the plan.'],
       ['Lock process','Once a trade is linked to this challenge, its mode, plan length, reward and setup rules are locked.'],
     ],
   },
@@ -50,6 +52,7 @@ const challengeRules={
       ['Step-back','A losing trade from Level 2 onward steps the challenge back one level. A Level 1 loss stays at Level 1.'],
       ['Balance floor','The challenge is paused when live trading capital falls below its starting balance by the selected maximum drawdown.'],
       ['Funding','Deposits can fund forward progress. Withdrawals and transfers can move the challenge back.'],
+      ['Planned and live balance','The final planned balance is the clean-path target. Re-passing levels after a step-back adds to realised equity again, so live balance can finish above the plan.'],
       ['Lock process','The challenge always starts at Level 1. Once a trade is linked, its adaptive settings and plan rules are locked.'],
     ],
   },
@@ -70,7 +73,7 @@ function ChallengeRulesPopover({mode,onClose}) {
 }
 // Phone layout: every challenge card shares one swipe row, and the plan below follows the selected card.
 const PhoneChallengeRail=createContext(null);
-export default function ChallengeLifecyclePage({account,challenge,userId,loginQuote,onDelete,onSaveSetup,challengeProgress,progressReady=false}) {
+export default function ChallengeLifecyclePage({account,challenge,userId,loginQuote,onDelete,onSaveSetup,onComplete,challengeProgress,progressReady=false}) {
   const multi=isMultiBalanceWorkspace(account);
   const challengeBalances=multi?activeBalances(account).filter(balance=>balance.challengeEnabled):[];
   const firstBalance=challengeBalances[0] || null;
@@ -112,14 +115,14 @@ export default function ChallengeLifecyclePage({account,challenge,userId,loginQu
   const deskId=railIds.includes(deskSel)?deskSel:railIds[0];
   const deskCards=railIds.map(id=>({id,name:activity[id]?.name || '',level:activity[id]?.level || 0,total:activity[id]?.total || 0}));
   const railValue=useMemo(()=>phonePage?{railEl,lowerEl,selectedId,userMoved,orderOf:id=>Math.max(0,cardIds.indexOf(id))}:null,[phonePage,railEl,lowerEl,selectedId,cardKey]);
-  if(deskV2) return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><div className="ch2-page"><ChallengeHero cards={deskCards} selectedId={deskId} onSelect={setDeskSel}/>{multi?challengeBalances.map(balance=><div key={balance.id} hidden={balance.id!==deskId}><BalanceCard workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup}/></div>):<ChallengeCard account={account} challenge={challenge} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)}/>}</div></section>;
-  return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><PhoneChallengeRail.Provider value={railValue}><div className="tj-balance-challenge-stack">{phonePage&&<><div className="tj-mc6-rail" ref={setRailEl} data-scroll-row="true" onScroll={onRailScroll}/>{railIds.length>1&&<div className="tj-mc6-rail-dots" aria-hidden="true">{railIds.map(id=><i key={id} className={id===selectedId?'is-on':''}/>)}</div>}<div ref={setLowerEl}/></>}{multi?challengeBalances.map(balance=><BalanceCard key={balance.id} workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={expanded(balance.id)} setExpanded={next=>setExpanded(balance.id,next)} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup}/>):<ChallengeCard account={account} challenge={challenge} expanded={expanded(account.id)} setExpanded={next=>setExpanded(account.id,next)} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)}/>}</div></PhoneChallengeRail.Provider></section>;
+  if(deskV2) return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><div className="ch2-page"><ChallengeHero cards={deskCards} selectedId={deskId} onSelect={setDeskSel}/>{multi?challengeBalances.map(balance=><div key={balance.id} hidden={balance.id!==deskId}><BalanceCard workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup} onComplete={onComplete}/></div>):<ChallengeCard account={account} challenge={challenge} expanded={true} setExpanded={()=>{}} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)} onComplete={facts=>onComplete?.(null,challenge,facts,account)}/>}</div></section>;
+  return <section className="tj-challenge tj-challenge-split-page"><JournalSignalHeader page="challenge" challenge={multi?{...firstChallenge.state,loading:firstChallenge.loading,error:firstChallenge.error}: {...challenge.state,loading:challenge.loading,error:challenge.error}} loginQuote={loginQuote}/><PhoneChallengeRail.Provider value={railValue}><div className="tj-balance-challenge-stack">{phonePage&&<><div className="tj-mc6-rail" ref={setRailEl} data-scroll-row="true" onScroll={onRailScroll}/>{railIds.length>1&&<div className="tj-mc6-rail-dots" aria-hidden="true">{railIds.map(id=><i key={id} className={id===selectedId?'is-on':''}/>)}</div>}<div ref={setLowerEl}/></>}{multi?challengeBalances.map(balance=><BalanceCard key={balance.id} workspace={account} balance={balance} userId={userId} startupProgress={challengeProgress?.balance?.[balance.id]} progressReady={progressReady} expanded={expanded(balance.id)} setExpanded={next=>setExpanded(balance.id,next)} onActivityChange={reportActivity} onDelete={onDelete} onSaveSetup={onSaveSetup} onComplete={onComplete}/>):<ChallengeCard account={account} challenge={challenge} expanded={expanded(account.id)} setExpanded={next=>setExpanded(account.id,next)} onActivityChange={reportActivity} onDelete={()=>onDelete(null,challenge.state)} onSaveSetup={patch=>onSaveSetup(null,challenge.state,patch)} onComplete={facts=>onComplete?.(null,challenge,facts,account)}/>}</div></PhoneChallengeRail.Provider></section>;
 }
-function BalanceCard({workspace,balance,userId,startupProgress,progressReady,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup}) {
+function BalanceCard({workspace,balance,userId,startupProgress,progressReady,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup,onComplete}) {
   const challenge=useBalanceChallenge({...balance,trades:workspace.trades,balances:workspace.balances,financeMovements:workspace.financeMovements},userId,startupProgress,progressReady);
-  return <ChallengeCard account={scopeChallengeAccount(workspace,balance)} challenge={challenge} expanded={expanded} setExpanded={setExpanded} onActivityChange={onActivityChange} onDelete={()=>onDelete(balance.id,challenge.state)} onSaveSetup={patch=>onSaveSetup(balance.id,challenge.state,patch)}/>;
+  return <ChallengeCard account={scopeChallengeAccount(workspace,balance)} challenge={challenge} expanded={expanded} setExpanded={setExpanded} onActivityChange={onActivityChange} onDelete={()=>onDelete(balance.id,challenge.state)} onSaveSetup={patch=>onSaveSetup(balance.id,challenge.state,patch)} onComplete={facts=>onComplete?.(balance.id,challenge,facts,balance)}/>;
 }
-function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup}) {
+function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,onDelete,onSaveSetup,onComplete}) {
   const rail=useContext(PhoneChallengeRail);
   const traderName=useContext(TraderNameContext);
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
@@ -140,15 +143,27 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   const [setup,setSetup]=useState(null);
   const [savingSetup,setSavingSetup]=useState(false);
   const [deleting,setDeleting]=useState(false);
-  const complete=!failed && (state.activeLevel===plan.length+1 || Object.values(state.statuses || {}).filter(status=>status==='Pass').length===plan.length);
-  const [celebrating,setCelebrating]=useCompletionCelebration(!loading && complete && plan.length>0);
+  const complete=!failed && (state.activeLevel===plan.length+1 || Object.values(state.statuses || {}).filter(status=>status==='Pass'||status==='Jumped').length===plan.length);
+  // The certificate archive is the durable record of a completed challenge.
+  // The acknowledgement timestamp is only a convenience marker: it may be
+  // absent if the archive write succeeded but its follow-up state write did
+  // not.  Never replay a celebration for an already archived run.
+  const certificateId=`AF-${String(account.id || account.name || '').replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase()}-${plan.length}`;
+  const runStartedAt=Date.parse(state.automation?.startedAt || '');
+  const completionArchived=(account.challengeCertificates || []).some(certificate=>{
+    if (certificate?.certificateId !== certificateId) return false;
+    const completedAt=Date.parse(certificate.completedAt || certificate.archivedAt || '');
+    return !Number.isFinite(runStartedAt) || !Number.isFinite(completedAt) || completedAt >= runStartedAt;
+  });
+  const [celebrating,setCelebrating]=useCompletionCelebration(!loading && complete && plan.length>0 && !completionArchived && !state.automation?.completionAcknowledgedAt);
   const activeRow=useRef(null);
   useEffect(()=>{onActivityChange?.(account.id,{ready:!loading,active:!loading&&plan.length>0&&!failed&&!complete,planned:plan.length>0,level:loading||!plan.length?0:Math.min(Math.max(state.activeLevel || 1,1),plan.length),total:plan.length,name:account.name});},[account.id,account.name,complete,failed,loading,onActivityChange,plan.length,state.activeLevel]);
   if(!plan.length)return null;
   // Do not render a made-up Level 1 while the saved challenge state is still
   // arriving. A stable loading card is preferable to a visible level jump.
   if(loading)return <article className="tj-panel tj-balance-challenge-panel tj-challenge-reference"><header><div><h3>{account.name}</h3><p>{mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit'} · {plan.length} levels</p></div></header><p role="status" className="tj-challenge-loading-state">Loading saved challenge progress…</p></article>;
-  const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass').length;
+  const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass'||status==='Jumped').length;
+  const funded=Object.values(state.statuses || {}).filter(status=>status==='Jumped').length;
   const current=plan[Math.min(Math.max(state.activeLevel || 1,1),plan.length)-1];
   const fmt=value=>money(value,account.baseCurrency);
   const nextLevel=plan[current.level] || null;
@@ -158,18 +173,36 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   const visiblePlan=rangeStart==='all'?plan:plan.slice(rangeStart,rangeStart+10);
   const modeName=adaptive?'Mode 3 — Adaptive Balance':mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit';
   const rewardLabel=adaptive?`${state.automation?.adaptiveRiskPct ?? 1}% risk · ${reward}R`:reward?`1:${reward}`:'';
+  // Challenge growth is earned trading performance, not a change in funded
+  // capital. Deposits and withdrawals can advance the plan, but never inflate
+  // the achievement percentage shown in the completion card or certificate.
+  const challengeTradingPnl=linkedChallengeTrades(state,account)
+    .filter(closedChallengeTrade)
+    .reduce((sum,trade)=>sum+Number(trade.pnl || 0),0);
   // Facts for the desktop celebration and certificate, all from this challenge's own record.
   const celebrationFacts=()=>{
     const trades=linkedChallengeTrades(state,account);
     const lastClose=trades.map(trade=>Date.parse(trade.closeDate||trade.date)).filter(Number.isFinite).sort((a,b)=>b-a)[0];
-    const started=Date.parse(state.automation?.startedAt);
     const completedAt=lastClose || Date.now();
     return {traderName, accountName:account.name, totalLevels:plan.length, modeName, rewardLabel,
-      finalTarget:plan.at(-1)?.end ?? life.liveBalance, trades:trades.length,
-      daysTaken:Number.isFinite(started)?Math.max(1,Math.ceil((completedAt-started)/864e5)):null,
+      // Preserve the actual equity that completed this run. The plan target is
+      // still retained for reference, but an over-target final trade must be
+      // recognised as the achievement on both the trophy and certificate.
+      completionBalance:life.liveBalance, finalTarget:plan.at(-1)?.end ?? life.liveBalance, trades:trades.length,
+      daysTaken:challengeTradingDays(trades),
       stepBacks:state.stepBacks ?? Object.values(state.statuses || {}).filter(status=>status==='Step back').length,
-      growth:challengeBalance>0?life.liveBalance/challengeBalance:null, completedAt,
-      certificateId:`AF-${String(account.id || account.name || '').replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase()}-${plan.length}`};
+      growth:challengeBalance>0?challengeTradingPnl/challengeBalance*100:null, completedAt,
+      certificateId};
+  };
+  const continueWithAdaptive=async()=>{
+    const started=await onSaveSetup({
+      name:account.name || '', startingBalance:challengeBalance, mode:'adaptive',
+      levelCount:plan.length, reward:state.automation?.rewardRatio ?? 2,
+      adaptiveRiskPct:state.automation?.adaptiveRiskPct ?? 1,
+      adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct ?? 10,
+      restartCompleted:true,
+    });
+    if (started) setCelebrating(false);
   };
   const jumpToActive=()=>{setExpanded(true);setPlanRange(Math.floor((current.level-1)/10)*10);setTimeout(()=>activeRow.current?.scrollIntoView({behavior:'smooth',block:'center'}),0);};
   const openSetup=()=>setSetup({name:account.name || '',startingBalance:challengeBalance || account.balance || '',mode,levelCount:plan.length,reward:reward ?? (mode==='streak'?3.1:3),adaptiveRiskPct:state.automation?.adaptiveRiskPct ?? 1,adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct ?? 10,monthlyGoalPct:account.monthlyGoalPct || 0,yearlyGoalPct:account.yearlyGoalPct || 0,dailyLossLimitPct:account.dailyLossLimitPct || 0,monthlyLossLimitPct:account.monthlyLossLimitPct || 0,...(!isMultiBalanceWorkspace(account)&&account.monthlyGoalSource==='amount'?{monthlyGoalPctAmount:account.monthlyGoalAmount || 0}:{}),...(!isMultiBalanceWorkspace(account)&&account.yearlyGoalSource==='amount'?{yearlyGoalPctAmount:account.yearlyGoalAmount || 0}:{})});
@@ -182,15 +215,15 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
     rewardLabel, reward, adaptive, failureFloor, linked, fmt, expanded,
     setExpanded, challenge, openSetup, setup, setSetup, saveSetup,
     savingSetup, deleting, setDeleting, onDelete, onSaveSetup, locked,
-    settingsLocked:state.settingsLocked,
+    settingsLocked:state.settingsLocked, completionArchived, onContinueAdaptive:continueWithAdaptive,
   };
-  return phone ? <><MobileChallengesV6 {...viewProps} rules={challengeRules[mode] || challengeRules.risk} rail={rail} order={rail?.orderOf(account.id) ?? 0} onOpenSettings={openSetup} saving={saving} error={error} onRetry={challenge.retry}/>{setup&&<ChallengeSplitSettingsModal setup={setup} setSetup={setSetup} account={account} locked={state.settingsLocked} saving={savingSetup} deleting={deleting} onCancel={()=>setSetup(null)} onSave={saveSetup} onDelete={async()=>{setDeleting(true);try{if(await onDelete())setSetup(null);}finally{setDeleting(false);}}}/>}</> : CHALLENGE_V2 ? <><DesktopChallengeCard {...viewProps} rules={challengeRules[mode] || challengeRules.risk} saving={saving} error={error}/>{celebrating&&<ChallengeCompletePopup facts={celebrationFacts()} money={fmt} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}</> : <ChallengeSplitVisual {...viewProps}/>;
+  return phone ? <><MobileChallengesV6 {...viewProps} rules={challengeRules[mode] || challengeRules.risk} rail={rail} order={rail?.orderOf(account.id) ?? 0} onOpenSettings={openSetup} saving={saving} error={error} onRetry={challenge.retry}/>{setup&&<ChallengeSplitSettingsModal setup={setup} setSetup={setSetup} account={account} locked={state.settingsLocked} saving={savingSetup} deleting={deleting} onCancel={()=>setSetup(null)} onSave={saveSetup} onDelete={async()=>{setDeleting(true);try{if(await onDelete())setSetup(null);}finally{setDeleting(false);}}}/>}</> : CHALLENGE_V2 ? <><DesktopChallengeCard {...viewProps} rules={challengeRules[mode] || challengeRules.risk} saving={saving} error={error}/>{celebrating&&<ChallengeCompletePopup facts={celebrationFacts()} money={fmt} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onComplete={onComplete} onClose={()=>setCelebrating(false)}/>}</> : <ChallengeSplitVisual {...viewProps}/>;
   /* Legacy layout retained below as a reference during the migration. */
   return <article className={`tj-panel tj-balance-challenge-panel tj-challenge-reference ${expanded?'':'tj-balance-challenge-collapsed'}`}>
     <header role="button" tabIndex={0} aria-expanded={expanded} aria-label={`${expanded?'Collapse':'Expand'} ${account.name} challenge`} onClick={()=>setExpanded(value=>!value)} onKeyDown={event=>{if(event.target===event.currentTarget && (event.key==='Enter'||event.key===' ')){event.preventDefault();setExpanded(value=>!value);}}}><div className="tj-challenge-card-title"><h3>{account.name}</h3><span>{modeName}</span>{rewardLabel&&<span>{rewardLabel}</span>}<span>{plan.length} levels</span></div><div className="tj-challenge-header-actions"><span className={`tj-challenge-state-badge ${failed?'failed':complete?'passed':'active'}`} aria-label={`${account.name} challenge ${failed?'Failed':complete?'Passed':'Active'}`}>{failed?'Failed':complete?'Passed':'Active'}</span><button type="button" className="tj-icon-btn" aria-label={`Settings for ${account.name}`} title="Challenge settings" onClick={event=>{event.stopPropagation();openSetup();}} disabled={loading}><Settings size={12}/> Settings</button></div></header>
     {error&&<div role="alert">{error} <button onClick={challenge.retry}>Retry</button></div>}
     {(failed||guardrails.tradeEntryLocked)&&<div className="tj-challenge-lock-message" role={failed?'alert':'status'}>{failed?<><strong>Challenge failed.</strong> Your live balance of {fmt(life.liveBalance)} is below the {fmt(failureFloor)} minimum required to continue. Deposit at least {fmt(Math.max(0,failureFloor-life.liveBalance))} in Finance to reactivate this challenge, or delete the failed run and start a new one.</>:'This account is paused until its loss-limit reset. Deposits do not clear this guardrail.'}</div>}
-    <div className="tj-challenge-summary-layout"><section className="tj-challenge-progress-summary"><div className="tj-challenge-progress-heading"><div><small>CHALLENGE PROGRESS</small><h2>{complete?'Complete':`Level ${current.level}`} <span>of {plan.length}</span></h2></div><div><small>THIS LEVEL</small><strong>{fmt(current.start)} → {fmt(current.end)}</strong></div></div><LevelRail plan={plan} statuses={state.statuses} currentLevel={current.level} onSelect={level=>{setExpanded(true);setPlanRange(Math.floor((level-1)/10)*10);}}/><button type="button" className="tj-phone-jump-active" onClick={jumpToActive}><ArrowDown size={14}/>Jump to active level</button><p>{passed} of {plan.length} levels passed · Deposit-funded levels are not trading passes</p></section><section className="tj-challenge-balance-summary"><div className="tj-challenge-balance-pair"><div className="tj-challenge-balance-value"><small>AVAILABLE TRADING CAPITAL</small><strong className={life.liveBalance < failureFloor ? 'tj-challenge-negative' : 'tj-challenge-live-balance'}>{fmt(life.liveBalance)}</strong></div><div className="tj-challenge-balance-value"><small>FULL CHALLENGE TARGET</small><strong className="tj-challenge-positive">{fmt(plan.at(-1).end)}</strong></div></div><div><span>Challenge position</span><b>{complete?'Complete':`Level ${current.level} of ${plan.length}`}</b></div><div><span>{nextLevel?'Next level':'Challenge target'}</span><b>{nextLevel?`${fmt(nextLevel.start)} · ${fmt(amountToNext)} away`:fmt(plan.at(-1).end)}</b></div></section></div>
+    <div className="tj-challenge-summary-layout"><section className="tj-challenge-progress-summary"><div className="tj-challenge-progress-heading"><div><small>CHALLENGE PROGRESS</small><h2>{complete?'Complete':`Level ${current.level}`} <span>of {plan.length}</span></h2></div><div><small>THIS LEVEL</small><strong>{fmt(current.start)} → {fmt(current.end)}</strong></div></div><LevelRail plan={plan} statuses={state.statuses} currentLevel={current.level} onSelect={level=>{setExpanded(true);setPlanRange(Math.floor((level-1)/10)*10);}}/><button type="button" className="tj-phone-jump-active" onClick={jumpToActive}><ArrowDown size={14}/>Jump to active level</button><p>{passed} of {plan.length} levels reached{funded?` · ${funded} deposit-funded`:''}</p></section><section className="tj-challenge-balance-summary"><div className="tj-challenge-balance-pair"><div className="tj-challenge-balance-value"><small>AVAILABLE TRADING CAPITAL</small><strong className={life.liveBalance < failureFloor ? 'tj-challenge-negative' : 'tj-challenge-live-balance'}>{fmt(life.liveBalance)}</strong></div><div className="tj-challenge-balance-value"><small>FULL CHALLENGE TARGET</small><strong className="tj-challenge-positive">{fmt(plan.at(-1).end)}</strong></div></div><div><span>Challenge position</span><b>{complete?'Complete':`Level ${current.level} of ${plan.length}`}</b></div><div><span>{nextLevel?'Next level':'Challenge target'}</span><b>{nextLevel?`${fmt(nextLevel.start)} · ${fmt(amountToNext)} away`:fmt(plan.at(-1).end)}</b></div></section></div>
     <div className="tj-challenge-summary-metrics">{[['RISK AT LEVEL START',fmt(current.risk),'tj-challenge-negative'],['PROFIT TARGET',complete?'—':fmt(current.profit),'tj-challenge-positive'],[adaptive?'MAX DRAWDOWN':'LOSS STREAK',adaptive?`${state.automation?.adaptiveDrawdownPct ?? 10}%`:state.lossStreak||0,''],['TRADES TAKEN',linked,''],['STEP-BACKS',state.stepBacks||0,'']].map(([label,value,tone])=><div key={label}><small>{label}</small><b className={tone}>{value}</b></div>)}</div>
     {!expanded&&<button type="button" className="tj-challenge-open-plan" onClick={()=>setExpanded(true)}><span>Compounding plan</span><small>{plan.length} levels · Milestone at level {Math.min(10,plan.length)} · {fmt(plan[Math.min(9,plan.length-1)].end)}</small><ArrowDown size={16}/></button>}
     {(guardrails.dailyLossLimitPct>0 || guardrails.monthlyLossLimitPct>0)&&<section className="tj-panel tj-challenge-account-guardrails"><strong>{account.name} guardrails</strong><div>{guardrails.dailyLossLimitPct>0&&<span><small>DAILY LOSS LIMIT · {guardrails.dailyLossLimitPct}%</small><b>{fmt(Math.max(0,-guardrails.dailyPnl))} / {fmt(guardrails.dailyLossCap)}</b><em>{guardrails.dailyLossHit?'Locked until next day':'Open'}</em></span>}{guardrails.monthlyLossLimitPct>0&&<span><small>MONTHLY LOSS LIMIT · {guardrails.monthlyLossLimitPct}%</small><b>{fmt(Math.max(0,-guardrails.monthlyPnl))} / {fmt(guardrails.monthlyLossCap)}</b><em>{guardrails.monthlyLossHit?'Locked until next month':'Open'}</em></span>}</div></section>}
@@ -222,7 +255,7 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
       <button type="button" className="tj-btn-outline" aria-label="Cancel" title="Cancel" disabled={deleting || savingSetup} onClick={()=>setSetup(null)}>Cancel</button>
       <button type="button" className="tj-btn-primary" aria-label={savingSetup?'Saving challenge':'Save challenge'} title="Save challenge" disabled={deleting || savingSetup || !setup.name.trim() || !(Number(setup.startingBalance)>0)} onClick={saveSetup}><Save size={16}/>{savingSetup?'Saving…':'Save changes'}</button>
     </footer></section></div>}
-    {celebrating&&<ChallengeCelebration accountName={account.name} totalLevels={plan.length} startingBalance={challengeBalance} finalBalance={life.liveBalance} currency={account.baseCurrency || 'USD'} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}
+    {celebrating&&<ChallengeCelebration accountName={account.name} totalLevels={plan.length} startingBalance={challengeBalance} finalBalance={life.liveBalance} tradingPnl={challengeTradingPnl} currency={account.baseCurrency || 'USD'} onViewJourney={()=>{setCelebrating(false);jumpToActive();}} onClose={()=>setCelebrating(false)}/>}
   </article>;
 }
 // A deposit can place an account at a higher level, but it is never an earned
@@ -250,7 +283,8 @@ function ChallengeSplitVisual({account,plan,current,state,life,failed,complete,m
   const rulesMenuRef=useRef(null);
   const [showSizing,setShowSizing]=useState(true);
   useEffect(()=>{if(expanded)setSelected(current.level);},[expanded,current.level]);
-  const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass').length;
+  const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass'||status==='Jumped').length;
+  const funded=Object.values(state.statuses || {}).filter(status=>status==='Jumped').length;
   const milestone=plan[Math.min(Math.ceil(plan.length / 2)-1,plan.length-1)];
   const levelRanges=Array.from({length:Math.ceil(plan.length/10)},(_,index)=>{
     const start=index*10+1;
@@ -301,7 +335,7 @@ function ChallengeSplitVisual({account,plan,current,state,life,failed,complete,m
           <div className="tj-cs-row"><div><small>CHALLENGE PROGRESS</small><h3>{complete?'Complete':`Level ${current.level}`} <em>of {plan.length}</em></h3></div><div className="tj-cs-current-level"><small>THIS LEVEL</small><strong>{fmt(current.start)} → {fmt(current.end)}</strong></div></div>
                 <div className="tj-cs-segments" aria-label={`Level ${current.level} of ${plan.length}`}>{plan.map(row=><i key={row.level} className={`${visualState(row.level)==='passed'?'is-passed':''} ${visualState(row.level)==='funded'?'is-funded':''} ${(visualState(row.level)==='progress'||(row.level===current.level&&visualState(row.level)==='not-started'))?'is-progress':''} ${row.level===current.level?'is-current':''} ${expanded&&row.level===selected?'is-selected':''}`}/>)}</div>
           <div className="tj-cs-ticks"><span>1</span><span>{milestone.level}</span><span>{plan.length}</span></div>
-          <p>{passed} of {plan.length} levels passed · Deposit-funded levels are not trading passes</p>
+          <p>{passed} of {plan.length} levels reached{funded?` · ${funded} deposit-funded`:''}</p>
         </section>
         <div className="tj-cs-money"><section className="tj-cs-card"><small>AVAILABLE TRADING CAPITAL</small><strong>{fmt(life.liveBalance)}</strong></section><section className="tj-cs-card"><small>FULL CHALLENGE TARGET</small><strong>{fmt(plan.at(-1).end)}</strong></section></div>
         <div className="tj-cs-stats">

@@ -93,11 +93,13 @@ export default class MobilePageStage extends React.Component {
 
   getSnapshotBeforeUpdate(previous) {
     if (previous.page === this.props.page) return null;
-    const kind = getBackNavigation().takeMove();
+    // Consume the route move so it cannot leak into a later in-page transition,
+    // but never photograph one full page behind another. A live previous page can
+    // show through chart/card mounting and creates the mobile ghosting effect.
+    getBackNavigation().takeMove();
     const layer = this.live(), scroller = this.scroller();
     if (scroller) this.scrolls.set(previous.page, scroller.scrollTop);
-    if (previous.account !== this.props.account) return null;
-    return this.capture(kind);
+    return null;
   }
 
   // The picture of what is on screen now, before it changes. Null when nothing should move.

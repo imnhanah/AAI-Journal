@@ -133,6 +133,8 @@ test('the page stage takes its direction from the back layer and adds nothing on
   assert.match(stage, /querySelectorAll\('\[id\]'\)\.forEach\(node => node\.removeAttribute\('id'\)\)/);
   assert.match(stage, /removeAttribute\('name'\)/);
   assert.match(stage, /aria-hidden="true" inert=""/);
+  assert.match(stage, /getBackNavigation\(\)\.takeMove\(\);/);
+  assert.match(stage, /return null;\n  }\n\n  \/\/ The picture of what is on screen now/);
   assert.match(journal, /<MobilePageStage page=\{page\} account=\{account\.id\}>\n\s*<div className="tj-page-transition" key=\{`\$\{page\}-\$\{account\.id\}`\}>/);
 });
 

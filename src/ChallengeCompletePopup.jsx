@@ -1,9 +1,11 @@
 // Desktop "challenge complete" celebration and certificate, after
 // aaicorefx-desktop-finance-challenge-popups.html. ChallengeCelebration.jsx supplies the facts;
 // every figure shown here comes from the trader's own challenge.
-import { Play } from 'lucide-react';
+import { CalendarDays, CandlestickChart, Play, Target, TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { playSynthSound, stopSynthSound, unlockSynthSounds } from './synthSounds';
+import { downloadCertificate } from './certificateExport';
 import './desktopPopups.css';
 
 const CONFETTI = ['var(--celebrate-gold)', 'var(--accent)', 'var(--tj-blue)', 'var(--celebrate-gold-hi)', 'var(--tj-green)', 'var(--loss)', 'var(--tj-purple)'];
@@ -43,30 +45,39 @@ function useCountUp(target, duration = 2200) {
   return value;
 }
 
-export default function ChallengeCompletePopup({ facts, money, soundEnabled = true, onViewJourney, onClose }) {
-  const { traderName, accountName, totalLevels, modeName, rewardLabel, finalTarget, daysTaken, trades, stepBacks, growth, completedAt, certificateId } = facts;
-  const [view, setView] = useState('popup');
+export default function ChallengeCompletePopup({ facts, money, soundEnabled = true, onViewJourney, onClose, onComplete, initialView = 'popup' }) {
+  const { traderName, accountName, totalLevels, modeName, rewardLabel, completionBalance, finalTarget, daysTaken, trades, stepBacks, growth, completedAt, certificateId } = facts;
+  // Archived certificates created before completionBalance existed continue to
+  // render with their recorded target. New certificates always use the actual
+  // equity that cleared the final level.
+  const achievementBalance = Number.isFinite(Number(completionBalance)) ? Number(completionBalance) : finalTarget;
+  const [view, setView] = useState(initialView);
+  const [completing, setCompleting] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const started = useRef(false), primary = useRef(null), dialog = useRef(null);
-  const shown = useCountUp(finalTarget || 0);
+  const [saving, setSaving] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const started = useRef(false), primary = useRef(null), dialog = useRef(null), certificate = useRef(null);
+  const shown = useCountUp(achievementBalance || 0);
   const levels = Math.max(1, totalLevels || 1);
   const bars = useMemo(() => Array.from({ length: levels }, (_, i) => 8 + Math.pow(levels === 1 ? 1 : i / (levels - 1), 1.9) * 64), [levels]);
   const confetti = useMemo(() => Array.from({ length: 60 }, (_, i) => ({ left: `${(i * 37 + 11) % 100}%`, color: CONFETTI[i % CONFETTI.length], d: `${3 + ((i * 7) % 25) / 10}s`, l: `${((i * 13) % 30) / 10}s`, x: `${((i * 29) % 140) - 70}px`, r: `${(i * 53) % 720}deg` })), []);
   const date = completedAt ? new Date(completedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
   const name = traderName || accountName;
+  const portalClass = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'light' ? 'tj-root tj-theme-light' : 'tj-root tj-theme-dark';
+  const inViewport = content => createPortal(<div className={portalClass}>{content}</div>, document.body);
   useEffect(() => {
     const previous = document.activeElement;
-    primary.current?.focus();
-    return () => { stopSynthSound('challenge'); if (previous?.isConnected) previous.focus?.(); };
+    primary.current?.focus({ preventScroll: true });
+    return () => { stopSynthSound('challenge'); if (previous?.isConnected) previous.focus?.({ preventScroll: true }); };
   }, []);
   useEffect(() => {
     if (started.current || !soundEnabled) return;
     started.current = true;
     playSynthSound('challenge').then((played) => setBlocked(!played));
   }, [soundEnabled]);
-  useEffect(() => { primary.current?.focus(); }, [view]);
+  useEffect(() => { primary.current?.focus({ preventScroll: true }); }, [view]);
   const keys = (event) => {
-    if (event.key === 'Escape') { event.stopPropagation(); if (view === 'certificate') setView('popup'); else onClose(); }
+    if (event.key === 'Escape') { event.stopPropagation(); if (view === 'certificate' && initialView !== 'certificate') setView('popup'); else onClose(); }
     if (event.key === 'Tab') {
       const buttons = dialog.current?.querySelectorAll('button:not(:disabled)');
       if (!buttons?.length) return;
@@ -75,36 +86,51 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   };
-  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `×${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`, 'Growth']];
-  if (view === 'certificate') return <div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
+  const stats = [[daysTaken ?? '—', 'Days taken'], [trades ?? '—', 'Trades'], [stepBacks ?? 0, 'Step-backs'], [growth == null ? '—' : `${growth > 0 ? '+' : ''}${growth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`, 'Growth']];
+  const saveCertificate = async (kind) => {
+    setSaving(kind); setSaveError('');
+    try { await downloadCertificate(certificate.current, name, kind); }
+    catch { setSaveError('Could not create the certificate file. Please try again.'); }
+    finally { setSaving(''); }
+  };
+  const completeChallenge = async () => {
+    if (!onComplete || completing) return;
+    setCompleting(true);
+    try { if (await onComplete(facts) !== false) onClose(); }
+    finally { setCompleting(false); }
+  };
+  if (view === 'certificate') return inViewport(<div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
     <div className="cc2-wrap">
-      <div className="cc2-cert">
-        <i className="cc2-b1"/><i className="cc2-b2"/><i className="cc2-cn is-a"/><i className="cc2-cn is-b"/><i className="cc2-cn is-c"/><i className="cc2-cn is-d"/><i className="cc2-sh"/>
-        <div className="cc2-cin">
-          <div className="cc2-brand">AAICOREFX · Trading Journal</div>
-          <div className="cc2-ttl">Certificate of Achievement</div>
-          <div className="cc2-orn" aria-hidden="true"><i/>◆<i/></div>
-          <div className="cc2-cer">This certifies that</div>
-          <div className="cc2-nm">{name}</div>
-          <p className="cc2-txt">has completed all <b>{totalLevels} levels</b> of the <b>{accountName} · {modeName}</b> challenge{rewardLabel ? <> at <b>{rewardLabel}</b></> : null}, respecting every risk rule from the first level to the last.</p>
-          <div className="cc2-row">{[[money(finalTarget), 'Final target'], ...stats.slice(0, 2), stats[3]].map(([value, label]) => <div key={label}><b>{value}</b><span>{label}</span></div>)}</div>
-          <div className="cc2-bars" aria-hidden="true">{bars.map((h, i) => <i key={i} style={{ '--h': `${Math.round(h * 40 / 72)}px`, '--n': i }}/>)}</div>
+      <div ref={certificate} className="cc3-cert">
+        <i className="cc3-contour cc3-contour-a"/><i className="cc3-contour cc3-contour-b"/><i className="cc3-corner cc3-corner-t"/><i className="cc3-corner cc3-corner-b"/>
+        <div className="cc3-frame"/><div className="cc3-inner-frame"/>
+        <div className="cc3-content">
+          <div className="cc3-logo"><img className="cc3-logo-light" src="/brand/aaicorefx-corefx-logo-light.png" alt="CoreFX"/><img className="cc3-logo-dark" src="/brand/aaicorefx-corefx-logo-dark.png" alt=""/></div>
+          <div className="cc3-brand">AAICOREFX <i/> Trading Journal</div>
+          <h2 className="cc3-title">Certificate <span>of achievement</span></h2>
+          <div className="cc3-certifies">This certifies that</div>
+          <div className="cc3-name-row"><span aria-hidden="true">❮❮❮</span><div className="cc2-nm">{name}</div><span aria-hidden="true">❯❯❯</span></div>
+          <p className="cc2-txt">has completed all <b>{totalLevels} levels</b> of the <b>{accountName} · {modeName}</b> challenge{rewardLabel ? <> at <b>{rewardLabel}</b></> : null}, respecting every risk rule from the <b>first level</b> to the last.</p>
+          <div className="cc2-row">{[[money(achievementBalance), 'Final balance', Target], ...stats.slice(0, 2).map(([value,label])=>[value,label,label==='Days taken'?CalendarDays:CandlestickChart]), [...stats[3], TrendingUp]].map(([value, label, Icon]) => <div key={label}><Icon aria-hidden="true"/><b>{value}</b><span>{label}</span></div>)}</div>
           <div className="cc2-foot">
             <div className="cc2-sg"><div className="cc2-l">{date}</div><span>Date completed</span></div>
-            <div className="seal-gold"><Seal/></div>
+            <div className="cc3-seal"><i/><img className="cc3-logo-light" src="/brand/aaicorefx-corefx-logo-light.png" alt="AAICOREFX achievement seal"/><img className="cc3-logo-dark" src="/brand/aaicorefx-corefx-logo-dark.png" alt=""/><span>Achievement</span></div>
             <div className="cc2-sg"><div className="cc2-l">AAICOREFX</div><span>Issued by</span></div>
           </div>
           <div className="cc2-cid">Certificate No. {certificateId}</div>
         </div>
       </div>
       <div className="cc2-bar">
-        <button ref={primary} type="button" className="cc2-cbtn is-pri" onClick={() => { try { window.print(); } catch { /* printing unavailable */ } }}>Save as PDF</button>
-        <button type="button" className="cc2-cbtn" onClick={() => setView('popup')}>Back</button>
+        <button ref={primary} type="button" className="cc2-cbtn is-pri" disabled={!!saving} onClick={() => saveCertificate('pdf')}>{saving === 'pdf' ? 'Saving…' : 'Save PDF'}</button>
+        <button type="button" className="cc2-cbtn" disabled={!!saving} onClick={() => saveCertificate('image')}>{saving === 'image' ? 'Saving…' : 'Save image'}</button>
+        {onComplete && <button type="button" className="cc2-cbtn is-pri" disabled={!!saving || completing} onClick={completeChallenge}>{completing ? 'Completing…' : 'Complete challenge'}</button>}
+        {initialView !== 'certificate' && <button type="button" className="cc2-cbtn" onClick={() => setView('popup')}>Back</button>}
         <button type="button" className="cc2-cbtn" onClick={onClose}>Close</button>
       </div>
+      {saveError && <p className="cc2-save-error" role="alert">{saveError}</p>}
     </div>
-  </div>;
-  return <div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  </div>);
+  return inViewport(<div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="cc2">
       <div className="cc2-cf" aria-hidden="true">{confetti.map((c, i) => <i key={i} style={{ left: c.left, background: c.color, '--d': c.d, '--l': c.l, '--x': c.x, '--r': c.r }}/>)}</div>
       <div className="cc2-top">
@@ -115,10 +141,10 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
       </div>
       <div className="cc2-in">
         <h2 id="cc2-title">You conquered all {totalLevels} levels</h2>
-        <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its risk rules. This is rare discipline.</p>
+        <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its rules. This is rare discipline.</p>
         <div className="cc2-chips"><span>{accountName}</span><span>{modeName}</span>{rewardLabel && <span>{rewardLabel}</span>}</div>
         <div className="cc2-big">
-          <small>Full challenge target reached</small>
+          <small>Challenge completed at</small>
           <div className="cc2-amt">{money(shown)}</div>
           <div className="cc2-lv" style={{ '--levels': levels }} aria-hidden="true">{bars.map((h, i) => <i key={i} style={{ '--n': i, '--h': `${h}px` }}/>)}</div>
           <div className="cc2-lvl"><span>Level 1</span><span>Level {totalLevels} · {totalLevels} of {totalLevels} passed</span></div>
@@ -129,5 +155,5 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
         <div className="cc2-cta"><button type="button" className="cc2-btn" onClick={onClose}>Later</button><button ref={primary} type="button" className="cc2-btn is-pri" onClick={() => setView('certificate')}>View certificate</button></div>
       </div>
     </section>
-  </div>;
+  </div>);
 }

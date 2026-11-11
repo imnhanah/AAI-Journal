@@ -17,6 +17,15 @@ export function linkedChallengeTrades(state, account) {
   return (account.trades || []).filter(trade => !excluded.has(trade.id) && (!trade.accountId || trade.accountId === account.id) &&
     (included.has(trade.id) || tradeLoggedAt(trade) >= Date.parse(config.startedAt)));
 }
+// The completion card measures days by the same dated trading activity shown
+// in Calendar: one day for each distinct close/date, not elapsed wall-clock
+// time since the challenge was created.
+export function challengeTradingDays(trades = []) {
+  return new Set(trades.filter(closedChallengeTrade).map(trade => {
+    const value = trade.closeDate || trade.date || trade.createdAt;
+    return String(value || '').slice(0, 10);
+  }).filter(Boolean)).size;
+}
 export function scopeChallengeAccount(workspace = {}, balance = {}) {
   const balances = Array.isArray(workspace.balances) ? workspace.balances.filter(item => item && typeof item === 'object') : [];
   const primary = balances.filter(item => item.isActive !== false)[0]?.id === balance.id;
@@ -72,10 +81,11 @@ export function challengeLifecycle(state, account) {
   const events=[...(account.trades || []).filter(closedChallengeTrade).map(trade=>({at:tradeLoggedAt(trade),amount:Number(trade.pnl || 0),deposit:false})),...(account.financeMovements || []).map(item=>({at:Date.parse(item.createdAt || `${item.date}T23:59:59`),amount:cashImpact(item),deposit:item.type==='deposit' && cashImpact(item)>0}))].sort((a,b)=>a.at-b.at);
   let balance=Math.round(Number(account.balance ?? account.challengeStartingBalance ?? 0)*100);
   for(const event of events.filter(item=>item.at<checkpoint))balance+=Math.round(event.amount*100);
-  let failed=balance<minimum;
+  const failsAtFloor = amount => mode === 'adaptive' ? amount <= minimum : amount < minimum;
+  let failed=failsAtFloor(balance);
   for(const event of events.filter(item=>item.at>=checkpoint)) {
     balance+=Math.round(event.amount*100);
-    if(balance<minimum)failed=true;
+    if(failsAtFloor(balance))failed=true;
     else if(event.deposit)failed=false;
   }
   return {liveBalance, failed:!!account.challengeEnabled && plan.length > 0 && failed, settingsLocked:linkedChallengeTrades(state,account).length>0};

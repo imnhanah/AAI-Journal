@@ -11,7 +11,7 @@ export const ACCOUNT_PATCH_FIELDS = Object.freeze([
   'challengeEnabled', 'challengeStartingBalance', 'challengeMode',
   'challengeReward', 'challengeLevelCount', 'challengeAdaptiveRiskPct',
   'challengeAdaptiveDrawdownPct', 'financeEnabled', 'typeTags',
-  'mistakeTags', 'confluenceSessions', 'rewardPresets', 'caseStudyWorkspace',
+  'mistakeTags', 'confluenceSessions', 'rewardPresets', 'caseStudyWorkspace', 'challengeCertificates',
 ]);
 
 const allowed = new Set(ACCOUNT_PATCH_FIELDS);

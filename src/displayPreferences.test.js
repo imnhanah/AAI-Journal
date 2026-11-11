@@ -29,6 +29,12 @@ test('saved start page and user-scoped last page safely resolve', () => {
   assert.equal(resolveStartPage({start_page:'last'},null),'dashboard');
   assert.equal(resolveStartPage({start_page:'finance'},'finance',['dashboard']),'dashboard');
 });
+test('signed-in standalone reload restores the remembered journal page before Landing', () => {
+  const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
+  assert.match(journal, /iOS standalone launches can reopen the installed app at `\/` rather than/);
+  assert.match(journal, /const destination = requestedPage\.current \|\| resolveStartPage\(user\.user_metadata, readActivePage\(user\.id\)\);/);
+  assert.match(journal, /if \(user && !JOURNAL_PAGES_BY_PATH\[window\.location\.pathname\]\) \{\n\s*return <JournalPreloader theme=\{sessionTheme\} \/>;\n\s*\}/);
+});
 test('money masking retains labels, dates and percentages', () => {
   assert.equal(maskMoneyText('Balance +$40,000.00; P&L -€250.50; target £100.00'),'Balance $••••; P&L €••••; target £••••');
   assert.equal(maskMoneyText('10/10/2026 · 20% · 258 trades'),'10/10/2026 · 20% · 258 trades');

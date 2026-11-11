@@ -63,6 +63,22 @@ export default function useChallenge(account, userId, startupProgress = null, st
     window.addEventListener('aaicorefx:backup-restored',restored);
     return()=>window.removeEventListener('aaicorefx:backup-restored',restored);
   },[reload]);
+  // Settings can change an unlocked challenge's plan without changing its
+  // account id. Apply that confirmed save in memory so the open Challenge
+  // page immediately uses the new mode, targets and level count.
+  useEffect(()=>{
+    const sync=(event)=>{
+      if(event.detail?.accountId===account?.id && event.detail?.state){
+        setRecord(current=>current?.key===key ? {...current,state:event.detail.state} : current);
+        latest.current=null;
+        flight.current=null;
+        setError('');
+        setLoading(false);
+      }
+    };
+    window.addEventListener('aaicorefx:account-challenge-updated',sync);
+    return()=>window.removeEventListener('aaicorefx:account-challenge-updated',sync);
+  },[account?.id,key]);
   async function persist(next) {
     if(!ready || loading || flight.current===key) return false;
     flight.current=key;
@@ -111,6 +127,7 @@ export default function useChallenge(account, userId, startupProgress = null, st
       const next=changeChallengeStatus(state,level,status);
       return persist(resetAutomation(next,account.trades || [],baseline.automation?.mode,next.activeLevel,new Date(),undefined,liveChallengeBalance(account)));
     },
-    setNote:(level,note)=>persist({...baseline,notes:{...baseline.notes,[level]:note}})
+    setNote:(level,note)=>persist({...baseline,notes:{...baseline.notes,[level]:note}}),
+    acknowledgeCompletion:certificate=>persist({...baseline,automation:{...(baseline.automation || {}),completionAcknowledgedAt:new Date().toISOString(),completionCertificate:certificate || null}})
   };
 }

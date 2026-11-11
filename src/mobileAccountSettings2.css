@@ -142,6 +142,8 @@
   .tj-ma-sheet .tj-challenge-mode-buttons em {display:block;margin-top:2px;color:var(--muted);font-size:12px;font-style:normal;}
   .tj-ma-sheet .tj-challenge-plan-progress small {font-size:12px;}
   .tj-ma-sheet .tj-challenge-activation-message {margin:10px 0 0;color:var(--phone-loss);font-size:13px;}
+  .tj-ma-sheet .tj-challenge-recommendations {display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .tj-ma-sheet .tj-challenge-recommendations button {min-height:32px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--phone-loss) 35%,var(--border));border-radius:8px;background:var(--raised);color:inherit;font:inherit;font-size:12px;font-weight:700;}
 
   /* Danger */
   .tj-ma-danger {overflow:hidden;border:.5px solid var(--border);border-radius:26px;background:var(--card);}

@@ -1,7 +1,8 @@
 // Desktop Journal Setup v2 (SETUP_V2 in TradingJournal.jsx), after aaicorefx-desktop-journal-setup.html.
 // Phones keep the existing Setup screens. Every change goes through the same handlers as the old page.
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, ArrowRight, CandlestickChart, Check, ChevronDown, Database, Download, GripVertical, Info, Layers, ListChecks, LogIn, Pencil, Plus, Search, ShieldCheck, Sun, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, ArrowRight, Award, CandlestickChart, Check, ChevronDown, Database, Download, GripVertical, Info, Layers, ListChecks, LogIn, Pencil, Plus, Search, ShieldCheck, Sun, Trash2, Upload, X } from 'lucide-react';
+import CertificateArchive from './CertificateArchive.jsx';
 import { ThemeSelect } from './JournalControls';
 import { DEFAULT_INSTRUMENTS, INSTRUMENT_GROUPS, instrumentGroup, normalizeInstrument, sameInstrument } from './instrumentCatalog';
 import { activeRoutineItems, deleteRoutineItem, reorderRoutine, resetCountdown, restoreRoutineItems, routineItems, routineWeekStats, updateRoutineItem } from './dailyRoutine';
@@ -10,7 +11,7 @@ import './desktopJournalSetup.css';
 const SECTIONS = [
   ['Workflow', [['daily-routine', 'Daily routine', Sun], ['rules', 'Trading rules', ListChecks], ['risk-presets', 'Risk presets', ShieldCheck]]],
   ['Libraries', [['instruments', 'Instruments', CandlestickChart], ['mistakes', 'Mistakes', AlertTriangle], ['confluences', 'Confluences', Layers], ['entries', 'Entry types', LogIn]]],
-  ['Data', [['mappings', 'Import mappings', ArrowLeftRight], ['backup', 'Data & backup', Database]]],
+  ['Data', [['certificates', 'Certificates', Award], ['mappings', 'Import mappings', ArrowLeftRight], ['backup', 'Data & backup', Database]]],
 ];
 const ICONS = Object.fromEntries(SECTIONS.flatMap(([, list]) => list.map(([id, , Icon]) => [id, Icon])));
 const GROUPS = [['before', 'Before the chart'], ['pretrade', 'Pre-trade']];
@@ -242,7 +243,7 @@ function BackupSection({ onExportBackup, onImportBackup, snapshots = [], onResto
   </>;
 }
 
-export default function DesktopJournalSetup({ section, onSection, userId, account, typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
+export default function DesktopJournalSetup({ section, onSection, userId, account, certificates = [], typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
   const [pending, setPending] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -255,12 +256,13 @@ export default function DesktopJournalSetup({ section, onSection, userId, accoun
   const customMistakes = mistakeTags.filter((item) => !isMistakeDefault(item));
   const allInstruments = [...DEFAULT_INSTRUMENTS, ...instruments.map(symbolOf).filter((symbol) => symbol && !DEFAULT_INSTRUMENTS.some((item) => sameInstrument(item, symbol)))];
   const rules = account?.rules || [];
-  const counts = { 'daily-routine': activeRoutineItems(routine).length, rules: rules.length, 'risk-presets': riskPresets.length, instruments: allInstruments.length, mistakes: mistakeDefaults.length + customMistakes.length, confluences: typeTags.length, entries: confluenceSessions.length, mappings: section === 'mappings' ? null : readMappings(userId).length, backup: null };
+  const counts = { 'daily-routine': activeRoutineItems(routine).length, rules: rules.length, 'risk-presets': riskPresets.length, instruments: allInstruments.length, mistakes: mistakeDefaults.length + customMistakes.length, confluences: typeTags.length, entries: confluenceSessions.length, certificates: certificates.length, mappings: section === 'mappings' ? null : readMappings(userId).length, backup: null };
   const stringList = (items, handler) => ({ items: items.map((item) => ({ id: item, label: item })), onAdd: (text) => saveWith(handler)([...items, text]), onRename: (id, text) => saveWith(handler)(items.map((item) => item === id ? text : item)), onDelete: (id) => saveWith(handler)(items.filter((item) => item !== id)) });
   const body = section === 'daily-routine' ? <RoutineSection routine={routine} onUpdate={onUpdateRoutine} run={run} toast={toast}/>
     : section === 'instruments' ? <InstrumentSection instruments={instruments} onSave={saveWith(onInstruments)} toast={toast}/>
     : section === 'risk-presets' ? <RiskSection presets={riskPresets} onSave={saveWith(onRiskPresets)} toast={toast}/>
     : section === 'mappings' ? <MappingSection userId={userId} instruments={allInstruments} toast={toast}/>
+    : section === 'certificates' ? <CertificateArchive certificates={certificates} currency={account?.baseCurrency}/>
     : section === 'backup' ? <BackupSection onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/>
     : section === 'mistakes' ? <ListSection id="mistakes" title="Mistake management" one="mistake" many="mistakes" grid placeholder="Add a mistake…" desc="Mistakes you can tag on a trade when reviewing it. Presets are built in and cannot be removed." toast={toast} items={[...mistakeDefaults.map((item) => ({ id: item, label: item, locked: true, tag: 'Preset' })), ...customMistakes.map((item) => ({ id: item, label: item }))]} onAdd={(text) => saveWith(onMistakes)([...customMistakes, text])} onRename={(id, text) => saveWith(onMistakes)(customMistakes.map((item) => item === id ? text : item))} onDelete={(id) => saveWith(onMistakes)(customMistakes.filter((item) => item !== id))}/>
     : section === 'confluences' ? <ListSection id="confluences" title="Confluences" one="confluence" many="confluences" grid placeholder="Add a confluence…" desc="The reasons that line up behind an entry. Tag them when you log a trade." toast={toast} {...stringList(typeTags, onTypeTags)}/>

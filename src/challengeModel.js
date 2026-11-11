@@ -36,7 +36,10 @@ export const STREAK_CHALLENGE_PLAN = (() => {
 export const emptyChallenge = () => ({ activeLevel: 1, statuses: {}, notes: {} });
 export const CHALLENGE_LEVEL_OPTIONS = [10, 15, 20, 30];
 export const normaliseChallengeLevelCount = value => CHALLENGE_LEVEL_OPTIONS.includes(Number(value)) ? Number(value) : 30;
-export const FIXED_CHALLENGE_MAX_LEVEL = 24;
+// Funding is deliberately capped at the halfway point of the chosen plan.
+// This is separate from trade progression: a trader can earn every later
+// level through normal trading.
+export const maxFundedChallengeLevel = levelCount => Math.floor(normaliseChallengeLevelCount(levelCount) / 2);
 // Challenge funding always comes from the account itself.  The legacy
 // challengeStartingBalance field is retained only for older saved workspaces.
 const challengeFundingBalance = account => Number(account?.balance ?? account?.challengeStartingBalance);
@@ -44,7 +47,58 @@ export const isChallengeEnabled = account => !!account?.challengeEnabled && Numb
 export const challengeReward = (value, mode = 'risk') => Number(value) > 0 && Number.isFinite(Number(value)) ? Number(value) : mode === 'streak' ? 3.1 : null;
 export const canUseLossStreak = reward => Number(reward) >= 2.8 && Number(reward) <= 5;
 export const isAdaptiveBalanceMode = mode => mode === 'adaptive';
-export function challengeModeActivationRule({mode='risk',reward,balance}={}) {
+export function challengeFundingLimit({mode='risk', reward, balance, levelCount=30, linked=false, startingBalance=20}={}) {
+  // Adaptive Balance always starts at its own Level 1. It only adopts the
+  // funding cap after it is linked to trading activity.
+  if (isAdaptiveBalanceMode(mode) && !linked) return null;
+  const totalLevels=normaliseChallengeLevelCount(levelCount);
+  const plan=buildChallengePlan(isAdaptiveBalanceMode(mode) ? startingBalance : 20,mode,totalLevels,reward);
+  const maxLevel=maxFundedChallengeLevel(totalLevels);
+  const fundedLevel=plan.reduce((highest,row)=>Math.round(Number(balance)*100) >= Math.round(row.start*100) ? row.level : highest,1);
+  const firstProhibited=plan[maxLevel];
+  return {
+    totalLevels,
+    maxLevel,
+    fundedLevel,
+    firstProhibitedLevel:maxLevel+1,
+    firstProhibitedStart:firstProhibited?.start ?? Infinity,
+    allowed:fundedLevel<=maxLevel,
+    plan,
+  };
+}
+export function challengeDepositFundingRule({mode='risk',reward,balance,levelCount=30,activeLevel=1,failed=false,linked=false,startingBalance=20}={}) {
+  const capApplies=!isAdaptiveBalanceMode(mode) || linked;
+  if (!capApplies) return {allowed:true,capApplies:false};
+  const funding=challengeFundingLimit({mode,reward,balance,levelCount,linked:true,startingBalance});
+  if (failed) return {...funding,allowed:funding.allowed,reason:funding.allowed ? null : 'recovery-cap'};
+  if (Number(activeLevel)>=funding.maxLevel) return {...funding,allowed:false,reason:'active-cap'};
+  return {...funding,allowed:funding.allowed,reason:funding.allowed ? null : 'funding-cap'};
+}
+const rewardRangeForMode = mode => mode==='streak' ? [2.8,5] : [1.5,2];
+const supportsStartingBalance = ({mode,reward,balance,levelCount}) => {
+  const funding=challengeFundingLimit({mode,reward,balance,levelCount});
+  return funding.allowed;
+};
+// These suggestions are calculated from the actual ladder, never from a
+// guessed balance threshold. The UI deliberately does not apply one until the
+// trader explicitly selects and saves it.
+export function challengeFundingRecommendations({mode='risk',reward,balance,levelCount=30}={}) {
+  if (isAdaptiveBalanceMode(mode)) return [];
+  const selected=normaliseChallengeLevelCount(levelCount);
+  const options=[];
+  const add=(kind, config, label) => {
+    if (supportsStartingBalance({...config,balance}) && !options.some(item=>item.mode===config.mode && item.levelCount===config.levelCount && item.reward===config.reward)) options.push({kind,...config,label});
+  };
+  for (const count of CHALLENGE_LEVEL_OPTIONS.filter(value=>value>selected)) add('length',{mode,reward,levelCount:count},`Use a ${count}-level challenge`);
+  const [,maximumReward]=rewardRangeForMode(mode);
+  for (const count of CHALLENGE_LEVEL_OPTIONS.filter(value=>value>=selected)) add('reward',{mode,reward:maximumReward,levelCount:count},`Use 1:${maximumReward} R:R with ${count} levels`);
+  if (mode==='risk') {
+    for (const count of CHALLENGE_LEVEL_OPTIONS) add('mode',{mode:'streak',reward:5,levelCount:count},`Switch to Mode 2 · 1:5 R:R · ${count} levels`);
+  }
+  if (!options.length) options.push({kind:'adaptive',mode:'adaptive',reward:null,levelCount:selected,label:'Switch to Adaptive Mode'});
+  return options;
+}
+export function challengeModeActivationRule({mode='risk',reward,balance,levelCount=30}={}) {
   if (isAdaptiveBalanceMode(mode)) return null;
   const value=Number(reward);
   const range=mode==='streak' ? [2.8,5] : [1.5,2];
@@ -52,10 +106,11 @@ export function challengeModeActivationRule({mode='risk',reward,balance}={}) {
   if (!Number.isFinite(value) || value<range[0] || value>range[1]) {
     return {kind:'reward',message:`${modeName} supports a reward between ${range[0]}R and ${range[1]}R. Choose Mode 3 — Adaptive Balance for a different reward.`};
   }
-  const referencePlan=buildChallengePlan(20,mode,30,value);
-  const ceiling=referencePlan[FIXED_CHALLENGE_MAX_LEVEL-1]?.start;
-  if (Number.isFinite(Number(balance)) && Number(balance)>ceiling) {
-    return {kind:'balance',ceiling,message:`This live balance is above Mode 1 and Mode 2’s Level ${FIXED_CHALLENGE_MAX_LEVEL} limit. Use Mode 3 — Adaptive Balance.`};
+  const funding=challengeFundingLimit({mode,reward:value,balance,levelCount});
+  if (Number.isFinite(Number(balance)) && !funding.allowed) {
+    const recommendations=challengeFundingRecommendations({mode,reward:value,balance,levelCount});
+    const suggestion=recommendations[0]?.label;
+    return {kind:'balance',ceiling:funding.firstProhibitedStart-0.01,fundedLevel:funding.fundedLevel,maxFundedLevel:funding.maxLevel,recommendations,message:`Starting balance exceeds the funding limit. Your starting balance would fund Level ${funding.fundedLevel}, but your selected ${funding.totalLevels}-level challenge allows starting funding only up to Level ${funding.maxLevel}.${suggestion ? ` Recommended: ${suggestion}.` : ''}`};
   }
   return null;
 }

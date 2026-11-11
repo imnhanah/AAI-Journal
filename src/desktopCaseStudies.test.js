@@ -149,7 +149,7 @@ test('desktop evidence viewer v2: rail with swatches, details with linked studie
 
 test('desktop Case Studies use their own confirm dialog and toasts; phones keep the app dialog', () => {
   const dialog = readFileSync(new URL('./ConfirmationDialog.jsx', import.meta.url), 'utf8');
-  assert.match(dialog, /export const ConfirmationContext=createContext\(async\(\)=>false\);\nconst C=ConfirmationContext;/);
+  assert.match(dialog, /export const ConfirmationContext=createContext\(async\(\)=>false\);/);
   assert.match(library, /if \(!desktop\) return appConfirm\(options\);/);
   assert.match(library, /<ConfirmationContext\.Provider value=\{confirm\}><Cs2ToastContext\.Provider value=\{notify\}>/);
   assert.match(library, /return <Cs2Feedback><CaseStudyLibraryReady /);
@@ -158,7 +158,7 @@ test('desktop Case Studies use their own confirm dialog and toasts; phones keep 
 });
 
 test('restore reports a bad file inline on desktop instead of a browser alert', () => {
-  assert.match(library, /catch \{ if \(!cs2Desktop\) window\.alert\('Choose a Case Study Library backup created by this journal\.'\); return false; \}/);
+  assert.match(library, /catch \{ await alert\(\{title:'That backup can’t be restored'/);
   assert.match(library, /\{restoreDialog && <Cs2RestoreDialog /);
   assert.match(library, /That file is not a Case Study Library backup from this journal\./);
   assert.match(css, /\.tj-root \.cs2\.cs2-toast \{position:fixed;/);

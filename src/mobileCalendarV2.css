@@ -44,12 +44,12 @@
   /* Week cards */
   .tj-mcal-weeks{display:flex;gap:10px;max-width:none;margin:0 -14px 2px;padding:2px 14px 6px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:14px;scrollbar-width:none}
   .tj-mcal-weeks::-webkit-scrollbar,.tj-mcal-notes::-webkit-scrollbar{display:none}
-  .tj-mobile-calendar-v2 .tj-mcal-week{--week-tint:var(--muted);display:block;flex:0 0 140px;padding:12px 14px;border:.5px solid color-mix(in srgb,var(--week-tint) 24%,var(--border));border-radius:24px;background:linear-gradient(160deg,color-mix(in srgb,var(--week-tint) 14%,var(--card)),var(--card) 75%);scroll-snap-align:start;text-align:left}
+  .tj-mobile-calendar-v2 .tj-mcal-week{--week-tint:var(--muted);display:block;flex:0 0 140px;min-width:0;overflow:hidden;padding:12px 14px;border:.5px solid color-mix(in srgb,var(--week-tint) 24%,var(--border));border-radius:24px;background:linear-gradient(160deg,color-mix(in srgb,var(--week-tint) 14%,var(--card)),var(--card) 75%);scroll-snap-align:start;text-align:left}
   .tj-mobile-calendar-v2 .tj-mcal-week.pos{--week-tint:var(--phone-gain)}
   .tj-mobile-calendar-v2 .tj-mcal-week.neg{--week-tint:var(--phone-drop)}
   .tj-mobile-calendar-v2 .tj-mcal-week.is-on{box-shadow:inset 0 0 0 2px var(--text)}
   .tj-mcal-week small{display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
-  .tj-mcal-week b{display:block;margin:3px 0 2px;font-size:22px;font-weight:500;letter-spacing:-.02em}
+  .tj-mcal-week b{display:block;overflow:hidden;margin:3px 0 2px;font-size:22px;font-weight:500;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap}
   .tj-mcal-week span{display:block;color:var(--muted);font-size:12px}
 
   /* Insights */

@@ -134,8 +134,8 @@ function Vitals({stats, points, currency}) {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const start = rail.getBoundingClientRect().left + 14; let best = 0, closest = Infinity;
-      [...rail.children].forEach((card, index) => { const distance = Math.abs(card.getBoundingClientRect().left - start); if(distance < closest){closest = distance;best = index;} const share = Math.min(1, distance / 170); card.style.opacity = (1 - .4 * share).toFixed(2); });
+      const start = rail.getBoundingClientRect().left; let best = 0, closest = Infinity;
+      [...rail.children].forEach((card, index) => { const distance = Math.abs(card.getBoundingClientRect().left - start); if(distance < closest){closest = distance;best = index;} });
       if(rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 4) best = rail.children.length - 1;
       setActive(best);
     };

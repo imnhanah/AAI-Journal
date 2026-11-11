@@ -36,6 +36,11 @@
   .tj-mc6-two b.is-gain{color:var(--phone-profit)}
   .tj-mc6-mini{display:flex;gap:14px;margin-top:12px;color:var(--muted);font-size:12px}
   .tj-mc6-mini b{color:var(--text);font-size:14px;font-weight:500}
+  .tj-mc6-complete{display:grid;gap:4px;margin-top:14px;padding:13px;border:.5px solid var(--phone-gain);border-radius:18px;background:var(--phone-gain-bg)}
+  .tj-mc6-complete>span{color:var(--phone-profit);font-size:var(--text-min);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .tj-mc6-complete>b{font-size:14px;font-weight:600}
+  .tj-mc6-complete>small{color:var(--muted);font-size:12px}
+  .tj-mc6-card .tj-mc6-complete button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;margin-top:5px;border-radius:12px;background:var(--phone-pill);color:var(--phone-on-pill);font-size:13px;font-weight:600}
   .tj-mc6-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
   .tj-mc6-card .tj-mc6-buttons button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:15px;background:var(--phone-raised);font-size:13px;font-weight:500}
 

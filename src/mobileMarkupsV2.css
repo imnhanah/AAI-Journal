@@ -1,4 +1,7 @@
 @media (max-width:767px) {
+  /* The frame already supplies the phone gutter. Keep Markups at that same
+     16px edge as Trade Logs instead of adding a second 16px inset. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-content:has(.tj-mk2){padding-inline:0}
   .tj-root .tj-mk2 {display:block;min-width:0;padding:18px 16px calc(102px + env(safe-area-inset-bottom,0px));color:var(--tj-text);}
   .tj-root .tj-mk2,.tj-root .tj-mk2 * {box-sizing:border-box;}
   .tj-root .tj-mk2-heading {margin:0 0 22px;}

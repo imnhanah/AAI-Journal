@@ -1,4 +1,4 @@
-import {buildChallengePlan, isChallengeEnabled, normaliseChallengeLevelCount, canUseLossStreak, isAdaptiveBalanceMode, challengeFailureFloor} from './challengeModel.js';
+import {buildChallengePlan, isChallengeEnabled, normaliseChallengeLevelCount, canUseLossStreak, isAdaptiveBalanceMode, challengeFailureFloor, maxFundedChallengeLevel} from './challengeModel.js';
 import {linkedChallengeTrades, closedChallengeTrade, cashImpact, fundedChallengeLevel, liveChallengeBalance} from './challengeLifecycle.js';
 const RUNNING_TRADE_MARKER = '[aaicorefx-running-trade]';
 const isClosedTrade = closedChallengeTrade;
@@ -15,7 +15,7 @@ export function resetAutomation(state, trades, mode, level = state.activeLevel, 
   for (const key of Object.keys(statuses)) if (statuses[key] === 'In progress') statuses[key] = '';
   if (level <= totalLevels) statuses[level] = 'In progress';
   return {activeLevel:level, statuses, notes:{...state.notes}, automation:{
-    mode:validMode(mode), levelCount:totalLevels, rewardRatio:state.automation?.rewardRatio ?? null, adaptiveRiskPct:state.automation?.adaptiveRiskPct, adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct, manualStepBacks:state.automation?.manualStepBacks ?? 0, startedAt:now.toISOString(), version:5,
+    mode:validMode(mode), levelCount:totalLevels, rewardRatio:state.automation?.rewardRatio ?? null, adaptiveRiskPct:state.automation?.adaptiveRiskPct, adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct, manualStepBacks:state.automation?.manualStepBacks ?? 0, startedAt:now.toISOString(), version:6,
     ...(Number.isFinite(Number(startingBalance)) && Number(startingBalance) > 0 ? {startingBalance:Math.round(Number(startingBalance)*100)/100} : {}),
     excludedIds:trades.map(t=>t.id),
     // Trades imported after this checkpoint are added explicitly by the
@@ -32,12 +32,19 @@ export function replayChallenge(baseline, account) {
   const excluded=new Set(config.excludedIds || []);
   const included=new Set(config.includedIds || []);
   const totalLevels=normaliseChallengeLevelCount(config.levelCount);
+  const maxFundingLevel=maxFundedChallengeLevel(totalLevels);
   const rewardRatio = config.rewardRatio ?? account.challengeReward;
   const startingBalance=Number(config.startingBalance);
   const hasCapturedBalance=Number.isFinite(startingBalance) && startingBalance>0;
   const challengeStart=hasCapturedBalance ? startingBalance : account.balance ?? account.challengeStartingBalance;
   const plan=buildChallengePlan(challengeStart, config.mode, totalLevels, rewardRatio, config);
   const failureFloor=challengeFailureFloor(challengeStart,config.mode,config);
+  // Adaptive Balance has an inclusive drawdown floor: a $100 account with a
+  // 50% floor fails at $50 as well as below it. The other modes retain their
+  // existing historical threshold behaviour.
+  const hasFailedAtBalance = balanceInCents => isAdaptiveBalanceMode(config.mode)
+    ? balanceInCents <= Math.round(failureFloor * 100)
+    : balanceInCents < Math.round(failureFloor * 100);
   const loggedAt=t=>Date.parse(t.createdAt || `${t.date}T${t.time || '00:00'}`);
   const rows=(account.trades || []).filter(t=>{
     if (excluded.has(t.id) || (t.accountId && t.accountId !== account.id)) return false;
@@ -47,7 +54,7 @@ export function replayChallenge(baseline, account) {
   const startTime = Date.parse(config.startedAt);
   const cashRows = (account.financeMovements || []).map(item=>({...item,eventAt:Date.parse(item.createdAt || `${item.date}T23:59:59`)}));
   let live = Math.round((hasCapturedBalance ? startingBalance : Number(account.balance ?? account.challengeStartingBalance) + (account.trades || []).filter(t=>isClosedTrade(t)&&!rows.some(row=>row.id===t.id)).reduce((sum,t)=>sum+Number(t.pnl||0),0) + cashRows.filter(item=>item.eventAt<startTime).reduce((sum,item)=>sum+cashImpact(item),0))*100);
-  state.failed = live < Math.round(failureFloor*100);
+  state.failed = hasFailedAtBalance(live);
   const markFundingJump = (from, to, reason) => {
     for (let level=from; level<to; level++) {
       if (state.statuses[level] === 'Pass') continue;
@@ -67,6 +74,7 @@ export function replayChallenge(baseline, account) {
   for (const event of events) {
     if (event.kind === 'cash') {
       const impact = cashImpact(event.item);
+      const wasFailed=state.failed;
       live += Math.round(impact*100);
       if (impact < 0) {
         // Cash leaving trading capital can make several levels unaffordable.
@@ -91,28 +99,48 @@ export function replayChallenge(baseline, account) {
           state.lossStreak = 0;
         }
       }
+      // Mode 1 and 2 always have a halfway funding cap. Adaptive Balance only
+      // does once the challenge has linked trading activity.
+      const capApplies=!isAdaptiveBalanceMode(config.mode) || rows.some(trade=>loggedAt(trade)<=event.eventAt);
       if (event.item.type==='deposit' && cashImpact(event.item)>0 && live>=Math.round(failureFloor*100) && state.activeLevel<=totalLevels) {
         const fundedLevel = fundedChallengeLevel(plan,live/100);
-        if (state.failed || fundedLevel!==state.activeLevel) {
+        const eligibleRecovery=wasFailed && fundedLevel<=maxFundingLevel;
+        const eligibleFunding=!wasFailed && capApplies && state.activeLevel<maxFundingLevel && fundedLevel<=maxFundingLevel;
+        if (eligibleRecovery || eligibleFunding || (!capApplies && !wasFailed)) {
           Object.keys(state.statuses).forEach(key=>{if(state.statuses[key]==='In progress')state.statuses[key]='';});
-          markFundingJump(state.activeLevel,fundedLevel,'Jumped due to deposit-funded balance');
+          if (eligibleRecovery) {
+            // Recovery restarts at what the restored balance can actually
+            // support. Later levels must be earned again.
+            for (const key of Object.keys(state.statuses)) if (Number(key)>=fundedLevel) delete state.statuses[key];
+            for (const key of Object.keys(state.fundingJumps)) if (Number(key)>=fundedLevel) delete state.fundingJumps[key];
+          }
+          markFundingJump(eligibleRecovery ? 1 : state.activeLevel,fundedLevel,'Jumped due to deposit-funded balance');
           state.activeLevel=fundedLevel; state.statuses[fundedLevel]='In progress'; delete state.fundingJumps[fundedLevel]; cents=0; state.lossStreak=0;
+          state.failed=false;
         }
-        state.failed=false;
-      } else if (live<Math.round(failureFloor*100)) state.failed=true;
+      } else if (hasFailedAtBalance(live)) state.failed=true;
       continue;
     }
     const trade=event.trade;
+    // Adaptive Balance sizes the next trade from the actual capital available
+    // immediately before it opens. Its static ladder is a projection only;
+    // it must not become a hidden target after a win, loss, or step-back.
+    const balanceBeforeTrade = live;
     live += Math.round(Number(trade.pnl || 0)*100);
     if (state.activeLevel > totalLevels) continue;
     state.counted++;
-    if (state.failed || live<Math.round(failureFloor*100)) { state.failed=true; continue; }
+    if (state.failed || hasFailedAtBalance(live)) { state.failed=true; continue; }
     const row=plan[state.activeLevel-1];
     const amount=Number(trade.grossPnl);
     const gross=Math.round(amount*100);
     cents+=gross;
-    if (amount < 0) state.lossStreak++; else if (amount > 0) state.lossStreak=0;
-    const pass=cents >= Math.round(row.profit*100);
+    const adaptiveTarget = Math.round(balanceBeforeTrade * (row.profitPct || 0) / 100);
+    const pass=cents >= (isAdaptiveBalanceMode(config.mode) ? adaptiveTarget : Math.round(row.profit*100));
+    // Mode 2 counts losses within the current level. A breakeven is neutral:
+    // it neither adds a loss nor clears a previous one. Only passing the
+    // level (or a resulting step-back below) starts a fresh count.
+    if (config.mode === 'streak' && canUseLossStreak(rewardRatio ?? 3.1) && amount < 0) state.lossStreak++;
+    else if (pass) state.lossStreak=0;
     const back=isAdaptiveBalanceMode(config.mode) ? amount < 0 && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(rewardRatio ?? 3.1) ? state.lossStreak >= 2 : cents <= -Math.round(row.risk*100);
     if (pass || back) {
       const previous=state.activeLevel;
@@ -132,16 +160,16 @@ export function replayChallenge(baseline, account) {
   // A loss must never be able to undo a just-recorded step-back by promoting
   // the active level again merely because its remaining balance still funds a
   // higher rung.
-  const balanceReduced = events.some(event => event.kind === 'cash'
-    ? cashImpact(event.item) < 0
-    : Number(event.trade.pnl || 0) < 0);
+  // Trading losses are evaluated by the selected mode above.  In particular,
+  // a single Mode 2 loss must remain on the current level.  Only cash being
+  // removed from the trading account can trigger this affordability fallback.
+  const balanceReduced = events.some(event => event.kind === 'cash' && cashImpact(event.item) < 0);
   const fundedLevel = fundedChallengeLevel(plan,state.liveBalance);
   const previous = state.activeLevel;
-  // A funding jump must remain affordable. This also catches a balance that
-  // was edited outside the event ledger: the displayed rung cannot stay above
-  // the available capital simply because an earlier deposit jumped levels.
-  const hasFundingJump = Object.entries(state.statuses || {}).some(([level,status]) => status === 'Jumped' && Number(level) < previous);
-  if ((balanceReduced || hasFundingJump) && fundedLevel < previous) {
+  // A completed challenge uses the sentinel level just beyond the final rung.
+  // Do not pull it back to the final rung merely because the historical replay
+  // contains an earlier loss; completion was earned by the final-level trade.
+  if (previous <= totalLevels && balanceReduced && fundedLevel < previous) {
     for (const key of Object.keys(state.statuses)) {
       if (Number(key) >= fundedLevel) delete state.statuses[key];
     }
@@ -160,6 +188,19 @@ export function replayChallenge(baseline, account) {
     state.levelPnl=0;
     state.lossStreak=0;
   }
-  if (state.liveBalance<failureFloor) state.failed=true;
+  // Available capital never completes a challenge by itself. The last rung
+  // must receive its normal trade-earned pass.
+  // Passing every rung is necessary, but it is not sufficient: the real
+  // account equity must also have reached the final planned target. Costs or
+  // earlier losses can otherwise make the ladder look complete while the
+  // account itself is still below the promised finish. Keep the final rung
+  // active so subsequent trade profit can close that gap legitimately.
+  const finalTarget = plan[totalLevels - 1]?.end;
+  if (state.activeLevel > totalLevels && Number.isFinite(finalTarget) && state.liveBalance < finalTarget) {
+    state.activeLevel = totalLevels;
+    state.statuses[totalLevels] = 'In progress';
+    state.levelPnl = 0;
+  }
+  if (hasFailedAtBalance(Math.round(state.liveBalance * 100))) state.failed=true;
   return state;
 }

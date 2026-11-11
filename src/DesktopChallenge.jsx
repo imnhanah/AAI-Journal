@@ -107,14 +107,20 @@ function NoteField({ level, value, disabled, onSave }) {
 }
 
 export default function DesktopChallengeCard(p) {
-  const { account, plan, current, state, life, failed, complete, modeName, rewardLabel, reward, adaptive, failureFloor, linked, fmt, challenge, openSetup, setup, setSetup, saveSetup, savingSetup, deleting, setDeleting, onDelete, locked, settingsLocked, rules, saving, error } = p;
+  const { account, plan, current, state, life, failed, complete, modeName, rewardLabel, reward, adaptive, failureFloor, linked, fmt, challenge, openSetup, setup, setSetup, saveSetup, savingSetup, deleting, setDeleting, onDelete, locked, settingsLocked, rules, saving, error, completionArchived, onContinueAdaptive } = p;
   const ranges = useMemo(() => Array.from({ length: Math.ceil(plan.length / 10) }, (_, index) => ({ key: `${index * 10 + 1}`, start: index * 10 + 1, end: Math.min(plan.length, index * 10 + 10) })), [plan.length]);
   const rangeOf = (level) => `${Math.floor((level - 1) / 10) * 10 + 1}`;
   const [range, setRange] = useState(() => rangeOf(current.level));
   const [selected, setSelected] = useState(current.level);
   const [rulesAnchor, setRulesAnchor] = useState(null);
-  // The selection stays where the trader put it; "Go to current level" jumps back.
-  const passed = Object.values(state.statuses || {}).filter((status) => status === 'Pass').length;
+  // A lifecycle update from a newly logged trade takes priority over a prior
+  // manual selection: immediately surface the new current level and its range.
+  useEffect(() => {
+    setSelected(current.level);
+    setRange(rangeOf(current.level));
+  }, [current.level]);
+  const reached = Object.values(state.statuses || {}).filter((status) => status === 'Pass' || status === 'Jumped').length;
+  const funded = Object.values(state.statuses || {}).filter((status) => status === 'Jumped').length;
   const mid = plan[Math.min(Math.ceil(plan.length / 2) - 1, plan.length - 1)];
   const all = range === 'all';
   const shownRange = all ? { start: 1, end: plan.length } : ranges.find((item) => item.key === range) || ranges[0];
@@ -140,11 +146,15 @@ export default function DesktopChallengeCard(p) {
       </header>
       {error && <p className="ch2-alert" role="alert">{error} <button type="button" onClick={challenge.retry}>Retry</button></p>}
       {failed && <p className="ch2-alert" role="alert"><b>Challenge is paused.</b> Live capital {fmt(life.liveBalance)} is below the {fmt(failureFloor)} minimum. Deposit at least {fmt(Math.max(0, failureFloor - life.liveBalance))} in Finance to reactivate it, or delete this run and start again.</p>}
+      {complete && <section className="ch2-complete" aria-label="Completed challenge">
+        <div><span className="ch2-eb2">Challenge completed</span><strong>Congratulations — all {plan.length} levels are complete.</strong><p>{completionArchived ? 'Your certificate is saved in Journal Setup.' : 'Complete the certificate to archive this achievement.'}</p></div>
+        <button type="button" className="ch2-btn is-pri" onClick={onContinueAdaptive}>Continue with Adaptive <ArrowRight size={15}/></button>
+      </section>}
       <div className="ch2-ovg">
         <div className="ch2-ovl"><span className="ch2-eb2">Challenge progress</span><div className="ch2-lv"><b>{complete ? 'Complete' : `Level ${current.level}`}</b><span>of {plan.length}</span></div>
           <div className="ch2-seg" style={{ '--n': plan.length }}>{plan.map((item) => { const v = visual(item.level); return <i key={item.level} title={`Level ${item.level} · ${LABEL[v]}`} className={item.level === current.level && !complete ? 'is-cur' : v === 'funded' ? 'is-fund' : v === 'passed' ? 'is-pass' : v === 'step' ? 'is-stp' : ''}/>; })}</div>
           <div className="ch2-sgl"><span>1</span><span>{mid?.level}</span><span>{plan.length}</span></div>
-          <p>{passed} of {plan.length} levels passed · Deposit-funded levels are not trading passes</p></div>
+          <p>{reached} of {plan.length} levels reached{funded ? ` · ${funded} deposit-funded` : ''}</p></div>
         <div className="ch2-bx"><small>Available trading capital</small><b className={life.liveBalance >= (plan[0]?.start || 0) ? 'is-gain' : 'is-loss'}>{fmt(life.liveBalance)}</b><span>This level · {fmt(current.start)} <ArrowRight size={12} strokeWidth={2.4}/> {fmt(current.end)}</span></div>
         <div className="ch2-bx"><small>Full challenge target</small><b>{fmt(plan.at(-1).end)}</b><Spark plan={plan} current={current}/><span>Planned across {plan.length} levels</span></div>
       </div>

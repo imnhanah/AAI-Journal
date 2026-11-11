@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CHALLENGE_PLAN as plan, STREAK_CHALLENGE_PLAN, FIXED_CHALLENGE_MAX_LEVEL, emptyChallenge, changeChallengeStatus as change, challengeModeActivationRule } from './challengeModel.js';
+import { CHALLENGE_PLAN as plan, STREAK_CHALLENGE_PLAN, emptyChallenge, changeChallengeStatus as change, challengeModeActivationRule, challengeDepositFundingRule, challengeFundingLimit, challengeFundingRecommendations, maxFundedChallengeLevel } from './challengeModel.js';
 import { buildChallengePlan, isChallengeEnabled, challengeFailureFloor } from './challengeModel.js';
 
 test('Custom deposit preserves the original ladder; absent balance keeps challenge off', () => {
@@ -65,18 +65,32 @@ test('Mode 2 retains the old risk, stop-loss and lot ladder but uses 3.1R profit
   assert.equal(streak.at(-1).end, 124939.15);
   assert.deepEqual(streak, STREAK_CHALLENGE_PLAN);
 });
-test('fixed modes are available through Level 24 and require Adaptive Balance above it', () => {
-  assert.equal(FIXED_CHALLENGE_MAX_LEVEL, 24);
-
-  for (const [mode, reward] of [['risk', 1.5], ['streak', 2.8]]) {
-    const level24Start = buildChallengePlan(20, mode, 30, reward)[FIXED_CHALLENGE_MAX_LEVEL - 1].start;
-
-    assert.equal(challengeModeActivationRule({ mode, reward, balance: level24Start }), null);
-
-    const result = challengeModeActivationRule({ mode, reward, balance: level24Start + 0.01 });
-    assert.equal(result.kind, 'balance');
-    assert.equal(result.ceiling, level24Start);
-    assert.match(result.message, /Level 24/);
+test('fixed modes cap initial and deposit funding at the selected plan halfway point', () => {
+  assert.deepEqual([10,15,20,30].map(maxFundedChallengeLevel),[5,7,10,15]);
+  for (const [levels, mode, reward] of [[10,'risk',1.5],[15,'streak',2.8],[20,'risk',2],[30,'streak',3.1]]) {
+    const limit=challengeFundingLimit({mode,reward,levelCount:levels,balance:20});
+    const accepted=challengeModeActivationRule({mode,reward,levelCount:levels,balance:limit.plan[limit.maxLevel-1].start});
+    const rejected=challengeModeActivationRule({mode,reward,levelCount:levels,balance:limit.firstProhibitedStart});
+    assert.equal(accepted,null);
+    assert.equal(rejected.kind,'balance');
+    assert.equal(rejected.maxFundedLevel,limit.maxLevel);
+  }
+  const plan10=buildChallengePlan(20,'risk',10,1.5);
+  assert.equal(challengeDepositFundingRule({mode:'risk',reward:1.5,levelCount:10,balance:plan10[4].start,activeLevel:2}).allowed,true);
+  assert.equal(challengeDepositFundingRule({mode:'risk',reward:1.5,levelCount:10,balance:plan10[5].start,activeLevel:2}).allowed,false);
+  assert.equal(challengeDepositFundingRule({mode:'risk',reward:1.5,levelCount:10,balance:plan10[4].start,activeLevel:5}).reason,'active-cap');
+  assert.equal(challengeDepositFundingRule({mode:'adaptive',levelCount:10,balance:1000,activeLevel:1,linked:false}).allowed,true);
+  const adaptivePlan=buildChallengePlan(100,'adaptive',10,3);
+  assert.equal(challengeDepositFundingRule({mode:'adaptive',reward:3,levelCount:10,balance:adaptivePlan[5].start,activeLevel:1,linked:true,startingBalance:100}).allowed,false);
+});
+test('funding recommendations are ladder-validated and retain their priority order',()=>{
+  const balance=60;
+  const recommendations=challengeFundingRecommendations({mode:'risk',reward:1.5,balance,levelCount:10});
+  assert.ok(recommendations.length);
+  assert.equal(recommendations[0].kind,'length');
+  for (const recommendation of recommendations) {
+    if (recommendation.kind==='adaptive') continue;
+    assert.equal(challengeFundingLimit({...recommendation,balance}).allowed,true);
   }
 });
 test('Pass advances, step back reactivates previous level without changing plan', () => {

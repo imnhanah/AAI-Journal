@@ -197,6 +197,35 @@
 .tj-challenge-linked-target { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-width:0; }
 .tj-challenge-linked-target .tj-input { min-width:0; width:100%; box-sizing:border-box; }
 .tj-challenge-setup-section .tj-challenge-setup-grid { gap:14px; }
+.tj-challenge-compatible-overlay { position:fixed; inset:0; z-index:410; display:grid; place-items:center; isolation:isolate; padding:24px; background:color-mix(in srgb,var(--tj-bg) 58%,transparent); }
+.tj-challenge-compatible-overlay::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.tj-challenge-compatible-dialog { position:relative; box-sizing:border-box; width:min(740px,100%); padding:34px 60px 38px; overflow:hidden; border:1px solid color-mix(in srgb,var(--tj-border) 62%,var(--accent)); border-radius:28px; background:radial-gradient(75% 95% at 50% 100%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 68%),var(--tj-panel); box-shadow:0 32px 90px color-mix(in srgb,var(--tj-text) 38%,transparent); color:var(--tj-text); text-align:center; }
+.tj-challenge-compatible-dialog::before { content:""; position:absolute; inset:0; pointer-events:none; border:1px solid color-mix(in srgb,var(--accent) 30%,transparent); border-radius:inherit; }
+.tj-challenge-compatible-close { position:absolute; top:22px; right:22px; display:grid; width:42px; height:42px; place-items:center; padding:0; border:1px solid var(--tj-border); border-radius:13px; background:color-mix(in srgb,var(--tj-panel) 88%,transparent); color:var(--tj-muted); cursor:pointer; }
+.tj-challenge-compatible-close:hover { color:var(--tj-text); border-color:var(--accent); }
+.tj-challenge-compatible-warning { display:grid; width:76px; height:76px; margin:0 auto 20px; place-items:center; border:1px solid color-mix(in srgb,var(--tj-amber) 50%,transparent); border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--tj-amber) 24%,transparent),transparent 68%); color:var(--tj-amber); box-shadow:0 0 34px color-mix(in srgb,var(--tj-amber) 25%,transparent); }
+.tj-challenge-compatible-dialog h2 { max-width:620px; margin:0 auto; font-size:clamp(1.65rem,3vw,2.45rem); line-height:1.12; letter-spacing:-.035em; }
+.tj-challenge-compatible-dialog h2 em { color:var(--tj-amber); font-style:normal; }
+.tj-challenge-compatible-dialog>p { max-width:590px; margin:15px auto 28px; color:var(--tj-muted); font-size:1.08rem; line-height:1.45; }
+.tj-challenge-compatible-choice { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:18px; padding:20px 24px; border:1px solid color-mix(in srgb,var(--accent) 68%,var(--tj-border)); border-radius:20px; background:color-mix(in srgb,var(--accent) 11%,var(--tj-panel)); text-align:left; }
+.tj-challenge-compatible-choice>svg:first-child { width:42px; height:42px; padding:10px; border:1px solid color-mix(in srgb,var(--accent) 38%,var(--tj-border)); border-radius:14px; color:var(--accent); }
+.tj-challenge-compatible-choice div { display:grid; gap:5px; min-width:0; }
+.tj-challenge-compatible-choice small { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.11em; }
+.tj-challenge-compatible-choice strong { font-size:clamp(1.05rem,2.2vw,1.45rem); line-height:1.25; overflow-wrap:anywhere; }
+.tj-challenge-compatible-check { box-sizing:content-box; padding:10px; border-radius:50%; background:var(--accent); color:var(--on-accent); }
+.tj-challenge-compatible-dialog footer { display:grid; grid-template-columns:1fr 1.32fr; gap:16px; max-width:530px; margin:28px auto 0; }
+.tj-challenge-compatible-dialog footer button { min-height:58px; border:1px solid var(--tj-border); border-radius:16px; background:transparent; color:var(--tj-text); font:inherit; font-size:1rem; font-weight:800; cursor:pointer; }
+.tj-challenge-compatible-dialog footer .tj-challenge-compatible-confirm { display:flex; align-items:center; justify-content:center; gap:10px; border-color:var(--accent); background:var(--accent); color:var(--on-accent); box-shadow:0 12px 24px color-mix(in srgb,var(--accent) 30%,transparent); }
+.tj-challenge-compatible-dialog footer button:hover { border-color:var(--accent); }
+@media(max-width:600px) { .tj-challenge-compatible-overlay { padding:14px; } .tj-challenge-compatible-dialog { padding:28px 20px 22px; border-radius:22px; } .tj-challenge-compatible-close { top:14px; right:14px; width:38px; height:38px; } .tj-challenge-compatible-warning { width:62px; height:62px; margin-bottom:16px; } .tj-challenge-compatible-dialog>p { font-size:.94rem; margin-bottom:20px; } .tj-challenge-compatible-choice { grid-template-columns:auto minmax(0,1fr); gap:12px; padding:15px; } .tj-challenge-compatible-choice>svg:first-child { width:32px; height:32px; padding:8px; } .tj-challenge-compatible-check { grid-column:2; justify-self:end; grid-row:1; padding:7px; } .tj-challenge-compatible-choice strong { padding-right:36px; font-size:1rem; } .tj-challenge-compatible-dialog footer { gap:10px; margin-top:20px; } .tj-challenge-compatible-dialog footer button { min-height:50px; font-size:.9rem; } }
+.tj-challenge-activation-message { display:flex; align-items:flex-start; gap:12px; margin:14px 0 0; padding:15px 16px; border:1px solid color-mix(in srgb,var(--tj-amber) 48%,var(--tj-border)); border-radius:14px; background:linear-gradient(100deg,color-mix(in srgb,var(--tj-amber) 13%,var(--tj-panel)),var(--tj-panel)); color:var(--tj-text); }
+.tj-challenge-activation-message>svg { flex:none; margin-top:2px; color:var(--tj-amber); }
+.tj-challenge-activation-message>div { min-width:0; }
+.tj-challenge-activation-message small { display:block; margin-bottom:4px; color:var(--tj-amber); font-size:var(--text-min); font-weight:800; letter-spacing:.1em; }
+.tj-challenge-activation-message p { margin:0; color:var(--tj-muted); font-size:13px; line-height:1.45; }
+.tj-challenge-recommendations { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.tj-challenge-recommendations button { display:inline-flex; align-items:center; gap:7px; min-height:34px; padding:7px 11px; border:1px solid color-mix(in srgb,var(--accent) 56%,var(--tj-border)); border-radius:9px; background:color-mix(in srgb,var(--accent) 10%,var(--tj-panel)); color:var(--tj-text); font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.tj-challenge-recommendations button:hover { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 18%,var(--tj-panel)); }
 .tj-challenge-status-picker { width:135px; max-width:100%; margin-inline:auto; }
 .tj-challenge-status-picker .tj-picker-trigger { width:100%; height:auto; min-height:34px; padding:7px 10px; border-radius:20px; border:1px solid var(--tj-border); background:var(--tj-panel-alt); color:var(--tj-muted); font:inherit; font-size:.9375rem; }
 .tj-challenge-status-picker.pass { --status:var(--accent); }
@@ -216,6 +245,17 @@
 .tj-challenge-state-badge.passed { --challenge-state-color:var(--tj-green); }
 .tj-challenge-state-badge.active { --challenge-state-color:var(--tj-amber); }
 @media(max-width:540px) { .tj-challenge-auto-progress { column-gap:10px; }.tj-challenge-state-badge { grid-row:1; padding:5px 10px; }.tj-challenge-auto-progress > span:not(.tj-challenge-state-badge),.tj-challenge-auto-progress > small { grid-column:1 / -1; } }
+
+/* Save-time challenge compatibility notice. This is deliberately a compact
+   notification, separate from the confirmation dialog it can open. */
+.tj-root .tj-toast-challenge { left:80px; right:auto; width:min(720px,calc(100vw - 96px)); max-width:none; margin:0; gap:14px; padding:14px 16px; border-color:color-mix(in srgb,var(--tj-amber) 68%,var(--tj-border)); border-radius:15px; background:linear-gradient(105deg,color-mix(in srgb,var(--tj-amber) 14%,var(--tj-panel)),var(--tj-panel)); box-shadow:0 16px 38px color-mix(in srgb,var(--tj-text) 26%,transparent); color:var(--tj-text); }
+.tj-root .tj-toast-challenge>span { width:34px; height:34px; place-content:center; border:1px solid color-mix(in srgb,var(--tj-amber) 55%,transparent); border-radius:50%; background:color-mix(in srgb,var(--tj-amber) 10%,transparent); color:var(--tj-amber); }
+.tj-root .tj-toast-challenge>div { display:grid; flex:1; min-width:0; gap:3px; }
+.tj-root .tj-toast-challenge small { color:var(--tj-amber); font-size:var(--text-min); font-weight:850; letter-spacing:.1em; }
+.tj-root .tj-toast-challenge p { color:var(--tj-text); font-size:13px; font-weight:650; line-height:1.42; }
+.tj-root .tj-toast-challenge .tj-toast-challenge-action { flex:none; min-height:36px; margin-left:4px; padding:8px 12px; border:1px solid color-mix(in srgb,var(--accent) 62%,var(--tj-border)); border-radius:10px; background:color-mix(in srgb,var(--accent) 10%,var(--tj-panel)); color:var(--accent); font-size:12px; font-weight:800; white-space:nowrap; }
+.tj-root .tj-toast-challenge .tj-toast-challenge-action:hover,.tj-root .tj-toast-challenge .tj-toast-challenge-action:focus-visible { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 18%,var(--tj-panel)); outline:0; }
+@media(max-width:760px) { .tj-root .tj-toast-challenge { left:12px; width:calc(100vw - 24px); align-items:flex-start; }.tj-root .tj-toast-challenge .tj-toast-challenge-action { margin:0; }.tj-root .tj-toast-challenge>button:last-child { position:absolute; top:7px; right:7px; }.tj-root .tj-toast-challenge>div { padding-right:25px; }.tj-root .tj-toast-challenge { flex-wrap:wrap; }.tj-root .tj-toast-challenge .tj-toast-challenge-action { margin-left:48px; } }
 
 
 /* Blur lives behind readable content, never on its container. */

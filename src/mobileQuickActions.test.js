@@ -11,9 +11,9 @@ test('the Start day action opens or continues the routine from one hero', () => 
 
 test('Markup and Trade Logs lock only until Start day is first saved on a trading day', () => {
   assert.match(shell, /startDayLock=due&&!status\.started\?'Start your day first':''/);
-  assert.match(shell, /'Markup','is-blue',\{lock:startDayLock\}/);
-  assert.match(shell, /'Trade Logs','is-purple',\{lock:startDayLock/);
-  assert.match(shell, /lock\?showQuickNote\(lock\):go\(id\)/);
+  assert.match(shell, /quickTile\('markups',Pencil,'Markup','is-blue',\{lock:startDayLock/);
+  assert.match(shell, /quickTile\('journal',NotebookText,'Trade Logs','is-purple',\{lock:startDayLock/);
+  assert.match(shell, /lock\?showQuickNote\(\{type:'warning',title:'Action unavailable',message:lock\}\):go\(id\)/);
 });
 
 test('a switched-off challenge explains itself and the centre button shows the daily workflow', () => {

@@ -35,6 +35,7 @@ test('TradingJournal mounts exactly one Markups surface per breakpoint and prese
 test('Mobile Markups V2 styling is scoped, token-based, touch-sized and does not create a second scroll owner', () => {
   const css = read('./mobileMarkupsV2.css');
   assert.match(css, /@media \(max-width:767px\)/);
+  assert.match(css, /\.tj-content:has\(\.tj-mk2\)\{padding-inline:0\}/);
   assert.match(css, /\.tj-root \.tj-mk2/);
   assert.match(css, /env\(safe-area-inset-bottom,0px\)/);
   assert.match(css, /color:var\(--on-accent\)/);

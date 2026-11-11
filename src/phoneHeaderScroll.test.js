@@ -3,26 +3,21 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {nextHeaderState} from './phoneHeaderScroll.js';
 
-const base = {hidden:false, anchorY:200, headerHeight:90, atBottom:false};
+const base = {hidden:false, anchorY:0, headerHeight:90, atBottom:false};
 
-test('scrolling down hides the header', () => {
+test('any scroll away from the document top hides the header', () => {
+  assert.equal(nextHeaderState({...base, y:1}).hidden, true);
   assert.equal(nextHeaderState({...base, y:220}).hidden, true);
 });
 
-test('a reverse gesture keeps a hidden header away until the page reaches its top edge', () => {
+test('a reverse gesture keeps a hidden header away until the document reaches its real top', () => {
   assert.equal(nextHeaderState({...base, hidden:true, y:190}).hidden, true);
-  assert.equal(nextHeaderState({...base, hidden:true, y:89}).hidden, false);
+  assert.equal(nextHeaderState({...base, hidden:true, y:1}).hidden, true);
+  assert.equal(nextHeaderState({...base, hidden:true, y:0}).hidden, false);
 });
 
-test('finger jitter changes nothing, but a slow scroll still adds up', () => {
-  const first = nextHeaderState({...base, y:203});
-  assert.equal(first.hidden, false);
-  assert.equal(first.anchorY, 200);
-  assert.equal(nextHeaderState({...first, headerHeight:90, atBottom:false, y:207}).hidden, true);
-});
-
-test('the top of a page always shows it', () => {
-  assert.equal(nextHeaderState({...base, hidden:true, y:40}).hidden, false);
+test('the document top always shows it, including iOS rubber-banding', () => {
+  assert.equal(nextHeaderState({...base, hidden:true, y:0}).hidden, false);
   assert.equal(nextHeaderState({...base, hidden:true, y:-20}).hidden, false);
 });
 

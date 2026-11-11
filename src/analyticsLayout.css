@@ -145,18 +145,6 @@
 .tj-root.tj-root.tj-root .tj-reference-analytics .recharts-responsive-container {
   contain:size;
 }
-/* Follow the pointer using left/top, without translating readable text. */
-.tj-root.tj-root.tj-root .tj-reference-analytics .recharts-tooltip-wrapper {
-  transform:none !important;
-  translate:none !important;
-  left:var(--analytics-tooltip-left,12px) !important;
-  right:auto !important;
-  top:var(--analytics-tooltip-top,12px) !important;
-  transition:none !important;
-  max-width:calc(100% - 24px);
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
 .tj-root.tj-root.tj-root .tj-reference-analytics .tj-engine-trade-mix>small {
   font-size:inherit;
 }

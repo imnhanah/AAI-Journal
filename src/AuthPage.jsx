@@ -1,9 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import { BarChart3, BookOpen, ShieldCheck, ClipboardCheck, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+import './landing.css';
+import './authPage.css';
 import { signUp, signIn, signInWithGoogle, requestPasswordReset } from './auth';
 import { FinancialDisclaimerDialog } from './FinancialDisclaimer.jsx';
+import LanguageSelector, { useLanguage } from './LanguageSelector';
+import { translate } from './localization';
 import Turnstile from './Turnstile.jsx';
 import { TURNSTILE_CONFIGURATION_ERROR, TURNSTILE_SITE_KEY, TURNSTILE_WIDGET_ENABLED } from './turnstileConfig.js';
+
+const t = translate;
 
 function GoogleMark() {
   return <svg className="auth-google-mark" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
@@ -14,7 +22,14 @@ function GoogleMark() {
   </svg>;
 }
 
+const COPY = {
+  login: { eyebrow: 'SIGN IN', title: () => <>{t('Welcome back,')} <span>{t('trader.')}</span></>, body: 'Use the email you signed up with.', submit: 'Sign in' },
+  signup: { eyebrow: 'FREE TO USE', title: 'Create your account', body: 'Your trading process starts here.', submit: 'Create account' },
+  forgot: { eyebrow: 'RESET', title: 'Reset your password', body: 'We’ll email you a link to reset your password.', submit: 'Send reset link' },
+};
+
 export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange, onBack, brand = 'AAICOREFX' }) {
+  useLanguage(); // Re-render when the visitor switches language.
   const [mode, setMode] = useState(initialMode);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -47,25 +62,39 @@ export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange
     finally { setBusy(false); if (turnstileEnabled) resetTurnstile(); }
   };
   const google = async () => { setBusy(true); setError(''); setInfo(''); try { const result = await signInWithGoogle(); if (result.error) { setError(result.error); setBusy(false); } } catch { setError('Unable to connect to Google. Please try again.'); setBusy(false); } };
-  return <main className="auth-root">
-    <button className="auth-home" onClick={onBack}><ArrowLeft size={16}/> Back to home</button>
-    <div className="auth-box">
-      <section className="auth-story"><div className="pub-brand"><span className="pub-brand-mark"><BarChart3 size={22}/></span>{brand}</div><h1>{mode === 'signup' ? <>Start your<br/><span>trading journal.</span></> : mode === 'forgot' ? <>A fresh start.<br/><span>Back to your journal.</span></> : <>Welcome back,<br/><span>trader.</span></>}</h1><p>{mode === 'signup' ? "Log every trade, understand your results, and keep the lessons behind each setup." : 'Pick up where you left off. Your trades, journal, and performance are all here.'}</p><div className="auth-benefits">{[[BarChart3, 'Performance Analytics', 'See your P&L, win rate, and equity curve'], [ClipboardCheck, 'Trade Reviews', 'Reflect on your executions and decisions'], [BookOpen, 'Trading Journal', 'Keep your plans, charts, and lessons together'], [ShieldCheck, 'Risk Management', 'Set your goals and follow your guardrails']].map(([Icon, title, text]) => <div key={title}><span><Icon size={18}/></span><div><strong>{title}</strong><small>{text}</small></div></div>)}</div><div className="auth-story-foot">One workspace for your trading process.<small>Plan. Execute. Review. Refine.</small></div></section>
-      <section className="auth-form-panel" aria-labelledby="auth-title"><h2 id="auth-title">{mode === 'signup' ? 'Create your account' : mode === 'forgot' ? 'Reset your password' : 'Sign in'}</h2><p>{mode === 'signup' ? 'Your trading process starts here.' : mode === 'forgot' ? 'We’ll email you a link to reset your password.' : 'Use the email you signed up with.'}</p>
+  const copy = COPY[mode] || COPY.login;
+  const home = event => { event.preventDefault(); onBack?.(); };
+
+  return <div className="lp lpa">
+    <div className="lp-backdrop" aria-hidden="true"><i className="lp-grid"/><i className="lp-glow"/></div>
+    <header className="lpa-top lp-in" style={{ '--i': 0 }}>
+      <a className="lp-brand" href="/" onClick={home} aria-label={t('Back to home')}><img src="/brand/logo-dark.png" width="44" height="44" alt=""/><span>{brand}</span></a>
+      <div className="lpa-top-actions">
+        <button type="button" className="lpa-back" onClick={onBack}><ArrowLeft size={16} aria-hidden="true"/><span>{t('Back to home')}</span></button>
+        <LanguageSelector publicSite/>
+      </div>
+    </header>
+    <main className="lpa-main">
+      <section className="lp-glass lpa-card lp-in" style={{ '--i': 1 }} aria-labelledby="auth-title">
+        <div className="lpa-head">
+          <span className="lp-eyebrow lp-eyebrow-mint">{t(copy.eyebrow)}</span>
+          <h1 id="auth-title">{typeof copy.title === 'function' ? copy.title() : t(copy.title)}</h1>
+          <p>{t(copy.body)}</p>
+        </div>
         <form onSubmit={submit}>
-          {mode === 'signup' && <div className="auth-name-row"><label>First name<input required autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="John"/></label><label>Last name<input required autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe"/></label></div>}
-          <label>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"/></label>
-          {mode !== 'forgot' && <label>Password<span className="auth-password"><input required minLength={mode === 'signup' ? 6 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a strong password' : 'Enter your password'}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></span></label>}
-          {mode === 'signup' && <label className="auth-disclaimer-check"><input required type="checkbox" checked={financialDisclaimerAcknowledged} onChange={event => setFinancialDisclaimerAcknowledged(event.target.checked)}/><span>I acknowledge that AAICOREFX is for educational and personal journaling purposes only, and does not provide financial advice. <button type="button" onClick={() => setFinancialDisclaimerOpen(true)}>Read the Financial Disclaimer</button></span></label>}
-          {mode === 'login' && <button type="button" className="auth-forgot" onClick={() => switchMode('forgot')}>Forgot password?</button>}
-          {turnstileEnabled && <Turnstile siteKey={siteKey} resetKey={turnstileResetKey} onSuccess={(token) => { setCaptchaToken(token); setError(''); }} onExpire={() => { setCaptchaToken(''); setError('Security verification expired. Please complete it again.'); }} onError={() => { setCaptchaToken(''); setError('Security verification could not be completed. Please refresh and try again.'); }}/>} 
-          {error && <div className="auth-message auth-error" role="alert">{error}</div>}{info && <div className="auth-message" role="status">{info}</div>}
-          <button className="auth-submit" type="submit" disabled={busy || TURNSTILE_CONFIGURATION_ERROR || (mode === 'signup' && !financialDisclaimerAcknowledged) || (turnstileEnabled && !captchaToken)}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in'}<ArrowRight size={17}/></button>
+          {mode === 'signup' && <div className="lpa-names"><label>{t('First name')}<input required autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="John"/></label><label>{t('Last name')}<input required autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe"/></label></div>}
+          <label>{t('Email')}<input required type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"/></label>
+          {mode !== 'forgot' && <label>{t('Password')}<span className="lpa-password"><input required minLength={mode === 'signup' ? 6 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={t(mode === 'signup' ? 'Create a strong password' : 'Enter your password')}/><button type="button" aria-label={t(showPassword ? 'Hide password' : 'Show password')} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></span></label>}
+          {mode === 'signup' && <label className="lpa-check"><input required type="checkbox" checked={financialDisclaimerAcknowledged} onChange={event => setFinancialDisclaimerAcknowledged(event.target.checked)}/><span>{t('I acknowledge that AAICOREFX is for educational and personal journaling purposes only, and does not provide financial advice.')} <button type="button" onClick={() => setFinancialDisclaimerOpen(true)}>{t('Read the Financial Disclaimer')}</button></span></label>}
+          {mode === 'login' && <button type="button" className="lpa-forgot" onClick={() => switchMode('forgot')}>{t('Forgot password?')}</button>}
+          {turnstileEnabled && <Turnstile siteKey={siteKey} resetKey={turnstileResetKey} onSuccess={(token) => { setCaptchaToken(token); setError(''); }} onExpire={() => { setCaptchaToken(''); setError('Security verification expired. Please complete it again.'); }} onError={() => { setCaptchaToken(''); setError('Security verification could not be completed. Please refresh and try again.'); }}/>}
+          {error && <div className="lpa-message lpa-error" role="alert">{t(error)}</div>}{info && <div className="lpa-message" role="status">{t(info)}</div>}
+          <button className="lp-btn lp-btn-primary lpa-submit" type="submit" disabled={busy || TURNSTILE_CONFIGURATION_ERROR || (mode === 'signup' && !financialDisclaimerAcknowledged) || (turnstileEnabled && !captchaToken)}>{busy ? t('Please wait…') : t(copy.submit)}<ArrowRight size={17} aria-hidden="true"/></button>
         </form>
-        {mode !== 'forgot' && <><div className="auth-divider">OR CONTINUE WITH</div><button className="auth-google" disabled={busy || (mode === 'signup' && !financialDisclaimerAcknowledged)} onClick={google}><GoogleMark/>Continue with Google</button></>}
-        <div className="auth-switch">{mode === 'login' ? <>Don’t have an account? <button onClick={() => switchMode('signup')}>Sign up</button></> : <>{mode === 'signup' ? 'Already have an account? ' : ''}<button onClick={() => switchMode('login')}>Sign in</button></>}</div>
+        {mode !== 'forgot' && <><div className="lpa-divider">{t('OR CONTINUE WITH')}</div><button type="button" className="lp-btn lp-btn-ghost lpa-google" disabled={busy || (mode === 'signup' && !financialDisclaimerAcknowledged)} onClick={google}><GoogleMark/>{t('Continue with Google')}</button></>}
+        <p className="lpa-switch">{mode === 'login' ? <>{t('Don’t have an account?')} <button type="button" onClick={() => switchMode('signup')}>{t('Sign up free')}</button></> : <>{mode === 'signup' ? `${t('Already have an account?')} ` : ''}<button type="button" onClick={() => switchMode('login')}>{t(mode === 'signup' ? 'Sign in' : 'Back to sign in')}</button></>}</p>
       </section>
-    </div>
-    {financialDisclaimerOpen && <FinancialDisclaimerDialog onClose={() => setFinancialDisclaimerOpen(false)}/>} 
-  </main>;
+    </main>
+    {financialDisclaimerOpen && <FinancialDisclaimerDialog onClose={() => setFinancialDisclaimerOpen(false)}/>}
+  </div>;
 }

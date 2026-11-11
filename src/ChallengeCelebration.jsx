@@ -26,13 +26,13 @@ export function useCompletionCelebration(complete) {
   return [open, setOpen];
 }
 
-export default function ChallengeCompletionCelebration({ accountName, totalLevels, startingBalance, finalBalance, currency = 'USD', onViewJourney, onClose, soundEnabled = true }) {
+export default function ChallengeCompletionCelebration({ accountName, totalLevels, startingBalance, finalBalance, tradingPnl, currency = 'USD', onViewJourney, onClose, soundEnabled = true }) {
   const [soundBlocked,setSoundBlocked]=useState(false);
   const started=useRef(false);
   const dialog=useRef(null);
   const continueButton=useRef(null);
   const formatMoney=value=>new Intl.NumberFormat(undefined,{style:'currency',currency,minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value) || 0);
-  const growth=Number(startingBalance)>0 ? Number(finalBalance)/Number(startingBalance) : null;
+  const growth=Number(startingBalance)>0 && Number.isFinite(Number(tradingPnl)) ? Number(tradingPnl)/Number(startingBalance)*100 : null;
   useEffect(()=>{
     const previousFocus=document.activeElement;
     continueButton.current?.focus();
@@ -64,7 +64,7 @@ export default function ChallengeCompletionCelebration({ accountName, totalLevel
       <div className="tj-challenge-completion-stats">
         <div><small>STARTING BALANCE</small><strong>{formatMoney(startingBalance)}</strong></div>
         <div><small>FINAL BALANCE</small><strong>{formatMoney(finalBalance)}</strong></div>
-        <div><small>GROWTH</small><strong>{growth===null?'—':`×${growth.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}`}</strong></div>
+        <div><small>GROWTH</small><strong>{growth===null?'—':`${growth>0?'+':''}${growth.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}%`}</strong></div>
       </div>
       {soundBlocked && <button type="button" className="tj-btn-outline" onClick={async()=>{const ready=await unlockAlertSounds();if(ready)setSoundBlocked(!await playAlertSound('challenge'));}}>Play celebration sound</button>}
       <div className="tj-challenge-completion-actions"><button type="button" className="tj-btn-outline" onClick={onViewJourney || onClose}>View journey</button><button ref={continueButton} type="button" className="tj-btn-primary" onClick={onClose}>Continue</button></div>

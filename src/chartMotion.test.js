@@ -40,8 +40,10 @@ test('every journal line/bar and percentage fill uses the shared entry motion', 
   // The desktop side panel's rule progress bar is one more fill.
   // Removed unreachable Analytics and Markups fallbacks contained extra charts and
   // percentage fills; the active surfaces remain covered below.
-  // The active per-account challenge and guardrail panels own three fill nodes.
-  assert.equal(chartCount,10);assert.equal(fillCount,36);
+  // The active per-account challenge, guardrail, and completion panels own
+  // the remaining fills. Keep this inventory explicit so new animated fills
+  // cannot bypass the shared marker above.
+  assert.equal(chartCount,11);assert.equal(fillCount,39);
   assert.match(source,/key=\{`\$\{page\}-\$\{account.id\}`\}/);
 });
 

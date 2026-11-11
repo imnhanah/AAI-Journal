@@ -7,6 +7,7 @@ import './typographyTokens.css';
 import './analyticsLayout.css';
 import TradingJournal from "./TradingJournal.jsx?header-controls=161";
 import {ConfirmationProvider} from './ConfirmationDialog.jsx';
+import {MobileAlertProvider} from './MobileAlert.jsx';
 import './shellAlignment.css';
 import './financeRedesign.css';
 import './backtestRedesign.css';
@@ -37,6 +38,7 @@ import './selectedControlBorders.css?selected-controls=12';
 import './borderlessInterface.css?borderless-interface=1';
 import './writingFields.css?writing-fields=1';
 import './mobileApp.css';
+import './mobileAlerts.css';
 import { useLanguage } from './LanguageSelector';
 import { loadAccent } from './siteTheme';
 
@@ -49,7 +51,7 @@ const LocalOnboardingHarness = import.meta.env.DEV
 
 function LocalizedApp() {
   const [language] = useLanguage();
-  return <ConfirmationProvider><TradingJournal language={language}/></ConfirmationProvider>;
+  return <ConfirmationProvider><MobileAlertProvider><TradingJournal language={language}/></MobileAlertProvider></ConfirmationProvider>;
 }
 
 function AppEntry() {

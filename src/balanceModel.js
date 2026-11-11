@@ -43,6 +43,7 @@ export function normaliseBalance(balance, workspace = {}) {
     challengeStartingBalance,
     challengeLevelCount,
     challengeMode: mode,
+    challengeCertificates: Array.isArray(balance?.challengeCertificates ?? balance?.riskSettings?.challengeCertificates) ? (balance?.challengeCertificates ?? balance?.riskSettings?.challengeCertificates) : [],
     ...(Number(balance?.challengeReward ?? balance?.riskSettings?.challengeReward)>0 ? {challengeReward:Number(balance?.challengeReward ?? balance?.riskSettings?.challengeReward)} : {}),
     challengeAdaptiveRiskPct:Number(balance?.challengeAdaptiveRiskPct ?? balance?.riskSettings?.challengeAdaptiveRiskPct ?? 1),
     challengeAdaptiveDrawdownPct:Number(balance?.challengeAdaptiveDrawdownPct ?? balance?.riskSettings?.challengeAdaptiveDrawdownPct ?? 10),

@@ -1273,22 +1273,22 @@
 @media(max-width:1100px) { .tj-root .tj-reference-analytics .tj-performance-monthly-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .tj-root .tj-reference-analytics .tj-performance-monthly-surface { min-height:0; padding:14px; } .tj-root .tj-reference-analytics .tj-performance-monthly-summary>div { padding:16px 12px; } .tj-root .tj-reference-analytics .tj-performance-monthly-summary strong { font-size:19px; } .tj-root .tj-reference-analytics .tj-monthly-chart { padding:12px 2px; } }
 
-/* Markup plan hover card uses its realised outcome, not its planning status. */
-.tj-root .tj-markup-chart-tooltip { display:grid; gap:8px; width:304px; max-width:calc(100vw - 32px); }
-.tj-root .tj-markup-chart-tooltip>small { color:var(--color-ink-137); font-size:var(--text-min); font-weight:700; letter-spacing:.5px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip { width:100%; overflow:hidden; border-radius:14px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>header { padding:16px; gap:14px; min-height:82px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>header>strong { font-size:22px; line-height:1.35; letter-spacing:0; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip .tj-result-tooltip-badge { width:80px; box-sizing:border-box; padding:5px 10px; font-size:var(--text-min); white-space:normal; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>div { padding:12px 16px; min-height:39px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>div>span { font-size:var(--text-min); }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>div>b { font-size:14px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>.tj-result-tooltip-balance { min-height:78px; padding:14px 16px; gap:8px; }
-.tj-root .tj-markup-chart-tooltip .tj-markup-result-tooltip>.tj-result-tooltip-balance>b { font-size:32px; white-space:nowrap; letter-spacing:0; }
-.tj-root .tj-markup-chart-tooltip .tj-result-tooltip-loss>.tj-result-tooltip-balance { border-color:var(--color-border-223); border-left-color:var(--tj-red); background:var(--color-surface-224); }
-.tj-root .tj-markup-chart-tooltip .tj-result-tooltip-flat { border-color:var(--color-border-225); }
-.tj-root .tj-markup-chart-tooltip .tj-result-tooltip-flat .tj-result-tooltip-badge { color:var(--color-ink-137); background:var(--color-surface-226); }
-.tj-root .tj-markup-chart-tooltip .tj-result-tooltip-flat>.tj-result-tooltip-balance { border-color:var(--color-border-225); border-left-color:var(--color-border-227); background:var(--color-surface-228); }
+/* Compact, chart-safe markup hover card. */
+.tj-root .tj-markup-chart-tooltip { width:264px; max-width:calc(100vw - 28px); }
+.tj-root .tj-markup-hover-card { overflow:hidden; border:1px solid color-mix(in srgb,var(--tj-green) 35%,var(--border)); border-radius:12px; background:var(--card); color:var(--text); box-shadow:0 14px 30px color-mix(in srgb,var(--text) 18%,transparent); }
+.tj-root .tj-markup-hover-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:12px 13px 10px; }
+.tj-root .tj-markup-hover-card header>div { display:grid; gap:2px; min-width:0; }
+.tj-root .tj-markup-hover-card header small,.tj-root .tj-markup-hover-card footer small,.tj-root .tj-markup-hover-metrics small { color:var(--muted); font-size:var(--text-min); font-weight:800; letter-spacing:.55px; }
+.tj-root .tj-markup-hover-card header strong { overflow:hidden; font-size:.9375rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+.tj-root .tj-markup-hover-card header span { color:var(--muted); font-size:var(--text-min); }
+.tj-root .tj-markup-hover-status { flex:0 0 auto; max-width:88px; padding:4px 7px; border-radius:99px; background:var(--raised); color:var(--muted); font-size:var(--text-min); letter-spacing:.35px; line-height:1.1; text-align:center; text-transform:uppercase; }
+.tj-root .tj-markup-hover-status.is-executed { background:color-mix(in srgb,var(--tj-green) 13%,var(--raised)); color:var(--tj-green); }
+.tj-root .tj-markup-hover-metrics { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border); }
+.tj-root .tj-markup-hover-metrics>div { display:grid; gap:3px; min-width:0; padding:9px 12px; border-bottom:1px solid var(--border); }
+.tj-root .tj-markup-hover-metrics>div:nth-child(odd) { border-right:1px solid var(--border); }
+.tj-root .tj-markup-hover-metrics b { overflow:hidden; font-size:.8125rem; text-overflow:ellipsis; white-space:nowrap; }
+.tj-root .tj-markup-hover-card footer { display:flex; align-items:end; justify-content:space-between; gap:10px; padding:10px 12px; background:color-mix(in srgb,var(--tj-green) 6%,var(--card)); }
+.tj-root .tj-markup-hover-card footer>div { display:grid; gap:2px; }.tj-root .tj-markup-hover-card footer>div>b { font-size:1.25rem; line-height:1; }.tj-root .tj-markup-hover-card footer>span { max-width:105px; color:var(--muted); font-size:var(--text-min); line-height:1.25; text-align:right; }
 
 /* Detailed daily/monthly hover cards; other chart tooltips stay compact. */
 .tj-root .tj-reference-result-tooltip { width:380px; max-width:calc(100vw - 32px); min-width:0; box-sizing:border-box; border:1px solid var(--color-border-161); border-radius:16px; background:var(--color-surface-144); color:var(--color-ink-136); box-shadow:0 16px 36px var(--color-shadow-229); }
@@ -1415,11 +1415,13 @@
 .tj-root .tj-weekly-bar-tooltip > div > b { font-size: 12px; }
 .tj-root .tj-weekly-bar-tooltip > .tj-weekly-closing { border-left: 3px solid var(--tj-green); background: color-mix(in srgb, var(--tj-green) 12%, var(--bg)); padding-left: 10px; }
 .tj-root .tj-weekly-bar-tooltip > .tj-weekly-closing > b { font-size: 15px; }
-.tj-root .tj-compact-chart-tooltip { width: max-content; min-width: 164px; max-width: calc(100vw - 32px); padding: 10px 12px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); color: var(--text); box-shadow: 0 14px 28px color-mix(in srgb, var(--text) 12%, transparent); }
-.tj-root .tj-compact-chart-tooltip > strong { display: block; margin-bottom: 6px; font-size: var(--text-min); line-height: 1.2; }
-.tj-root .tj-compact-chart-tooltip > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: var(--text-min); }
-.tj-root .tj-compact-chart-tooltip > div > span { color: var(--muted); font-weight: 600; }
-.tj-root .tj-compact-chart-tooltip > div > b { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: right; }
+.tj-root .tj-compact-chart-tooltip { width:max-content; min-width:154px; max-width:calc(100vw - 32px); padding:0; box-sizing:border-box; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border)); border-left:3px solid var(--accent); border-radius:11px; background:color-mix(in srgb,var(--accent) 8%,var(--card)); color:var(--text); box-shadow:0 14px 30px color-mix(in srgb,var(--text) 20%,transparent); }
+.tj-root .tj-compact-chart-tooltip>header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px 6px; border-bottom:1px solid color-mix(in srgb,var(--accent) 22%,var(--border)); }
+.tj-root .tj-compact-chart-tooltip>header small { color:var(--accent); font-size:var(--text-min); font-weight:850; letter-spacing:.72px; text-transform:uppercase; }
+.tj-root .tj-compact-chart-tooltip>header span { color:var(--muted); font-size:var(--text-min); font-weight:700; }
+.tj-root .tj-compact-chart-tooltip>div { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:8px 10px 10px; font-size:var(--text-min); }
+.tj-root .tj-compact-chart-tooltip>div>strong { overflow:hidden; color:var(--text); font-size:var(--text-min); font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+.tj-root .tj-compact-chart-tooltip>div>b { font-size:.9375rem; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; text-align:right; }
 
 /* Review Library reference layout; deliberately scoped away from other pages. */
 /* Dashboard reference, scoped to keep the library and journal lists unchanged. */
@@ -3308,6 +3310,7 @@
 }
 .tj-confirm-overlay{position:fixed;inset:0;z-index:400000;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--tj-bg) 28%,transparent);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.tj-confirm-dialog{width:min(520px,calc(100vw - 40px));padding:26px 28px 22px;border:1px solid color-mix(in oklab,var(--tj-border) 82%,var(--tj-text));border-radius:19px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 28px 66px -34px color-mix(in srgb,var(--tj-text) 44%,transparent),0 2px 5px color-mix(in srgb,var(--tj-text) 8%,transparent);animation:tj-confirm-in .2s cubic-bezier(.22,1,.36,1)}.tj-confirm-dialog header{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:start;gap:16px}.tj-confirm-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:color-mix(in oklab,var(--tj-red) 10%,var(--tj-panel));color:var(--tj-red)}.tj-confirm-icon svg{width:25px;height:25px}.tj-confirm-copy{min-width:0;padding-top:2px}.tj-confirm-dialog h2{margin:0;color:var(--tj-text);font-size:19px;font-weight:750;letter-spacing:-.025em;line-height:1.2}.tj-confirm-dialog p{max-width:385px;margin:7px 0 0;color:var(--tj-muted);font-size:14px;line-height:1.5}.tj-confirm-close{display:grid;place-items:center;width:30px;min-width:30px;height:30px;min-height:30px;padding:0!important;border:0!important;border-radius:9px!important;background:transparent!important;color:var(--tj-muted)!important}.tj-confirm-close:hover{background:var(--tj-panel-alt)!important;color:var(--tj-text)!important}.tj-confirm-close svg{width:19px;height:19px}.tj-confirm-dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--tj-border)}.tj-confirm-dialog footer button{min-height:42px;padding:8px 15px;border:1px solid var(--tj-border);border-radius:12px;background:transparent;color:var(--tj-text);font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}.tj-confirm-dialog footer button:hover{background:var(--tj-panel-alt);border-color:color-mix(in oklab,var(--tj-text) 18%,var(--tj-border))}.tj-confirm-dialog .tj-confirm-danger{border-color:color-mix(in oklab,var(--tj-red) 70%,var(--tj-border));background:var(--tj-red);color:var(--tj-primary-contrast);box-shadow:0 10px 18px -12px color-mix(in srgb,var(--tj-red) 76%,transparent)}.tj-confirm-dialog .tj-confirm-danger:hover{background:color-mix(in oklab,var(--tj-red) 88%,var(--tj-text));border-color:transparent;transform:translateY(-1px)}@keyframes tj-confirm-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.tj-confirm-dialog{animation:none}}
 @media (max-width:767px){.tj-confirm-overlay{align-items:end;padding:12px}.tj-confirm-dialog{width:100%;padding:22px 20px 18px;border-radius:18px}.tj-confirm-dialog header{grid-template-columns:44px minmax(0,1fr) auto;gap:12px}.tj-confirm-icon{width:44px;height:44px}.tj-confirm-icon svg{width:22px;height:22px}.tj-confirm-dialog h2{font-size:17px}.tj-confirm-dialog footer{margin-top:18px;padding-top:14px}.tj-confirm-dialog footer button{flex:1;min-height:44px;padding-inline:10px}}
+.tj-confirm-dialog .tj-confirm-primary{border-color:var(--tj-accent);background:var(--tj-accent);color:var(--tj-primary-contrast);box-shadow:0 10px 18px -12px color-mix(in srgb,var(--tj-accent) 76%,transparent)}.tj-confirm-dialog .tj-confirm-primary:hover{background:color-mix(in oklab,var(--tj-accent) 86%,var(--tj-text));border-color:transparent;transform:translateY(-1px)}.tj-confirm-icon-warning{background:color-mix(in oklab,var(--tj-amber) 13%,var(--tj-panel));color:var(--tj-amber)}.tj-confirm-prompt form{display:block}.tj-confirm-field{display:grid;gap:8px;margin-top:20px;color:var(--tj-muted);font-size:12px;font-weight:750;letter-spacing:.025em}.tj-confirm-field input{min-height:44px;width:100%;border:1px solid var(--tj-border);border-radius:11px;background:var(--tj-panel-alt);color:var(--tj-text);font:inherit;font-size:14px;font-weight:500;padding:9px 12px}.tj-confirm-field input:focus{outline:2px solid color-mix(in srgb,var(--tj-accent) 55%,transparent);outline-offset:1px;border-color:var(--tj-accent)}.tj-confirm-hint,.tj-confirm-field-error{margin:8px 0 0!important;font-size:12px!important}.tj-confirm-field-error{color:var(--tj-red)!important}
 
 /* The app header belongs to the workspace canvas, rather than introducing a
    second chrome surface. These are the same opaque canvas tokens used by the
