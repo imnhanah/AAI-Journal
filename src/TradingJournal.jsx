@@ -15,6 +15,7 @@ import MobileMarkupsV2 from './MobileMarkupsV2.jsx';
 import MarkupsRedesign from './MarkupsRedesign.jsx';
 import ReviewPage, { DEFAULT_QUESTIONS as REVIEW_DEFAULT_QUESTIONS } from './ReviewPage.jsx';
 import CaseStudyLibrary from './CaseStudyLibrary.jsx';
+import MobileCaseStudies from './MobileCaseStudies.jsx';
 import SidebarShell from './SidebarShell?sidebar-divider=2';
 import MobileShell from './MobileShell.jsx';
 import MobileDashboardV6 from './MobileDashboardV6.jsx';
@@ -43,6 +44,9 @@ import DesktopFinanceV2 from './DesktopFinance.jsx';
 import MobilePsychologyLab from './MobilePsychologyLab.jsx';
 import DesktopPsychologyV2 from './DesktopPsychology.jsx';
 import DesktopJournalSetup from './DesktopJournalSetup.jsx';
+import MembershipManagement from './MembershipManagement.jsx';
+import JournalPromotion from './JournalPromotion.jsx';
+import { membershipAdminUiEnabled, readMembershipAdmin } from './membershipAdmin.js';
 import CertificateArchive from './CertificateArchive.jsx';
 import DesktopProfilePanel from './DesktopProfilePanel.jsx';
 import './desktopShell.css';
@@ -51,6 +55,7 @@ import './desktopTradeReview.css';
 // Desktop shell v2 (after aaicorefx-desktop-shell.html): sidebar and header. false brings back the old shell.
 const SHELL_V2 = true;
 import MobileSetupHome from './MobileSetupHome.jsx';
+import './mobileSetupThree.css';
 import MobileAccountSettings, { ChoiceChips, Group, Icon, TextField } from './MobileAccountSettings.jsx';
 import {emptyPhoneTradeFilters,matchesPhoneTrade} from './mobileTradeFilters.js';
 import { scopedFinanceProfitCycle as financeProfitCycle, savingsBalance as financeSavingsBalance, savingsOwner, savingsForBalance } from './financeScope';
@@ -105,13 +110,16 @@ import LanguageSelector, { useLanguage } from './LanguageSelector';
 import { setLanguage, translate } from './localization';
 import BacktestAccounts from './BacktestAccounts';
 import {scopeBacktests} from './backtestWorkspace.js';
-import {preloadBacktests} from './backtestCloud.js';
+import * as backtestCloud from './backtestCloud.js';
+import { createLocalBacktestApi } from './backtestLocal.js';
+import { readCloudJournalRecovery } from './journalCloudRecovery.js';
 import {loadProfileCaseStudyLibrary,saveProfileCaseStudyLibrary} from './caseStudyCloud.js';
 import {resolveProfileCaseStudyVisibility} from './profileCaseStudyVisibility.js';
 import {readTemporaryCaseStudyLibrary,saveTemporaryCaseStudyLibrary} from './temporaryCaseStudyLibrary.js';
 import {cloudSyncState,planPendingLibraryRecovery,planTemporaryLibraryUpload,sameProfileCaseStudyLibrary} from './profileCaseStudySync.js';
-import {clearCaseStudySyncOutbox, conflictCaseStudySnapshot, pendingCaseStudySnapshot, readCaseStudySyncOutbox, saveCaseStudySyncOutbox} from './caseStudySyncOutbox.js';
+import {clearCaseStudySyncOutbox, confirmCaseStudySyncOutbox, conflictCaseStudySnapshot, pendingCaseStudySnapshot, readCaseStudySyncOutbox, saveCaseStudySyncOutbox} from './caseStudySyncOutbox.js';
 import {prepareProfileLibraryDeviceCopy} from './profileCaseStudyRecovery.js';
+import {createCaseStudyReconciliationProposal} from './caseStudyReconciliation.js';
 import {readSidebarExpanded, writeSidebarExpanded} from './sidebarPreference.js';
 import {
   ResponsiveContainer as RechartsResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell,
@@ -158,6 +166,7 @@ import { acceptFinancialDisclaimer, getFinancialDisclaimerStatus } from './finan
 import { supabase } from "./supabaseClient";
 import { readCloudSyncAccess } from './storageAccess';
 import { onAuthStateChange, getSession, signOut, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady } from "./auth";
+import { membershipPreviewEnabled, resolveJournalMembership } from './membership.js';
 import { getCalendarWindow } from "./forexFactory";
 import { newsWeekKey, archivedNewsEvents, readNewsArchive } from "./newsArchive";
 import { NewsAlertsProvider, NewsAlertControls, NEWS_FOCUS_EVENT_KEY } from "./NewsAlerts";
@@ -1015,7 +1024,7 @@ function ImageViewer({ src, alt = "Full-size image", onClose }) {
   </div>;
 }
 
-function ImagePreview({ src, alt = "Uploaded image", className = "", selected = false, onSelect }) {
+function ImagePreview({ src, media = null, displaySrc = "", alt = "Uploaded image", className = "", selected = false, onSelect }) {
   const openImage = React.useContext(ImageViewerContext);
   const [resolved, setResolved] = useState("");
   const [error, setError] = useState("");
@@ -1024,19 +1033,23 @@ function ImagePreview({ src, alt = "Uploaded image", className = "", selected = 
   useEffect(() => {
     let active = true;
     setResolved(""); setError("");
-    const load = () => loadJournalImage(src).then(value => { if (active) setResolved(value); }).catch(reason => { if (active) setError(reason.message || "Image unavailable"); });
+    // Strategy Testing resolves its private shared-media references before it
+    // opens this form. Use that verified display URL instead of sending the
+    // raw tj-shared-media reference through the Trade Journal resolver.
+    const load = () => (displaySrc ? Promise.resolve(displaySrc) : loadJournalImage(media || src)).then(value => { if (active) setResolved(value); }).catch(reason => { if (active) setError(reason.message || "Image unavailable"); });
     // Hidden sections and off-screen review screenshots don't trigger downloads.
     const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
       if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); load(); }
     });
     if (observer && previewRef.current) observer.observe(previewRef.current); else load();
     return () => { active = false; observer?.disconnect(); };
-  }, [src, attempt]);
+  }, [src, media?.cloudRef, displaySrc, attempt]);
   return <button ref={previewRef} type="button" className={`tj-image-preview ${selected ? "tj-image-preview-selected" : ""} ${className}`} title={error || alt} onClick={(event) => { event.stopPropagation(); if (error) { setAttempt(value => value + 1); return; } if (!resolved) return; onSelect?.(src); openImage(resolved); }} aria-label={error ? `Retry ${alt}` : `View ${alt}`}>{resolved ? <img src={resolved} alt={alt} loading="lazy" /> : <span style={{color:"var(--tj-muted)",fontSize:"var(--text-min)"}}>{error ? "Retry image" : "Loading…"}</span>}</button>;
 }
 
 const screenshotSource = (screenshot) => typeof screenshot === "string" ? screenshot : screenshot?.src || "";
 const screenshotCaption = (screenshot) => typeof screenshot === "object" && screenshot ? screenshot.caption || "" : "";
+const resolvedScreenshotSource = (screenshot) => typeof screenshot === "object" && screenshot ? screenshot.displaySrc || "" : "";
 
 /* ============================ SCREENSHOT UPLOADER ======================= */
 
@@ -1049,7 +1062,7 @@ function readImageData(file) {
   });
 }
 
-function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, emptyLabel = null }) {
+function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, emptyLabel = null, previewSource = null }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const fileRef = useRef(null);
@@ -1107,7 +1120,7 @@ function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, 
           <div className="tj-shot-grid">
             {screenshots.map((screenshot, i) => (
               <div key={i} className="tj-shot-thumb">
-                <ImagePreview src={screenshotSource(screenshot)} alt={`Screenshot ${i + 1}`} />
+                <ImagePreview src={screenshotSource(screenshot)} displaySrc={previewSource?.(screenshot) || ""} alt={`Screenshot ${i + 1}`} />
                 <ConfirmDeleteButton type="button" className="tj-shot-remove"
                   aria-label="Remove screenshot" onClick={async (e) => { e.stopPropagation(); onChange((prev) => prev.filter((_, idx) => idx !== i)); }}>
                   <X size={12} />
@@ -1556,8 +1569,8 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
           </div>
           <h4 className="sp-sub">Screenshots</h4>
           <div className="sp-grid sp-c2 sp-shots">
-            <div><div className="tj-field-label">Entry screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).entry} onChange={setScreenshots("entry")} emptyLabel="Add image" /></div>
-            <div><div className="tj-field-label">Exit screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).exit} onChange={setScreenshots("exit")} emptyLabel="Add image" /></div>
+            <div><div className="tj-field-label">Entry screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).entry} onChange={setScreenshots("entry")} emptyLabel="Add image" previewSource={backtest ? resolvedScreenshotSource : null} /></div>
+            <div><div className="tj-field-label">Exit screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).exit} onChange={setScreenshots("exit")} emptyLabel="Add image" previewSource={backtest ? resolvedScreenshotSource : null} /></div>
           </div>
         </section>
       </div>
@@ -1650,8 +1663,8 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
     <section className="tj-trade-reference-card tj-trade-reference-psychology"><h4>Psychology &amp; screenshots</h4><div className="tj-trade-reference-psychology-grid">
     <div className="tj-grid2"><Field label="Before"><ThemeSelect className="tj-input" value={form.moodBefore} onChange={(event) => set("moodBefore", event.target.value)}>{MOODS.map((mood) => <option key={mood} value={mood}>{mood}</option>)}</ThemeSelect></Field><Field label="After"><ThemeSelect className="tj-input" value={form.moodAfter} onChange={(event) => set("moodAfter", event.target.value)}>{MOODS.map((mood) => <option key={mood} value={mood}>{mood}</option>)}</ThemeSelect></Field></div>
     <div className="tj-grid2 tj-trade-image-sessions">
-      <div><div className="tj-field-label">Entry screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).entry} onChange={setScreenshots("entry")} emptyLabel="+ Add image" /></div>
-      <div><div className="tj-field-label">Exit screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).exit} onChange={setScreenshots("exit")} emptyLabel="+ Add image" /></div>
+      <div><div className="tj-field-label">Entry screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).entry} onChange={setScreenshots("entry")} emptyLabel="+ Add image" previewSource={backtest ? resolvedScreenshotSource : null} /></div>
+      <div><div className="tj-field-label">Exit screenshot</div><ScreenshotUploader screenshots={tradeImageSessions(form.screenshots).exit} onChange={setScreenshots("exit")} emptyLabel="+ Add image" previewSource={backtest ? resolvedScreenshotSource : null} /></div>
     </div>
     </div></section>
     </section>
@@ -2420,8 +2433,11 @@ function InstrumentManager({ instruments, onSave, phone = false }) {
     const needle = search.trim().toLowerCase();
     const chip = (instrument) => { const fixed = isDefault(instrument), isEditing = editing?.old?.symbol === instrument.symbol; if (fixed) return <span className="tj-setup-chip" key={instrument.symbol}>{instrument.symbol}</span>; return isEditing ? <span className="tj-setup-chip is-editing" key={instrument.symbol}><input autoFocus className="tj-input" aria-label={`Rename ${instrument.symbol}`} value={editing.value} onChange={(event) => setEditing({ ...editing, value: event.target.value })} onKeyDown={(event) => event.key === "Enter" && rename(instrument)}/><button type="button" aria-label="Save edit" onClick={() => rename(instrument)}><CheckCircle2 size={15}/></button><button type="button" aria-label="Cancel edit" onClick={() => setEditing(null)}><X size={15}/></button></span> : <span className="tj-setup-chip is-custom" key={instrument.symbol}>{instrument.symbol}<button type="button" aria-label={`Edit ${instrument.symbol}`} onClick={() => setEditing({ old: instrument, value: instrument.symbol })}><Pencil size={14}/></button><ConfirmDeleteButton className="tj-setup-chip-delete" title={`Remove ${instrument.symbol}`} onClick={() => onSave(instruments.filter((item) => item.symbol !== instrument.symbol))}><X size={15}/></ConfirmDeleteButton></span>; };
     const hits = needle ? available.filter((instrument) => instrument.symbol.toLowerCase().includes(needle)) : [];
-    return <section className="tj-management-collection tj-instrument-manager"><h2>Instruments</h2><small className="tj-management-count">{available.length} instruments</small><p className="tj-muted-txt">Choose a group when adding your own instrument. This decides where it appears in the journal.</p><div className="tj-inline-add"><input className="tj-input" aria-label="New instrument" value={value} placeholder="Add an instrument, e.g. EURGBP" onChange={(event) => {setValue(event.target.value);setNotice("");}} onKeyDown={(event) => event.key === "Enter" && add()}/><button type="button" className="tj-btn-primary" onClick={add}>Add</button></div><div className="tj-instrument-group-picker"><ThemeSelect label="Instrument group" value={group} onChange={(event) => setGroup(event.target.value)}>{INSTRUMENT_GROUPS.map((name) => <option key={name} value={name}>{name}</option>)}</ThemeSelect></div>{notice && <p className="tj-management-inline-notice" role="status">{notice}</p>}<input className="tj-input tj-management-search" aria-label="Search instruments" placeholder="Search instruments..." value={search} onChange={(event) => setSearch(event.target.value)}/>
-      {needle ? <div className="tj-setup-group is-open"><div className="tj-setup-chips">{hits.length ? hits.map(chip) : <p className="tj-setup-empty">No instruments match.</p>}</div></div> : grouped.map(({group: groupName, instruments: groupInstruments}) => { const open = openGroup === groupName; return <div className={`tj-setup-group ${open ? "is-open" : ""}`} key={groupName}><button type="button" aria-expanded={open} onClick={() => setOpenGroup(open ? null : groupName)}><b>{groupName}</b><em>{groupInstruments.length}</em><ChevronDown size={16} aria-hidden="true"/></button>{open && <div className="tj-setup-chips">{groupInstruments.map(chip)}</div>}</div>; })}</section>;
+    const own = available.filter((instrument) => !isDefault(instrument)).length;
+    return <section className="tj-management-collection tj-instrument-manager tj-mi"><header className="tj-mi-head"><span aria-hidden="true"><BarChart3 size={22}/></span><div><h2>Instrument management</h2><p>Choose a group when adding your own instrument. This decides where it appears in the journal.</p></div></header><div className="tj-mi-chips"><span><b>{available.length}</b> Instruments</span><span><b>{own}</b> Your own</span></div>
+      <label className="tj-mi-search"><Search size={18} aria-hidden="true"/><input aria-label="Search instruments" placeholder="Search instruments..." autoComplete="off" value={search} onChange={(event) => setSearch(event.target.value)}/>{search && <button type="button" aria-label="Clear search" onClick={() => setSearch("")}><X size={14}/></button>}</label>
+      <div className="tj-mi-add"><input className="tj-input" aria-label="New instrument" value={value} placeholder="Add an instrument, e.g. EURGBP" onChange={(event) => {setValue(event.target.value);setNotice("");}} onKeyDown={(event) => event.key === "Enter" && add()}/><div className="tj-instrument-group-picker"><ThemeSelect label="Instrument group" value={group} onChange={(event) => setGroup(event.target.value)}>{INSTRUMENT_GROUPS.map((name) => <option key={name} value={name}>{name}</option>)}</ThemeSelect></div><button type="button" className="tj-btn-primary" onClick={add}>Add</button></div>{notice && <p className="tj-management-inline-notice" role="status">{notice}</p>}<p className="tj-mi-note">Built-in instruments stay in the list. Your own can be renamed or removed.</p>
+      {needle ? <div className="tj-setup-group tj-mi-g is-open"><div className="tj-setup-chips">{hits.length ? hits.map(chip) : <p className="tj-setup-empty">No instruments match.</p>}</div></div> : grouped.map(({group: groupName, instruments: groupInstruments}, groupIndex) => { const open = openGroup === groupName; return <div className={`tj-setup-group tj-mi-g is-g${groupIndex % 5} ${open ? "is-open" : ""}`} key={groupName}><button type="button" aria-expanded={open} onClick={() => setOpenGroup(open ? null : groupName)}><i aria-hidden="true"/><b>{groupName}</b><em>{groupInstruments.length}</em><ChevronDown size={16} aria-hidden="true"/></button>{open && <div className="tj-setup-chips">{groupInstruments.map(chip)}</div>}</div>; })}</section>;
   }
   return <section className="tj-management-collection tj-instrument-manager"><h2>Instrument management</h2><small className="tj-management-count">{available.length} instruments</small><p className="tj-muted-txt">Choose a group when adding your own instrument. This decides where it appears in the journal.</p><div className="tj-inline-add"><input className="tj-input" value={value} placeholder="Add an instrument, e.g. EURGBP or NAS100" onChange={(event) => {setValue(event.target.value);setNotice("");}} onKeyDown={(event) => event.key === "Enter" && add()} /><select className="tj-input tj-instrument-group-select" aria-label="Instrument group" value={group} onChange={(event) => setGroup(event.target.value)}>{INSTRUMENT_GROUPS.map((name) => <option key={name}>{name}</option>)}</select><button type="button" className="tj-btn-primary" onClick={add}>Add</button></div>{notice && <p className="tj-management-inline-notice" role="status">{notice}</p>}<div className="tj-management-list tj-management-reveal-list">{grouped.map(({group: groupName, instruments: groupInstruments}) => <section className="tj-instrument-group" key={groupName}><h3>{groupName}</h3><div className="tj-management-tiles">{groupInstruments.map((instrument) => { const fixed = isDefault(instrument); return <div className="tj-rule-row" key={instrument.symbol}>{editing?.old?.symbol === instrument.symbol ? <input autoFocus className="tj-input" value={editing.value} onChange={(event) => setEditing({ ...editing, value: event.target.value })} onKeyDown={(event) => event.key === "Enter" && rename(instrument)} /> : <span>{instrument.symbol}</span>}<span className="tj-management-row-actions">{!fixed && <>{editing?.old?.symbol === instrument.symbol ? <><button className="tj-icon-btn" title="Save edit" onClick={() => rename(instrument)}><CheckCircle2 size={14}/></button><button className="tj-icon-btn" title="Cancel edit" onClick={() => setEditing(null)}><X size={14}/></button></> : <button className="tj-icon-btn" title="Edit custom instrument" onClick={() => setEditing({ old: instrument, value: instrument.symbol })}><Pencil size={14}/></button>}<ConfirmDeleteButton className="tj-icon-btn" title="Remove custom instrument" onClick={() => onSave(instruments.filter((item) => item.symbol !== instrument.symbol))}><Trash2 size={14}/></ConfirmDeleteButton></>}</span></div>; })}</div></section>)}</div></section>;
 }
@@ -2620,13 +2636,13 @@ function PlaybooksManager({ playbooks, onSave }) {
   </section>;
 }
 
-function DataBackupManager({ onExportBackup, onImportBackup, snapshots = [], onRestoreSnapshot, protectedStorage, localOnly }) {
+function DataBackupManager({ onExportBackup, onExportCloudRecovery, onImportBackup, snapshots = [], onRestoreSnapshot, protectedStorage, localOnly }) {
   const fileRef = useRef(null);
   const [pending,setPending]=useState(null);
   const ago = value => { const days=Math.floor((Date.now()-Date.parse(value))/86400000); return days<=0?'today':`${days} day${days===1?'':'s'} ago`; };
   const bytes = value => value<1024?`${value} B`:`${(value/1024).toFixed(1)} KB`;
   const latest=snapshots[0];
-  return <section className="tj-management-collection tj-management-tool tj-backup-safeguard"><header className="tj-backup-safeguard-head"><span className="tj-backup-safeguard-icon"><ShieldCheck size={19} aria-hidden="true"/></span><div><h2>Data &amp; backup</h2><small>MANUAL BACKUP</small><p>Keep a complete copy before moving devices or making major changes.</p>{localOnly&&<p className="tj-muted-txt">{latest?`Last device backup ${ago(latest.createdAt)}.`:'No device snapshot yet.'} Storage: <b>{protectedStorage===true?'Protected':'Not protected'}</b>{protectedStorage===true?' — your browser is less likely to clear local journal data.':' — browser storage may be cleared when space is needed.'}</p>}</div></header><div className="tj-backup-safeguard-actions"><article className="tj-backup-export-card"><span className="tj-backup-action-icon">↓</span><h3>Save a copy</h3><p>Accounts, trades, markups, reviews, lists, and Daily Routine.</p><button type="button" className="tj-btn-primary" onClick={onExportBackup}>Export backup</button></article><article className="tj-backup-restore-card"><span className="tj-backup-action-icon">↑</span><h3>Restore a copy</h3><p>Use a backup file to replace the journal on this device.</p><button type="button" className="tj-btn-outline tj-backup-import" onClick={() => fileRef.current?.click()}>Import backup</button></article></div>{localOnly&&<section className="tj-backup-snapshot-list"><h3>Device snapshots</h3>{snapshots.length?<ul>{snapshots.map(snapshot=><li key={snapshot.id}><span><b>{snapshot.kind==='safety'?'Safety snapshot':'Automatic snapshot'}</b><small>{new Date(snapshot.createdAt).toLocaleString()} · {snapshot.tradeCount} trades · {bytes(snapshot.size)}</small></span><button type="button" className="tj-btn-outline" onClick={()=>setPending(snapshot)}>Restore</button></li>)}</ul>:<p className="tj-muted-txt">Snapshots are created after changes, at most once per hour.</p>}{pending&&<div className="tj-backup-safeguard-warning"><AlertTriangle size={16}/><p>Restore this snapshot? A safety snapshot of your current journal will be saved first.</p><button type="button" className="tj-btn-outline" onClick={()=>setPending(null)}>Cancel</button><button type="button" className="tj-btn-danger" onClick={()=>{onRestoreSnapshot?.(pending.id);setPending(null);}}>Restore snapshot</button></div>}</section>}<input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => {const file=event.target.files?.[0];event.target.value='';if(file)onImportBackup(file);}}/></section>;
+  return <section className="tj-management-collection tj-management-tool tj-backup-safeguard"><header className="tj-backup-safeguard-head"><span className="tj-backup-safeguard-icon"><ShieldCheck size={19} aria-hidden="true"/></span><div><h2>Data &amp; backup</h2><small>MANUAL BACKUP</small><p>Keep a complete copy before moving devices or making major changes.</p>{localOnly&&<p className="tj-muted-txt">{latest?`Last device backup ${ago(latest.createdAt)}.`:'No device snapshot yet.'} Storage: <b>{protectedStorage===true?'Protected':'Not protected'}</b>{protectedStorage===true?' — your browser is less likely to clear local journal data.':' — browser storage may be cleared when space is needed.'}</p>}</div></header><div className="tj-backup-safeguard-actions"><article className="tj-backup-export-card"><span className="tj-backup-action-icon">↓</span><h3>Save a copy</h3><p>Accounts, trades, markups, reviews, lists, and Daily Routine.</p><button type="button" className="tj-btn-primary" onClick={onExportBackup}>Export backup</button>{onExportCloudRecovery && <button type="button" className="tj-btn-outline" onClick={onExportCloudRecovery}>Export cloud recovery copy</button>}</article><article className="tj-backup-restore-card"><span className="tj-backup-action-icon">↑</span><h3>Restore a copy</h3><p>Use a backup file to replace the journal on this device.</p><button type="button" className="tj-btn-outline tj-backup-import" onClick={() => fileRef.current?.click()}>Import backup</button></article></div>{localOnly&&<section className="tj-backup-snapshot-list"><h3>Device snapshots</h3>{snapshots.length?<ul>{snapshots.map(snapshot=><li key={snapshot.id}><span><b>{snapshot.kind==='safety'?'Safety snapshot':'Automatic snapshot'}</b><small>{new Date(snapshot.createdAt).toLocaleString()} · {snapshot.tradeCount} trades · {bytes(snapshot.size)}</small></span><button type="button" className="tj-btn-outline" onClick={()=>setPending(snapshot)}>Restore</button></li>)}</ul>:<p className="tj-muted-txt">Snapshots are created after changes, at most once per hour.</p>}{pending&&<div className="tj-backup-safeguard-warning"><AlertTriangle size={16}/><p>Restore this snapshot? A safety snapshot of your current journal will be saved first.</p><button type="button" className="tj-btn-outline" onClick={()=>setPending(null)}>Cancel</button><button type="button" className="tj-btn-danger" onClick={()=>{onRestoreSnapshot?.(pending.id);setPending(null);}}>Restore snapshot</button></div>}</section>}<input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => {const file=event.target.files?.[0];event.target.value='';if(file)onImportBackup(file);}}/></section>;
 }
 
 function PhoneRoutineScreen({routine, onUpdate, onBack}) {
@@ -2648,14 +2664,14 @@ function PhoneRoutineScreen({routine, onUpdate, onBack}) {
 // Desktop Journal Setup v2 (after aaicorefx-desktop-journal-setup.html). false brings back the old desktop page.
 const SETUP_V2 = true;
 
-function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags, mistakeTags, confluenceSessions, instruments, riskPresets, onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine, onRoutineProfile, onOpenRiskGuardrails, routineRequest }) {
+function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, membershipAdmin, revokeMembershipAdmin, typeTags, mistakeTags, confluenceSessions, instruments, riskPresets, onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onExportCloudRecovery, promotionPanel, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine, onRoutineProfile, onOpenRiskGuardrails, routineRequest }) {
   const [selected, setSelected] = usePageState('management', 'tj-nav-selected', routineRequest ? "daily-routine" : "instruments");
   const [phoneIndex,setPhoneIndex]=usePageState('management', 'tj-nav-phoneIndex', !routineRequest);
   const [handledRoutineRequest,setHandledRoutineRequest]=usePageState('management', 'tj-nav-routineRequest', 0);
   const managementRef=useRef(null);
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),update=()=>setPhone(media.matches);media.addEventListener('change',update);return()=>media.removeEventListener('change',update);},[]);
-  const activeSection = selected === "playbooks" ? (routineRequest ? "daily-routine" : "instruments") : selected;
+  const activeSection = selected === "memberships" && !membershipAdmin ? "instruments" : selected === "playbooks" ? (routineRequest ? "daily-routine" : "instruments") : selected;
   const chooseList=id=>{setSelected(id);setPhoneIndex(false);};
   useEffect(() => { if (routineRequest && routineRequest !== handledRoutineRequest) {setSelected("daily-routine");setPhoneIndex(false);setHandledRoutineRequest(routineRequest);} }, [routineRequest,handledRoutineRequest]);
   useEffect(() => { if (rulesRequest) { setSelected("rules"); setPhoneIndex(false); } }, [rulesRequest]);
@@ -2671,7 +2687,8 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
     ["risk-presets", "Risk presets", riskPresets.length],
     ["mappings", "Import mappings", ""],
     ["certificates", "Certificates", certificates.length],
-    ["backup", "Data & backup", ""]
+    ["backup", "Data & backup", ""],
+    ...(membershipAdmin ? [["memberships", "Memberships", ""]] : []),
   ];
   const activeLabel = activeSection === "daily-routine" ? "Daily routine" : lists.find(([id]) => id === activeSection)?.[1] || "Journal Setup";
   // A list inside Setup is a step of Setup. Daily routine is its own screen, which Back closes itself.
@@ -2682,7 +2699,10 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
   // A list slides in over the Setup index. Daily routine is a screen on top with its own slide.
   useStepMotion(phoneListOpen ? 1 : 0);
   useEffect(() => { onPhoneTitle?.(phoneListOpen ? activeLabel : ''); return () => onPhoneTitle?.(''); }, [phoneListOpen, activeLabel]);
-  if (SETUP_V2 && !phone) return <DesktopJournalSetup section={activeSection} onSection={chooseList} userId={userId} account={account} certificates={certificates} typeTags={typeTags} mistakeTags={mistakeTags} mistakeDefaults={DEFAULT_MISTAKE_TAGS} confluenceSessions={confluenceSessions} instruments={instruments} riskPresets={riskPresets} onRiskPresets={onRiskPresets} onTypeTags={onTypeTags} onMistakes={onMistakes} onConfluence={onConfluence} onInstruments={onInstruments} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule} onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly} routine={routine} onUpdateRoutine={onUpdateRoutine}/>;
+  const membershipPanel = membershipAdmin && activeSection === 'memberships'
+    ? <MembershipManagement userId={userId} onAccessLost={revokeMembershipAdmin}/>
+    : null;
+  if (SETUP_V2 && !phone) return <DesktopJournalSetup membershipAdmin={membershipAdmin} membershipPanel={membershipPanel} section={activeSection} onSection={chooseList} userId={userId} account={account} certificates={certificates} typeTags={typeTags} mistakeTags={mistakeTags} mistakeDefaults={DEFAULT_MISTAKE_TAGS} confluenceSessions={confluenceSessions} instruments={instruments} riskPresets={riskPresets} onRiskPresets={onRiskPresets} onTypeTags={onTypeTags} onMistakes={onMistakes} onConfluence={onConfluence} onInstruments={onInstruments} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule} onExportBackup={onExportBackup} onExportCloudRecovery={onExportCloudRecovery} promotionPanel={promotionPanel} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly} routine={routine} onUpdateRoutine={onUpdateRoutine}/>;
   return <Card className={`tj-management-reference ${phoneShowsIndex?'tj-management-phone-index':'tj-management-phone-list'} ${activeSection === "daily-routine" ? "tj-management-routine-view" : ""}`}><div ref={managementRef} className="tj-management-phone-back-wrap"/><header><small>JOURNAL SETUP</small><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></header>{phone&&phoneShowsIndex&&<MobileSetupHome routine={routine} onUpdateRoutine={onUpdateRoutine} lists={lists} onChoose={chooseList}/>}<div className="tj-management-layout">
     <nav className="tj-management-nav" aria-label="Journal Setup lists"><button type="button" aria-pressed={activeSection === "daily-routine"} onClick={() => chooseList("daily-routine")}><span>Daily routine</span><em>{activeRoutineItems(routine).length}</em><ChevronRight className="tj-management-phone-chevron" size={16} aria-hidden="true"/></button>{lists.map(([id,label,count]) => <button type="button" key={id} aria-pressed={activeSection === id} onClick={() => chooseList(id)}><span>{label}</span><em>{count}</em><ChevronRight className="tj-management-phone-chevron" size={16} aria-hidden="true"/></button>)}</nav>
     <div className="tj-management-content">
@@ -2695,7 +2715,9 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, typeTags,
       {activeSection === "mappings" && <ImportMappingsManager userId={userId} instruments={[...DEFAULT_INSTRUMENTS, ...instruments.map(customInstrumentSymbol)]}/>} 
       {activeSection === "risk-presets" && <RiskPresetsManager presets={riskPresets} onSave={onRiskPresets} phone={phone}/>} 
       {activeSection === "certificates" && <CertificateArchive certificates={certificates} currency={account.baseCurrency}/>} 
-      {activeSection === "backup" && <DataBackupManager onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/>} 
+      {membershipPanel}
+      {activeSection === "backup" && promotionPanel}
+      {activeSection === "backup" && <DataBackupManager onExportBackup={onExportBackup} onExportCloudRecovery={onExportCloudRecovery} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/>}
     </div>
   </div></Card>;
 }
@@ -3155,7 +3177,7 @@ function TradeReviewEditorModal({ trade, trades = [], existing, reviews = [], ma
                 {card(CheckCircle2, "Journal detail", <span className="tr2-mini">{confluences.length} confluence{confluences.length === 1 ? "" : "s"}</span>, <>
                   <div className="tr2-jd"><small>Confluences</small>{confluences.length ? <div className="tr2-tags">{confluences.map((item) => <em key={item}>{item}</em>)}</div> : <p>No confluences logged.</p>}</div>
                   <div className="tr2-jd"><small>Mistakes</small>{activeTrade.mistakes?.length ? <div className="tr2-tags is-bad">{activeTrade.mistakes.map((item) => <em key={item}>{item}</em>)}</div> : <p>No mistakes logged.</p>}</div>
-                  <div className="tr2-jd"><small>Screenshots</small>{shots.length ? <div className="tr2-shots">{shots.map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} alt={label}/>)}</div> : <p>No screenshots added.</p>}</div>
+                  <div className="tr2-jd"><small>Screenshots</small>{shots.length ? <div className="tr2-shots">{shots.map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} media={screenshot} alt={label}/>)}</div> : <p>No screenshots added.</p>}</div>
                 </>)}
                 {card(Link2, "Linked markup", <span className="tr2-mini">{linkedMarkup ? (linkedMarkup.status || "Planned") : "Not linked"}</span>, linkedMarkup ? <>
                   <strong className="tr2-mk">{formatDate(linkedMarkup.date)} · {linkedMarkup.instrument || linkedMarkup.market || "Untitled"}</strong>
@@ -3167,7 +3189,7 @@ function TradeReviewEditorModal({ trade, trades = [], existing, reviews = [], ma
           </div> : readOnly ? <div className="sp-pane">
             <section className="sp-card"><header className="sp-card-head"><i aria-hidden="true"><FileText size={16} strokeWidth={2.2}/></i><div><h3>Recorded reflection</h3><small>{existing?.date ? `Reviewed ${formatDate(existing.date)}` : "Not reviewed yet"}</small></div></header>
               <div className="tr2-rec">{[["doneWell", "What went well"], ["wentWrong", "What went wrong"], ["execution", "Execution", "executionScore"], ["adherence", "Rule adherence", "adherenceScore"], ["psychology", "Psychology", "psychologyScore"], ["lessons", "Lessons learned"], ["actions", "Next adjustment"], ["notes", "Notes"]].map(([key, label, scoreKey]) => <div key={key}><small>{label}{scoreKey && scoreDisplay(existing?.[scoreKey])}</small><p>{existing?.[key] || "No note recorded."}</p></div>)}</div>
-              {existing?.screenshots?.length > 0 && <div className="tr2-shots">{existing.screenshots.map((shot, index) => <ImagePreview key={index} src={screenshotSource(shot)} alt="Review screenshot"/>)}</div>}
+              {existing?.screenshots?.length > 0 && <div className="tr2-shots">{existing.screenshots.map((shot, index) => <ImagePreview key={index} src={screenshotSource(shot)} media={shot} alt="Review screenshot"/>)}</div>}
             </section>
           </div> : <div className="sp-pane">
             <div className="sp-grid sp-c2"><Field label="Trade reference"><ThemeSelect className="tj-input" label="Trade reference" value={selectedTradeId} onChange={(event) => selectTrade(event.target.value)}>{allTrades.map((item) => <option key={item.id} value={item.id}>{formatDate(item.date)} · {item.asset || "Trade"} · {fmtMoney(item.pnl)}</option>)}</ThemeSelect></Field><Field label="Review date"><input type="date" className="tj-input" value={form.date} onChange={(event) => set("date", event.target.value)}/></Field></div>
@@ -3195,11 +3217,11 @@ function TradeReviewEditorModal({ trade, trades = [], existing, reviews = [], ma
       <section className="tj-review-reference-card"><header><span>Trade brief</span><small>{resultLabel} · {activeTrade.entryType || activeTrade.confluenceSession || "No model"}</small></header><div className="tj-review-brief-rows"><div><span>RESULT</span><strong>{resultLabel} · {fmtMoney(activeTrade.pnl)} · {Number(activeTrade.rr || 0).toFixed(2)}R</strong></div><div><span>Entry model</span><strong>{activeTrade.entryType || activeTrade.confluenceSession || "Not logged"}</strong></div>{!readOnly && <><div><span>Entry price</span><strong>{activeTrade.entryPrice === "" || activeTrade.entryPrice == null ? "—" : Number(activeTrade.entryPrice).toLocaleString(undefined, { maximumFractionDigits: 8 })}</strong></div><div><span>Exit price</span><strong>{activeTrade.exitPrice === "" || activeTrade.exitPrice == null ? "—" : Number(activeTrade.exitPrice).toLocaleString(undefined, { maximumFractionDigits: 8 })}</strong></div></>}<div><span>Mood shift</span><strong>{activeTrade.moodBefore || "Not logged"} → {activeTrade.moodAfter || "Not logged"}</strong></div><div><span>Rating</span><RatingDisplay value={activeTrade.rating || 0} /></div></div><p>{activeTrade.context || "No trade note added."}</p></section>
       <section className="tj-review-reference-card"><header><span>Linked markup</span><small>{linkedMarkup?.status || (linkedMarkup ? "Planned" : "Not linked")}</small></header>{linkedMarkup ? <><strong className="tj-review-markup-title">{formatDate(linkedMarkup.date)} · {linkedMarkup.instrument || linkedMarkup.market || "Untitled"}</strong><div className="tj-review-markup-meta"><span>{linkedMarkup.market || "—"}</span><span>{linkedMarkup.bias || "—"}</span><span>{linkedMarkup.status || "Planned"}</span></div><div className="tj-review-markup-shots-head"><span>MARKUP SCREENSHOTS</span><small>{markupScreenshots.length} shot{markupScreenshots.length === 1 ? "" : "s"}</small></div>{markupScreenshots.length ? <div className="tj-review-markup-shots">{markupScreenshots.map((shot) => <div key={shot.key}><ImagePreview src={shot.src} alt={`${shot.label} markup screenshot`} /><strong>{shot.label}</strong><small>{shot.label.startsWith("Pre") ? "Pre-session Charts" : "Post-session Charts"}</small></div>)}</div> : <p>No markup screenshots added yet.</p>}</> : <p>No markup was linked to this trade. {checkedRules}/{totalRules} rules checked.</p>}</section>
       <section className="tj-review-reference-card"><header><span>Execution Snapshot</span><small>{checkedRules}/{totalRules} rules checked</small></header><div className="tj-review-execution-grid"><div><span>NET RETURN</span><strong className={netReturn >= 0 ? "tj-green" : "tj-red"}>{pct(netReturn)}</strong><small>{fmtMoney(activeTrade.pnl)}</small></div><div><span>GROSS RETURN</span><strong className={grossReturn >= 0 ? "tj-green" : "tj-red"}>{pct(grossReturn)}</strong><small>{fmtMoney(grossPnl)}</small></div><div><span>COSTS</span><strong className={costReturn ? "tj-red" : ""}>{costReturn ? pct(costReturn) : "0.00%"}</strong><small>{fmtMoney(-costs)}</small></div><div><span>R:R</span><strong>{Number(activeTrade.rr || 0).toFixed(2)}R</strong><small>{dayDate}</small></div></div></section>
-      <section className="tj-review-reference-card"><header><span>Journal Detail</span><small>{(activeTrade.confluence || activeTrade.types || []).length} confluence{(activeTrade.confluence || activeTrade.types || []).length === 1 ? "" : "s"}</small></header><div className="tj-review-journal-block"><span>CONFLUENCES</span>{(activeTrade.confluence || activeTrade.types || []).length ? <div className="tj-tagwrap">{(activeTrade.confluence || activeTrade.types || []).map((item) => <em key={item} className="tj-tag tj-tag-purple tj-tag-active">{item}</em>)}</div> : <p>No confluences logged.</p>}</div><div className="tj-review-journal-block"><span>MISTAKES</span>{activeTrade.mistakes?.length ? <div className="tj-tagwrap">{activeTrade.mistakes.map((item) => <em key={item} className="tj-tag tj-tag-red tj-tag-active">{item}</em>)}</div> : <p>No mistakes logged.</p>}</div><div className="tj-review-journal-block"><span>PSYCHOLOGY</span><div className="tj-review-psychology"><strong>{activeTrade.moodBefore || "Not logged"}</strong><small>before trade</small><b>→</b><strong>{activeTrade.moodAfter || "Not logged"}</strong><small>after trade</small></div></div><div className="tj-review-journal-block"><span>SCREENSHOTS</span>{tradeScreenshotItems(activeTrade.screenshots).length ? <div className="tj-review-trade-shots">{tradeScreenshotItems(activeTrade.screenshots).map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} alt={label} />)}</div> : <p>No screenshots added.</p>}</div></section>
+      <section className="tj-review-reference-card"><header><span>Journal Detail</span><small>{(activeTrade.confluence || activeTrade.types || []).length} confluence{(activeTrade.confluence || activeTrade.types || []).length === 1 ? "" : "s"}</small></header><div className="tj-review-journal-block"><span>CONFLUENCES</span>{(activeTrade.confluence || activeTrade.types || []).length ? <div className="tj-tagwrap">{(activeTrade.confluence || activeTrade.types || []).map((item) => <em key={item} className="tj-tag tj-tag-purple tj-tag-active">{item}</em>)}</div> : <p>No confluences logged.</p>}</div><div className="tj-review-journal-block"><span>MISTAKES</span>{activeTrade.mistakes?.length ? <div className="tj-tagwrap">{activeTrade.mistakes.map((item) => <em key={item} className="tj-tag tj-tag-red tj-tag-active">{item}</em>)}</div> : <p>No mistakes logged.</p>}</div><div className="tj-review-journal-block"><span>PSYCHOLOGY</span><div className="tj-review-psychology"><strong>{activeTrade.moodBefore || "Not logged"}</strong><small>before trade</small><b>→</b><strong>{activeTrade.moodAfter || "Not logged"}</strong><small>after trade</small></div></div><div className="tj-review-journal-block"><span>SCREENSHOTS</span>{tradeScreenshotItems(activeTrade.screenshots).length ? <div className="tj-review-trade-shots">{tradeScreenshotItems(activeTrade.screenshots).map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} media={screenshot} alt={label} />)}</div> : <p>No screenshots added.</p>}</div></section>
     </div>
     </section>
     <section title="Review">
-    {readOnly ? <section className="tj-review-reflection"><header><div><small>Review Notes</small><strong>Recorded reflection</strong></div><small>{existing?.date ? `Reviewed ${formatDate(existing.date)}` : "Not reviewed yet"}</small></header><div className="tj-review-reflection-grid">{[["doneWell","WHAT WENT WELL"],["wentWrong","WHAT WENT WRONG"],["execution","EXECUTION","executionScore"],["adherence","RULE ADHERENCE","adherenceScore"],["psychology","PSYCHOLOGY","psychologyScore"],["lessons","LESSONS LEARNED"],["actions","NEXT ADJUSTMENT"],["notes","NOTES"]].map(([key,label,scoreKey])=><div key={key}><small>{label}{scoreKey && existing?.[scoreKey] ? ` · ${existing[scoreKey]}/5` : ""}</small><p>{existing?.[key] || "No note recorded."}</p></div>)}</div>{existing?.screenshots?.length > 0 && <div className="tj-review-trade-shots">{existing.screenshots.map((shot,index)=><ImagePreview key={index} src={screenshotSource(shot)} alt="Review screenshot"/>)}</div>}</section> : <>
+    {readOnly ? <section className="tj-review-reflection"><header><div><small>Review Notes</small><strong>Recorded reflection</strong></div><small>{existing?.date ? `Reviewed ${formatDate(existing.date)}` : "Not reviewed yet"}</small></header><div className="tj-review-reflection-grid">{[["doneWell","WHAT WENT WELL"],["wentWrong","WHAT WENT WRONG"],["execution","EXECUTION","executionScore"],["adherence","RULE ADHERENCE","adherenceScore"],["psychology","PSYCHOLOGY","psychologyScore"],["lessons","LESSONS LEARNED"],["actions","NEXT ADJUSTMENT"],["notes","NOTES"]].map(([key,label,scoreKey])=><div key={key}><small>{label}{scoreKey && existing?.[scoreKey] ? ` · ${existing[scoreKey]}/5` : ""}</small><p>{existing?.[key] || "No note recorded."}</p></div>)}</div>{existing?.screenshots?.length > 0 && <div className="tj-review-trade-shots">{existing.screenshots.map((shot,index)=><ImagePreview key={index} src={screenshotSource(shot)} media={shot} alt="Review screenshot"/>)}</div>}</section> : <>
     <div className="tj-grid2"><Field label="Trade reference"><ThemeSelect className="tj-input" value={selectedTradeId} onChange={(event) => selectTrade(event.target.value)}>{allTrades.map((item) => <option key={item.id} value={item.id}>{formatDate(item.date)} · {item.asset || "Trade"} · {fmtMoney(item.pnl)}</option>)}</ThemeSelect></Field><Field label="Review date"><input type="date" className="tj-input" value={form.date} onChange={(event) => set("date", event.target.value)} /></Field></div>
     <div className="tj-grid2 tj-review-outcome-fields"><Field label="What went well" className="tj-review-well"><textarea className="tj-input tj-textarea" value={form.doneWell} onChange={(event) => set("doneWell", event.target.value)} /></Field><Field label="What went wrong" className="tj-review-wrong"><textarea className="tj-input tj-textarea" value={form.wentWrong} onChange={(event) => set("wentWrong", event.target.value)} /></Field></div>
     <div className="tj-grid3">{[["execution", "Execution", "executionScore"], ["adherence", "Rule adherence", "adherenceScore"], ["psychology", "Psychology", "psychologyScore"]].map(([key, label, scoreKey]) => <Field key={key} label={<><span>{label}</span><span className="tj-review-score" role="group" aria-label={`${label} score`}>{[1,2,3,4,5].map(score => <button key={score} type="button" aria-pressed={form[scoreKey] === score} onClick={() => set(scoreKey, score)}>{score}</button>)}</span></>}><textarea className="tj-input tj-textarea" value={form[key]} onChange={(event) => set(key, event.target.value)} /></Field>)}</div>
@@ -3724,7 +3746,7 @@ function DayTradesModal({ date, trades, reviews = [], movements = [], account, o
               </div>
             </div>
             {tags.length > 0 && <div className="tj-day-trade-tags" title={tags.join(" · ")}>{tags.slice(0, 2).join(" · ")}{tags.length > 2 ? ` +${tags.length - 2}` : ""}</div>}
-            <div className="tj-day-trade-footer"><div className="tj-day-trade-shots" data-scroll-row="true">{tradeScreenshotItems(t.screenshots).map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} alt={label} />)}{tradeScreenshotItems(t.screenshots).length === 0 && <span className="tj-day-no-shots">No screenshots attached</span>}</div></div>
+            <div className="tj-day-trade-footer"><div className="tj-day-trade-shots" data-scroll-row="true">{tradeScreenshotItems(t.screenshots).map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} media={screenshot} alt={label} />)}{tradeScreenshotItems(t.screenshots).length === 0 && <span className="tj-day-no-shots">No screenshots attached</span>}</div></div>
             <button type="button" className="tj-day-open-log" onClick={()=>onOpenTrade(t)}>Open in Trade Logs <span aria-hidden="true">↗</span></button>
           </div>;
         })}
@@ -4346,9 +4368,9 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
     const results=(rawTrade.balanceResults||[]).filter(result=>activeBalances(account).some(balance=>balance.id===result.balanceId));
     const pnl=results.length?results.reduce((total,result)=>total+Number(result.netPnl??((Number(result.grossPnl)||0)-(Number(result.commission)||0)-(Number(result.swap)||0))),0):rawTrade.pnl;
     const summary={...rawTrade,pnl},trade={...summary,rr:tradeRiskReward(summary)},running=isRunningTrade(trade);
-    return {trade,running,result:running?'running':classify(pnl,cap),return:accountOpeningBalance ? pnl / accountOpeningBalance * 100 : 0,confluences:(trade.confluence||trade.types||[]).length,reviewed:reviewedTradeIds.has(trade.id),linked:markups.some(markup=>markup.id===trade.premarketMarkupId),screenshots:tradeScreenshotItems(trade.screenshots).map(({screenshot,label,key})=>({src:screenshotSource(screenshot),label,key}))};
+    return {trade,running,result:running?'running':classify(pnl,cap),return:accountOpeningBalance ? pnl / accountOpeningBalance * 100 : 0,confluences:(trade.confluence||trade.types||[]).length,reviewed:reviewedTradeIds.has(trade.id),linked:markups.some(markup=>markup.id===trade.premarketMarkupId),screenshots:tradeScreenshotItems(trade.screenshots).map(({screenshot,label,key})=>({src:screenshotSource(screenshot),media:screenshot,label,key}))};
   };
-  if(phone)return <><MobileJournalTimeline trades={filtered} allTrades={workspace.trades} decorate={decoratePhoneTrade} netPnl={stats.netPnl} count={filtered.length} filters={phoneFilters} onFilters={setPhoneFilters} onReset={restoreTradeLogBoard} search={search} onSearch={setSearch} money={fmtMoney} date={formatDate} balances={activeBalances(workspace)} markups={markups} noteOf={tradeNote} renderScreenshot={({src,label,key})=><ImagePreview key={key} src={src} alt={label}/>} onReview={(trade,preview)=>setLogReviewEditor({trade:workspace.trades.find(item=>item.id===trade.id)||trade,preview})} onEdit={onEdit} onDelete={onDelete} onLinkMarkup={onLinkMarkup} onNewTrade={onNewTrade} locked={locked}/>{reviewEditor}</>;
+  if(phone)return <><MobileJournalTimeline trades={filtered} allTrades={workspace.trades} decorate={decoratePhoneTrade} netPnl={stats.netPnl} count={filtered.length} filters={phoneFilters} onFilters={setPhoneFilters} onReset={restoreTradeLogBoard} search={search} onSearch={setSearch} money={fmtMoney} date={formatDate} balances={activeBalances(workspace)} markups={markups} noteOf={tradeNote} renderScreenshot={({src,media,label,key})=><ImagePreview key={key} src={src} media={media} alt={label}/>} onReview={(trade,preview)=>setLogReviewEditor({trade:workspace.trades.find(item=>item.id===trade.id)||trade,preview})} onEdit={onEdit} onDelete={onDelete} onLinkMarkup={onLinkMarkup} onNewTrade={onNewTrade} locked={locked}/>{reviewEditor}</>;
   // Desktop Trade Logs v2 (desktopTradeLogs.css, tl2- classes) after
   // aaicorefx-desktop-trade-logs.html. It is the only desktop Trade Logs layout.
   const signedMoney = (value, currency = account.baseCurrency) => `${Number(value) < 0 ? "−" : "+"}${currencySymbol(currency)}${Math.abs(Number(value) || 0).toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 })}`;
@@ -4418,7 +4440,7 @@ function TradeLogPage({ account: workspace, reviews = [], markups = [], onEdit: 
         <div className="tl2-card tl2-pad"><div className="tl2-row"><h3>Linked markup</h3><span className={`tl2-pill ${linkedMarkup ? "is-gain" : "is-muted"}`}>{linkedMarkup ? "Linked" : "Not linked"}</span></div>{linkedMarkup && <p className="tl2-linked">{[formatDate(linkedMarkup.date), linkedMarkup.instrument || linkedMarkup.market || "Untitled markup", linkedMarkup.bias].filter(Boolean).join(" · ")}</p>}<div className="tl2-link"><ThemeSelect label="Linked markup" className="tj-input" value={linkValue} onChange={(event) => setLinkDrafts((current) => ({ ...current, [t.id]: event.target.value }))}><option value="">No linked markup</option>{recentMarkups.map((markup) => <option key={markup.id} value={markup.id}>{formatDate(markup.date)} · {markup.instrument || "Untitled"} · {markup.bias || "No bias"}</option>)}</ThemeSelect><button type="button" className="tl2-btn" disabled={String(linkValue || "") === String(t.premarketMarkupId || "")} onClick={() => onLinkMarkup(t, linkValue || null)}>Save link</button></div></div>
       </div>
       <div className="tl2-two is-wide-left">
-        <div className="tl2-card tl2-pad"><div className="tl2-row"><h3>Screenshots</h3><span className="tl2-pill is-muted">{t.screenshots.length} saved</span></div>{t.screenshots.length ? <div className="tl2-shots">{t.screenshots.map((shot, index) => <div className="tl2-shot" key={`${shot.alt}-${index}`}><ImagePreview src={shot.src} alt={shot.alt} className="tl-live-shot"/><span>{shot.tag}</span></div>)}</div> : <div className="tl2-empty"><b>No screenshots yet</b>Add an entry or exit image when you edit the trade.</div>}</div>
+        <div className="tl2-card tl2-pad"><div className="tl2-row"><h3>Screenshots</h3><span className="tl2-pill is-muted">{t.screenshots.length} saved</span></div>{t.screenshots.length ? <div className="tl2-shots">{t.screenshots.map((shot, index) => <div className="tl2-shot" key={`${shot.alt}-${index}`}><ImagePreview src={shot.src} media={shot.media} alt={shot.alt} className="tl-live-shot"/><span>{shot.tag}</span></div>)}</div> : <div className="tl2-empty"><b>No screenshots yet</b>Add an entry or exit image when you edit the trade.</div>}</div>
         <div className="tl2-card tl2-pad tl2-note"><div className="tl2-row"><h3>Note</h3>{!locked && <button type="button" className="tl2-link-btn" onClick={() => onEdit(t)}>Edit</button>}</div>{note ? <p>{note}</p> : <div className="tl2-empty"><b>No note</b>Write what you saw and felt.</div>}</div>
       </div>
     </section>;
@@ -5051,7 +5073,7 @@ export function BacktestCenterPage({ trades = [], onAddTrade, onEditTrade, onDel
               <div className="tj-reference-trade-detail-summary"><div><span>NET P&amp;L</span><strong className={running ? "tj-amber" : Number(trade.pnl) >= 0 ? "tj-green" : "tj-red"}>{running ? "P&amp;L pending" : signedMoney(trade.pnl)}</strong></div><div><span>RESULT</span><strong className={Number(trade.rr) >= 0 ? "tj-green" : "tj-red"}>{running ? "Running" : formatR(trade.rr)}</strong></div><div><span>SESSION</span><strong>{trade.entrySession || trade.session || "Not set"}</strong></div><div><span>RULES CHECKED</span><strong>{checkedRules}/{totalRules}</strong></div></div>
               <div className="tj-reference-trade-main-grid">
                 <section className="tj-reference-trade-brief"><div className="tj-reference-trade-section-head"><span>Trade brief</span><div><em className={trade.direction === "BUY" ? "tj-green" : "tj-red"}>{trade.direction || "—"}</em><em>{trade.entrySession || trade.session || "—"}</em><em className={running ? "tj-amber" : Number(trade.pnl) >= 0 ? "tj-green" : "tj-red"}>{running ? "Open trade" : formatR(trade.rr)}</em></div></div><div className="tj-reference-trade-brief-rows"><div><span>RESULT</span><strong>{running ? "Running · P&L pending" : `${classification === "win" ? "Win" : classification === "loss" ? "Loss" : "B/E"} · ${signedMoney(trade.pnl)} · ${formatR(trade.rr)}`}</strong></div><div><span>ENTRY MODEL</span><strong>{entryModel}</strong></div><div><span>ENTRY PRICE</span><strong>{trade.entryPrice === "" || trade.entryPrice == null ? "—" : Number(trade.entryPrice).toLocaleString(undefined,{maximumFractionDigits:8})}</strong></div><div><span>EXIT PRICE</span><strong>{trade.exitPrice === "" || trade.exitPrice == null ? "—" : Number(trade.exitPrice).toLocaleString(undefined,{maximumFractionDigits:8})}</strong></div><div><span>MOOD SHIFT</span><strong>{trade.moodBefore || "—"} → {trade.moodAfter || "—"}</strong></div><div><span>RATING</span><strong><RatingDisplay value={trade.rating} noRules={!totalRules && !trade.rating}/></strong></div><div><span>CONFLUENCES</span><div className="tj-backtest-brief-tags">{confluence.length ? confluence.map((item) => <span key={item} className="tj-tag tj-tag-purple tj-tag-active tj-tag-xs">{item}</span>) : <span className="tj-muted-txt">No confluences logged.</span>}</div></div><div><span>MISTAKES</span><div className="tj-backtest-brief-tags">{trade.mistakes?.length ? trade.mistakes.map((mistake) => <span key={mistake} className="tj-tag tj-tag-red tj-tag-active tj-tag-xs">{mistake}</span>) : <span className="tj-muted-txt">No mistakes logged.</span>}</div></div></div><div className="tj-reference-trade-note">{tradeNote(trade) || "No trade note added."}</div></section>
-                <section className="tj-reference-trade-markup"><div className="tj-reference-trade-section-head"><span>Trade Screenshots</span><small>{tradeScreenshots.length} shot{tradeScreenshots.length === 1 ? "" : "s"}</small></div>{tradeScreenshots.length ? <div className="tj-reference-markup-shots">{tradeScreenshots.map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} alt={label} selected={selectedImage === screenshotSource(screenshot)} onSelect={setSelectedImage}/>)}</div> : <div className="tj-reference-trade-empty"><strong>No screenshots added</strong><span>Screenshots stay with this backtest trade only.</span><button type="button" className="tj-btn-outline tj-btn-small" onClick={()=>onEditTrade(trade)}>+ Add screenshot</button></div>}</section>
+                <section className="tj-reference-trade-markup"><div className="tj-reference-trade-section-head"><span>Trade Screenshots</span><small>{tradeScreenshots.length} shot{tradeScreenshots.length === 1 ? "" : "s"}</small></div>{tradeScreenshots.length ? <div className="tj-reference-markup-shots">{tradeScreenshots.map(({ screenshot, label, key }) => <ImagePreview key={key} src={screenshotSource(screenshot)} media={screenshot} alt={label} selected={selectedImage === screenshotSource(screenshot)} onSelect={setSelectedImage}/>)}</div> : <div className="tj-reference-trade-empty"><strong>No screenshots added</strong><span>Screenshots stay with this backtest trade only.</span><button type="button" className="tj-btn-outline tj-btn-small" onClick={()=>onEditTrade(trade)}>+ Add screenshot</button></div>}</section>
               </div>
             </div>
           </div>
@@ -6641,7 +6663,24 @@ export function EmptyJournalOnboarding({ onCreate }) {
   </section>;
 }
 
-export function TradingJournalApp({ user, onLogout }) {
+export function TradingJournalApp({ user, membership, onLogout }) {
+  const confirm = useConfirmation();
+  const [membershipAdmin, setMembershipAdmin] = useState(false);
+  const revokeMembershipAdmin = useCallback(() => setMembershipAdmin(false), []);
+  useEffect(() => {
+    if (!membershipAdminUiEnabled) return undefined;
+    let live = true;
+    let sequence = 0;
+    const refresh = async () => {
+      const request = ++sequence;
+      const authorized = await readMembershipAdmin().catch(() => false);
+      if (live && request === sequence) setMembershipAdmin(authorized);
+    };
+    void refresh();
+    window.addEventListener('focus', refresh);
+    return () => { live = false; window.removeEventListener('focus', refresh); };
+  }, [user.id]);
+  const [showMembershipsOnEmpty, setShowMembershipsOnEmpty] = useState(false);
   // Keep native chart animations aligned with preference changes, not just reloads.
   const [, refreshChartMotion] = useState(0);
   useEffect(() => {
@@ -6716,7 +6755,6 @@ export function TradingJournalApp({ user, onLogout }) {
     timezone: user.user_metadata?.timezone || "Africa/Accra", dateFormat: user.user_metadata?.date_format || "DD/MM/YYYY", timeFormat: user.user_metadata?.time_format || "12",
   }));
   setActiveRegionalPreferences(profileDetails);
-  const routineStore = useDailyRoutine(user);
   const [localSnapshots,setLocalSnapshots]=useState([]);
   const [persistentStorage,setPersistentStorage]=useState(null);
   const [riskPresets, setRiskPresets] = useDeviceManagementList(user.id, 'risk-presets', [{name:'Conservative',risk:'0.5',rr:'2'}, {name:'Standard',risk:'1',rr:'2'}, {name:'Aggressive',risk:'2',rr:'3'}]);
@@ -6956,6 +6994,16 @@ export function TradingJournalApp({ user, onLogout }) {
   const [cloudSyncAccess, setCloudSyncAccess] = useState(null);
   const [cloudSyncEntitled, setCloudSyncEntitled] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
+  const [cloudRecoveryBusy, setCloudRecoveryBusy] = useState(false);
+  const localBacktestApi = useMemo(() => createLocalBacktestApi(user.id), [user.id]);
+  const localBacktests = membershipPreviewEnabled && cloudSyncAccess === false;
+  const routineStore = useDailyRoutine(user, {
+    localMode: localBacktests,
+    isLocal: () => membershipPreviewEnabled && localJournal.isLocalJournal(),
+  });
+  const previousStorageMode = useRef(null);
+  const caseStudyStorageMode = useRef(null);
+  const journalLoadSequence = useRef(0);
   const [journalClock, setJournalClock] = useState(() => Date.now());
   const [sidebarOpen, setSidebarOpen] = useState(() => window.matchMedia('(min-width: 901px)').matches ? readSidebarExpanded(user.id) : true);
   const updateSidebarOpen = useCallback((next) => {
@@ -6993,7 +7041,9 @@ export function TradingJournalApp({ user, onLogout }) {
         // screen up forever. The journal can still safely open in local mode
         // for a free account while that service is unavailable.
         const accessResult = await Promise.race([
-          readCloudSyncAccess(user.id),
+          membershipPreviewEnabled
+            ? resolveJournalMembership({ authenticated: true }).then(result => ({ access: result.cloudWritesAllowed === true }))
+            : readCloudSyncAccess(user.id),
           new Promise((resolve) => window.setTimeout(() => resolve({ access: null, timedOut: true }), 8000)),
         ]);
         if (cancelled) return;
@@ -7004,7 +7054,7 @@ export function TradingJournalApp({ user, onLogout }) {
         setCloudSyncAccess(access);
         localJournal.configureLocalJournal(user.id, !access);
         if (!access) await localJournal.recoverPendingLocalJournal(user.id).catch(() => {});
-        if (!access && !(await localJournal.hasLocalJournal(user.id))) {
+        if (!membershipPreviewEnabled && !access && !(await localJournal.hasLocalJournal(user.id))) {
           const cached = readJournalCache(user.id);
           if (cached?.data) {
             const hydrated = await hydrateJournalImages(user.id, cached.data);
@@ -7095,9 +7145,13 @@ export function TradingJournalApp({ user, onLogout }) {
 
   const applyJournalData = useCallback((data) => {
     setAccounts(data.accounts);
-    void pendingTradeSaves(user.id).then((pending) => {
-      if (pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
-    });
+    if (!(membershipPreviewEnabled && localJournal.isLocalJournal())) {
+      const request = journalLoadSequence.current;
+      void pendingTradeSaves(user.id).then((pending) => {
+        if (membershipPreviewEnabled && (request !== journalLoadSequence.current || localJournal.isLocalJournal())) return;
+        if (pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
+      });
+    }
     setTypeTags(data.typeTags || []);
     setMistakeTags(data.mistakeTags || []);
     setConfluenceSessions(data.confluenceSessions || []);
@@ -7110,27 +7164,45 @@ export function TradingJournalApp({ user, onLogout }) {
     setActiveId(currentId => resolveActiveAccount(data.accounts, currentId, savedAccountId));
   }, [user.id]);
 
+  useEffect(() => {
+    if (!membershipPreviewEnabled || !storageReady || !['ready', 'error'].includes(membership?.status)) return;
+    const permitted = membership.cloudWritesAllowed === true;
+    setCloudSyncEntitled(permitted);
+    if (!permitted && cloudSyncAccess) {
+      setLoaded(false);
+      localJournal.configureLocalJournal(user.id, true);
+      setCloudSyncAccess(false);
+      setLastSyncedAt('');
+    }
+  }, [membership, storageReady, cloudSyncAccess, user.id]);
+
   const loadFromServer = useCallback(async () => {
-    const preloadPageData = (journalData) => {
+    const request = ++journalLoadSequence.current;
+    const localMode = localJournal.isLocalJournal();
+    const current = () => request === journalLoadSequence.current && localMode === localJournal.isLocalJournal();
+    const preloadPageData = () => {
       // These are independent. Backtest sync can be slow on a large journal;
       // it must never hold Challenge progress (or the main journal) hostage.
       void challengeDb.snapshot(user.id)
-        .then(next => { setChallengeProgress(next); setChallengeProgressReady(true); })
-        .catch(() => { setChallengeProgress(null); setChallengeProgressReady(true); });
-      void preloadBacktests(user.id)
-        .then(next => { setBacktestSnapshot(next); setBacktestSnapshotReady(true); })
-        .catch(() => { setBacktestSnapshot(null); setBacktestSnapshotReady(true); });
+        .then(next => { if (current()) { setChallengeProgress(next); setChallengeProgressReady(true); } })
+        .catch(() => { if (current()) { setChallengeProgress(null); setChallengeProgressReady(true); } });
+      const readBacktests = membershipPreviewEnabled && localJournal.isLocalJournal()
+        ? localJournal.readBacktestWorkspace : backtestCloud.preloadBacktests;
+      void readBacktests(user.id)
+        .then(next => { if (current()) { setBacktestSnapshot(next); setBacktestSnapshotReady(true); } })
+        .catch(() => { if (current()) { setBacktestSnapshot(null); setBacktestSnapshotReady(true); } });
     };
     if (localJournal.isLocalJournal()) {
       setLoadError("");
       const result = await fetchAllUserData(user.id);
+      if (!current()) return false;
       if (result.error) { setLoadError(result.error); setLoaded(true); return false; }
       applyJournalData(result.data);
       setLastSyncedAt("");
       setSyncSignature("local-v1");
-      writeJournalCache(user.id, { ...result.data, imageReferences: true }, "local-v1");
+      if (!membershipPreviewEnabled) writeJournalCache(user.id, { ...result.data, imageReferences: true }, "local-v1");
       setLoaded(true);
-      void preloadPageData(result.data);
+      void preloadPageData();
       return true;
     }
     let requestTicket = privateCache.token();
@@ -7145,6 +7217,7 @@ export function TradingJournalApp({ user, onLogout }) {
       let lastFailure;
       for (let attempt = 0; attempt < 6; attempt += 1) {
         try {
+          if (!current()) throw new Error('Journal load superseded.');
           let result = await fetchAllUserData(user.id);
           if (!result.error) return result;
           lastFailure = result.error;
@@ -7174,7 +7247,7 @@ export function TradingJournalApp({ user, onLogout }) {
     try {
       result = await loadJournal();
     } catch (error) {
-      if (!privateCache.valid(requestTicket)) return false;
+      if (!current() || !privateCache.valid(requestTicket)) return false;
       const message = error?.message || "The journal could not be loaded.";
       setLoadError(message);
       setLoaded(true);
@@ -7185,14 +7258,14 @@ export function TradingJournalApp({ user, onLogout }) {
       setLoaded(true);
       return false;
     }
-    if (!privateCache.valid(requestTicket)) return false;
+    if (!current() || !privateCache.valid(requestTicket)) return false;
     applyJournalData(result.data);
     const signature = "delta-v1";
     writeJournalCache(user.id, { ...result.data, imageReferences: true }, signature);
     setSyncSignature(signature);
     setLastSyncedAt(new Date().toISOString());
     setLoaded(true);
-    void preloadPageData(result.data);
+    void preloadPageData();
     return true;
   }, [user, applyJournalData]);
 
@@ -7202,7 +7275,7 @@ export function TradingJournalApp({ user, onLogout }) {
     if (!storageReady) return;
     (async () => {
       const cached = readJournalCache(user.id);
-      if (cached?.data?.challengeProgress && cached.data.backtestSnapshot) {
+      if (!(membershipPreviewEnabled && localJournal.isLocalJournal()) && cached?.data?.challengeProgress && cached.data.backtestSnapshot) {
         const hydrated = await hydrateJournalImages(user.id, cached.data);
         setChallengeProgress(hydrated.data.challengeProgress || null);
         setBacktestSnapshot(hydrated.data.backtestSnapshot || null);
@@ -7236,7 +7309,8 @@ export function TradingJournalApp({ user, onLogout }) {
   }, [storageReady]);
 
   useEffect(() => {
-    if (!loaded || !accounts || privateCache.token().owner !== user.id) return;
+    if (!loaded || !accounts || privateCache.token().owner !== user.id
+      || (membershipPreviewEnabled && localJournal.isLocalJournal())) return;
     const journalData = { accounts, typeTags, mistakeTags, confluenceSessions, customInstruments, markups, reviews, periodReviews, challengeProgress, backtestSnapshot, balancesReady: balanceStorageReady, imageReferences: syncSignature === "delta-v1" };
     writeJournalCache(user.id, journalData, syncSignature);
     void writeJournalImageCache(user.id, journalData);
@@ -7256,7 +7330,20 @@ export function TradingJournalApp({ user, onLogout }) {
     cloudModeTransition.current = true;
     try {
     if (!cloudSyncEntitled) return window.location.assign('/pricing');
+    if (membershipPreviewEnabled && !cloudSyncAccess) {
+      const current = await resolveJournalMembership({ authenticated: true });
+      if (!current.cloudWritesAllowed) return showError('Cloud write access could not be confirmed.');
+      if (!await confirm({title:'Switch to cloud journal?',description:'Switch this device to your cloud journal? Your local journal stays saved separately.',confirmLabel:'Switch to cloud journal',variant:'default'})) return;
+    }
     const preferenceKey = `aaicorefx-cloud-sync-disabled:${user.id}`;
+    if (cloudSyncAccess === true && membershipPreviewEnabled) {
+      setLoaded(false);
+      window.localStorage.setItem(preferenceKey, 'true');
+      localJournal.configureLocalJournal(user.id, true);
+      setCloudSyncAccess(false);
+      setLastSyncedAt('');
+      return;
+    }
     if (cloudSyncAccess === true) {
       // Read the authoritative profile row and inspect any old device copy
       // before changing modes. Neither a failed cloud read nor a divergent
@@ -7282,10 +7369,11 @@ export function TradingJournalApp({ user, onLogout }) {
       showInfo('Cloud Sync is off on this device. Your cloud journal remains unchanged.');
       return;
     }
+    if (membershipPreviewEnabled) setLoaded(false);
     window.localStorage.removeItem(preferenceKey);
     localJournal.configureLocalJournal(user.id, false);
     setCloudSyncAccess(true);
-    await loadFromServer();
+    if (!membershipPreviewEnabled) await loadFromServer();
     showInfo('Cloud Sync is enabled on this device.');
     } catch (error) {
       showError(error?.message || 'Cloud Sync mode could not be changed. Your existing storage was left unchanged.');
@@ -7294,11 +7382,42 @@ export function TradingJournalApp({ user, onLogout }) {
     }
   };
 
+  useEffect(() => {
+    if (!membershipPreviewEnabled || !storageReady) return;
+    const previous = previousStorageMode.current;
+    previousStorageMode.current = cloudSyncAccess;
+    if (previous === null || previous === cloudSyncAccess) return;
+    setLoaded(false);
+    setBacktestSnapshotReady(false);
+    void loadFromServer();
+  }, [cloudSyncAccess, storageReady, loadFromServer]);
+
+  const exportCloudRecovery = async () => {
+    if (cloudRecoveryBusy) return;
+    setCloudRecoveryBusy(true);
+    try {
+      const backup = await readCloudJournalRecovery(user.id, user.user_metadata?.dailyRoutine);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(backup)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `aaicorefx-cloud-recovery-${backup.exportedAt.slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showInfo(backup.unavailableImages
+        ? `Recovery copy exported with ${backup.unavailableImages} unresolved image references. Keep the source device and cloud copy.`
+        : 'Cloud recovery copy exported.');
+    } catch (error) { showError(error?.message || 'Cloud recovery export failed.'); }
+    finally { setCloudRecoveryBusy(false); }
+  };
+
   const exportBackup = async () => {
     try {
-      const backup = localJournal.isLocalJournal()
-        ? await localJournal.exportLocalJournal(user.id)
-        : { version:1, exportedAt:new Date().toISOString(), data:{ accounts, typeTags, mistakeTags, confluenceSessions, customInstruments, markups, reviews, periodReviews, profileCaseStudyLibrary:profileCaseStudyWorkspace, challengeProgress:await challengeDb.snapshot(user.id), balancesReady:balanceStorageReady, financeReady:true }, routine:routineStore.routine };
+      const deviceBackup = localJournal.isLocalJournal() ? await localJournal.exportLocalJournal(user.id) : null;
+      const backup = deviceBackup
+        ? await readCloudJournalRecovery(user.id, deviceBackup.routine, { deviceBackup })
+        : await readCloudJournalRecovery(user.id, user.user_metadata?.dailyRoutine);
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -7307,16 +7426,23 @@ export function TradingJournalApp({ user, onLogout }) {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
-      showInfo('Backup downloaded. Keep it somewhere safe.');
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showInfo(backup.unavailableImages
+        ? `Backup downloaded with ${backup.unavailableImages} unresolved image references. Keep the source device and cloud copy.`
+        : 'Backup downloaded. Keep it somewhere safe.');
     } catch (error) { showError(error?.message || 'The backup could not be created.'); }
   };
 
   const importBackup = async (file) => {
     try {
-      if (localJournal.isLocalJournal()) { const safety=await localJournal.createSafetySnapshot(user.id,routineStore.routine); if(safety.error)return showError(safety.error); }
       const text = await file.text();
       const parsed = JSON.parse(text);
+      if (parsed.recoveryOwnerId && parsed.recoveryOwnerId !== user.id) return showError('This recovery copy belongs to another account.');
+      if (localJournal.isLocalJournal() || ((membershipPreviewEnabled || parsed.recoveryOwnerId) && await localJournal.hasLocalJournal(user.id))) {
+        if (parsed.recoveryOwnerId && !await confirm({title:'Restore recovery file?',description:'Replace the journal on this device with this recovery file? A safety snapshot will be saved first.',confirmLabel:'Restore recovery file'})) return;
+        const safety=await localJournal.createSafetySnapshot(user.id,!membershipPreviewEnabled || localBacktests ? routineStore.routine : undefined);
+        if(safety.error)return showError(safety.error);
+      }
       const result = await localJournal.importLocalJournal(user.id, parsed);
       if (result.error) return showError(result.error);
       // Restore into device storage, never silently upload/overwrite a cloud
@@ -7326,9 +7452,16 @@ export function TradingJournalApp({ user, onLogout }) {
       setCloudSyncAccess(false);
       setLastSyncedAt('');
       applyJournalData(result.data);
+      if (membershipPreviewEnabled) {
+        setBacktestSnapshot(result.data.backtestWorkspace || null);
+        setBacktestSnapshotReady(true);
+        setProfileCaseStudyRetry(value => value + 1);
+      }
       if (result.routine) { try { await routineStore.restore(result.routine); } catch(error) { showError(error.message); } }
-      await writeJournalImageCache(user.id, result.data);
-      writeJournalCache(user.id, result.data, 'local-v1');
+      if (!membershipPreviewEnabled) {
+        await writeJournalImageCache(user.id, result.data);
+        writeJournalCache(user.id, result.data, 'local-v1');
+      }
       window.dispatchEvent(new CustomEvent('aaicorefx:backup-restored'));
       await refreshLocalSnapshots();
       showInfo('Backup restored on this device.');
@@ -7343,6 +7476,11 @@ export function TradingJournalApp({ user, onLogout }) {
     const result=await localJournal.importLocalJournal(user.id,snapshot.data);
     if(result.error)return showError(result.error);
     applyJournalData(result.data);
+    if (membershipPreviewEnabled) {
+      setBacktestSnapshot(result.data.backtestWorkspace || null);
+      setBacktestSnapshotReady(true);
+      setProfileCaseStudyRetry(value => value + 1);
+    }
     if(snapshot.data.routine) { try { await routineStore.restore(snapshot.data.routine); } catch(error) { showError(error.message); } }
     await refreshLocalSnapshots();
     showInfo('Device snapshot restored.');
@@ -7466,6 +7604,13 @@ export function TradingJournalApp({ user, onLogout }) {
   useEffect(() => {
     if (!accounts?.length) return;
     let cancelled=false;
+    const deviceOnly = membershipPreviewEnabled && localJournal.isLocalJournal();
+    const storageChanged = caseStudyStorageMode.current !== deviceOnly;
+    caseStudyStorageMode.current = deviceOnly;
+    if (storageChanged && membershipPreviewEnabled) {
+      profileCaseStudyWorkspaceRef.current = null;
+      profileCaseStudyWorkspaceOwnerRef.current = null;
+    }
     if (profileCaseStudyWorkspaceOwnerRef.current !== user.id) {
       profileCaseStudyConflictRef.current=null;
       caseStudySyncOutboxRef.current=null;
@@ -7483,7 +7628,11 @@ export function TradingJournalApp({ user, onLogout }) {
       const loaded = localJournal.isLocalJournal() ? await localJournal.readProfileCaseStudyLibrary(user.id) : await loadProfileCaseStudyLibrary(user.id);
       if (cancelled) return;
       if (caseStudySaveSeqRef.current !== saveSeqAtStart && profileCaseStudyWorkspaceOwnerRef.current === user.id && profileCaseStudyWorkspaceRef.current) return;
-      const outbox=readCaseStudySyncOutbox(user.id);
+      const outbox = deviceOnly ? {data:null} : readCaseStudySyncOutbox(user.id);
+      if (deviceOnly) {
+        profileCaseStudyConflictRef.current = null;
+        setProfileCaseStudyConflict(null);
+      }
       if (!outbox.error) caseStudySyncOutboxRef.current=outbox.data;
       const lastValidWorkspace=profileCaseStudyWorkspaceOwnerRef.current === user.id ? profileCaseStudyWorkspaceRef.current : null;
       let resolved=resolveProfileCaseStudyVisibility({ loaded, accounts, lastValidWorkspace });
@@ -7545,7 +7694,7 @@ export function TradingJournalApp({ user, onLogout }) {
       setProfileCaseStudyState(resolved);
     })();
     return()=>{cancelled=true;};
-  },[user.id,accounts,profileCaseStudyRetry]);
+  },[user.id,accounts,profileCaseStudyRetry,membershipPreviewEnabled && cloudSyncAccess]);
   useEffect(() => {
     if (!accounts?.length) return;
     const storedBacktestTrades = readBacktestTrades(user.id, accounts);
@@ -7798,6 +7947,13 @@ export function TradingJournalApp({ user, onLogout }) {
       <div className={`tj-root tj-loading ${profileTheme === "light" ? "tj-theme-light" : "tj-theme-dark"}`}>
         <style>{CSS}</style>
         <EmptyJournalOnboarding onCreate={() => setModal("addaccount")} />
+        {membershipAdmin && <section className="tj-panel" aria-label="Administration">
+          {showMembershipsOnEmpty
+            ? <MembershipManagement userId={user.id} onAccessLost={revokeMembershipAdmin}/>
+            : <button type="button" className="tj-btn-outline" onClick={() => setShowMembershipsOnEmpty(true)}>Memberships</button>}
+        </section>}
+        {membershipPreviewEnabled && cloudSyncEntitled && <JournalPromotion userId={user.id}/>}
+        {membershipPreviewEnabled && localBacktests && <DataBackupManager onExportBackup={exportBackup} onExportCloudRecovery={exportCloudRecovery} onImportBackup={importBackup}/>}
         {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={createFirstAccount} canCreateMultiBalance allowImport={false} />}
       </div>
     );
@@ -7894,11 +8050,11 @@ export function TradingJournalApp({ user, onLogout }) {
       let persistedTrade = optimisticTrade;
       try {
         if (writesExistingTrade) {
-          const res = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: account.id });
+          const res = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: account.id, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) });
           if (res.error) throw new Error(res.error);
           persistedTrade = res.data || trade;
         } else {
-          const res = await createTrade(user.id, account.id, trade);
+          const res = await createTrade(user.id, account.id, { ...trade, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) });
           if (res.error) throw new Error(res.error);
           persistedTrade = res.data || trade;
         }
@@ -8039,12 +8195,12 @@ export function TradingJournalApp({ user, onLogout }) {
       completed += 1; onProgress?.(Math.round(completed / total * 100));
     }
     for (const trade of importedTradeUpdates) {
-      const result = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: targetAccount.id });
+      const result = await updateTrade(trade.id, { ...trade, userId: user.id, accountId: targetAccount.id, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) });
       if (result.error) { showError(result.error); return false; }
       completed += 1; onProgress?.(Math.round(completed / total * 100));
     }
     for (const trade of unique) {
-      const result = await createTrade(user.id, targetAccount.id, trade);
+      const result = await createTrade(user.id, targetAccount.id, { ...trade, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) });
       if (result.error) { showError(result.error); return false; }
       let importedTrade = result.data;
       if (targetBalance) {
@@ -8171,9 +8327,9 @@ export function TradingJournalApp({ user, onLogout }) {
     // A later edit may already have replaced this request's durable snapshot.
     // Never clear that newer recovery record on an older response.
     if (!pending || !sameProfileCaseStudyLibrary(pending.workspace,workspace)) return true;
-    const cleared=clearCaseStudySyncOutbox(user.id);
-    if (cleared.error) { setProfileCaseStudySyncStatus('Local save failed'); return false; }
-    caseStudySyncOutboxRef.current=null;
+    const confirmed=confirmCaseStudySyncOutbox(user.id);
+    if (confirmed.error) { setProfileCaseStudySyncStatus('Local save failed'); return false; }
+    caseStudySyncOutboxRef.current=confirmed.data || null;
     return true;
   };
   const confirmAmbiguousCaseStudySave = async (workspace, originalError) => {
@@ -8193,6 +8349,9 @@ export function TradingJournalApp({ user, onLogout }) {
     throw new Error('Sync conflict: the cloud response could not confirm this save. Both versions are stored on this device until reconciliation.');
   };
   const commitCaseStudyCloudSave = async caseStudyWorkspace => {
+    if (membershipPreviewEnabled && localJournal.isLocalJournal()) {
+      throw new Error('Cloud sync was paused. Your pending Case Study changes are preserved.');
+    }
     const existingConflict=profileCaseStudyConflictRef.current;
     if (existingConflict) {
       persistCaseStudyConflict(caseStudyWorkspace,existingConflict.cloud,existingConflict.cloudRevision);
@@ -8229,6 +8388,9 @@ export function TradingJournalApp({ user, onLogout }) {
     finally { caseStudySaveSeqRef.current+=1; }
   };
   const saveCaseStudyWorkspaceNow = async (caseStudyWorkspace) => {
+    if (membershipPreviewEnabled && !localJournal.isLocalJournal() && membership?.cloudWritesAllowed !== true) {
+      throw new Error('Cloud write access could not be confirmed.');
+    }
     if (profileCaseStudyState.status !== 'ready') throw new Error('Case Study Library is read-only until its authoritative profile library loads successfully.');
     if (localJournal.isLocalJournal()) { const saved=await localJournal.saveProfileCaseStudyLibrary(user.id,caseStudyWorkspace); if(saved.error) { setProfileCaseStudySyncStatus('Local save failed'); throw new Error(saved.error); } profileCaseStudyWorkspaceRef.current=saved.data; profileCaseStudyWorkspaceOwnerRef.current=user.id; setProfileCaseStudySyncStatus('Saved locally'); return saved.data; }
     // Persist before queuing. Closing the tab while another request is active
@@ -8249,7 +8411,7 @@ export function TradingJournalApp({ user, onLogout }) {
   };
   const prepareCaseStudyLibraryUpload = async (workspace) => {
     const temporary=workspace || (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : null);
-    if (!temporary) return {kind:'nothing-to-upload'};
+    if (!temporary || (membershipPreviewEnabled && localJournal.isLocalJournal())) return {kind:'nothing-to-upload'};
     const loaded=await loadProfileCaseStudyLibrary(user.id);
     if (loaded.error) { setProfileCaseStudySyncStatus(loaded.failure?.kind==='network' ? 'Sync failed' : 'Cloud unavailable'); showError(loaded.error); return null; }
     const plan=planTemporaryLibraryUpload({temporaryLibrary:temporary,cloudLibrary:loaded.data,cloudRevision:loaded.revision});
@@ -8297,6 +8459,49 @@ export function TradingJournalApp({ user, onLogout }) {
     profileCaseStudyRevisionRef.current=plan.expectedRevision; setProfileCaseStudyRevision(plan.expectedRevision);
     try { await handleSaveCaseStudyWorkspace(pending.workspace); }
     catch (error) { showError(error?.message || 'The Case Study Library could not be synchronized.'); }
+  };
+  const reconcileCaseStudyLibrary = async (selections = {}) => {
+    const conflict=profileCaseStudyConflictRef.current;
+    if (!conflict) throw new Error('There is no Case Study conflict to reconcile. Refresh the library comparison.');
+    if (localJournal.isLocalJournal()) throw new Error('Cloud reconciliation is unavailable while this journal is in local-only mode. Both copies remain preserved.');
+    const latest=await loadProfileCaseStudyLibrary(user.id);
+    if (latest.error) throw new Error(latest.error);
+    // Never apply a proposal to a cloud revision we did not compare. Preserve
+    // the device snapshot, replace only its cloud comparison copy, and let the
+    // UI retain any choices whose record keys still exist.
+    if (latest.revision !== conflict.cloudRevision || !sameProfileCaseStudyLibrary(latest.data || {}, conflict.cloud || {})) {
+      persistCaseStudyConflict(conflict.local, latest.data || {}, latest.revision ?? null);
+      return {kind:'refreshed'};
+    }
+    const proposal=createCaseStudyReconciliationProposal({local:conflict.local,cloud:conflict.cloud,selections});
+    if (!proposal.canSave) {
+      if (proposal.unresolved.length) throw new Error('Choose a device or cloud version for every changed record before saving.');
+      throw new Error('Review the missing or orphaned Case Study relationships before saving. Both source copies remain protected.');
+    }
+    persistPendingCaseStudySnapshot(proposal.workspace, latest.revision ?? null);
+    setProfileCaseStudySyncStatus('Saving reviewed merge');
+    const saved=await saveProfileCaseStudyLibrary(user.id,proposal.workspace,latest.revision ?? null);
+    if (saved.conflict) {
+      persistCaseStudyConflict(conflict.local,saved.data || {},saved.revision ?? null);
+      return {kind:'refreshed'};
+    }
+    if (saved.error) {
+      // The original pair is retained rather than turning a failed request
+      // into a replacement attempt or losing the browser recovery snapshot.
+      persistCaseStudyConflict(conflict.local,conflict.cloud,conflict.cloudRevision);
+      throw new Error(saved.error);
+    }
+    profileCaseStudyWorkspaceRef.current=saved.data;
+    profileCaseStudyWorkspaceOwnerRef.current=user.id;
+    profileCaseStudyRevisionRef.current=saved.revision;
+    setProfileCaseStudyRevision(saved.revision);
+    setProfileCaseStudyWorkspace(saved.data);
+    setProfileCaseStudyState({status:'ready',workspace:saved.data,message:''});
+    profileCaseStudyConflictRef.current=null;
+    setProfileCaseStudyConflict(null);
+    if (!clearConfirmedCaseStudySnapshot(proposal.workspace)) throw new Error('The cloud merge succeeded, but the protected device snapshot could not be cleared.');
+    setProfileCaseStudySyncStatus('Synced');
+    return {kind:'saved'};
   };
   const closeDailyRoutine = () => { setRoutineContinueOnly(false); routineGate.current.cancel(); setRoutineOpenMarkupAfterSave(false); };
   const openRoutineManagement = () => { closeDailyRoutine(); setModal(null); setRoutineRequest(value => value + 1); if (getBackNavigation().enabled) navigateMobile("management"); else setPage("management"); };
@@ -8363,7 +8568,7 @@ export function TradingJournalApp({ user, onLogout }) {
     return true;
   };
   const handleDeleteMarkup = async (id) => {  const res=await deleteMarkup(id); if(res.error)return showError(res.error); setMarkups(x=>x.filter(m=>m.id!==id)); };
-  const handleSaveReview = async (r) => { const res=await saveTradeReview(user.id,account.id,r); if(res.error){showError(res.error);return false;}setReviews(x=>{const i=x.findIndex(v=>v.id===res.data.id);return i<0?[res.data,...x]:x.map(v=>v.id===res.data.id?res.data:v);}); return true; };
+  const handleSaveReview = async (r) => { const res=await saveTradeReview(user.id,account.id,{ ...r, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) }); if(res.error){showError(res.error);return false;}setReviews(x=>{const i=x.findIndex(v=>v.id===res.data.id);return i<0?[res.data,...x]:x.map(v=>v.id===res.data.id?res.data:v);}); return true; };
   const handleSavePeriodReview = async (review) => { const res = await savePeriodReview(user.id, account.id, review); if (res.error) { showError(res.error); return false; } setPeriodReviews((items) => { const index = items.findIndex((item) => item.id === res.data.id || (item.accountId === account.id && item.type === res.data.type && item.key === res.data.key)); return index < 0 ? [res.data, ...items] : items.map((item, itemIndex) => itemIndex === index ? res.data : item); }); return true; };
   // Loss guardrails restrict trade entry, not bookkeeping or funding the account.
   const handleRecordFinanceMovement = async (movement) => {
@@ -9015,7 +9220,7 @@ export function TradingJournalApp({ user, onLogout }) {
           {page === "dashboard" && (financialValidation.valid ? <DashboardSurface routine={routineStore.routine} onStartDay={openNewMarkup} routineBusy={routineTriggerBusy} account={dashboardAccount} workspace={account} stats={dashboardStats} liveBalance={financeTotals(dashboardAccount).tradingBalance} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} guardrails={dashboardGuardrails || guardrails} displayName={displayName} loginQuote={loginQuote} challenge={challenge} userId={user.id} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} onViewTrades={() => { window.history.pushState({}, "", JOURNAL_PATHS.tradelog); setPage("tradelog"); }} onViewCalendar={() => navigateMobile('calendar')} onViewChallenge={() => navigateMobile('challenge')} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {(page === "tradelog" || page === "journal") && <TradeLogPage account={account} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveReview={handleSaveReview} onNewTrade={() => openNewTrade()} onEdit={(t) => { if (guardrails.tradeEntryLocked) return showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period."); beginTradeEntry({editing:t}); }} onRetrySave={(trade) => { void saveTrade(trade); }} onDelete={handleDeleteTrade} onLinkMarkup={(trade, markupId) => saveTrade({ ...trade, premarketMarkupId: markupId })} locked={guardrails.tradeEntryLocked} />}
           
-          {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
+          {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} membership={membership} api={localBacktests ? localBacktestApi : backtestCloud} localOnly={localBacktests} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
           {page === "analytics" && (financialValidation.valid ? <AnalyticsPage account={dashboardAccount} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveTradeReview={handleSaveReview} onViewMarkups={() => setPage("markups")} onOpenAccountSettings={guardrails.tradeEntryLocked ? undefined : () => setModal("account")} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "finance" && account.finance?.enabled && (financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "challenge" && (isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled)) && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
@@ -9024,10 +9229,10 @@ export function TradingJournalApp({ user, onLogout }) {
             : <CalendarPage account={account} markups={markups.filter((markup)=>markup.accountId===account.id)} reviews={reviews.filter((review)=>review.accountId===account.id)} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails}/>) }
           {page === "psychology" && <PsychologyPage account={account} challenge={challenge} />}
           {page === "news" && <NewsPage userId={user.id}/>}
-          {page === "management" && <ManagementPage onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
+          {page === "management" && <ManagementPage membershipAdmin={membershipAdmin} revokeMembershipAdmin={revokeMembershipAdmin} onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onExportCloudRecovery={exportCloudRecovery} promotionPanel={membershipPreviewEnabled && cloudSyncEntitled ? <JournalPromotion userId={user.id}/> : null} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
           {page === "markups" && (phoneCalendar ? <MobileMarkupsV2 markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} currency={account.baseCurrency} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} /> : <MarkupsRedesign markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} />)}
           {page === "reviews" && <ReviewLibraryPage onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />}
-          {page === "case-studies" && <CaseStudyLibrary sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />}
+          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
           </div>
           </MobilePageStage>
           </BacktestViewSession>
@@ -11992,11 +12197,41 @@ export default function AppRoot() {
   const requestedPage = useRef(JOURNAL_PAGES_BY_PATH[window.location.pathname]);
   const [sessionTheme] = useSiteTheme();
   const [user, setUser] = useState(undefined); // undefined = checking, null = logged out
+  const [membership, setMembership] = useState({ status: 'unauthenticated', membership: null, error: '' });
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [financialDisclaimer, setFinancialDisclaimer] = useState(null);
   const [financialDisclaimerBusy, setFinancialDisclaimerBusy] = useState(false);
   useEffect(() => {
     if (user?.user_metadata?.language) setLanguage(user.user_metadata.language);
+  }, [user?.id]);
+
+  // Membership is refreshed for every authenticated account identity. It is
+  // deliberately never persisted in browser storage and is not an authority:
+  // Supabase's current JWT and RLS policies remain the source of truth.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setMembership({ status: 'unauthenticated', membership: null, error: '' });
+      return undefined;
+    }
+    setMembership({ status: 'loading', membership: null, error: '' });
+    let request = 0;
+    const refresh = async () => {
+      const sequence = ++request;
+      const next = await resolveJournalMembership({ authenticated: true });
+      if (!cancelled && sequence === request) setMembership(next);
+    };
+    void refresh();
+    const resume = () => { if (document.visibilityState === 'visible') void refresh(); };
+    if (membershipPreviewEnabled) {
+      window.addEventListener('focus', refresh);
+      document.addEventListener('visibilitychange', resume);
+    }
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', resume);
+    };
   }, [user?.id]);
 
   useEffect(() => {
@@ -12082,6 +12317,7 @@ export default function AppRoot() {
   return (
     <TradingJournalApp key={user.id}
       user={user}
+      membership={membership}
       onLogout={async () => { const result = await signOut(); if (!result.error) setUser(null); }}
     />
   );

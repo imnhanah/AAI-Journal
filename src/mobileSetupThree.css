@@ -1,0 +1,41 @@
+/* Phone Journal Setup: the Instruments tab (Certificates and Memberships restyle in their own files).
+   Presentation only. Theme tokens only: the --phone-* set plus --card, --border, --text, --muted, --accent. */
+@media (max-width:767px) {
+  .tj-mi,.tj-mi * {box-sizing:border-box;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi {display:flex;flex-direction:column;gap:12px;min-width:0;color:var(--text);}
+  .tj-mi-head {display:flex;align-items:center;gap:14px;min-width:0;}
+  .tj-mi-head>span {display:grid;flex:none;place-items:center;width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));color:var(--on-accent,var(--phone-plus-icon));box-shadow:0 12px 22px -12px color-mix(in srgb,var(--accent) 70%,transparent);}
+  .tj-mi-head>div {min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi-head h2 {margin:0;font-size:20px!important;font-weight:650;letter-spacing:-.02em;line-height:1.2;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi-head p {margin:3px 0 0;color:var(--muted);font-size:12.5px;line-height:1.4;}
+  .tj-mi-chips {display:flex;flex-wrap:wrap;gap:8px;}
+  .tj-mi-chips span {display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:.5px solid var(--border);border-radius:17px;background:var(--card);color:var(--muted);font-size:12.5px;}
+  .tj-mi-chips b {color:var(--text);font-size:15px;}
+  .tj-mi-search {display:flex;align-items:center;gap:10px;height:50px;padding:0 6px 0 16px;border:1.5px solid transparent;border-radius:25px;background:var(--card);color:var(--muted);}
+  .tj-mi-search:focus-within {border-color:var(--accent);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi-search input {flex:1;width:auto;min-width:0;height:44px;min-height:0;padding:0;border:0!important;border-radius:0!important;outline:0;background:transparent!important;box-shadow:none!important;color:var(--text);font-size:16px;}
+  .tj-mi-search button {display:grid;flex:none;place-items:center;width:44px;height:44px;padding:0;border:0;background:none;color:var(--muted);}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi .tj-mi-add {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi .tj-mi-add>input.tj-input {grid-column:1/-1;min-width:0;font-size:16px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi .tj-mi-add .tj-instrument-group-picker {margin:0;min-width:0;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi .tj-mi-add>.tj-btn-primary {grid-column:auto;width:auto;min-width:92px;height:50px;min-height:50px;padding:0 22px;border-radius:25px;font-size:15px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi p.tj-mi-note {margin:0 4px;color:var(--muted);font-size:12px;line-height:1.5;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root .tj-mi .tj-management-inline-notice {margin:0 4px;color:var(--muted);font-size:12.5px;}
+
+  /* Groups: stacked cards with a coloured left edge. */
+  .tj-mi .tj-mi-g {--gc:var(--accent);position:relative;margin:0;overflow:hidden;border:.5px solid var(--border);border-radius:24px;background:var(--card);}
+  .tj-mi .tj-mi-g.is-g1 {--gc:var(--phone-blue);}
+  .tj-mi .tj-mi-g.is-g2 {--gc:var(--phone-amber);}
+  .tj-mi .tj-mi-g.is-g3 {--gc:var(--phone-purple,var(--accent));}
+  .tj-mi .tj-mi-g.is-g4 {--gc:var(--phone-loss);}
+  .tj-mi .tj-mi-g::before {content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--gc);}
+  .tj-mi .tj-mi-g>button {min-height:54px;padding:0 16px 0 18px;}
+  .tj-mi .tj-mi-g>button i {flex:none;width:10px;height:10px;border-radius:50%;background:var(--gc);box-shadow:0 0 0 4px color-mix(in srgb,var(--gc) 20%,transparent);}
+  .tj-mi .tj-mi-g>button em {background:color-mix(in srgb,var(--gc) 16%,var(--card));color:var(--gc);font-weight:700;}
+  .tj-mi .tj-mi-g .tj-setup-chips {padding:2px 14px 16px 18px;}
+  .tj-mi .tj-mi-g.is-open>.tj-setup-chips:first-child {padding-top:14px;}
+  .tj-mi .tj-setup-chip {min-height:40px;max-width:100%;border:.5px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--text) 4%,var(--card));font-weight:600;}
+  .tj-mi .tj-setup-chip.is-custom {border-color:color-mix(in srgb,var(--phone-amber) 45%,var(--border));background:color-mix(in srgb,var(--phone-amber) 13%,var(--card));padding-left:14px;}
+  .tj-mi .tj-setup-chip.is-custom button {width:36px;min-height:40px;}
+  .tj-mi .tj-setup-chip.is-editing input {height:36px;min-height:0;font-size:16px;}
+}
