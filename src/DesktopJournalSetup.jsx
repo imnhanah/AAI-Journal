@@ -1,7 +1,7 @@
 // Desktop Journal Setup v2 (SETUP_V2 in TradingJournal.jsx), after aaicorefx-desktop-journal-setup.html.
 // Phones keep the existing Setup screens. Every change goes through the same handlers as the old page.
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, ArrowRight, Award, CandlestickChart, Check, ChevronDown, Database, Download, GripVertical, Info, Layers, ListChecks, LogIn, Pencil, Plus, Search, ShieldCheck, Sun, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, ArrowRight, Award, CalendarDays, CandlestickChart, Check, ChevronDown, Database, Download, Flame, GripVertical, Info, Layers, ListChecks, LogIn, Pencil, Plus, Search, ShieldCheck, Sun, Trash2, Upload, X } from 'lucide-react';
 import CertificateArchive from './CertificateArchive.jsx';
 import { ThemeSelect } from './JournalControls';
 import { DEFAULT_INSTRUMENTS, INSTRUMENT_GROUPS, instrumentGroup, normalizeInstrument, sameInstrument } from './instrumentCatalog';
@@ -101,7 +101,7 @@ function RoutineSection({ routine, onUpdate, run, toast }) {
   const add = async (text) => { const item = { id: `custom-${crypto.randomUUID()}`, label: text, group, order: items.length, enabled: true }; const ok = await save((current) => ({ ...current, customItems: [...current.customItems, item], order: [...current.order, item.id] })); if (ok) toast(`Added “${text}”`); return ok; };
   const list = (key, title) => {
     const all = items.filter((item) => item.group === key), rows = all.filter((item) => lower(item.label).includes(lower(query)));
-    return <div className="js2-gr" key={key}><div className="js2-gh"><b>{title}</b><small>{all.filter((item) => item.enabled !== false).length} of {all.length} on</small></div>
+    return <div className="js2-gr" key={key}><div className="js2-gh"><b>{title}</b><small>{all.filter((item) => item.enabled !== false).length} of {all.length} on</small></div><div className="js2-pb" aria-hidden="true"><u style={{ width: `${all.length ? Math.round((all.filter((item) => item.enabled !== false).length / all.length) * 100) : 0}%` }}/></div>
       <div className={`js2-list ${drag && over === key ? 'is-over' : ''}`} onDragOver={(event) => { if (drag) { event.preventDefault(); setOver(key); } }} onDragLeave={() => setOver(null)} onDrop={(event) => { event.preventDefault(); if (drag) move(drag, null, key); setDrag(null); setOver(null); }}>
         {rows.map((item) => { const index = items.indexOf(item), isEditing = editing === item.id;
           return <div key={item.id} data-routine-id={item.id} className={`js2-rw ${item.enabled === false ? 'is-off' : ''} ${drag === item.id ? 'is-dg' : ''} ${drag && over === item.id ? 'is-ov' : ''}`} draggable={!listDisabled && !isEditing}
@@ -112,7 +112,8 @@ function RoutineSection({ routine, onUpdate, run, toast }) {
             <span className="js2-gp" role="button" tabIndex={listDisabled ? -1 : 0} aria-label={`Reorder ${item.label}`} title="Drag to reorder, or use Arrow Up / Arrow Down" onKeyDown={(event) => { if (listDisabled) return; if (event.key === 'ArrowUp' && index > 0) { event.preventDefault(); void save((current) => reorderRoutine(current, item.id, items[index - 1].id)); } if (event.key === 'ArrowDown' && index < items.length - 1) { event.preventDefault(); void save((current) => reorderRoutine(current, items[index + 1].id, item.id)); } }}><GripVertical size={15}/></span>
             <span className="js2-n">{index + 1}</span>
             <NameField label={item.label} editing={isEditing} disabled={listDisabled} onCancel={() => setEditing(null)} onRename={(text) => rename(item, text)}/>
-            {!isEditing && <div className="js2-ac"><div className="js2-sl"><ThemeSelect label={`Group for ${item.label}`} compact value={item.group} disabled={listDisabled} onChange={(event) => save((current) => updateRoutineItem(current, item, { group: event.target.value }))}>{GROUPS.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</ThemeSelect></div><Toggle on={item.enabled !== false} label={item.label} disabled={listDisabled} onChange={() => save((current) => updateRoutineItem(current, item, { enabled: item.enabled === false }))}/><button type="button" className="js2-ib" aria-label={`Edit ${item.label}`} disabled={listDisabled} onClick={() => setEditing(item.id)}><Pencil size={15}/></button><DeleteButton label={item.label} disabled={listDisabled} onDelete={async () => { if (await save((current) => deleteRoutineItem(current, item))) toast('Deleted'); }}/></div>}
+            {isEditing && <div className="js2-sl is-edg"><ThemeSelect label={`Group for ${item.label}`} compact value={item.group} disabled={listDisabled} onChange={(event) => save((current) => updateRoutineItem(current, item, { group: event.target.value }))}>{GROUPS.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</ThemeSelect></div>}
+            {!isEditing && <div className="js2-ac"><Toggle on={item.enabled !== false} label={item.label} disabled={listDisabled} onChange={() => save((current) => updateRoutineItem(current, item, { enabled: item.enabled === false }))}/><button type="button" className="js2-ib" aria-label={`Edit ${item.label}`} disabled={listDisabled} onClick={() => setEditing(item.id)}><Pencil size={15}/></button><DeleteButton label={item.label} disabled={listDisabled} onDelete={async () => { if (await save((current) => deleteRoutineItem(current, item))) toast('Deleted'); }}/></div>}
           </div>; })}
         {!rows.length && <div className="js2-em">{all.length ? 'No match.' : 'Nothing here. Drag an item here to move it.'}</div>}
       </div></div>;
@@ -121,20 +122,20 @@ function RoutineSection({ routine, onUpdate, run, toast }) {
   return <>
     <Head id="daily-routine" title="Daily routine" count={plural(activeRoutineItems(routine).length, 'item on', 'items on')} desc="the same in every workspace"><button type="button" className="js2-bn" disabled={listDisabled} onClick={async () => { if (await save(restoreRoutineItems)) toast('Recommended items restored'); }}>Restore recommended</button></Head>
     <div className="js2-st">
-      <div><small>Today</small><b>{todayDone}<em>/{todayTotal}</em></b><span>{todayCompletion ? 'Saved for today' : 'Not started yet'}</span></div>
-      <div><small>Current streak</small><b>{history.streak}<em> days</em></b><span>{history.streak ? 'Keep it going' : 'Complete a day to start'}</span></div>
-      <div><small>This week</small><b>{completedThisWeek}<em>/{recentTradingDays.length} full</em></b><div className="js2-wk" aria-label="This trading week, Monday through Friday">{tradingWeek.map((entry) => { const state = completionState(entry.key); return <i key={entry.key} className={`is-${state} ${entry.today ? 'is-today' : ''}`} title={`${entry.key}: ${state}`}>{day(entry.key)}</i>; })}</div></div>
-      <div className="is-att"><small>Needs attention</small><b>{historicalRows.length && mostMissed?.missed ? mostMissed.label : 'Nothing yet'}</b><span>{historicalRows.length && mostMissed?.missed ? `${plural(mostMissed.missed, 'missed check', 'missed checks')} across saved routines` : 'Missed-item trends build here.'}</span></div>
+      <div><div><small>Today</small><b>{todayDone}<em>/{todayTotal}</em></b><span>{todayCompletion ? 'Saved for today' : 'Not started yet'}</span></div><i className="js2-ring" style={{ '--p': todayTotal ? Math.round((todayDone / todayTotal) * 100) : 0 }} aria-hidden="true"><u>{todayTotal ? Math.round((todayDone / todayTotal) * 100) : 0}%</u></i></div>
+      <div><div><small>Current streak</small><b>{history.streak}<em> days</em></b><span>{history.streak ? 'Keep it going' : 'Complete a day to start'}</span></div><i className="js2-ic" aria-hidden="true"><Flame size={20}/></i></div>
+      <div><div><small>This week</small><b>{completedThisWeek}<em>/{recentTradingDays.length} full</em></b><div className="js2-wk" aria-label="This trading week, Monday through Friday">{tradingWeek.map((entry) => { const state = completionState(entry.key); return <i key={entry.key} className={`is-${state} ${entry.today ? 'is-today' : ''}`} title={`${entry.key}: ${state}`}>{day(entry.key)}</i>; })}</div></div><i className="js2-ic" aria-hidden="true"><CalendarDays size={20}/></i></div>
+      <div className="is-att"><div><small>Needs attention</small><b>{historicalRows.length && mostMissed?.missed ? mostMissed.label : 'Nothing yet'}</b><span>{historicalRows.length && mostMissed?.missed ? `${plural(mostMissed.missed, 'missed check', 'missed checks')} across saved routines` : 'Missed-item trends build here.'}</span></div><i className="js2-ic" aria-hidden="true"><AlertTriangle size={20}/></i></div>
     </div>
     <div className="js2-set">
-      <div className="js2-sr2"><div><b>Routine enabled</b><p>{routine.enabled ? 'Show the checklist before you start trading.' : 'Markups and trades open straight to their forms.'}</p></div><Toggle on={routine.enabled} label="Routine enabled" disabled={busy} onChange={async () => { const next = !routine.enabled; if (await save((current) => ({ ...current, enabled: next }))) toast(next ? 'Routine is on' : 'Routine is off'); }}/></div>
-      <div className="js2-sr2"><div><b>Opens before</b><p>The routine must be completed before this action.</p></div><span className="js2-fx">First markup or trade</span></div>
-      <div className="js2-sr2"><div><b>Resets when</b><p>Checks clear for the next day at this moment.</p></div><span className="js2-fx">Tokyo session opens · next in {resetCountdown()}</span></div>
+      <div className="js2-sr2 is-sw"><Toggle on={routine.enabled} label="Routine enabled" disabled={busy} onChange={async () => { const next = !routine.enabled; if (await save((current) => ({ ...current, enabled: next }))) toast(next ? 'Routine is on' : 'Routine is off'); }}/><div><b>Routine enabled</b><p>{routine.enabled ? 'Show the checklist before you start trading.' : 'Markups and trades open straight to their forms.'}</p></div></div>
+      <div className="js2-sr2"><div><b>Opens before</b><p>Must be done before this action.</p></div><span className="js2-fx">First markup or trade</span></div>
+      <div className="js2-sr2"><div><b>Resets when</b><p>Checks clear for the next day.</p></div><span className="js2-fx"><Sun size={14} aria-hidden="true"/>Tokyo opens · in {resetCountdown()}</span></div>
     </div>
     <div className="js2-sec"><div className="js2-sh"><h3>Routine items</h3><span>{items.length} items · {on} on</span><SearchBox value={query} onChange={setQuery} placeholder="Search items…"/></div>
       {!routine.enabled && <p className="js2-fn">Switch the routine on to edit its items.</p>}
       <AddBar placeholder="Add a routine item…" label="Routine item" disabled={listDisabled} onAdd={add}><div className="js2-sl is-w"><ThemeSelect label="Routine item group" value={group} disabled={listDisabled} onChange={(event) => setGroup(event.target.value)}>{GROUPS.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</ThemeSelect></div></AddBar>
-      {GROUPS.map(([key, title]) => list(key, title))}
+      <div className="js2-cols">{GROUPS.map(([key, title]) => list(key, title))}</div>
     </div>
   </>;
 }
@@ -161,14 +162,14 @@ function InstrumentSection({ instruments, onSave, toast }) {
   };
   const remove = (symbol) => { onSave(instruments.filter((item) => symbolOf(item) !== symbol)); toast(`Removed ${symbol}`); };
   return <>
-    <Head id="instruments" title="Instrument management" count={plural(available.length, 'instrument', 'instruments')} desc="Choose a group when adding your own instrument. This decides where it appears in the journal."><SearchBox value={query} onChange={setQuery} placeholder="Search instruments…"/></Head>
+    <Head id="instruments" title="Instrument management" desc="Choose a group when adding your own instrument. This decides where it appears in the journal."><span className="js2-kp"><b>{available.length}</b> Instruments</span><span className="js2-kp"><b>{custom.length}</b> Your own</span><SearchBox value={query} onChange={setQuery} placeholder="Search instruments…"/></Head>
     <AddBar placeholder="Add an instrument, e.g. EURGBP or NAS100" label="New instrument" onAdd={add}><div className="js2-sl is-w"><ThemeSelect label="Instrument group" value={group} onChange={(event) => setGroup(event.target.value)}>{INSTRUMENT_GROUPS.map((name) => <option key={name} value={name}>{name}</option>)}</ThemeSelect></div></AddBar>
     <p className="js2-fn">Built-in instruments stay in the list. Your own can be renamed or removed.</p>
-    <div className="js2-ig">{INSTRUMENT_GROUPS.map((name) => {
+    <div className="js2-ig">{INSTRUMENT_GROUPS.map((name, groupIndex) => {
       const all = available.filter((item) => item.group === name), hits = all.filter((item) => lower(item.symbol).includes(lower(query)));
       if (query.trim() && !hits.length) return null;
       const open = query.trim() || !closed[name];
-      return <section className="js2-gc" key={name}><button type="button" className="js2-gt" aria-expanded={!!open} onClick={() => setClosed((current) => ({ ...current, [name]: !current[name] }))}><b>{name}</b><span>{all.length}</span><ChevronDown size={14} className={open ? 'is-up' : ''}/></button>
+      return <section className={`js2-gc is-g${groupIndex % 5}`} key={name}><button type="button" className="js2-gt" aria-expanded={!!open} onClick={() => setClosed((current) => ({ ...current, [name]: !current[name] }))}><b>{name}</b><span>{all.length}</span><ChevronDown size={14} className={open ? 'is-up' : ''}/></button>
         {open && <div className="js2-ch">{hits.map((item) => item.fixed ? <span className="js2-c" key={item.symbol}>{item.symbol}</span> : editing === item.symbol
           ? <span className="js2-c is-ed" key={item.symbol}><NameField label={item.symbol} editing onCancel={() => setEditing(null)} onRename={(text) => rename(item.symbol, text)}/></span>
           : <span className="js2-c is-custom" key={item.symbol}>{item.symbol}<button type="button" aria-label={`Rename ${item.symbol}`} onClick={() => setEditing(item.symbol)}><Pencil size={11}/></button><button type="button" className="is-x" aria-label={`Remove ${item.symbol}`} onClick={() => remove(item.symbol)}><X size={11}/></button></span>)}{!hits.length && <small className="js2-mu">None in this group.</small>}</div>}
@@ -182,7 +183,7 @@ function PresetCard({ preset, onChange, onDelete }) {
   const risk = Number(draft.risk) > 0 ? Number(draft.risk) : Number(preset.risk) || 0, rr = Number(draft.rr) > 0 ? Number(draft.rr) : Number(preset.rr) || 0;
   const commit = (field) => { const value = Number(draft[field]); if (value > 0 && (field !== 'risk' || value <= 100)) { if (String(value) !== String(preset[field])) onChange({ ...preset, [field]: String(value) }); } else setDraft((current) => ({ ...current, [field]: String(preset[field]) })); };
   const field = (key, label, unit) => <label><small>{label}</small><span className="js2-in is-s"><input inputMode="decimal" aria-label={`${preset.name} ${label.toLowerCase()}`} value={draft[key]} onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))} onBlur={() => commit(key)} onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}/><em>{unit}</em></span></label>;
-  return <article className="js2-pc"><header><b>{preset.name}</b><DeleteButton label={preset.name} onDelete={onDelete}/></header><div className="js2-pv">{field('risk', 'Risk', '%')}{field('rr', 'Target', 'R')}</div><div className="js2-bar" aria-hidden="true"><u className="is-l" style={{ flex: risk || 1 }}/><u className="is-g" style={{ flex: risk * rr || 1 }}/></div><small className="js2-mu">Risk {trimNumber(risk)}% · Target {trimNumber(rr)}R · Reward {trimNumber(risk * rr)}%</small></article>;
+  return <article className="js2-pc"><header><b>{preset.name}</b><em className="js2-rt" title="Risk to reward">1:{trimNumber(rr)}</em><DeleteButton label={preset.name} onDelete={onDelete}/></header><div className="js2-pv">{field('risk', 'Risk', '%')}{field('rr', 'Target', 'R')}</div><div className="js2-bar" aria-hidden="true"><u className="is-l" style={{ flex: risk || 1 }}/><u className="is-g" style={{ flex: risk * rr || 1 }}/></div><small className="js2-mu">Risk {trimNumber(risk)}% · Target {trimNumber(rr)}R · Reward {trimNumber(risk * rr)}%</small></article>;
 }
 
 function RiskSection({ presets, onSave, toast }) {
@@ -258,6 +259,14 @@ export default function DesktopJournalSetup({ section, onSection, membershipAdmi
   const rules = account?.rules || [];
   const counts = { 'daily-routine': activeRoutineItems(routine).length, rules: rules.length, 'risk-presets': riskPresets.length, instruments: allInstruments.length, mistakes: mistakeDefaults.length + customMistakes.length, confluences: typeTags.length, entries: confluenceSessions.length, certificates: certificates.length, mappings: section === 'mappings' ? null : readMappings(userId).length, backup: null };
   const stringList = (items, handler) => ({ items: items.map((item) => ({ id: item, label: item })), onAdd: (text) => saveWith(handler)([...items, text]), onRename: (id, text) => saveWith(handler)(items.map((item) => item === id ? text : item)), onDelete: (id) => saveWith(handler)(items.filter((item) => item !== id)) });
+  const groups = membershipAdmin ? [...SECTIONS, ['Administration', [['memberships', 'Memberships', ShieldCheck]]]] : SECTIONS;
+  const navRef = useRef(null);
+  useEffect(() => { const nav = navRef.current, tab = nav?.querySelector('[aria-selected="true"]'); if (!nav || !tab) return; const n = nav.getBoundingClientRect(), t = tab.getBoundingClientRect(); if (t.left < n.left + 24) nav.scrollLeft += t.left - n.left - 24; else if (t.right > n.right - 24) nav.scrollLeft += t.right - n.right + 24; }, [section]);
+  const tabKeys = (event) => {
+    const ids = groups.flatMap(([, list]) => list.map(([id]) => id)), at = ids.indexOf(section);
+    const next = event.key === 'ArrowRight' ? ids[(at + 1) % ids.length] : event.key === 'ArrowLeft' ? ids[(at - 1 + ids.length) % ids.length] : event.key === 'Home' ? ids[0] : event.key === 'End' ? ids.at(-1) : null;
+    if (!next) return; event.preventDefault(); onSection(next); requestAnimationFrame(() => document.getElementById(`js2-tab-${next}`)?.focus());
+  };
   const body = section === 'memberships' ? membershipPanel : section === 'daily-routine' ? <RoutineSection routine={routine} onUpdate={onUpdateRoutine} run={run} toast={toast}/>
     : section === 'instruments' ? <InstrumentSection instruments={instruments} onSave={saveWith(onInstruments)} toast={toast}/>
     : section === 'risk-presets' ? <RiskSection presets={riskPresets} onSave={saveWith(onRiskPresets)} toast={toast}/>
@@ -270,8 +279,8 @@ export default function DesktopJournalSetup({ section, onSection, membershipAdmi
     : <ListSection id="rules" title="Trading rules" one="trading rule" many="trading rules" placeholder="Add a trading rule…" desc="Your rules. Link them to a trade or a test to measure how often you follow them." toast={toast} items={rules.map((rule) => ({ id: rule.id, label: rule.text }))} onAdd={(text) => void run(() => onAddRule(text))} onRename={(id, text) => void run(() => onUpdateRule(id, text))} onDelete={(id) => void run(() => onRemoveRule(id))}/>;
   return <div className="js2">
     <section className="js2-hd"><div><span className="js2-eb">Setup</span><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></div><span className={`js2-sv ${pending ? 'is-saving' : ''} ${error ? 'is-err' : ''}`} role="status" aria-live="polite">{pending ? <><i/>Saving…</> : error ? <><AlertTriangle size={13}/>{error}</> : <><Check size={13}/>All changes saved</>}</span></section>
-    <nav className="js2-nv" aria-label="Journal Setup sections"><div className="js2-navin">{(membershipAdmin ? [...SECTIONS, ['Administration', [['memberships', 'Memberships', ShieldCheck]]]] : SECTIONS).map(([group, list]) => <div className={`js2-grp${group === 'Administration' ? ' is-last' : ''}`} key={group}>{list.map(([id, label, Icon]) => <button type="button" key={id} className={`js2-tab${section === id ? ' is-on' : ''}`} aria-current={section === id ? 'page' : undefined} onClick={() => onSection(id)}><Icon size={15} aria-hidden="true"/>{label}</button>)}</div>)}</div></nav>
-    <section className="js2-card js2-pn" key={section}>{body}</section>
+    <nav className="js2-nv" aria-label="Journal Setup sections"><div className="js2-navin" ref={navRef} role="tablist" aria-label="Journal Setup sections" onKeyDown={tabKeys}>{groups.map(([group, list]) => <div className={`js2-grp${group === 'Administration' ? ' is-last' : ''}`} key={group} role="presentation">{list.map(([id, label, Icon]) => <button type="button" key={id} role="tab" id={`js2-tab-${id}`} aria-selected={section === id} tabIndex={section === id ? 0 : -1} className={`js2-tab${section === id ? ' is-on' : ''}`} onClick={() => onSection(id)}><Icon size={15} aria-hidden="true"/>{label}</button>)}</div>)}</div></nav>
+    <section className="js2-card js2-pn" key={section} role="tabpanel" aria-labelledby={`js2-tab-${section}`}>{body}</section>
     <div className={`js2-toast ${message ? 'is-on' : ''}`} role="status" aria-live="polite">{message}</div>
   </div>;
 }
