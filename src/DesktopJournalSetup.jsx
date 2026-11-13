@@ -222,7 +222,7 @@ function MappingSection({ userId, instruments, toast }) {
   </>;
 }
 
-function BackupSection({ onExportBackup, onImportBackup, snapshots = [], onRestoreSnapshot, protectedStorage, localOnly }) {
+function BackupSection({ onExportBackup, onExportCloudRecovery, onImportBackup, snapshots = [], onRestoreSnapshot, protectedStorage, localOnly }) {
   const fileRef = useRef(null);
   const [pending, setPending] = useState(null);
   const ago = (value) => { const days = Math.floor((Date.now() - Date.parse(value)) / 86400000); return days <= 0 ? 'today' : `${days} day${days === 1 ? '' : 's'} ago`; };
@@ -232,7 +232,7 @@ function BackupSection({ onExportBackup, onImportBackup, snapshots = [], onResto
     <Head id="backup" title="Data & backup" desc="Keep a complete copy before moving devices or making major changes."/>
     {localOnly && <p className="js2-fn">{latest ? `Last device backup ${ago(latest.createdAt)}.` : 'No device snapshot yet.'} Storage: <b>{protectedStorage === true ? 'Protected' : 'Not protected'}</b>{protectedStorage === true ? ', so your browser is less likely to clear local journal data.' : '. Browser storage may be cleared when space is needed.'}</p>}
     <div className="js2-bk">
-      <div className="js2-bc"><span className="js2-bi"><Download size={22}/></span><b>Save a copy</b><p>Accounts, trades, markups, reviews, lists, and Daily Routine.</p><button type="button" className="js2-bn is-pri" onClick={onExportBackup}><Download size={15}/>Export backup</button></div>
+      <div className="js2-bc"><span className="js2-bi"><Download size={22}/></span><b>Save a copy</b><p>Accounts, trades, markups, reviews, lists, and Daily Routine.</p><button type="button" className="js2-bn is-pri" onClick={onExportBackup}><Download size={15}/>Export backup</button>{onExportCloudRecovery && <button type="button" className="js2-bn" onClick={onExportCloudRecovery}>Export cloud recovery copy</button>}</div>
       <div className="js2-bc is-w"><span className="js2-bi is-w"><Upload size={22}/></span><b>Restore a copy</b><p>Use a backup file to replace the journal on this device.</p><button type="button" className="js2-bn is-dng" onClick={() => fileRef.current?.click()}><Upload size={15}/>Import backup</button><input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onImportBackup(file); }}/></div>
     </div>
     <div className="js2-nt"><Info size={16}/><p>Restoring replaces everything on this device. Export a backup first if you are not sure.</p></div>
@@ -243,7 +243,7 @@ function BackupSection({ onExportBackup, onImportBackup, snapshots = [], onResto
   </>;
 }
 
-export default function DesktopJournalSetup({ section, onSection, userId, account, certificates = [], typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
+export default function DesktopJournalSetup({ section, onSection, membershipAdmin, membershipPanel, userId, account, certificates = [], typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onExportCloudRecovery, promotionPanel, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
   const [pending, setPending] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -258,22 +258,20 @@ export default function DesktopJournalSetup({ section, onSection, userId, accoun
   const rules = account?.rules || [];
   const counts = { 'daily-routine': activeRoutineItems(routine).length, rules: rules.length, 'risk-presets': riskPresets.length, instruments: allInstruments.length, mistakes: mistakeDefaults.length + customMistakes.length, confluences: typeTags.length, entries: confluenceSessions.length, certificates: certificates.length, mappings: section === 'mappings' ? null : readMappings(userId).length, backup: null };
   const stringList = (items, handler) => ({ items: items.map((item) => ({ id: item, label: item })), onAdd: (text) => saveWith(handler)([...items, text]), onRename: (id, text) => saveWith(handler)(items.map((item) => item === id ? text : item)), onDelete: (id) => saveWith(handler)(items.filter((item) => item !== id)) });
-  const body = section === 'daily-routine' ? <RoutineSection routine={routine} onUpdate={onUpdateRoutine} run={run} toast={toast}/>
+  const body = section === 'memberships' ? membershipPanel : section === 'daily-routine' ? <RoutineSection routine={routine} onUpdate={onUpdateRoutine} run={run} toast={toast}/>
     : section === 'instruments' ? <InstrumentSection instruments={instruments} onSave={saveWith(onInstruments)} toast={toast}/>
     : section === 'risk-presets' ? <RiskSection presets={riskPresets} onSave={saveWith(onRiskPresets)} toast={toast}/>
     : section === 'mappings' ? <MappingSection userId={userId} instruments={allInstruments} toast={toast}/>
     : section === 'certificates' ? <CertificateArchive certificates={certificates} currency={account?.baseCurrency}/>
-    : section === 'backup' ? <BackupSection onExportBackup={onExportBackup} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/>
+    : section === 'backup' ? <>{promotionPanel}<BackupSection onExportBackup={onExportBackup} onExportCloudRecovery={onExportCloudRecovery} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/></>
     : section === 'mistakes' ? <ListSection id="mistakes" title="Mistake management" one="mistake" many="mistakes" grid placeholder="Add a mistake…" desc="Mistakes you can tag on a trade when reviewing it. Presets are built in and cannot be removed." toast={toast} items={[...mistakeDefaults.map((item) => ({ id: item, label: item, locked: true, tag: 'Preset' })), ...customMistakes.map((item) => ({ id: item, label: item }))]} onAdd={(text) => saveWith(onMistakes)([...customMistakes, text])} onRename={(id, text) => saveWith(onMistakes)(customMistakes.map((item) => item === id ? text : item))} onDelete={(id) => saveWith(onMistakes)(customMistakes.filter((item) => item !== id))}/>
     : section === 'confluences' ? <ListSection id="confluences" title="Confluences" one="confluence" many="confluences" grid placeholder="Add a confluence…" desc="The reasons that line up behind an entry. Tag them when you log a trade." toast={toast} {...stringList(typeTags, onTypeTags)}/>
     : section === 'entries' ? <ListSection id="entries" title="Entry types" one="entry type" many="entry types" placeholder="Add an entry type…" desc="How you got into the trade, such as with or against the trend." toast={toast} {...stringList(confluenceSessions, onConfluence)}/>
     : <ListSection id="rules" title="Trading rules" one="trading rule" many="trading rules" placeholder="Add a trading rule…" desc="Your rules. Link them to a trade or a test to measure how often you follow them." toast={toast} items={rules.map((rule) => ({ id: rule.id, label: rule.text }))} onAdd={(text) => void run(() => onAddRule(text))} onRename={(id, text) => void run(() => onUpdateRule(id, text))} onDelete={(id) => void run(() => onRemoveRule(id))}/>;
   return <div className="js2">
     <section className="js2-hd"><div><span className="js2-eb">Setup</span><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></div><span className={`js2-sv ${pending ? 'is-saving' : ''} ${error ? 'is-err' : ''}`} role="status" aria-live="polite">{pending ? <><i/>Saving…</> : error ? <><AlertTriangle size={13}/>{error}</> : <><Check size={13}/>All changes saved</>}</span></section>
-    <div className="js2-wr">
-      <nav className="js2-card js2-nv" aria-label="Journal Setup sections">{SECTIONS.map(([group, list]) => <div className="js2-ng" key={group}><small>{group}</small>{list.map(([id, label, Icon]) => <button type="button" key={id} className={section === id ? 'is-on' : ''} aria-current={section === id ? 'page' : undefined} onClick={() => onSection(id)}><span><Icon size={17}/></span>{label}{counts[id] != null && <em>{counts[id]}</em>}</button>)}</div>)}</nav>
-      <section className="js2-card js2-pn" key={section}>{body}</section>
-    </div>
+    <nav className="js2-nv" aria-label="Journal Setup sections"><div className="js2-navin">{(membershipAdmin ? [...SECTIONS, ['Administration', [['memberships', 'Memberships', ShieldCheck]]]] : SECTIONS).map(([group, list]) => <div className={`js2-grp${group === 'Administration' ? ' is-last' : ''}`} key={group}>{list.map(([id, label, Icon]) => <button type="button" key={id} className={`js2-tab${section === id ? ' is-on' : ''}`} aria-current={section === id ? 'page' : undefined} onClick={() => onSection(id)}><Icon size={15} aria-hidden="true"/>{label}</button>)}</div>)}</div></nav>
+    <section className="js2-card js2-pn" key={section}>{body}</section>
     <div className={`js2-toast ${message ? 'is-on' : ''}`} role="status" aria-live="polite">{message}</div>
   </div>;
 }

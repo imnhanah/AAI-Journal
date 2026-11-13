@@ -28,23 +28,21 @@
   @keyframes js2-spin {to {transform:rotate(360deg);}}
 
   /* Layout and section nav */
-  .js2-wr {display:grid;grid-template-columns:268px minmax(0,1fr);align-items:start;gap:20px;}
-  .js2-nv {position:sticky;top:84px;display:flex;flex-direction:column;gap:14px;padding:14px;}
-  .js2-ng {display:flex;flex-direction:column;gap:2px;}
-  .js2-ng small {padding:6px 12px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;}
-  .tj-root .js2 .js2-ng button {position:relative;display:flex;align-items:center;gap:11px;min-height:0;padding:9px 12px;border:0;border-radius:13px;background:none;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;text-align:left;cursor:pointer;transition:background .2s,color .2s;}
-  .js2-ng button > span {display:grid;flex:none;width:30px;height:30px;place-items:center;border-radius:10px;background:var(--raised);transition:background .2s,color .2s;}
-  .js2-ng button em {min-width:24px;margin-left:auto;padding:2px 7px;border-radius:99px;background:var(--raised);color:var(--muted);font-size:12px;font-style:normal;font-weight:700;text-align:center;}
-  .tj-root .js2 .js2-ng button:hover {background:var(--raised);color:var(--text);}
-  .tj-root .js2 .js2-ng button.is-on {background:var(--js2-soft);color:var(--text);}
-  .js2-ng button.is-on > span {background:var(--accent);color:var(--on-accent);}
-  .js2-ng button.is-on em {background:var(--surface);color:var(--accent);}
+  .js2-nv {position:sticky;top:84px;z-index:20;margin:0 -4px;padding:4px 4px 10px;}
+  .js2-navin {display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;padding-bottom:1px;}
+  .js2-navin::-webkit-scrollbar {display:none;}
+  .js2-grp {display:flex;gap:2px;padding:4px;border-radius:15px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);backdrop-filter:blur(8px);flex:none;}
+  .js2-grp.is-last {margin-left:auto;}
+  .tj-root .js2 .js2-tab {height:36px;padding:0 11px;border-radius:11px;font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:7px;transition:color .18s,background .18s;border:0;cursor:pointer;background:none;min-height:0;}
+  .tj-root .js2 .js2-tab:hover {color:var(--text);background:var(--raised);}
+  .tj-root .js2 .js2-tab.is-on {background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 62%,var(--bg)));color:var(--on-accent);box-shadow:0 8px 18px -8px color-mix(in srgb,var(--accent) 70%,transparent),inset 0 1px 0 color-mix(in srgb,var(--on-accent) 22%,transparent);}
 
   /* Panel */
-  .js2-pn {display:flex;flex-direction:column;gap:22px;min-height:560px;padding:28px 30px 32px;}
-  .js2-pn > * {animation:js2-rise .4s cubic-bezier(.22,1,.36,1) both;}
+  .js2-pn {position:relative;overflow:hidden;display:flex;flex-direction:column;gap:22px;min-height:560px;padding:28px 30px 32px;border-radius:28px;}
+  .js2-pn::before {content:"";position:absolute;inset:0 0 auto;height:210px;background:radial-gradient(520px 200px at 0% 0%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 75%),linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent);pointer-events:none;}
+  .js2-pn > * {position:relative;animation:js2-rise .4s cubic-bezier(.22,1,.36,1) both;}
   .js2-ph {display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding-bottom:22px;border-bottom:1px solid var(--border);}
-  .js2-pi {display:grid;flex:none;width:50px;height:50px;place-items:center;border-radius:16px;background:var(--js2-soft);color:var(--accent);}
+  .js2-pi {display:grid;flex:none;width:54px;height:54px;place-items:center;border-radius:17px;background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));color:var(--on-accent);box-shadow:0 14px 26px -12px color-mix(in srgb,var(--accent) 65%,transparent),inset 0 1px 0 color-mix(in srgb,var(--on-accent) 25%,transparent);}
   .js2-pt {flex:1;min-width:220px;}
   .js2-pt h2 {margin:0;font-size:22px;letter-spacing:-.03em;}
   .js2-pt p {max-width:640px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.45;}
@@ -198,11 +196,6 @@
 
   /* By the page's own width (the side panel can take half the window). */
   @container journal-workspace (max-width:1180px) {
-    .tj-root .js2 .js2-wr {grid-template-columns:minmax(0,1fr);}
-    .tj-root .js2 .js2-nv {position:static;flex-direction:row;gap:6px;padding:8px;overflow-x:auto;scrollbar-width:none;}
-    .tj-root .js2 .js2-ng {flex-direction:row;align-items:center;}
-    .tj-root .js2 .js2-ng small {display:none;}
-    .tj-root .js2 .js2-ng button {white-space:nowrap;}
     .tj-root .js2 .js2-st {grid-template-columns:repeat(2,minmax(0,1fr));}
     .tj-root .js2 .js2-rp {grid-template-columns:minmax(0,1fr);}
     .tj-root .js2 :is(.js2-bk,.js2-list.is-g2) {grid-template-columns:minmax(0,1fr);}
