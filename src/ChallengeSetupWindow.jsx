@@ -6,6 +6,7 @@ import {
   challengeSetupFits, defaultChallengeReward, snapChallengeReward,
 } from './challengeModel.js';
 import { ADAPTIVE_STEP_BACK_RULES, normaliseAdaptiveStepBack } from './challengeRules.js';
+import SetupPanel from './SetupPanel.jsx';
 import './challengeSetupWindow.css';
 
 // One setup window for every challenge (desktop two-column dialog, phone bottom sheet),
@@ -50,10 +51,10 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
   const [rDraft, setRDraft] = useState(String(setup.reward ?? ''));
   useEffect(() => { setRDraft(String(setup.reward ?? '')); }, [setup.reward]);
   useEffect(() => {
-    const escape = (event) => { if (event.key === 'Escape' && !busy) (compat ? setCompat(false) : onCancel()); };
+    const escape = (event) => { if (event.key === 'Escape' && compat) setCompat(false); };
     document.addEventListener('keydown', escape);
     return () => document.removeEventListener('keydown', escape);
-  }, [busy, compat, onCancel]);
+  }, [compat]);
 
   const patch = (next) => setSetup((current) => ({ ...current, ...next }));
   const fits = useMemo(() => challengeSetupFits({ balance: start }), [start]);
@@ -96,14 +97,13 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
   const Fixed = ({ children }) => <div className="csw2-in is-dis">{locked && <Lock size={13} />}<span>{children}</span></div>;
   const modeLabel = `${MODES[mode].kicker.replace('MODE', 'Mode')} · ${reward || '—'}R · ${levelCount} levels`;
 
-  return <Portal><div className="csw2-ov" role="presentation">
-    <div className="csw2-bk" onClick={() => { if (!busy) onCancel(); }} />
+  return <SetupPanel label={isNew ? 'Start a challenge' : 'Edit challenge'} panelKey="challenge" busy={busy} onClose={onCancel}>{(close) =>
     <section className="csw2" role="dialog" aria-modal="true" aria-labelledby="csw2-title">
       <span className="csw2-grab" aria-hidden="true" />
       <header className="csw2-mh">
         <span className="csw2-av">{(setup.name || '?').slice(0, 1).toUpperCase()}</span>
         <div><span className="csw2-eb">{isNew ? 'Start a challenge' : 'Edit challenge'}</span><h2 id="csw2-title">{setup.name || 'Untitled'}</h2></div>
-        <button type="button" className="csw2-xb" aria-label="Close" onClick={onCancel} disabled={busy}><X size={18} /></button>
+        <button type="button" className="csw2-xb" aria-label="Close" onClick={close} disabled={busy}><X size={18} /></button>
       </header>
       <div className="csw2-mb">
         <div className="csw2-ml">
@@ -180,16 +180,14 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
         {askDelete ? <div className="csw2-cf"><span><AlertTriangle size={15} />Delete this challenge and its progress?</span><div><button type="button" className="csw2-bt" onClick={() => setAskDelete(false)} disabled={busy}>Keep</button><button type="button" className="csw2-bt is-dng" onClick={onDelete} disabled={busy}>{deleting ? 'Deleting…' : 'Delete'}</button></div></div>
           : <>{!isNew && <button type="button" className="csw2-bt is-dng csw2-tr" aria-label="Delete challenge" title="Delete challenge" onClick={() => setAskDelete(true)} disabled={busy}><Trash2 size={17} /></button>}
             <span className={`csw2-hl ${valid ? 'is-ok' : 'is-no'}`}>{valid ? <><Check size={15} />Everything checks out.</> : <><AlertTriangle size={15} />Fix the setup warning to continue.</>}</span><span className="csw2-sp" />
-            <button type="button" className="csw2-bt" onClick={onCancel} disabled={busy}>Cancel</button>
+            <button type="button" className="csw2-bt" onClick={close} disabled={busy}>Cancel</button>
             <button type="button" className="csw2-bt is-pri" disabled={busy || !valid} onClick={() => onSave({ ...setup, adaptiveStepBack: adaptive ? stepBack : undefined })}><Check size={15} />{saving ? 'Saving…' : isNew ? 'Start challenge' : 'Save changes'}</button></>}
       </footer>
       {compat && <CompatibleSetups fits={fits} money={money} mode={mode} levelCount={levelCount} reward={reward} start={start} where={where} onClose={() => setCompat(false)}
         onApply={(choice) => { setToast('Setup updated. It fits your balance.'); patch({ mode: choice.mode, levelCount: choice.levelCount, reward: choice.mode === 'adaptive' ? (reward >= 1 ? reward : 3) : choice.reward, ...(choice.mode === 'adaptive' ? { adaptiveRiskPct: setup.adaptiveRiskPct || ADAPTIVE_DEFAULT.risk, adaptiveDrawdownPct: setup.adaptiveDrawdownPct || ADAPTIVE_DEFAULT.drawdown, adaptiveStepBack: stepBack } : {}) }); setCompat(false); }} />}
-    </section>
-  </div></Portal>;
+    </section>}
+  </SetupPanel>;
 }
-
-function Portal({ children }) { return createPortal(children, document.body); }
 
 function Ladder({ plan, money, where, adaptive, total }) {
   const W = 320, H = 84;
@@ -221,7 +219,8 @@ function CompatibleSetups({ fits, money, mode, levelCount, reward, start, where,
   const only = !list.length;
   const bump = (fit, delta) => { const next = r1(Math.min(fit.rewardMax, Math.max(fit.rewardMin, Number(rOf(fit)) + delta))); setRs({ ...rs, [key(fit)]: next }); };
   const rangeLine = (m) => rangeText(m);
-  return <div className="csw2-pov" role="dialog" aria-modal="true" aria-label="Compatible setups">
+  const host = document.querySelector('.tj-root') || document.body;
+  return <CompatPortal host={host}><div className="csw2-ov csw2-ovp"><div className="csw2-pov" role="dialog" aria-modal="true" aria-label="Compatible setups">
     <div className="csw2-bk is-in" onClick={onClose} />
     <div className="csw2-dlg csw2-cp">
       <header className="csw2-cph">
@@ -251,5 +250,7 @@ function CompatibleSetups({ fits, money, mode, levelCount, reward, start, where,
       </div>
       <footer className="csw2-cpf"><button type="button" className="csw2-bt" onClick={onClose}>Cancel</button><button type="button" className="csw2-bt is-pri" disabled={!chosen} onClick={() => chosen && onApply(chosen.mode === 'adaptive' ? chosen : { ...chosen, reward: Math.min(chosen.rewardMax, Math.max(chosen.rewardMin, Number(rOf(chosen)))) })}>{chosen?.mode === 'adaptive' ? 'Use Adaptive Balance' : chosen ? `Use ${MODES[chosen.mode].kicker.replace('MODE', 'Mode')} · ${Number(rOf(chosen))}R · ${chosen.levelCount} levels` : 'Choose a setup'}</button></footer>
     </div>
-  </div>;
+  </div></div></CompatPortal>;
 }
+
+function CompatPortal({ host, children }) { return createPortal(children, host); }

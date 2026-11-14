@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from "react";
+import {PanelPrefsContext} from './panelPrefsContext.js';
 import {beginEntryEditor, clearEntryEditor} from './entryEditorSession.js';
 import {normaliseEntryPanelBehavior, normaliseEntryPanelPosition} from './entryPanelPosition.js';
 import {useConfirmation} from './ConfirmationDialog.jsx';
@@ -962,7 +963,6 @@ function getGrade(winRate, pnl, count) {
 
 const ImageViewerContext = React.createContext(() => {});
 // Shell v2: where side panels open, for panels opened from deep inside a page (the trade review).
-const PanelPrefsContext = React.createContext({ position: 'right', behavior: 'push', userId: null });
 
 function ImageViewer({ src, alt = "Full-size image", onClose }) {
   const [zoom, setZoom] = useState(1);

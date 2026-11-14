@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertTriangle, Check, Info, Landmark, Plus, Trash2, X } from 'lucide-react';
 import { useSavingsSoundEnabled } from './SavingsSoundControls';
 import { playAlertSound, stopAlertSound, unlockAlertSounds } from './alertSounds';
 import { saveSavingsSound, SAVINGS_SOUND_EVENT } from './savingsSoundSettings';
 import { newSavingsDraft, savingsIssue } from './savingsSetup.js';
+import SetupPanel from './SetupPanel.jsx';
 import './challengeSetupWindow.css';
 
 // Savings accounts are managed on the Finance page in this window (same look as the
@@ -41,11 +42,6 @@ export default function SavingsSetupWindow({ plans, balances = [], currency = 'U
   const [askDelete, setAskDelete] = useState(false);
   const sym = currency === 'USD' ? '$' : `${currency} `;
   const money = (value) => `${sym}${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-  useEffect(() => {
-    const escape = (event) => { if (event.key === 'Escape' && !saving) onClose(); };
-    document.addEventListener('keydown', escape);
-    return () => document.removeEventListener('keydown', escape);
-  }, [saving, onClose]);
   const plan = draft.find((item) => item.id === sel) || draft[0];
   const patch = (next) => setDraft((list) => list.map((item) => (item.id === plan.id ? { ...item, ...next } : item)));
   const issues = useMemo(() => draft.map((item) => [item, savingsIssue(item)]).filter(([, issue]) => issue), [draft]);
@@ -58,14 +54,13 @@ export default function SavingsSetupWindow({ plans, balances = [], currency = 'U
   };
   const pct = Number(plan?.allocationPct) || 0;
 
-  return <div className="csw2-ov" role="presentation">
-    <div className="csw2-bk" onClick={() => { if (!saving) onClose(); }} />
+  return <SetupPanel label="Savings accounts" panelKey="savings" defaultWidth={760} busy={saving} onClose={onClose}>{(close) =>
     <section className="csw2" role="dialog" aria-modal="true" aria-labelledby="sv-title">
       <span className="csw2-grab" aria-hidden="true" />
       <header className="csw2-mh">
         <span className="csw2-av"><Landmark size={22} /></span>
         <div><span className="csw2-eb">Finance</span><h2 id="sv-title">Savings accounts</h2></div>
-        <button type="button" className="csw2-xb" aria-label="Close" onClick={onClose} disabled={saving}><X size={18} /></button>
+        <button type="button" className="csw2-xb" aria-label="Close" onClick={close} disabled={saving}><X size={18} /></button>
       </header>
       <div className="csw2-mb">
         <div className="csw2-ml">
@@ -122,9 +117,9 @@ export default function SavingsSetupWindow({ plans, balances = [], currency = 'U
         {askDelete ? <div className="csw2-cf"><span><AlertTriangle size={15} />Delete {plan?.name || 'this account'} when you save?</span><div><button type="button" className="csw2-bt" onClick={() => setAskDelete(false)}>Keep</button><button type="button" className="csw2-bt is-dng" onClick={remove}>Delete</button></div></div>
           : <>{plan && <button type="button" className="csw2-bt is-dng csw2-tr" aria-label="Delete savings account" title="Delete savings account" onClick={() => setAskDelete(true)} disabled={saving}><Trash2 size={17} /></button>}
             <span className={`csw2-hl ${valid ? 'is-ok' : 'is-no'}`}>{valid ? <><Check size={15} />Everything checks out.</> : <><AlertTriangle size={15} />Fix the warning to save.</>}</span><span className="csw2-sp" />
-            <button type="button" className="csw2-bt" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="button" className="csw2-bt" onClick={close} disabled={saving}>Cancel</button>
             <button type="button" className="csw2-bt is-pri" disabled={saving || !valid} onClick={() => onSave(draft)}><Check size={15} />{saving ? 'Saving…' : 'Save savings'}</button></>}
       </footer>
-    </section>
-  </div>;
+    </section>}
+  </SetupPanel>;
 }
