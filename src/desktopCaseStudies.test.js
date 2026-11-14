@@ -113,7 +113,7 @@ test('every section is one document with a shared toolbar, rename, remove and ad
   assert.match(library, /const renameStudySection = \(study, index, next\) =>/);
   assert.match(library, /const removeStudySection = \(study, index\) =>/);
   const editor = readFileSync(new URL('./RichDocumentEditor.jsx', import.meta.url), 'utf8');
-  assert.match(editor, /export async function insertImageInView\(view,file,coordinates\)/);
+  assert.match(editor, /export async function insertImageInView\(view,file,coordinates,\{saveImage\}=\{\}\)/);
   assert.match(editor, /bare=false, placeholder='', onFocusEditor=null/);
 });
 
@@ -152,7 +152,7 @@ test('desktop Case Studies use their own confirm dialog and toasts; phones keep 
   assert.match(dialog, /export const ConfirmationContext=createContext\(async\(\)=>false\);/);
   assert.match(library, /if \(!desktop\) return appConfirm\(options\);/);
   assert.match(library, /<ConfirmationContext\.Provider value=\{confirm\}><Cs2ToastContext\.Provider value=\{notify\}>/);
-  assert.match(library, /return <Cs2Feedback><CaseStudyLibraryReady /);
+  assert.match(library, /return <CaseStudyImageOwnerContext\.Provider value=\{props\.sessionOwner \|\| ''\}><Cs2Feedback><CaseStudyLibraryReady /);
   assert.match(library, /if \(open\[open\.length - 1\] !== backdrop\.current\) return;/);
   for (const message of ['Pinned to top', 'Study deleted', 'Library exported', 'Library restored', 'Connection created', 'Evidence attached', 'Study validated']) assert.ok(library.includes(message), message);
 });

@@ -40,22 +40,22 @@ test('Adaptive Balance fails at, not only below, its configured drawdown floor',
 test('deposits select the highest affordable starting level, without trading passes',()=>{
   const baseline={...base(),automation:{...base().automation,mode:'streak'}};
   const result=replayChallenge(baseline,{...account,trades:[],financeMovements:[deposit(80)]});
-  assert.equal(result.liveBalance,100);assert.equal(result.activeLevel,4);
+  assert.equal(result.liveBalance,100);assert.equal(result.activeLevel,5);
   assert.equal(Object.values(result.statuses).includes('Pass'),false);
-  assert.deepEqual([result.statuses[1],result.statuses[2],result.statuses[3]],['Jumped','Jumped','Jumped']);
+  assert.deepEqual([result.statuses[1],result.statuses[2],result.statuses[3],result.statuses[4]],['Jumped','Jumped','Jumped','Jumped']);
   assert.equal(result.fundingJumps[2],'Jumped due to deposit-funded balance');
 });
 test('starting balance funds skipped levels without counting them as trading passes',()=>{
   const baseline={...base(),automation:{...base().automation,mode:'streak'}};
   const result=replayChallenge(baseline,{...account,balance:100,trades:[]});
-  assert.equal(result.activeLevel,4);
-  assert.deepEqual([result.statuses[1],result.statuses[2],result.statuses[3]],['Jumped','Jumped','Jumped']);
-  assert.equal(result.statuses[4],'In progress');
+  assert.equal(result.activeLevel,5);
+  assert.deepEqual([result.statuses[1],result.statuses[2],result.statuses[3],result.statuses[4]],['Jumped','Jumped','Jumped','Jumped']);
+  assert.equal(result.statuses[5],'In progress');
   assert.equal(result.fundingJumps[1],'Jumped due to starting balance');
   assert.equal(result.stepBacks,0);
 });
 test('deposit jump preserves earned passes and replay removes labels when deposit is deleted',()=>{
-  const win={...loss,id:'win',grossPnl:6,pnl:6};
+  const win={...loss,id:'win',grossPnl:6.75,pnl:6.75};
   const result=replayChallenge(base(),{...account,trades:[win],financeMovements:[deposit(80)]});
   assert.equal(result.statuses[1],'Pass');
   assert.equal(result.statuses[2],'Jumped');

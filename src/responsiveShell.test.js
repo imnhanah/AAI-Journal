@@ -4,6 +4,8 @@ import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {JSDOM} from 'jsdom';
 import {createServer} from 'vite';
+import configure from '../vite.config.js';
+import {createServer as createHttpServer} from 'node:http';
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -59,7 +61,9 @@ function installDom(width) {
 
 test('actual MobileShell mounts and unmounts cleanly across repeated desktop/phone transitions', async () => {
   const harness = installDom(1024);
-  const vite = await createServer({root:process.cwd(), server:{middlewareMode:true}, appType:'custom'});
+  // SSR needs no listening socket or bundled temporary config in the repo.
+  const hmrServer = createHttpServer();
+  const vite = await createServer({...configure({mode:'development'}), configFile:false, root:process.cwd(), server:{middlewareMode:true,hmr:{server:hmrServer}}, appType:'custom'});
   let root;
   try {
     const {default:MobileShell} = await vite.ssrLoadModule('/src/MobileShell.jsx');

@@ -1,7 +1,7 @@
 import React, {useState,useEffect,useId} from 'react';
 import {Check,Layers,TriangleAlert,X} from 'lucide-react';
 import {ThemeSelect} from './JournalControls';
-import {CHALLENGE_LEVEL_OPTIONS, normaliseChallengeLevelCount, canUseLossStreak, challengeModeActivationRule} from './challengeModel';
+import {CHALLENGE_LEVEL_OPTIONS, normaliseChallengeLevelCount, canUseLossStreak, challengeModeActivationRule, defaultChallengeReward} from './challengeModel';
 export function ChallengeCompatibleDialog({recommendation,onClose,onApply}) {
   const recommendationValue=recommendation?.mode==='adaptive'
     ? 'Adaptive Balance'
@@ -23,7 +23,7 @@ export default function ChallengeModeSettings({challenge, enabled, liveBalance, 
   // Adaptive configuration is chosen before the challenge begins. Its risk
   // and drawdown remain editable here; the entry level is always Level 1.
   const adaptiveInputDisabled=!enabled || loading || saving || !modesReady;
-  const reward=state.automation?.rewardRatio ?? (mode==='streak'?3.1:'');
+  const reward=state.automation?.rewardRatio ?? (mode==='streak'?defaultChallengeReward('streak'):mode==='risk'?defaultChallengeReward('risk'):'');
   const adaptiveRisk=state.automation?.adaptiveRiskPct ?? 1;
   const adaptiveDrawdown=state.automation?.adaptiveDrawdownPct ?? 10;
   const [rewardDraft,setRewardDraft]=useState(String(reward));
@@ -32,7 +32,7 @@ export default function ChallengeModeSettings({challenge, enabled, liveBalance, 
   useEffect(()=>setRewardDraft(String(reward)),[reward]);
   const modeOptions=[
     ['risk','MODE 1','Risk limit','Step back when the level’s risk limit is reached.'],
-    ['streak','MODE 2','Two-loss streak','Step back after two consecutive losses.'],
+    ['streak','MODE 2','Two losses on a level','Step back after two losses on the same level.'],
     ['adaptive','MODE 3','Adaptive Balance','Use a custom balance, drawdown and percent risk.'],
   ];
   const saveReward=value=>{

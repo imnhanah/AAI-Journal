@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EVIDENCE_IMAGE_MAX_BYTES, validateEvidenceImage } from './caseStudyWorkspace.js';
-import { isEvidenceImageReference, isStoredEvidenceImageReference } from './caseStudyEvidenceImages.js';
+import { isEvidenceImageReference, isStoredEvidenceImageReference, sharedImageCloudReference } from './caseStudyEvidenceImages.js';
 
 test('shared Evidence Library image references are distinct from direct document-image references',()=>{
   assert.equal(isEvidenceImageReference('tj-case-study-evidence:chart-1'),true);
@@ -19,4 +19,11 @@ test('Evidence Library retains the existing safe image size and type policy',()=
   assert.equal(validateEvidenceImage({type:'image/png',size:EVIDENCE_IMAGE_MAX_BYTES}),null);
   assert.match(validateEvidenceImage({type:'image/gif',size:1}),/PNG, JPEG, or WebP/);
   assert.match(validateEvidenceImage({type:'image/webp',size:EVIDENCE_IMAGE_MAX_BYTES+1}),/3 MB/);
+});
+
+test('shared images retain a cloud fallback after refresh even when this browser has no IndexedDB metadata',()=>{
+  assert.equal(sharedImageCloudReference({cloudRef:'tj-case-study-storage:owner-a/asset-a',userId:'owner-a',assetId:'asset-a'}),'tj-case-study-storage:owner-a/asset-a');
+  assert.equal(sharedImageCloudReference({metadata:{cloudPath:'owner-a/asset-a'},userId:'owner-a',assetId:'asset-a'}),'tj-case-study-storage:owner-a/asset-a');
+  assert.equal(sharedImageCloudReference({userId:'owner-a',assetId:'asset-a'}),'tj-case-study-storage:owner-a/asset-a');
+  assert.equal(sharedImageCloudReference({userId:'owner-b',assetId:'asset-a'}),'tj-case-study-storage:owner-b/asset-a');
 });

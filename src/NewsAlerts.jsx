@@ -141,8 +141,7 @@ export function NewsAlertsProvider({children,activePage,onViewEvent,userId}) {
   };
   return <NewsAlertContext.Provider value={{settings,setSettings,enable,testAlert,unlockSound,previewTone,setBrowserDelivery,filters,soundReady,message,now,next:nextNewsRelease(eligible,now),loading:calendar.loading,available:calendar.results.filter(result=>Array.isArray(result.events)).length}}>
     {children}
-    {banner && phone && <aside className="tj-news-notifications" aria-label="News notifications">{banner.alerts.map(({event,minute},index)=><article key={`${banner.id}-${index}`} role="alert" className={`tj-news-notification ${minute===0?'is-release':minute<=5?'is-five':'is-fifteen'}`}><span className="tj-news-notification-bell" aria-hidden="true">🔔</span><div className="tj-news-notification-content"><small>{banner.test?'ALERT PREVIEW':minute===0?'RELEASING NOW':`RELEASE IN ${minute} MIN`}</small><strong>{event.title}</strong><p><b>{event.currency}</b><span>{event.isoDate?new Date(event.isoDate).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'—'} · {event.impact?event.impact[0].toUpperCase()+event.impact.slice(1):'News'}</span></p></div><button type="button" aria-label={`Dismiss news alert: ${event.title}`} onClick={()=>setBanner(current=>{if(!current)return null;const alerts=current.alerts.filter((_,item)=>item!==index);return alerts.length?{...current,alerts}:null;})}>×</button><i key={banner.id} className="tj-news-notification-lifetime" aria-hidden="true"/></article>)}</aside>}
-    {banner && !phone && <aside className="na2-toasts" aria-label="News notifications">{banner.alerts.slice(0,3).map(({event,minute},index)=>{
+    {banner && <aside className="na2-toasts" aria-label="News notifications">{banner.alerts.slice(0,3).map(({event,minute},index)=>{
       const impact=["high","medium","low"].includes(event.impact)?event.impact:"medium";
       const impactLabel=impact[0].toUpperCase()+impact.slice(1);
       const value=(field)=>field===undefined||field===null||field===""?"—":field;
@@ -165,6 +164,7 @@ export function NewsAlertsProvider({children,activePage,onViewEvent,userId}) {
 export function NewsReleaseHero(){
   const alert=useContext(NewsAlertContext);
   const [open,setOpen]=useState(false);
+  useEffect(()=>{const show=()=>setOpen(true);window.addEventListener('tj-news-open-alerts',show);return()=>window.removeEventListener('tj-news-open-alerts',show);},[]);
   if(!alert)return null;
   const {settings,next,now}=alert;
   return <section className={`tj-nx-hero ${settings.enabled?"is-enabled":"is-disabled"}`} aria-label="News release timer">
@@ -175,6 +175,13 @@ export function NewsReleaseHero(){
     {alert.message && <p className="tj-nx-alert-message" role="status">{alert.message}</p>}
     {open && <PhoneNewsAlertSheet alert={alert} onClose={()=>setOpen(false)}/>}
   </section>;
+}
+
+// Phone header bell: opens the same alert sheet as the Next release card.
+export function NewsAlertBell(){
+  const alert=useContext(NewsAlertContext);
+  if(!alert)return null;
+  return <button type="button" className="tj-nx-bell" aria-label="News alerts" onClick={()=>window.dispatchEvent(new Event('tj-news-open-alerts'))}><span><Bell size={16}/>{alert.settings.enabled&&<b aria-hidden="true"/>}</span></button>;
 }
 
 export function NewsAlertControls(){

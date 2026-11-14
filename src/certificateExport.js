@@ -26,9 +26,10 @@ function inlineStyles(source, target) {
 
 async function svgCanvas(element) {
   await document.fonts?.ready;
-  const bounds = element.getBoundingClientRect();
-  const width = Math.round(bounds.width);
-  const height = Math.round(bounds.height);
+  // Layout size, not the on-screen box: on phones the certificate is turned
+  // on screen, and the saved file must stay the normal landscape certificate.
+  const width = Math.round(element.offsetWidth);
+  const height = Math.round(element.offsetHeight);
   if (!width || !height) throw new Error('Certificate has no visible dimensions.');
   const clone = element.cloneNode(true);
   inlineStyles(element, clone);

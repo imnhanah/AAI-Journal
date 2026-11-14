@@ -43,9 +43,9 @@ test('alerts deliver by banner and/or browser notification and play the chosen t
   assert.match(sounds, /export async function playAlertTone\(tone='app'\)\{\n\s*if\(!ALERT_TONE_NOTES\[tone\]\)return playAlertSound\('news'\);/);
 });
 
-test('desktop alert banner follows the mockup; phones keep their banner', () => {
-  assert.match(alerts, /\{banner && phone && <aside className="tj-news-notifications"/);
-  assert.match(alerts, /\{banner && !phone && <aside className="na2-toasts"/);
+test('alert banner follows the mockup on desktop and phone', () => {
+  assert.doesNotMatch(alerts, /tj-news-notifications/);
+  assert.match(alerts, /\{banner && <aside className="na2-toasts"/);
   assert.match(alerts, /<button type="button" onClick=\{\(\)=>viewEvent\(index\)\} disabled=\{!event\.isoDate\}>View event<\/button><button type="button" onClick=\{\(\)=>snoozeAlert\(index\)\}>Snooze 5 min<\/button>/);
   assert.match(alerts, /snoozeTimers\.current\.push\(setTimeout\(/);
   assert.match(journal, /<NewsAlertsProvider activePage=\{page\} onViewEvent=\{\(\) => setPage\("news"\)\} userId=\{user\.id\}>/);

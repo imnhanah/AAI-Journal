@@ -154,8 +154,9 @@ import { calculatePositionSize, getInstrumentSpec } from './positionSizing.js';
 import useChallenge from './useChallenge';
 import useBalanceChallenge from './useBalanceChallenge';
 import ChallengeModeSettings, {ChallengeCompatibleDialog} from './ChallengeModeSettings';
-import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule } from "./challengeModel";
-import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel} from './challengeLifecycle';
+import { normaliseAdaptiveStepBack } from "./challengeRules";
+import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule, defaultChallengeReward, snapChallengeReward } from "./challengeModel";
+import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import {psychologyMetrics} from './psychologyMetrics';
 import {replayChallenge, resetAutomation} from './challengeAutomation';
@@ -1714,6 +1715,25 @@ function LinkedPercentageAmountCards({ label, currency, percentage, amount, onPe
   </div></div>;
 }
 
+
+// Challenge setup now lives on the Challenge page. Account settings only reflect it.
+function ChallengeReadOnlyPanel({ on, state, account, currency }) {
+  const mode = state?.automation?.mode || account?.challengeMode || "risk";
+  const levels = state?.automation?.levelCount || account?.challengeLevelCount || 30;
+  const reward = state?.automation?.rewardRatio ?? account?.challengeReward;
+  const money = on ? challengeMoney(state, account) : null;
+  const fmt = (value) => fmtMoney(value, currency).replace(/^\+/, "");
+  const name = mode === "adaptive" ? "Mode 3 · Adaptive balance" : mode === "streak" ? "Mode 2 · Two losses on a level" : "Mode 1 · Risk limit";
+  return <div className="tj-challenge-readonly">
+    {on ? <dl>
+      <div><dt>Mode</dt><dd>{name}</dd></div>
+      <div><dt>Plan</dt><dd>{levels} levels{reward ? ` · ${reward}R` : ""}</dd></div>
+      <div><dt>Current level</dt><dd>{Math.min(state?.activeLevel || 1, levels)} of {levels}</dd></div>
+      {money && money.depositsAfterStart > 0 && <div><dt>Total deposited</dt><dd>{fmt(money.totalDeposited)}</dd></div>}
+    </dl> : <p>No challenge is running on this account.</p>}
+    <button type="button" className="tj-btn-outline" onClick={() => window.dispatchEvent(new CustomEvent("aaicorefx:open-challenge"))}>{on ? "Open Challenge page" : "Start on the Challenge page"}</button>
+  </div>;
+}
 function AccountSettingsSection({ title, children, status, icon, tone = "", danger = false, referencePosition = false, tradeCosts = null, enabled, onEnabledChange, description }) {
   if (title === "Finance") {
     const parts = React.Children.toArray(children);
@@ -1888,7 +1908,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
     ? (selectedBalance?.challengeMode || 'risk')
     : (challengeDraft?.mode ?? challenge.state.automation?.mode ?? 'risk');
   const settingsChallengeReward=multiBalanceWorkspace
-    ? (selectedBalance?.challengeReward ?? (selectedBalance?.challengeMode==='streak' ? 3.1 : null))
+    ? (selectedBalance?.challengeReward ?? (selectedBalance?.challengeMode==='streak' ? defaultChallengeReward('streak') : null))
     : (challengeDraft?.rewardRatio ?? challenge.state.automation?.rewardRatio);
   const settingsChallengeLevelCount=multiBalanceWorkspace ? (selectedBalance?.challengeLevelCount ?? 30) : (challengeDraft?.levelCount ?? challenge.state.automation?.levelCount ?? 30);
   const challengeActivationIssue=settingsChallengeEnabled ? challengeModeActivationRule({mode:settingsChallengeMode,reward:settingsChallengeReward,balance:settingsLiveBalance,levelCount:settingsChallengeLevelCount}) : null;
@@ -2056,9 +2076,9 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       <div className="tj-ma-drop"><Icon name="file"/><span><strong>Import trades</strong><small>Choose a CSV export</small></span>{importTradeField}</div>
       <Group title="Challenge" items={[
         multiBalanceWorkspace
-          ? { key:"challenge-toggle", type:"toggle", icon:"flag", label:"Challenge", note:Number(selectedBalance?.startingBalance) > 0 ? "Uses this balance for the plan" : "Add funds to enable it", on:challengeOn, disabled:!(Number(selectedBalance?.startingBalance) > 0) || selectedBalanceChallengeState.settingsLocked, onChange:() => updateSelectedBalance({ challengeEnabled:!selectedBalance.challengeEnabled, challengeStartingBalance:Number(selectedBalance.startingBalance) || 0 }) }
-          : { key:"challenge-toggle", type:"toggle", icon:"flag", label:"Challenge", note:Number(balance) > 0 ? "Uses this balance for the plan" : "Add funds to enable it", on:challengeOn, disabled:!(Number(balance) > 0) || challenge.state.settingsLocked, onChange:() => setChallengeEnabled(value => !value) },
-        { key:"plan", type:"plan", hidden:!challengeOn, mode:modeName(settingsChallengeMode), level:challengeLevel, count:challengeCount, hint:(multiBalanceWorkspace ? selectedBalanceChallengeState.settingsLocked : draftChallenge.state.settingsLocked) ? "Locked while this challenge has logged trades." : "Pick how you step between levels.", node:multiBalanceWorkspace ? selectedBalancePlan : <ChallengeModeSettings challenge={draftChallenge} enabled={challengeOn} liveBalance={settingsLiveBalance} referenceLayout/> },
+          ? { key:"challenge-toggle", type:"toggle", icon:"flag", label:"Challenge", note:selectedBalance?.challengeEnabled ? "Active · manage it on the Challenge page" : "Start it on the Challenge page", on:!!selectedBalance?.challengeEnabled, disabled:true, onChange:() => {} }
+          : { key:"challenge-toggle", type:"toggle", icon:"flag", label:"Challenge", note:isChallengeEnabled(account) ? "Active · manage it on the Challenge page" : "Start it on the Challenge page", on:isChallengeEnabled(account), disabled:true, onChange:() => {} },
+        { key:"plan", type:"plan", hidden:false, mode:modeName(settingsChallengeMode), level:challengeLevel, count:challengeCount, hint:"Set up, change or delete it on the Challenge page.", node:multiBalanceWorkspace && selectedBalance ? <ChallengeReadOnlyPanel on={!!selectedBalance.challengeEnabled} state={selectedBalanceChallengeState} account={scopeChallengeAccount(account, selectedBalance)} currency={baseCurrency}/> : <ChallengeReadOnlyPanel on={isChallengeEnabled(account)} state={challenge.state} account={account} currency={baseCurrency}/> },
       ]}/>
       {challengeActivationIssue && <p className="tj-ma-note is-alert" role="alert">{challengeActivationIssue.message}</p>}
     </>;
@@ -2133,13 +2153,13 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       <AccountSettingsSection title="Risk Guardrails" icon={<ShieldCheck size={15}/>} description="Only the selected account’s trade activity locks when its limit is reached. Markups remain available." enabled={guardrailsSwitchEnabled} onEnabledChange={enabled => toggleSettingsSection("guardrails",enabled)}>
         <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards compact label="Daily Loss Limit" currency={baseCurrency} percentage={scopedDailyLossLimitPct} amount={scopedDailyLimit ? Number(scopedDailyLimit.toFixed(2)) : ""} onPercentageChange={setScopedDailyLossLimit} onAmountChange={setScopedDailyLossAmount} /><LinkedPercentageAmountCards compact label="Monthly Loss Limit" currency={baseCurrency} percentage={scopedMonthlyLossLimitPct} amount={scopedMonthlyLimit ? Number(scopedMonthlyLimit.toFixed(2)) : ""} onPercentageChange={setScopedMonthlyLossLimit} onAmountChange={setScopedMonthlyLossAmount} /></div><div className="tj-settings-reset-grid"><div><small>DAILY RESET</small><strong>Next day</strong><span>Stops revenge-trading after a bad session.</span></div><div><small>MONTHLY RESET</small><strong>Next month</strong><span>Caps deeper drawdowns before they compound.</span></div></div>
       </AccountSettingsSection>
-      {!multiBalanceWorkspace && <AccountSettingsSection title="Challenge" icon={<Trophy size={15}/>} note="Build a compounding plan from this account’s balance." status={challengeEnabled && Number(balance) > 0 ? "On" : "Off"} isOpen={open.challenge} onToggle={() => toggle("challenge")}>
-        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label="Enable Challenge" aria-checked={challengeEnabled && Number(balance) > 0} disabled={!(Number(balance) > 0) || challenge.state.settingsLocked} className={`tj-settings-switch ${challengeEnabled && Number(balance) > 0 ? "tj-settings-switch-on" : ""}`} onClick={() => setChallengeEnabled(value => !value)}><i/></button><span><strong>Enable Challenge</strong><small>Uses this account’s balance as the challenge balance.</small></span></label>
-        <ChallengeModeSettings challenge={draftChallenge} enabled={challengeEnabled && Number(balance) > 0} liveBalance={settingsLiveBalance}/>
+      {!multiBalanceWorkspace && <AccountSettingsSection title="Challenge" icon={<Trophy size={15}/>} note="Set up and manage your challenge on the Challenge page." status={isChallengeEnabled(account) ? "On" : "Off"} isOpen={open.challenge} onToggle={() => toggle("challenge")}>
+        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label="Challenge status" aria-checked={isChallengeEnabled(account)} disabled className={`tj-settings-switch ${isChallengeEnabled(account) ? "tj-settings-switch-on" : ""}`}><i/></button><span><strong>{isChallengeEnabled(account) ? "Challenge active" : "No challenge running"}</strong><small>Read only here. Use the Challenge page to start, change or delete it.</small></span></label>
+        <ChallengeReadOnlyPanel on={isChallengeEnabled(account)} state={challenge.state} account={account} currency={baseCurrency}/>
       </AccountSettingsSection>}
-      {multiBalanceWorkspace && selectedBalance && <AccountSettingsSection title="Challenge" icon={<Trophy size={15}/>} note={`Challenge settings for ${selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}. Its plan remains separate from every other account.`} status={selectedBalance.challengeEnabled ? "On" : "Off"} isOpen={open.challenge} onToggle={() => toggle("challenge")}>
-        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label={`Enable challenge for ${selectedBalance.name || `account ${selectedBalanceIndex + 1}`}`} aria-checked={selectedBalance.challengeEnabled} disabled={!(Number(selectedBalance.startingBalance) > 0) || selectedBalanceChallengeState.settingsLocked} className={`tj-settings-switch ${selectedBalance.challengeEnabled ? "tj-settings-switch-on" : ""}`} onClick={() => updateSelectedBalance({ challengeEnabled:!selectedBalance.challengeEnabled, challengeStartingBalance:Number(selectedBalance.startingBalance) || 0 })}><i/></button><span><strong>Enable Challenge</strong><small>Uses this account’s balance. Add funds to enable it.</small></span></label>
-        {selectedBalancePlan}
+      {multiBalanceWorkspace && selectedBalance && <AccountSettingsSection title="Challenge" icon={<Trophy size={15}/>} note={`Challenge for ${selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}. Its plan remains separate from every other account.`} status={selectedBalance.challengeEnabled ? "On" : "Off"} isOpen={open.challenge} onToggle={() => toggle("challenge")}>
+        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label="Challenge status" aria-checked={!!selectedBalance.challengeEnabled} disabled className={`tj-settings-switch ${selectedBalance.challengeEnabled ? "tj-settings-switch-on" : ""}`}><i/></button><span><strong>{selectedBalance.challengeEnabled ? "Challenge active" : "No challenge running"}</strong><small>Read only here. Use the Challenge page to start, change or delete it.</small></span></label>
+        <ChallengeReadOnlyPanel on={!!selectedBalance.challengeEnabled} state={selectedBalanceChallengeState} account={scopeChallengeAccount(account, selectedBalance)} currency={baseCurrency}/>
       </AccountSettingsSection>}
       <AccountSettingsSection title="Finance" icon={<Landmark size={15}/>} note="Track account cash movement and savings without mixing it into trade statistics." status={financeEnabled ? `${savingsDraft.length} savings account${savingsDraft.length === 1 ? "" : "s"}` : "Off"} isOpen={open.finance} onToggle={() => toggle("finance")}>
         <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label="Enable Finance" aria-checked={financeEnabled} className={`tj-settings-switch ${financeEnabled ? "tj-settings-switch-on" : ""}`} onClick={() => setFinanceEnabled((enabled) => !enabled)}><i /></button><span><strong>Enable Finance</strong><small>Show Finance for this trading account. Turning it off keeps your settings and history saved.</small></span></label>
@@ -3920,7 +3940,8 @@ function DesktopDashboardV2({ account, stats, monthCursor, setMonthCursor, onDay
           <div className="dd-challenge-list">
             {accountChallenges.map((balance) => <AccountChallengeDashboardPanel key={balance.id} balance={balance} trades={account.trades} userId={userId} workspace={account}/>)}
             {workspaceChallenge && <section className="tj-dashboard-account-challenge"><div className="tj-dashboard-account-challenge-top"><span>{account.name}</span></div><strong>{challenge?.loading ? "—" : `${passed} / ${levels}`}</strong><i><em data-chart-fill="horizontal" style={{ width:`${passed / levels * 100}%` }}/></i><small>{passed === levels ? "All levels complete" : nextRisk != null ? `Level ${activeLevel} · Next risk ${money(nextRisk)}` : "Challenge progress is loading."}</small></section>}
-            {!accountChallenges.length && !workspaceChallenge && <p className="dd-empty">No active challenge. Turn one on in Account settings.</p>}
+            {!accountChallenges.length && !workspaceChallenge && <div className="dd-empty dd-empty-start"><p>No active challenge.</p><button type="button" className="tj-btn-primary" onClick={() => window.dispatchEvent(new CustomEvent("aaicorefx:open-challenge"))}>Start a challenge</button></div>}
+            {workspaceChallenge && !challenge?.loading && (() => { const money = challengeMoney(challenge?.state, account); return money && money.depositsAfterStart > 0 ? <p className="dd-challenge-deposit"><span>Total deposited</span><b>{fmtMoney(money.totalDeposited, currency).replace(/^\+/, "")}</b><em className={money.netProfit >= 0 ? "is-gain" : "is-loss"}>Net {money.netProfit >= 0 ? "+" : "−"}{fmtMoney(Math.abs(money.netProfit), currency).replace(/^\+/, "")}</em></p> : null; })()}
           </div>
         </section>
         <section className="dd-card dd-pad dd-score-card">
@@ -7832,8 +7853,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     window.addEventListener("popstate", syncPageFromHistory);
     return () => window.removeEventListener("popstate", syncPageFromHistory);
   }, []);
-  useEffect(() => { if (account && page === 'challenge' && !(isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled))) setPage('dashboard'); }, [page, account]);
-  useEffect(() => { if (account && page === 'finance' && !account.finance?.enabled) setPage('dashboard'); }, [page, account]);
+    useEffect(() => { if (account && page === 'finance' && !account.finance?.enabled) setPage('dashboard'); }, [page, account]);
+    useEffect(() => { const open = () => { setModal(null); setPage('challenge'); }; window.addEventListener('aaicorefx:open-challenge', open); return () => window.removeEventListener('aaicorefx:open-challenge', open); }, []);
   const dashboardBalances = useMemo(() => account ? activeBalances(account) : [], [account]);
   const [dashboardBalanceId, setDashboardBalanceId] = useState("");
   useEffect(() => {
@@ -8614,7 +8635,9 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const balance=balanceId ? account.balances.find(item=>item.id===balanceId) : null;
     const scoped=balance ? scopeChallengeAccount(account,balance) : account;
     const nextMode=['risk','streak','adaptive'].includes(patch.mode) ? patch.mode : 'risk';
-    const nextReward=patch.reward === '' || patch.reward == null ? null : Number(patch.reward);
+    const rawReward=patch.reward === '' || patch.reward == null ? null : Number(patch.reward);
+    const nextReward=rawReward===null ? (nextMode==='adaptive' ? null : defaultChallengeReward(nextMode)) : (Number.isFinite(rawReward) && rawReward>0 ? snapChallengeReward(nextMode,rawReward) : rawReward);
+    const nextStepBack=nextMode==='adaptive' ? normaliseAdaptiveStepBack(patch.adaptiveStepBack ?? state.automation?.adaptiveStepBack) : undefined;
     const nextCount=[10,15,20,30].includes(Number(patch.levelCount)) ? Number(patch.levelCount) : 30;
     // A challenge begins from the actual trading capital available at its
     // checkpoint. The account's saved starting balance is its deposit/base,
@@ -8629,20 +8652,19 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const goals={monthlyGoalPct:Number(patch.monthlyGoalPct ?? scoped.monthlyGoalPct ?? 0),yearlyGoalPct:Number(patch.yearlyGoalPct ?? scoped.yearlyGoalPct ?? 0)};
     const guardrails={dailyLossLimitPct:Number(patch.dailyLossLimitPct ?? scoped.dailyLossLimitPct ?? 0),monthlyLossLimitPct:Number(patch.monthlyLossLimitPct ?? scoped.monthlyLossLimitPct ?? 0)};
     if(Object.values(goals).some(value=>!Number.isFinite(value)||value<0) || Object.values(guardrails).some(value=>!Number.isFinite(value)||value<0||value>100)){showError('Goals must be non-negative. Loss limits must be between 0 and 100%.');return false;}
-    if(nextMode==='streak' && !canUseLossStreak(nextReward)){showError('Two-Loss Streak requires a reward above 1:2.8.');return false;}
-    const protectedChanged=(state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='streak'?3.1:0))!==Number(nextReward) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
+        const protectedChanged=(state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='adaptive'?0:defaultChallengeReward(nextMode)))!==Number(nextReward) || (nextMode==='adaptive' && normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack)!==nextStepBack) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
     // Completing a challenge closes that run. Starting Adaptive afterwards is
     // intentionally a fresh run at Level 1, so its historical linked trades
     // remain in the journal but cannot lock the new setup or reopen the old
     // completion ceremony.
     const restartCompleted=patch.restartCompleted===true;
     if(state.settingsLocked && protectedChanged && !restartCompleted){showError('This challenge has linked trades. Its starting balance, mode, plan length and reward are locked.');return false;}
-    const nextState=(protectedChanged || restartCompleted) ? resetAutomation({...state,statuses:restartCompleted?{}:state.statuses,notes:restartCompleted?{}:state.notes,stepBacks:restartCompleted?0:state.stepBacks,lossStreak:restartCompleted?0:state.lossStreak,failed:false,automation:{...(state.automation || {}),rewardRatio:nextReward,adaptiveRiskPct:nextMode==='adaptive'?adaptiveRiskPct:undefined,adaptiveDrawdownPct:nextMode==='adaptive'?adaptiveDrawdownPct:undefined}},scoped.trades || [],nextMode,restartCompleted?1:Math.min(state.activeLevel || 1,nextCount),new Date(),nextCount,nextBalance) : state;
+    const nextState=(protectedChanged || restartCompleted) ? resetAutomation({...state,statuses:restartCompleted?{}:state.statuses,notes:restartCompleted?{}:state.notes,stepBacks:restartCompleted?0:state.stepBacks,lossStreak:restartCompleted?0:state.lossStreak,failed:false,automation:{...(state.automation || {}),rewardRatio:nextReward,adaptiveRiskPct:nextMode==='adaptive'?adaptiveRiskPct:undefined,adaptiveDrawdownPct:nextMode==='adaptive'?adaptiveDrawdownPct:undefined,adaptiveStepBack:nextStepBack}},scoped.trades || [],nextMode,restartCompleted?1:Math.min(state.activeLevel || 1,nextCount),new Date(),nextCount,nextBalance) : state;
     if(balance) {
       // Keep the complete adaptive challenge configuration on the balance row.
       // The database mapper stores these values in risk_settings, so omitting
       // them here silently reset an edited adaptive challenge on the next load.
-      const updatedBalance={...balance,name:patch.name.trim(),challengeStartingBalance:nextBalance,challengeMode:nextMode,challengeReward:nextReward,challengeLevelCount:nextCount,challengeAdaptiveRiskPct:adaptiveRiskPct,challengeAdaptiveDrawdownPct:adaptiveDrawdownPct,goals:{...balance.goals,...goals},guardrails:{...balance.guardrails,...guardrails}};
+      const updatedBalance={...balance,name:patch.name.trim(),challengeEnabled:true,challengeStartingBalance:nextBalance,challengeMode:nextMode,challengeReward:nextReward,challengeLevelCount:nextCount,challengeAdaptiveRiskPct:adaptiveRiskPct,challengeAdaptiveDrawdownPct:adaptiveDrawdownPct,goals:{...balance.goals,...goals},guardrails:{...balance.guardrails,...guardrails}};
       const saved=await updateWorkspaceBalance(user.id,account.id,updatedBalance);
       if(saved.error){showError(saved.error);return false;}
       const persisted=await challengeDb.save('balance',{balance_id:balance.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation});
@@ -8650,7 +8672,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       setAccounts(items=>items.map(item=>item.id===account.id?{...item,balances:item.balances.map(target=>target.id===balance.id?{...target,...saved.data}:target)}:item));
       window.dispatchEvent(new CustomEvent('aaicorefx:balance-challenge-updated',{detail:{balanceId:balance.id,state:nextState}}));
     } else {
-      const updatedAccount={...account,name:patch.name.trim(),challengeStartingBalance:nextBalance,challengeMode:nextMode,challengeReward:nextReward,challengeLevelCount:nextCount,challengeAdaptiveRiskPct:adaptiveRiskPct,challengeAdaptiveDrawdownPct:adaptiveDrawdownPct,...goals,...guardrails,monthlyGoalSource:patch.monthlyGoalPctAmount!==undefined?'amount':'percentage',yearlyGoalSource:patch.yearlyGoalPctAmount!==undefined?'amount':'percentage',monthlyGoalAmount:patch.monthlyGoalPctAmount!==undefined?Number(patch.monthlyGoalPctAmount):Math.round(nextBalance*goals.monthlyGoalPct)/100,yearlyGoalAmount:patch.yearlyGoalPctAmount!==undefined?Number(patch.yearlyGoalPctAmount):Math.round(nextBalance*goals.yearlyGoalPct)/100};
+      const updatedAccount={...account,name:patch.name.trim(),challengeEnabled:true,challengeStartingBalance:nextBalance,challengeMode:nextMode,challengeReward:nextReward,challengeLevelCount:nextCount,challengeAdaptiveRiskPct:adaptiveRiskPct,challengeAdaptiveDrawdownPct:adaptiveDrawdownPct,...goals,...guardrails,monthlyGoalSource:patch.monthlyGoalPctAmount!==undefined?'amount':'percentage',yearlyGoalSource:patch.yearlyGoalPctAmount!==undefined?'amount':'percentage',monthlyGoalAmount:patch.monthlyGoalPctAmount!==undefined?Number(patch.monthlyGoalPctAmount):Math.round(nextBalance*goals.monthlyGoalPct)/100,yearlyGoalAmount:patch.yearlyGoalPctAmount!==undefined?Number(patch.yearlyGoalPctAmount):Math.round(nextBalance*goals.yearlyGoalPct)/100};
       const settingsPatch=createAccountPatch(updatedAccount);
       const saved=await updateAccount(account.id,settingsPatch);
       if(saved.error){showError(saved.error);return false;}
@@ -9168,7 +9190,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           </button>
         </div>
         <div className="tj-sidebar-list-wrap"><div className="tj-sidebar-scroll">
-          {[["Trading", ["dashboard","markups","tradelog","reviews"]],["Insights", ["analytics","calendar","psychology","news","case-studies"]],["Grow", ["challenge","finance","backtest"]],["Setup", ["management"]]].map(([group, ids]) => <div className="tj-sidebar-nav-group" key={group}><div className="tj-nav-label">{group}</div><div className="tj-nav">{ids.map((id) => NAV.find((item) => item.id === id)).filter(n => (n.id !== 'challenge' || isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled)) && (n.id !== 'finance' || account.finance?.enabled)).map((n) => <button key={n.id} aria-label={n.label} aria-current={page === n.id ? "page" : undefined} className={`tj-nav-item ${page === n.id ? "tj-nav-active" : ""}`} onClick={() => { if (window.location.pathname !== JOURNAL_PATHS[n.id]) window.history.pushState({}, "", JOURNAL_PATHS[n.id]); setPage(n.id); setShowAccountMenu(false); if (window.innerWidth <= 900) updateSidebarOpen(false); }}><SidebarIcon id={n.id}/> <span>{n.label}</span></button>)}</div></div>)}
+          {[["Trading", ["dashboard","markups","tradelog","reviews"]],["Insights", ["analytics","calendar","psychology","news","case-studies"]],["Grow", ["challenge","finance","backtest"]],["Setup", ["management"]]].map(([group, ids]) => <div className="tj-sidebar-nav-group" key={group}><div className="tj-nav-label">{group}</div><div className="tj-nav">{ids.map((id) => NAV.find((item) => item.id === id)).filter(n => (n.id !== 'finance' || account.finance?.enabled)).map((n) => <button key={n.id} aria-label={n.label} aria-current={page === n.id ? "page" : undefined} className={`tj-nav-item ${page === n.id ? "tj-nav-active" : ""}`} onClick={() => { if (window.location.pathname !== JOURNAL_PATHS[n.id]) window.history.pushState({}, "", JOURNAL_PATHS[n.id]); setPage(n.id); setShowAccountMenu(false); if (window.innerWidth <= 900) updateSidebarOpen(false); }}><SidebarIcon id={n.id}/> <span>{n.label}</span></button>)}</div></div>)}
         </div><span className="tj-sidebar-scroll-cue tj-sidebar-scroll-cue-top" aria-hidden="true"/><span className="tj-sidebar-scroll-cue tj-sidebar-scroll-cue-bottom" aria-hidden="true"/></div>
         <div className="tj-sidebar-footer">
           <div className="tj-nav tj-sidebar-settings">
@@ -9223,7 +9245,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} membership={membership} api={localBacktests ? localBacktestApi : backtestCloud} localOnly={localBacktests} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
           {page === "analytics" && (financialValidation.valid ? <AnalyticsPage account={dashboardAccount} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveTradeReview={handleSaveReview} onViewMarkups={() => setPage("markups")} onOpenAccountSettings={guardrails.tradeEntryLocked ? undefined : () => setModal("account")} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "finance" && account.finance?.enabled && (financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {page === "challenge" && (isChallengeEnabled(account) || activeBalances(account).some((balance) => balance.challengeEnabled)) && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
+          {page === "challenge" && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
           {page === "calendar" && (phoneCalendar
             ? <MobileCalendarV2 account={dashboardAccount} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} formatMoney={fmtMoney} formatDate={formatDate} cashImpact={financeTradingImpact} renderReadout={view => <CalendarPerformanceNarrative phone view={view} trades={dashboardAccount.trades} cap={dashboardAccount.breakevenCap} balance={dashboardAccount.balance}/>}/>
             : <CalendarPage account={account} markups={markups.filter((markup)=>markup.accountId===account.id)} reviews={reviews.filter((review)=>review.accountId===account.id)} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails}/>) }

@@ -1,5 +1,6 @@
 -- Add optional 1–5 assessment scores to each trade review.
 -- Existing reviews remain valid and display as unscored until edited.
+begin;
 
 alter table public.trade_reviews
   add column if not exists execution_score smallint,
@@ -52,3 +53,5 @@ end;
 $$;
 revoke all on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) from public, anon;
 grant execute on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) to authenticated;
+notify pgrst, 'reload schema';
+commit;

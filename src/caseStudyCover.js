@@ -1,3 +1,5 @@
+import { isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
+
 const externalImageSource = value => typeof value === 'string' && /^(data:image|https?:\/\/)/i.test(value);
 
 // Evidence image references may be browser URLs, data URLs, or IndexedDB keys.
@@ -5,6 +7,9 @@ const externalImageSource = value => typeof value === 'string' && /^(data:image|
 // without changing any stored study or evidence records.
 export const evidenceImageReference = evidence => {
   if (!evidence || typeof evidence !== 'object') return '';
+  // New shared assets are local-first. Their verified cloudRef remains on the
+  // record as a cross-browser fallback, never as a replacement for the blob.
+  if (isCaseStudySharedImageReference(evidence.url)) return evidence.url;
   if (typeof evidence.cloudRef === 'string' && evidence.cloudRef) return evidence.cloudRef;
   if (typeof evidence.url === 'string' && evidence.url) return evidence.url;
   if (typeof evidence.documentImageRef === 'string' && evidence.documentImageRef) return evidence.documentImageRef;

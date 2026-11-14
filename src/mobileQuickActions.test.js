@@ -16,7 +16,8 @@ test('Markup and Trade Logs lock only until Start day is first saved on a tradin
   assert.match(shell, /lock\?showQuickNote\(\{type:'warning',title:'Action unavailable',message:lock\}\):go\(id\)/);
 });
 
-test('a switched-off challenge explains itself and the centre button shows the daily workflow', () => {
-  assert.match(shell, /lock:challengeEnabled\?'':'Enable it in Account settings'/);
+test('the Challenge tile is never locked and invites a start when no challenge runs; the centre button shows the daily workflow', () => {
+  assert.doesNotMatch(shell, /lock:challengeEnabled/);
+  assert.match(shell, /note:challengeEnabled\?'Build your account':'Start a challenge'/);
   assert.match(shell, /<WorkflowMark /);
 });

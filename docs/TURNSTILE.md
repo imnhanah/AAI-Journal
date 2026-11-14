@@ -1,6 +1,14 @@
 # Cloudflare Turnstile rollout
 
-The email/password login, account-registration, and password-reset-request forms use Cloudflare Turnstile when `VITE_TURNSTILE_SITE_KEY` is set at build time. Google OAuth and authenticated password updates are intentionally unchanged.
+The email/password login, account-registration, and password-reset-request forms use Cloudflare Turnstile when it is enabled by the build configuration. Google OAuth and authenticated password updates are intentionally unchanged.
+
+## Local development switch
+
+Set `TURNSTILE_ENABLED=false` in `.env.local` to disable the widget and suppress CAPTCHA-token handling in a local Vite server. This is the default local configuration for this checkout. It applies equally when the app is opened through `127.0.0.1`, `localhost`, or a local-network IP address.
+
+`TURNSTILE_ENABLED` is deliberately ignored in production builds. Production stays enabled by default; disabling it requires the separate, deliberate `TURNSTILE_PRODUCTION_ENABLED=false` setting in the production deployment environment.
+
+Supabase Auth is the server-side verifier. It cannot be toggled per browser hostname by this frontend. For local sign-in without a token, use a local or dedicated development Supabase project with **Authentication → Settings → Bot and Abuse Protection → Enable CAPTCHA protection** disabled. Do not disable CAPTCHA on the production Supabase project to make localhost work. If local development points at the production project while its CAPTCHA enforcement is enabled, Supabase correctly rejects tokenless requests.
 
 ## Configuration
 
@@ -17,7 +25,7 @@ Configure the private Turnstile secret only in Supabase Dashboard: **Authenticat
 5. Add the public site key to the production Pages environment and deploy the reviewed release. Confirm the widget works on desktop and mobile at `https://aaijournal.trade`.
 6. Only then enable Supabase CAPTCHA protection with the private secret and re-test all three flows. Do not enable it before the deployed frontend supplies `captchaToken`.
 
-The app preserves existing behaviour when the public site key is absent and displays a configuration warning. Once present, submission is blocked until the widget supplies a token and it resets after every attempt, expiry, or client error.
+When Turnstile is enabled, a missing public site key fails closed: email authentication remains unavailable rather than silently bypassing verification. When the local switch is disabled, no widget, CAPTCHA token request, warning, or Turnstile-specific error is shown.
 
 ## Key rotation
 

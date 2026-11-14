@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { validateEvidenceImage } from './caseStudyWorkspace.js';
 import { isDocumentImageReference, readCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
-import { isCaseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl } from './caseStudyEvidenceCloud.js';
+import { isCaseStudyEvidenceCloudReference, peekCaseStudyEvidenceCloudBlob, resolveCaseStudyEvidenceCloudBlob } from './caseStudyEvidenceCloud.js';
+import { caseStudySharedImageIntegration, caseStudySharedImageId, isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
 
 const DATABASE='tj-case-study-evidence-images';
 const STORE='images';
@@ -18,10 +19,16 @@ const open=()=>new Promise((resolve,reject)=>{
 });
 
 export const isEvidenceImageReference=value=>typeof value==='string' && value.startsWith(PREFIX);
+const debugImageDiagnostic=(stage, code='')=>{
+  if (import.meta.env?.DEV) console.warn('[Case Study image]', {stage,code});
+};
+export const reportCaseStudyImageDecodeFailure=()=>debugImageDiagnostic('image-decoding-failed');
+export const sharedImageCloudReference=({cloudRef='',metadata=null,userId='',assetId='' }={})=>
+  cloudRef || (metadata?.cloudPath ? `tj-case-study-storage:${metadata.cloudPath}` : userId && assetId ? `tj-case-study-storage:${userId}/${assetId}` : '');
 // Shared Evidence can point either at its own blob store or at the original
 // Research Notes blob. Both must wait for IndexedDB resolution; neither is a
 // browser-loadable image URL.
-export const isStoredEvidenceImageReference=value=>isEvidenceImageReference(value)||isDocumentImageReference(value)||isCaseStudyEvidenceCloudReference(value);
+export const isStoredEvidenceImageReference=value=>isEvidenceImageReference(value)||isDocumentImageReference(value)||isCaseStudyEvidenceCloudReference(value)||isCaseStudySharedImageReference(value);
 
 export async function saveEvidenceImage(file) {
   const error=validateEvidenceImage(file); if (error) throw new Error(error);
@@ -42,27 +49,70 @@ export async function readEvidenceImageReference(ref) {
   finally { database.close(); }
 }
 
-export function useEvidenceImageUrl(value) {
-  const [state,setState]=useState({url:isStoredEvidenceImageReference(value)?'':value||'',loading:isStoredEvidenceImageReference(value),missing:false});
-  useEffect(()=>{
+export function useEvidenceImageUrl(value, { userId='', cloudRef='' } = {}) {
+  const [attempt,setAttempt]=useState(0);
+  const [state,setState]=useState(null);
+  const stored=isStoredEvidenceImageReference(value);
+  const requestKey=JSON.stringify([value,userId,cloudRef,attempt]);
+  const retry=()=>setAttempt(current=>current+1);
+  useLayoutEffect(()=>{
+    if (!stored) return undefined;
     let active=true; let objectUrl='';
-    if (!isStoredEvidenceImageReference(value)) { setState({url:value||'',loading:false,missing:false}); return undefined; }
-    setState({url:'',loading:true,missing:false});
-    if (isCaseStudyEvidenceCloudReference(value)) {
-      resolveCaseStudyEvidenceCloudUrl(value).then(result=>{
+    const showBlob = blob => {
+      if (!active) return;
+      if (blob) objectUrl=URL.createObjectURL(blob);
+      setState({requestKey,url:objectUrl,loading:false,missing:!blob});
+    };
+    const showCloudImage = async reference => {
+      const result=await resolveCaseStudyEvidenceCloudBlob(reference,{userId});
+      if (!result.blob) debugImageDiagnostic('cloud-image-resolution',result.code||'cloud-network-failed');
+      showBlob(result.blob);
+    };
+    const cleanup=()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};
+    const assetId=caseStudySharedImageId(value);
+    const reference=isCaseStudyEvidenceCloudReference(value) ? value : assetId
+      ? sharedImageCloudReference({cloudRef,userId,assetId}) : '';
+    const cached=peekCaseStudyEvidenceCloudBlob(reference,userId);
+    if (cached) {
+      showBlob(cached);
+      return cleanup;
+    }
+    if (assetId) {
+      const resolveSharedImage=async()=>{
+        let blob=null; let metadata=null;
+        try {
+          blob=await caseStudySharedImageIntegration.storage.getImage(assetId,userId);
+          if (!active) return;
+          if (blob) { showBlob(blob); return; }
+          metadata=await caseStudySharedImageIntegration.storage.getImageMetadata(assetId,userId);
+        } catch {
+          // A browser may deny or lose IndexedDB after a refresh. A verified
+          // cloud reference must still be allowed to recover the image.
+          debugImageDiagnostic('local-image-unavailable','local-image-missing');
+        }
         if (!active) return;
-        if (!result.url) { setState({url:'',loading:false,missing:true}); return; }
-        setState({url:result.url,loading:false,missing:false});
-      }).catch(()=>active&&setState({url:'',loading:false,missing:true}));
-      return ()=>{active=false;};
+        // Assets use a stable, owner-scoped object path. A second browser may
+        // receive a rich-document `tj-image:` reference before it has local
+        // metadata, so it can still request its private cloud copy safely.
+        const reference=sharedImageCloudReference({cloudRef,metadata,userId,assetId});
+        if (!reference) { debugImageDiagnostic('cloud-reference-missing','missing-cloud-reference'); showBlob(null); return; }
+        await showCloudImage(reference);
+      };
+      void resolveSharedImage().catch(()=>{
+        debugImageDiagnostic('cloud-image-resolution','cloud-network-failed');
+        showBlob(null);
+      });
+      return cleanup;
+    }
+    if (isCaseStudyEvidenceCloudReference(value)) {
+      void showCloudImage(value).catch(()=>showBlob(null));
+      return cleanup;
     }
     const read=isDocumentImageReference(value) ? readCaseStudyDocumentImage : readEvidenceImageReference;
-    read(value).then(blob=>{
-      if (!active) return;
-      if (!blob) { setState({url:'',loading:false,missing:true}); return; }
-      objectUrl=URL.createObjectURL(blob); setState({url:objectUrl,loading:false,missing:false});
-    }).catch(()=>active&&setState({url:'',loading:false,missing:true}));
-    return ()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};
-  },[value]);
-  return state;
+    read(value).then(showBlob).catch(()=>showBlob(null));
+    return cleanup;
+  },[value,userId,cloudRef,stored,requestKey]);
+  if (!stored) return {url:value||'',loading:false,missing:false,retry};
+  if (state?.requestKey === requestKey) return {...state,retry};
+  return {url:'',loading:true,missing:false,retry};
 }

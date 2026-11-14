@@ -22,7 +22,19 @@ begin
       execute format('alter table public.%I add column if not exists updated_at timestamptz not null default clock_timestamp()', table_name);
       execute format('drop trigger if exists %I on public.%I', 'tj_' || table_name || '_updated_at', table_name);
       execute format('create trigger %I before update on public.%I for each row execute function public.tj_set_updated_at()', 'tj_' || table_name || '_updated_at', table_name);
-      execute format('create index if not exists %I on public.%I (user_id)', 'tj_' || table_name || '_sync_user', table_name);
+      -- Reuse the valid owner-leading B-tree indexes from earlier migrations.
+      -- Partial/expression indexes cannot cover every synchronized row.
+      if not exists (
+        select 1 from pg_catalog.pg_index i
+        join pg_catalog.pg_class c on c.oid = i.indexrelid
+        join pg_catalog.pg_am am on am.oid = c.relam
+        join pg_catalog.pg_attribute a on a.attrelid = i.indrelid and a.attname = 'user_id'
+        where i.indrelid = to_regclass('public.' || table_name)
+          and i.indisvalid and i.indisready and i.indpred is null and i.indexprs is null
+          and am.amname = 'btree' and i.indkey[0] = a.attnum
+      ) then
+        execute format('create index if not exists %I on public.%I (user_id)', 'tj_' || table_name || '_sync_user', table_name);
+      end if;
     end if;
   end loop;
 end;
@@ -31,7 +43,7 @@ $$;
 -- Replace inline image bytes with revisioned references; preserve array shape,
 -- captions and sessionReview so counts and journal metrics remain accurate.
 create or replace function public.tj_image_references(value jsonb, owner_id uuid, table_name text, record_id text, revision text, image_path text[] default '{}')
-returns jsonb language plpgsql immutable set search_path = '' as $$
+returns jsonb language plpgsql immutable security invoker set search_path = '' as $$
 declare result jsonb; item record;
 begin
   if jsonb_typeof(value) = 'string' and (value #>> '{}') like 'data:image/%' then
@@ -60,6 +72,10 @@ declare
   changed jsonb; removed jsonb; result jsonb := '{}'; table_known jsonb;
 begin
   if owner_id is null then raise exception 'Authentication required'; end if;
+  known := coalesce(known, '{}'::jsonb);
+  if jsonb_typeof(known) is distinct from 'object' then
+    raise exception 'Journal manifest must be an object' using errcode = '22023';
+  end if;
   foreach table_name in array array[
     'accounts','trades','rules','journal_entries','user_settings',
     'premarket_markups','trade_reviews','period_reviews','finance_settings',
@@ -74,6 +90,9 @@ begin
     end if;
     key_column := case table_name when 'user_settings' then 'user_id' when 'finance_settings' then 'account_id' else 'id' end;
     table_known := coalesce(known -> table_name,'{}'::jsonb);
+    if jsonb_typeof(table_known) is distinct from 'object' then
+      raise exception 'Journal manifest for % must be an object', table_name using errcode = '22023';
+    end if;
     execute format($query$
       with current_rows as materialized (
         select to_jsonb(t) as row, t.%I::text as key from public.%I t where t.user_id = $1
@@ -81,9 +100,9 @@ begin
       select
         coalesce((select jsonb_agg(case when $3 = any(array['trades','premarket_markups','trade_reviews']) then
           jsonb_set(row,'{screenshots}',public.tj_image_references(coalesce(row -> 'screenshots','null'::jsonb),$1,$3,key,md5(coalesce(row -> 'screenshots','null'::jsonb)::text)))
-          else row end)
+          else row end order by key)
           from current_rows where ($2 ->> key) is distinct from (row ->> 'updated_at')), '[]'::jsonb),
-        coalesce((select jsonb_agg(k) from jsonb_object_keys($2) k where not exists(select 1 from current_rows c where c.key = k)), '[]'::jsonb)
+        coalesce((select jsonb_agg(k order by k) from jsonb_object_keys($2) k where not exists(select 1 from current_rows c where c.key = k)), '[]'::jsonb)
     $query$,key_column,table_name) into changed, removed using owner_id, table_known, table_name;
     result := result || jsonb_build_object(table_name,jsonb_build_object('rows',changed,'deleted',removed,'available',true));
   end loop;
@@ -97,10 +116,15 @@ returns jsonb language plpgsql stable security invoker set search_path = '' as $
 declare image jsonb;
 begin
   if auth.uid() is null then raise exception 'Authentication required'; end if;
-  if source_table <> all(array['trades','premarket_markups','trade_reviews']) then raise exception 'Invalid screenshot table'; end if;
+  if source_table is null or source_table <> all(array['trades','premarket_markups','trade_reviews']) then raise exception 'Invalid screenshot table'; end if;
   execute format('select screenshots #> $3 from public.%I where id = $1 and user_id = $2 and md5(screenshots::text) = $4', source_table)
     into image using row_id, auth.uid(), image_path, image_version;
-  return image;
+  -- A reference identifies one inline image, never a whole array/object or
+  -- unrelated caption/reference. An empty path is valid for legacy scalar media.
+  if jsonb_typeof(image) = 'string' and (image #>> '{}') like 'data:image/%' then
+    return image;
+  end if;
+  return null;
 end;
 $$;
 
@@ -109,5 +133,9 @@ revoke all on function public.tj_journal_image(text,uuid,text[],text) from publi
 revoke all on function public.tj_image_references(jsonb,uuid,text,text,text,text[]) from public, anon;
 grant execute on function public.tj_sync_journal(jsonb) to authenticated;
 grant execute on function public.tj_journal_image(text,uuid,text[],text) to authenticated;
+-- Required by the invoker sync RPC and by the helper's recursive calls.
+-- It transforms caller-supplied JSON only; it does not read any journal table.
 grant execute on function public.tj_image_references(jsonb,uuid,text,text,text,text[]) to authenticated;
+-- Publish the new RPC signatures after this transaction commits.
+notify pgrst, 'reload schema';
 commit;

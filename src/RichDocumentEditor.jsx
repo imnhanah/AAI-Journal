@@ -9,6 +9,8 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, Bold, Heading1, Heading2, Heading3, ImagePlus, Italic, Link2, List, ListOrdered, Minus, Quote, Redo2, RemoveFormatting, Strikethrough, Underline as UnderlineIcon, Undo2, Unlink } from 'lucide-react';
 import { isDocumentImageReference, readCaseStudyDocumentImage, saveCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
+import { useEvidenceImageUrl } from './caseStudyEvidenceImages.js';
+import { isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
 import { emptyRichDocument, isSafeLink, normaliseRichDocument } from './studyRichDocument.js';
 import { usePrompt } from './ConfirmationDialog.jsx';
 import './richDocumentEditor.css';
@@ -19,8 +21,11 @@ const percentage = value => Math.max(25,Math.min(100,Number(value)||100));
 function ResearchImageView({node,selected,updateAttributes,editor,getPos,extension}) {
   const [resolved,setResolved]=useState(node.attrs.src);
   const [missing,setMissing]=useState(false);
+  const isShared=isCaseStudySharedImageReference(node.attrs.src);
+  const sharedImage=useEvidenceImageUrl(isShared ? node.attrs.src : '', {userId:extension.options.imageOwnerUserId||''});
   useEffect(()=>{
     let url=''; let active=true; setMissing(false); setResolved(node.attrs.src);
+    if (isShared) return () => { active=false; };
     if (!isDocumentImageReference(node.attrs.src)) return () => { active=false; };
     readCaseStudyDocumentImage(node.attrs.src).then(blob=>{
       if (!active) return;
@@ -28,14 +33,14 @@ function ResearchImageView({node,selected,updateAttributes,editor,getPos,extensi
       url=URL.createObjectURL(blob); setResolved(url);
     }).catch(()=>active&&setMissing(true));
     return ()=>{ active=false; if(url) URL.revokeObjectURL(url); };
-  },[node.attrs.src]);
+  },[node.attrs.src,isShared]);
   const select=()=>{ const position=typeof getPos==='function' ? getPos() : null; if(typeof position==='number') editor.commands.setNodeSelection(position); };
   const width=percentage(node.attrs.width);
   const evidenceActions=extension.options.evidenceActions?.current;
   const sharedEvidence=evidenceActions?.documentEvidence?.[node.attrs.src]||null;
   const keepNodeSelected=event=>event.preventDefault();
   return <NodeViewWrapper as="figure" className={`rde-image rde-image--${node.attrs.align||'center'}${selected?' is-selected':''}`} style={{width:`${width}%`}} data-drag-handle>
-    {missing ? <button type="button" className="rde-missing-image" onClick={select}>Image unavailable on this device</button> : <img src={resolved} alt={node.attrs.alt||'Research note'} onClick={select} draggable="false" />}
+    {(isShared ? sharedImage.missing : missing) ? <button type="button" className="rde-missing-image" onClick={select}>Image unavailable on this device</button> : <img src={isShared ? sharedImage.url : resolved} alt={node.attrs.alt||'Research note'} onClick={select} draggable="false" />}
     {selected && <div className="rde-image-controls" contentEditable={false} onClick={event=>event.stopPropagation()}>
       <label>Size <input aria-label="Image size" type="range" min="25" max="100" value={width} onChange={event=>updateAttributes({width:percentage(event.target.value)})}/></label>
       <div role="group" aria-label="Image alignment"><button type="button" aria-label="Align image left" className={node.attrs.align==='left'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'left'})}><AlignLeft size={14}/></button><button type="button" aria-label="Center image" className={(node.attrs.align||'center')==='center'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'center'})}><AlignCenter size={14}/></button><button type="button" aria-label="Align image right" className={node.attrs.align==='right'?'is-active':''} onMouseDown={keepNodeSelected} onClick={()=>updateAttributes({align:'right'})}><AlignRight size={14}/></button></div>
@@ -50,8 +55,8 @@ const ResearchImage=Image.extend({
   addNodeView() { return ReactNodeViewRenderer(ResearchImageView); }
 });
 
-export async function insertImageInView(view,file,coordinates) {
-  const src=await saveCaseStudyDocumentImage(file);
+export async function insertImageInView(view,file,coordinates,{saveImage}={}) {
+  const src=saveImage ? await saveImage(file) : await saveCaseStudyDocumentImage(file);
   let transaction=view.state.tr;
   const location=coordinates&&view.posAtCoords(coordinates);
   if(location) transaction=transaction.setSelection(TextSelection.create(view.state.doc,location.pos));
@@ -61,7 +66,7 @@ export async function insertImageInView(view,file,coordinates) {
 
 function InlineEvidenceDialog({image,onClose,onSave,onSaved}) { const [title,setTitle]=useState(''),[source,setSource]=useState(''),[tags,setTags]=useState(''),[error,setError]=useState(''),[saving,setSaving]=useState(false); const submit=async event=>{event.preventDefault();if(!title.trim()){setError('Add a title before saving.');return;}setSaving(true);setError('');try{await onSave({imageRef:image.ref,title,source,tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)});onSaved?.();onClose();}catch(reason){setError(reason.message||'Evidence could not be saved.');setSaving(false);}};return <div className="case-dialog-backdrop"><form className="case-form-dialog rde-evidence-dialog" onSubmit={submit}><button type="button" className="case-close" onClick={onClose}>×</button><p className="case-eyebrow">Research Notes image</p><h2>Save to Evidence Library</h2>{image.preview&&<img className="rde-evidence-dialog__preview" src={image.preview} alt="Selected Research Notes image"/>}<label>Title<input autoFocus value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. London sweep, 15m"/></label><label>Source <small>optional</small><input value={source} onChange={event=>setSource(event.target.value)} placeholder="e.g. TradingView"/></label><label>Tags <small>comma-separated</small><input value={tags} onChange={event=>setTags(event.target.value)} placeholder="EUR/USD, liquidity"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving…':'Save evidence'}</button></footer></form></div>; }
 
-export default function RichDocumentEditor({ document, onChange, saveState, sectionName, documentEvidence={}, onSaveImage, onViewEvidence, bare=false, placeholder='', onFocusEditor=null }) {
+export default function RichDocumentEditor({ document, onChange, saveState, sectionName, documentEvidence={}, onSaveImage, onStoreImage, imageOwnerUserId='', onViewEvidence, bare=false, placeholder='', onFocusEditor=null }) {
   const prompt=usePrompt();
   const latestChange=useRef(onChange); latestChange.current=onChange;
   const latestFocus=useRef(onFocusEditor); latestFocus.current=onFocusEditor;
@@ -73,17 +78,17 @@ export default function RichDocumentEditor({ document, onChange, saveState, sect
   const evidenceActions=useRef();
   evidenceActions.current={documentEvidence,onRequestEvidence:setEvidenceImage,onViewEvidence};
   const editor=useEditor({
-    extensions:[StarterKit.configure({link:false}),Underline,Link.configure({openOnClick:false,protocols:['http','https','mailto']}),ResearchImage.configure({evidenceActions}),Placeholder.configure({placeholder:placeholder||'Write the observation, the evidence behind it, and what you will test next…'}),CharacterCount],
+    extensions:[StarterKit.configure({link:false}),Underline,Link.configure({openOnClick:false,protocols:['http','https','mailto']}),ResearchImage.configure({evidenceActions,imageOwnerUserId}),Placeholder.configure({placeholder:placeholder||'Write the observation, the evidence behind it, and what you will test next…'}),CharacterCount],
     content:initial.content,
     editorProps:{
       attributes:{class:'rde-content',spellcheck:'true'},
-      handlePaste:(view,event)=>{ const file=[...(event.clipboardData?.files||[])].find(item=>item.type.startsWith('image/')); if(!file)return false; event.preventDefault(); insertImageInView(view,file).catch(error=>setNotice(error.message)); return true; },
-      handleDrop:(view,event,_slice,moved)=>{ const file=[...(event.dataTransfer?.files||[])].find(item=>item.type.startsWith('image/')); if(!file||moved)return false; event.preventDefault(); insertImageInView(view,file,{left:event.clientX,top:event.clientY}).catch(error=>setNotice(error.message)); return true; }
+      handlePaste:(view,event)=>{ const file=[...(event.clipboardData?.files||[])].find(item=>item.type.startsWith('image/')); if(!file)return false; event.preventDefault(); insertImageInView(view,file,undefined,{saveImage:onStoreImage}).catch(error=>setNotice(error.message)); return true; },
+      handleDrop:(view,event,_slice,moved)=>{ const file=[...(event.dataTransfer?.files||[])].find(item=>item.type.startsWith('image/')); if(!file||moved)return false; event.preventDefault(); insertImageInView(view,file,{left:event.clientX,top:event.clientY},{saveImage:onStoreImage}).catch(error=>setNotice(error.message)); return true; }
     },
     onUpdate:({editor:instance})=>latestChange.current({version:1,content:instance.getJSON()}),
     onFocus:({editor:instance})=>latestFocus.current?.(instance)
   });
-  const insertImage=async event=>{ const file=event.target.files?.[0]; event.target.value=''; if(!file||!editor)return; try { await insertImageInView(editor.view,file); } catch(error) { setNotice(error.message); } };
+  const insertImage=async event=>{ const file=event.target.files?.[0]; event.target.value=''; if(!file||!editor)return; try { await insertImageInView(editor.view,file,undefined,{saveImage:onStoreImage}); } catch(error) { setNotice(error.message); } };
   if(!editor)return <div className="rde-loading">Preparing document editor…</div>;
   const command=callback=>()=>callback(editor.chain().focus()).run();
   if(bare)return <div className={`rde rde-bare${isDropping?' is-dropping':''}`} onDragEnter={event=>{if([...event.dataTransfer.types].includes('Files'))setIsDropping(true);}} onDragLeave={event=>{if(event.currentTarget===event.target)setIsDropping(false);}} onDrop={()=>setIsDropping(false)}>

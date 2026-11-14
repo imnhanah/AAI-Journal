@@ -160,7 +160,7 @@ test('both new-markup triggers are gated; editing and markup form stay unchanged
   assert.match(source,/setRoutineContinueOnly\(false\); routineGate\.current\.cancel\(\); setRoutineOpenMarkupAfterSave\(false\);/);
   assert.match(source,/Routine \{routineToday\.ticked\}\/\{routineToday\.total\}/);
   assert.match(source,/const continueDailyRoutine = \(\) => \{/);
-  assert.match(source,/useDailyRoutine\(user\)/);
+  assert.match(source,/useDailyRoutine\(user,\s*\{\s*localMode: localBacktests/);
   assert.match(source,/setRoutineOpenMarkupAfterSave\(true\)/);
   assert.match(source,/await routineGate\.current\.request\('markup'\)/);
 });

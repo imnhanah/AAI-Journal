@@ -1,3 +1,4 @@
+import {normaliseAdaptiveStepBack} from './challengeRules.js';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {challengeDb} from './challengeDb';
 import {isLocalJournal} from './localJournalDb';
@@ -95,15 +96,15 @@ export default function useChallenge(account, userId, startupProgress = null, st
     } catch(failure) {if(currentKey.current===key)setError(`Could not save challenge: ${failure.message}`);return false;}
     finally {if(currentKey.current===key){flight.current=null;setSaving(false);}}
   }
-  const reset=(mode,level,levelCount,rewardRatio=state.automation?.rewardRatio,adaptiveRiskPct=state.automation?.adaptiveRiskPct,adaptiveDrawdownPct=state.automation?.adaptiveDrawdownPct)=>{
+  const reset=(mode,level,levelCount,rewardRatio=state.automation?.rewardRatio,adaptiveRiskPct=state.automation?.adaptiveRiskPct,adaptiveDrawdownPct=state.automation?.adaptiveDrawdownPct,adaptiveStepBack=state.automation?.adaptiveStepBack)=>{
     if(state.settingsLocked) {setError('Challenge settings are locked because this challenge has linked trades.');return false;}
-    if(mode==='streak' && rewardRatio && !canUseLossStreak(rewardRatio)) {setError('Two-Loss Streak requires a reward above 1:2.8.');return false;}
-    return persist(resetAutomation({...state,automation:{...state.automation,rewardRatio,adaptiveRiskPct:mode==='adaptive'?Number(adaptiveRiskPct)||1:undefined,adaptiveDrawdownPct:mode==='adaptive'?Number(adaptiveDrawdownPct)||10:undefined}},account.trades || [],mode,level,new Date(),levelCount,liveChallengeBalance(account)));
+    if(mode==='streak' && rewardRatio && !canUseLossStreak(rewardRatio)) {setError('Two losses on a level needs a reward of 2.8R or more.');return false;}
+    return persist(resetAutomation({...state,automation:{...state.automation,rewardRatio,adaptiveRiskPct:mode==='adaptive'?Number(adaptiveRiskPct)||1:undefined,adaptiveDrawdownPct:mode==='adaptive'?Number(adaptiveDrawdownPct)||10:undefined,adaptiveStepBack:mode==='adaptive'?normaliseAdaptiveStepBack(adaptiveStepBack):undefined}},account.trades || [],mode,level,new Date(),levelCount,liveChallengeBalance(account)));
   };
   return {state, loading:loading || !ready, saving, error, modesReady:ready && record.modesReady,
     reload, retry:()=>latest.current?.key===key ? persist(latest.current.next) : reload(),
     setMode:mode=>reset(mode,state.activeLevel),
-    configure:(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct)=>reset(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct),
+    configure:(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct,adaptiveStepBack)=>reset(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct,adaptiveStepBack),
     setReward:reward=>reset(state.automation?.mode || 'risk',state.activeLevel,state.automation?.levelCount,reward),
     setAdaptiveRisk:risk=>reset('adaptive',state.activeLevel,state.automation?.levelCount,state.automation?.rewardRatio,risk,state.automation?.adaptiveDrawdownPct),
     setAdaptiveDrawdown:drawdown=>reset('adaptive',state.activeLevel,state.automation?.levelCount,state.automation?.rewardRatio,state.automation?.adaptiveRiskPct,drawdown),

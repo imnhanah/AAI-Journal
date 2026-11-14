@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, Check, CheckCircle2, ChevronDown, Edit3, Flas
 import { ThemeSelect, ThemeInstrument } from './JournalControls';
 import { backtestStats, isClosedTest, orderTestTrades, testType, testTypeLabel } from './backtestModel.js';
 import { strategyResult, strategyStreakTitle, strategyTradeMeta } from './mobileStrategyTestingModel.js';
+import { backtestMediaVersion, shouldLoadBacktestMedia } from './backtestSharedMedia.js';
 import './desktopStrategyTesting.css';
 
 // Desktop Strategy Testing v2 (STRATEGY_V2 in BacktestAccounts.jsx), after aaicorefx-desktop-strategy-testing.html.
@@ -13,7 +14,7 @@ const rValue = (value) => value == null || value === '' || !Number.isFinite(Numb
 const pct = (value) => value == null ? '—' : `${Math.round(value)}%`;
 const tone = (value) => Number(value) > 0 ? 'is-gain' : Number(value) < 0 ? 'is-loss' : '';
 const dateText = (value) => { const date = value && new Date(`${String(value).slice(0, 10)}T12:00:00`); return !date || Number.isNaN(date.getTime()) ? 'Date not set' : new Intl.DateTimeFormat(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date); };
-const imageSource = (image) => typeof image === 'string' ? image : image?.src || image?.url || image?.dataUrl || image?.source || image?.data || '';
+const imageSource = (image) => typeof image === 'string' ? image : image?.displaySrc || image?.src || image?.url || image?.dataUrl || image?.source || image?.data || '';
 const list = (values) => (values || []).filter(Boolean).join(', ');
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD', 'GHS'];
@@ -64,9 +65,16 @@ const Bar = ({ label, note, width, value, kind }) => <div className="st2-br"><di
 
 function TradeImages({ trade, onLoadMedia, onViewImage }) {
   const [images, setImages] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
-  useEffect(() => { setImages(null); setError(''); }, [trade.id, trade.updatedAt]);
+  const mediaVersion = backtestMediaVersion(trade);
   const load = async () => { setBusy(true); setError(''); try { setImages(await onLoadMedia(trade) || {}); } catch (reason) { setError(reason.message || 'Could not load screenshots.'); } finally { setBusy(false); } };
-  useEffect(() => { if (!trade.screenshots) void load(); }, [trade.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    let cancelled = false;
+    setImages(null); setError('');
+    if (!shouldLoadBacktestMedia(trade)) return undefined;
+    setBusy(true);
+    void onLoadMedia(trade).then(value => { if (!cancelled) setImages(value || {}); }).catch(reason => { if (!cancelled) setError(reason.message || 'Could not load screenshots.'); }).finally(() => { if (!cancelled) setBusy(false); });
+    return () => { cancelled = true; };
+  }, [mediaVersion]); // Media is versioned; onLoadMedia is supplied by the parent on every render.
   const sources = Object.entries(images || trade.screenshots || {}).flatMap(([label, value]) => (Array.isArray(value) ? value : [value]).map(imageSource).filter(Boolean).map((src) => ({ label, src })));
   if (error) return <p className="st2-err" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>;
   if (busy && !sources.length) return <p className="st2-mu">Loading screenshots…</p>;

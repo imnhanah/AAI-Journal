@@ -5,7 +5,7 @@ import { isLocalJournal } from './localJournalDb';
 import { changeChallengeStatus, emptyChallenge, normaliseChallengeLevelCount } from './challengeModel';
 import { replayChallenge, resetAutomation } from './challengeAutomation';
 import {scopeChallengeAccount, challengeLifecycle, liveChallengeBalance} from './challengeLifecycle';
-import {canUseLossStreak} from './challengeModel';
+import {canUseLossStreak, defaultChallengeReward} from './challengeModel';
 
 // Multi-balance challenge records deliberately live beside their balance, not
 // the shared workspace. This keeps level selection and notes independent.
@@ -110,7 +110,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
     return {...replay,...life,failed:replay.failed || life.failed};
   }, [state, challengeAccount, balance?.challengeReward]);
   const setMode = (mode) => mode
-    ? replayedState.settingsLocked || (mode==='streak' && !canUseLossStreak(balance?.challengeReward ?? 3.1)) ? false : persist(resetAutomation(replayedState, challengeAccount.trades, mode, replayedState.activeLevel,new Date(),undefined,liveChallengeBalance(challengeAccount)))
+    ? replayedState.settingsLocked || (mode==='streak' && !canUseLossStreak(balance?.challengeReward ?? defaultChallengeReward('streak'))) ? false : persist(resetAutomation(replayedState, challengeAccount.trades, mode, replayedState.activeLevel,new Date(),undefined,liveChallengeBalance(challengeAccount)))
     : replayedState.settingsLocked ? false : persist({ ...state, automation:null });
   const setLevel = (level) => {
     if(replayedState.settingsLocked) return false;

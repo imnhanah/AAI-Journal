@@ -9,7 +9,12 @@ const fields = readFileSync(new URL('./writingFields.css', import.meta.url), 'ut
 
 test('desktop Journal Setup shows v2; phones and the old page stay behind the flag', () => {
   assert.match(page, /const SETUP_V2 = true;/);
-  const v2 = page.indexOf('if (SETUP_V2 && !phone) return <DesktopJournalSetup section={activeSection} onSection={chooseList} ');
+  const branch = page.match(/if \(SETUP_V2 && !phone\) return <DesktopJournalSetup\b([^>]+)\/>;/);
+  assert.ok(branch, 'the desktop-only Setup branch exists');
+  for (const prop of ['section={activeSection}', 'onSection={chooseList}', 'membershipAdmin={membershipAdmin}', 'membershipPanel={membershipPanel}']) {
+    assert.ok(branch[1].includes(prop), `desktop Setup receives ${prop}`);
+  }
+  const v2 = branch.index;
   const old = page.indexOf('return <Card className={`tj-management-reference ');
   assert.ok(v2 > 0 && old > v2);
   // Every hook in ManagementPage runs before the v2 return.

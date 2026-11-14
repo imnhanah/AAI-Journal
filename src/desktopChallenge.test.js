@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {challengeRulesFor} from './challengeRules.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
@@ -11,9 +12,9 @@ const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), '
 test('desktop Challenge shows v2; phones keep MobileChallengesV6', () => {
   assert.match(page, /const CHALLENGE_V2 = true;/);
   assert.match(page, /return phone \? <><MobileChallengesV6 /);
-  assert.match(page, / : CHALLENGE_V2 \? <><DesktopChallengeCard \{\.\.\.viewProps\} rules=\{challengeRules\[mode\] \|\| challengeRules\.risk\} saving=\{saving\} error=\{error\}\/>\{celebrating&&<ChallengeCompletePopup [^}]*\}[\s\S]*?<\/> : <ChallengeSplitVisual/);
+  assert.match(page, / : CHALLENGE_V2 \? <><DesktopChallengeCard \{\.\.\.viewProps\} rules=\{challengeRulesFor\(mode,state\.automation\?\.adaptiveStepBack\)\} saving=\{saving\} error=\{error\}\/>\{\(celebrating\|\|certOpen\)&&<ChallengeCompletePopup [^}]*\}[\s\S]*?<\/> : <ChallengeSplitVisual/);
   assert.match(page, /const deskV2=CHALLENGE_V2&&!phonePage;/);
-  assert.match(page, /<ChallengeHero cards=\{deskCards\} selectedId=\{deskId\} onSelect=\{setDeskSel\}\/>/);
+  assert.match(page, /<ChallengeHero cards=\{deskCards\} selectedId=\{deskId\} onSelect=\{setDeskSel\}[^>]*\/>/);
 });
 
 test('Challenge v2 keeps every challenge mounted and reports its level for the switcher', () => {
@@ -22,8 +23,11 @@ test('Challenge v2 keeps every challenge mounted and reports its level for the s
 });
 
 test('every challenge mode explains why live balance can exceed the planned final balance', () => {
-  const explanation = /\['Planned and live balance','The final planned balance is the clean-path target\. Re-passing levels after a step-back adds to realised equity again, so live balance can finish above the plan\.'/g;
-  assert.equal([...page.matchAll(explanation)].length, 3);
+  for (const mode of ['risk', 'streak', 'adaptive']) {
+    const planned = challengeRulesFor(mode).items.find(([label]) => label === 'Planned and live balance');
+    assert.ok(planned, mode);
+    assert.match(planned[1], /live balance can finish above the plan/);
+  }
 });
 
 test('Challenge v2 uses the lifecycle handlers for status, notes, settings and delete', () => {

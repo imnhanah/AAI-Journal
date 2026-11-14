@@ -9,7 +9,7 @@ begin
     when 'accounts' then 'id,user_id,name,icon,balance,breakeven_cap,rating_style,theme,default_commission,monthly_goal_pct,yearly_goal_pct,daily_loss_limit_pct,monthly_loss_limit_pct,position_size_enabled,base_currency,default_risk_pct,default_stop_loss_pips,workspace_type,created_at,updated_at'
     when 'trades' then 'id,user_id,account_id,trade_date,trade_time,close_date,close_time,asset,direction,entry_price,exit_price,risk_method,risk_preset,stop_loss_pips,take_profit_pips,exit_pips,stop_loss_price,take_profit_price,planned_rr,realized_rr,gross_pnl,commission,swap,net_pnl,pnl,rr,session,entry_session,entry_type,rating,types,mistakes,mood_before,mood_after,context,confluence_session,premarket_markup_id,rule_evaluations,created_at,updated_at'
     when 'premarket_markups' then 'id,user_id,account_id,markup_date,markup_time,market,instrument,bias,status,levels,market_structure,notes,created_at,updated_at'
-    when 'trade_reviews' then 'id,user_id,account_id,trade_id,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,lessons,action_items,notes,created_at,updated_at'
+    when 'trade_reviews' then 'id,user_id,account_id,trade_id,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,execution_score,adherence_score,psychology_score,lessons,action_items,notes,created_at,updated_at'
     when 'period_reviews' then 'id,user_id,account_id,period_type,period_key,completed,created_at,updated_at'
     when 'rules' then 'id,user_id,account_id,rule_text,active,created_at,updated_at'
     when 'journal_entries' then 'id,user_id,account_id,rule_id,entry_date,checked,created_at,updated_at'
@@ -37,9 +37,13 @@ create or replace function public.tj_sync_journal(known jsonb default '{}')
 returns jsonb language plpgsql stable security invoker set search_path = '' as $$
 declare
   owner_id uuid := auth.uid(); table_name text; key_column text;
-  changed jsonb; removed jsonb; result jsonb := '{}'; table_known jsonb;
+  changed jsonb; removed jsonb; result jsonb := '{}'; table_known jsonb; row_known jsonb;
 begin
   if owner_id is null then raise exception 'Authentication required'; end if;
+  known := coalesce(known, '{}'::jsonb);
+  if jsonb_typeof(known) is distinct from 'object' then
+    raise exception 'Journal manifest must be an object' using errcode = '22023';
+  end if;
   foreach table_name in array array[
     'accounts','trades','rules','journal_entries','user_settings',
     'premarket_markups','trade_reviews','period_reviews','finance_settings',
@@ -53,17 +57,22 @@ begin
       continue;
     end if;
     key_column := case table_name when 'user_settings' then 'user_id' when 'finance_settings' then 'account_id' else 'id' end;
-    -- Refresh older cached rows once so newly included savings fields are loaded.
-    table_known := case when known ->> '_protocol' = '3' then coalesce(known -> table_name,'{}'::jsonb) else '{}'::jsonb end;
+    table_known := coalesce(known -> table_name,'{}'::jsonb);
+    if jsonb_typeof(table_known) is distinct from 'object' then
+      raise exception 'Journal manifest for % must be an object', table_name using errcode = '22023';
+    end if;
+    -- Refresh old projections once, but retain their IDs for deletion checks.
+    -- Discarding the entire old manifest would leave deleted rows in the cache.
+    row_known := case when known ->> '_protocol' = '3' then table_known else '{}'::jsonb end;
     execute format($query$
       with current_rows as materialized (
         select to_jsonb(t) as row, t.%I::text as key from public.%I t where t.user_id = $1
       )
       select
         coalesce((select jsonb_agg(public.tj_bootstrap_metadata(row,$1,$3,key) order by key)
-          from current_rows where ($2 ->> key) is distinct from (row ->> 'updated_at')), '[]'::jsonb),
-        coalesce((select jsonb_agg(k) from jsonb_object_keys($2) k where not exists(select 1 from current_rows c where c.key = k)), '[]'::jsonb)
-    $query$,key_column,table_name) into changed, removed using owner_id, table_known, table_name;
+          from current_rows where ($4 ->> key) is distinct from (row ->> 'updated_at')), '[]'::jsonb),
+        coalesce((select jsonb_agg(k order by k) from jsonb_object_keys($2) k where not exists(select 1 from current_rows c where c.key = k)), '[]'::jsonb)
+    $query$,key_column,table_name) into changed, removed using owner_id, table_known, table_name, row_known;
     result := result || jsonb_build_object(table_name,jsonb_build_object('rows',changed,'deleted',removed,'available',true));
   end loop;
   return jsonb_build_object('tables',result,'protocol',3);
@@ -72,4 +81,5 @@ $$;
 revoke all on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) from public, anon;
 grant execute on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) to authenticated;
 -- Existing tj_sync_journal grants remain authenticated-only.
+notify pgrst, 'reload schema';
 commit;

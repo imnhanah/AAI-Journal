@@ -1,4 +1,5 @@
-import {buildChallengePlan, isChallengeEnabled, normaliseChallengeLevelCount, canUseLossStreak, isAdaptiveBalanceMode, challengeFailureFloor, maxFundedChallengeLevel} from './challengeModel.js';
+import {buildChallengePlan, isChallengeEnabled, normaliseChallengeLevelCount, canUseLossStreak, isAdaptiveBalanceMode, challengeFailureFloor, maxFundedChallengeLevel, defaultChallengeReward} from './challengeModel.js';
+import {normaliseAdaptiveStepBack} from './challengeRules.js';
 import {linkedChallengeTrades, closedChallengeTrade, cashImpact, fundedChallengeLevel, liveChallengeBalance} from './challengeLifecycle.js';
 const RUNNING_TRADE_MARKER = '[aaicorefx-running-trade]';
 const isClosedTrade = closedChallengeTrade;
@@ -15,7 +16,7 @@ export function resetAutomation(state, trades, mode, level = state.activeLevel, 
   for (const key of Object.keys(statuses)) if (statuses[key] === 'In progress') statuses[key] = '';
   if (level <= totalLevels) statuses[level] = 'In progress';
   return {activeLevel:level, statuses, notes:{...state.notes}, automation:{
-    mode:validMode(mode), levelCount:totalLevels, rewardRatio:state.automation?.rewardRatio ?? null, adaptiveRiskPct:state.automation?.adaptiveRiskPct, adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct, manualStepBacks:state.automation?.manualStepBacks ?? 0, startedAt:now.toISOString(), version:6,
+    mode:validMode(mode), levelCount:totalLevels, rewardRatio:state.automation?.rewardRatio ?? null, adaptiveRiskPct:state.automation?.adaptiveRiskPct, adaptiveDrawdownPct:state.automation?.adaptiveDrawdownPct, adaptiveStepBack:mode==='adaptive' ? normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack) : undefined, manualStepBacks:state.automation?.manualStepBacks ?? 0, startedAt:now.toISOString(), version:6,
     ...(Number.isFinite(Number(startingBalance)) && Number(startingBalance) > 0 ? {startingBalance:Math.round(Number(startingBalance)*100)/100} : {}),
     excludedIds:trades.map(t=>t.id),
     // Trades imported after this checkpoint are added explicitly by the
@@ -138,10 +139,22 @@ export function replayChallenge(baseline, account) {
     const pass=cents >= (isAdaptiveBalanceMode(config.mode) ? adaptiveTarget : Math.round(row.profit*100));
     // Mode 2 counts losses within the current level. A breakeven is neutral:
     // it neither adds a loss nor clears a previous one. Only passing the
-    // level (or a resulting step-back below) starts a fresh count.
-    if (config.mode === 'streak' && canUseLossStreak(rewardRatio ?? 3.1) && amount < 0) state.lossStreak++;
+    // level (or a resulting step-back below) starts a fresh count. Adaptive
+    // Balance uses the same count when "Two losses" is its step-back rule.
+    const streakReward = rewardRatio ?? defaultChallengeReward('streak');
+    const adaptiveRule = isAdaptiveBalanceMode(config.mode) ? normaliseAdaptiveStepBack(config.adaptiveStepBack) : null;
+    const countsLosses = (config.mode === 'streak' && canUseLossStreak(streakReward)) || adaptiveRule === 'two';
+    if (countsLosses && amount < 0) state.lossStreak++;
     else if (pass) state.lossStreak=0;
-    const back=isAdaptiveBalanceMode(config.mode) ? amount < 0 && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(rewardRatio ?? 3.1) ? state.lossStreak >= 2 : cents <= -Math.round(row.risk*100);
+    // Adaptive step-back rules. One loss: any loss above Level 1 steps back.
+    // Two losses: the second loss on the level steps back. Net loss: wins and
+    // losses on the level add up and the net loss reaching the level's risk
+    // (the same share of the balance before the trade) steps back. Level 1 has
+    // no lower level, so Two losses and Net loss simply restart the count there.
+    const adaptiveRiskCents = Math.round(balanceBeforeTrade * (row.riskPct || 0) / 100);
+    const adaptiveBack = adaptiveRule === 'two' ? state.lossStreak >= 2 : adaptiveRule === 'net' ? cents <= -adaptiveRiskCents : amount < 0;
+    const back=isAdaptiveBalanceMode(config.mode) ? adaptiveBack && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(streakReward) ? state.lossStreak >= 2 : cents <= -Math.round(row.risk*100);
+    if (isAdaptiveBalanceMode(config.mode) && !pass && adaptiveBack && state.activeLevel === 1 && adaptiveRule !== 'one') { cents=0; state.lossStreak=0; }
     if (pass || back) {
       const previous=state.activeLevel;
       state.statuses[previous]=pass ? 'Pass' : 'Step back';

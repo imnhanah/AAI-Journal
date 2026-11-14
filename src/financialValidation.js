@@ -55,9 +55,9 @@ export function validateTradeFinancialData(trade) {
   return { valid:issues.length === 0, issues };
 }
 
-export function validateFinanceMovement(movement) {
+export function validateFinanceMovement(movement, { optionalAmount = false } = {}) {
   const issues = [];
-  if (movement && ['deposit','withdrawal','transfer'].includes(movement.type)) check(issues, 'cash movement', movement, 'amount', movement.amount);
+  if (movement && ['deposit','withdrawal','transfer'].includes(movement.type)) check(issues, 'cash movement', movement, 'amount', movement.amount, { optional:optionalAmount });
   return { valid:issues.length === 0, issues };
 }
 
@@ -100,7 +100,9 @@ export function validateAccountFinancialData(account) {
     if (!invalidRecord(issues, 'trade', trade)) issues.push(...validateTradeFinancialData(trade).issues);
   }
   for (const movement of financialCollection(issues, account, 'financeMovements', account.financeMovements)) {
-    if (!invalidRecord(issues, 'cash movement', movement)) issues.push(...validateFinanceMovement(movement).issues);
+    // amount is optional for existing records: cashImpact already treats null as 0.
+    // Write-time validation (validateFinanceMovement without optionalAmount) stays strict.
+    if (!invalidRecord(issues, 'cash movement', movement)) issues.push(...validateFinanceMovement(movement, { optionalAmount:true }).issues);
   }
   return { valid:issues.length === 0, issues };
 }

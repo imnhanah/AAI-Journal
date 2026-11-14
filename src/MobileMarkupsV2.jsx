@@ -1,3 +1,4 @@
+import {additionalScreenshotImages} from './legacyScreenshotMedia.js';
 import React, {useEffect, useMemo, useState} from 'react';
 import {ArrowUpRight, ChevronDown, ChevronUp, Edit3, Image as ImageIcon, Plus, Search, SlidersHorizontal, Trash2} from 'lucide-react';
 import {ConfirmDeleteButton} from './JournalControls.jsx';
@@ -113,6 +114,7 @@ export default function MobileMarkupsV2({markups = [], trades = [], currency = '
     const linkedTrades = linkedFor(selected);
     const pre = PRE_SLOTS.flatMap(slot => (selected.screenshots?.[slot] || []).map(imageSource).filter(Boolean).map(source => ({source, label:SLOT_LABELS[slot]})));
     const post = POST_SLOTS.flatMap(slot => (selected.screenshots?.[slot] || []).map(imageSource).filter(Boolean).map(source => ({source, label:SLOT_LABELS[slot]})));
+    const recovered=additionalScreenshotImages(selected.screenshots,[...PRE_SLOTS,...POST_SLOTS]);
     const review = selected.sessionReview || {};
     const status = statusFor(selected);
     const pnl = pnlFor(selected);
@@ -128,6 +130,7 @@ export default function MobileMarkupsV2({markups = [], trades = [], currency = '
         <section><p className="tj-mk2-eyebrow">02 / Pre-session charts</p>{pre.length ? <div className="tj-mk2-gallery">{pre.map(({source,label}, index) => <MarkupImage key={`${source}-${index}`} source={source} label={label} onView={onViewImage}/>)}</div> : <article className="tj-mk2-empty">No pre-session charts saved.</article>}</section>
         <section><p className="tj-mk2-eyebrow">03 / Execution</p><article className="tj-mk2-panel tj-mk2-trades">{linkedTrades.length ? linkedTrades.map(trade => <div key={trade.id}><span><strong>{trade.asset || selected.instrument || 'Trade'} · {trade.direction || '—'}</strong><small>{dateLabel(trade.date)} · {trade.time || '—'}{trade.rr != null ? ` · ${Number(trade.rr).toFixed(2)}R` : ''}</small></span><b className={Number(trade.pnl || 0) < 0 ? 'is-loss' : 'is-profit'}>{money(trade.pnl, currency)}</b></div>) : <span className="tj-mk2-muted">No trades linked yet.</span>}</article></section>
         <section><p className="tj-mk2-eyebrow">04 / Post-session review</p><article className="tj-mk2-panel tj-mk2-review">{[['Did the market play out as expected?', review.marketOutcome], ['Did you wait for key conditions?', review.waitedForConditions], ['If you traded outside the plan, why?', review.outsidePlanReason]].map(([label, value]) => <div key={label}><strong>{label}</strong><p>{String(value || '').trim() || 'Not reviewed yet'}</p></div>)}</article>{post.length ? <div className="tj-mk2-gallery">{post.map(({source,label}, index) => <MarkupImage key={`${source}-${index}`} source={source} label={label} onView={onViewImage}/>)}</div> : null}</section>
+        {recovered.length>0&&<section><p className="tj-mk2-eyebrow">Recovered legacy images</p><div className="tj-mk2-gallery">{recovered.map((item,index)=><MarkupImage key={index} source={item.src} label="Recovered legacy image" onView={onViewImage}/>)}</div></section>}
         <div className="tj-mk2-detail-actions"><button type="button" className="tj-mk2-secondary" onClick={() => onTrade(selected)}><Plus size={17}/>Trade</button><button type="button" className="tj-mk2-primary" onClick={() => onEdit(selected)}><Edit3 size={17}/>Edit markup</button><ConfirmDeleteButton className="tj-mk2-danger" title="Delete markup" onClick={() => onDelete(selected.id)}><Trash2 size={17}/>Delete</ConfirmDeleteButton></div>
       </div>
     </main>;

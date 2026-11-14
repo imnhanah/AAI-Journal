@@ -165,3 +165,33 @@
 @media (prefers-reduced-motion:reduce) {
   :is(.sv2,.sv2 *,.sv2-scrim,.cc2,.cc2 *,.cc2-cert,.cc2-cert *) {animation-duration:.01s!important;animation-iteration-count:1!important;}
 }
+
+/* Money line shown only when deposits were made after the challenge started */
+.cc3-money {max-width:100%;margin-top:6px;color:var(--muted);font-size:13px;line-height:1.4;text-align:center;overflow-wrap:anywhere;}
+.cc3-money b {color:var(--text);}
+.cc2-dep {margin-top:8px;color:var(--muted);font-size:13px;text-align:center;}
+
+/* Option A · Summit (wide): story on the left, numbers on the right; stacks on narrow screens */
+.cc2.is-wide {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);width:min(900px,100%);}
+.cc2.is-wide .cc2-left {position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;background:radial-gradient(90% 80% at 30% 20%,color-mix(in oklab,var(--celebrate-gold) 24%,transparent),transparent 70%),linear-gradient(160deg,var(--raised),var(--surface));}
+.cc2.is-wide .cc2-top {background:none;}
+.cc2.is-wide .cc2-story {padding-bottom:28px;}
+.cc2.is-wide .cc2-right {position:relative;display:flex;flex-direction:column;gap:14px;min-width:0;padding:26px 26px 22px;}
+.cc2.is-wide .cc2-right .cc2-x {align-self:flex-end;}
+.cc2-ledger {display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;}
+.cc2-ledger > div {min-width:0;padding:8px 12px;border:1px dashed var(--border);border-radius:13px;}
+.cc2-ledger > .is-dep {border-color:color-mix(in oklab,var(--celebrate-gold) 55%,var(--border));background:color-mix(in oklab,var(--celebrate-gold) 10%,transparent);}
+.cc2-ledger small {display:block;color:var(--muted);font-size:12px;}
+.cc2-ledger b {font-size:15px;overflow-wrap:anywhere;}
+@media (max-width:760px) {.cc2.is-wide {grid-template-columns:minmax(0,1fr);}.cc2.is-wide .cc2-right {position:static;}}
+
+/* Phone: certificate turned to fill the screen. The saved file is unchanged (export reads layout size). */
+.cc2-turn {display:none;}
+@media (max-width:760px) and (orientation:portrait) {
+  .cc2-cv {display:flex;padding:0;overflow:hidden;}
+  .cc2-cv .cc2-wrap {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;height:100dvh;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));}
+  .cc2-rot {position:relative;flex:1;min-height:0;width:100%;}
+  .cc2-rot .cc3-cert {position:absolute;left:50%;top:50%;width:min(calc((100vw - 28px) * 1.414),calc(100dvh - 190px));transform:translate(-50%,-50%) rotate(90deg);}
+  .cc2-cv .cc2-turn {display:block;margin:0;color:var(--muted);font-size:12px;text-align:center;}
+  .cc2-cv .cc2-bar {width:100%;}
+}
