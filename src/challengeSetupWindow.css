@@ -247,3 +247,7 @@
 }
 
 @media(max-width:860px){.csw2-ov .csw2-mb{grid-auto-rows:max-content;align-content:start}}
+
+/* Panel header: no hard line under it; the glow fades into the body. */
+.csw2-ov.csw2-panel .csw2-mh{border-bottom:0;background:radial-gradient(100% 160% at 0 0,color-mix(in srgb,var(--accent) 14%,transparent),transparent 72%),linear-gradient(180deg,transparent 60%,var(--surface))}
+.csw2-ov.csw2-panel .csw2-mb{border-top:0}
