@@ -92,7 +92,7 @@ export default function MobileFinance(p) {
       </>}
       {tab==='savings'&&<section className="tj-phone-finance-plans" aria-label="Savings plans">{p.savings.map(s=>{
         return <SavingsPlanCard key={s.id} saving={s} saved={s.saved} allocation={s.allocation} ownerName={s.ownerName || p.balances.find(b=>b.id===s.ownerBalanceId)?.name || ''} money={p.money} onTransfer={()=>{p.onPlanned(s);setError('');setOpen(true);}}/>;
-      })}{!p.savings.length&&<p className="tj-phone-finance-empty">Add a savings account in Account Settings to use transfers.</p>}</section>}
+      })}{!p.savings.length&&<p className="tj-phone-finance-empty">Add a savings account to use transfers.</p>}<button type="button" className="tj-phone-finance-manage" onClick={p.onManageSavings}>{p.savings.length?'Add or edit savings accounts':'Add savings account'}</button></section>}
     </div>
     {open&&<div className="tj-phone-finance-layer"><div className="tj-phone-finance-backdrop" onClick={close}/><section className="tj-phone-finance-sheet" data-type={p.type} role="dialog" aria-modal="true" aria-label="New movement" ref={dialog}>
       <button type="button" className="tj-phone-finance-handle" aria-label="Close movement form" onClick={close} onTouchStart={e=>{swipe.current=e.touches[0].clientY;}} onTouchEnd={e=>{if(swipe.current!=null&&e.changedTouches[0].clientY-swipe.current>60)close();swipe.current=null;}}><span/></button>

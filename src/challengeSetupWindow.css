@@ -177,3 +177,16 @@
 .csw2-op.is-pick{border-color:color-mix(in srgb,var(--accent) 70%,var(--border));background:radial-gradient(120% 120% at 100% 0,color-mix(in srgb,var(--accent) 24%,transparent),transparent 70%),color-mix(in srgb,var(--accent) 8%,var(--surface))}
 .csw2-chip{background:color-mix(in srgb,var(--accent) 16%,transparent)}.csw2-chip.is-sm{background:var(--goldbg)}
 @media(max-width:620px){.csw2{border-radius:30px 30px 0 0}.csw2-lad svg{height:96px}.csw2-bal{font-size:34px}}
+/* savings setup window */
+.csw2-pres4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.csw2-sv-list{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.csw2-sv-add{border-style:dashed;justify-content:center}.csw2-sv-add b{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:620px){.csw2-pres4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tj-finance-readonly{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px 16px;border:1px solid var(--border);border-radius:16px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}.tj-finance-readonly p{margin:0}.tj-finance-readonly small{color:var(--muted)}
+.csw2-snd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border:.5px solid var(--border);border-radius:20px;background:color-mix(in srgb,var(--text) 4%,var(--surface))}
+.csw2-snd b{display:block;font-size:14px;font-weight:500}.csw2-snd small{display:block;color:var(--muted);font-size:12px}.csw2-snd-err{grid-column:1/-1;margin:0;color:var(--loss);font-size:12px}
+.csw2-sw{position:relative;width:46px;height:26px;border-radius:99px;border:1px solid var(--border);background:var(--raised);padding:0;transition:background .2s}
+.csw2-sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:left .2s,background .2s}
+.csw2-sw.is-on{background:color-mix(in srgb,var(--accent) 30%,var(--surface));border-color:var(--accent)}.csw2-sw.is-on i{left:23px;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.csw2-how{margin-top:auto;padding:16px 18px;border:.5px solid var(--border);border-radius:22px;background:radial-gradient(140% 120% at 100% 0,color-mix(in srgb,var(--accent) 14%,transparent),transparent),color-mix(in srgb,var(--bg) 35%,var(--surface))}
+.csw2-how b{font-size:14px;font-weight:500}.csw2-how ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.55}

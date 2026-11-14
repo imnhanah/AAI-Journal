@@ -153,3 +153,4 @@
   @keyframes tj-phone-finance-enter {from {opacity:0;} to {opacity:1;}}
   @media(prefers-reduced-motion:reduce){.tj-phone-finance-sheet{animation:none;}.tj-phone-finance-tabs>i{transition:none;}}
 }
+.tj-phone-finance-manage {display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:10px;border:1px dashed color-mix(in srgb,var(--accent) 50%,var(--border));border-radius:16px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));color:var(--text);font:inherit;font-weight:650;}

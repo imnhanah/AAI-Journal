@@ -224,3 +224,5 @@
   .fn2 > *,.fn2-dr,.fn2-bk,.fn2-pop,.fn2-toast {animation:none;}
   .fn2-rg-value {transition:none;}
 }
+  .tj-root .fn2 .fn2-mg {display:flex;justify-content:flex-end;}
+  .tj-root .fn2 .fn2-btn.is-ghost {height:42px;background:var(--surface);color:var(--text);border-color:var(--border);box-shadow:none;}
