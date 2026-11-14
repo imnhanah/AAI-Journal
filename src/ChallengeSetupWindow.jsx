@@ -219,29 +219,37 @@ function CompatibleSetups({ fits, money, mode, levelCount, reward, start, where,
   const chosen = sel.startsWith('adaptive') ? { mode: 'adaptive', levelCount } : list.find((fit) => key(fit) === sel);
   const groups = ['risk', 'streak'].map((m) => [m, list.filter((fit) => fit.mode === m)]);
   const only = !list.length;
+  const bump = (fit, delta) => { const next = r1(Math.min(fit.rewardMax, Math.max(fit.rewardMin, Number(rOf(fit)) + delta))); setRs({ ...rs, [key(fit)]: next }); };
+  const rangeLine = (m) => rangeText(m);
   return <div className="csw2-pov" role="dialog" aria-modal="true" aria-label="Compatible setups">
     <div className="csw2-bk is-in" onClick={onClose} />
-    <div className="csw2-dlg">
-      <button type="button" className="csw2-x" aria-label="Close" onClick={onClose}><X size={16} /></button>
-      <div className="csw2-ico"><AlertTriangle size={26} /></div>
-      <h3>{only ? 'Only Adaptive Balance fits' : 'Choose a compatible setup'}</h3>
-      <p className="csw2-sub">{only ? <>Your balance <b>{money(start)}</b> is above the halfway level of every Mode 1 and Mode 2 plan.</> : <>Your balance would start at <b>Level {where.level}</b>. {MODES[mode].kicker.replace('MODE', 'Mode')} · {reward}R · {levelCount} levels only allows Level {where.max}.</>}</p>
-      <div className="csw2-scroll">
-        {groups.map(([m, items]) => <div key={m} className={`csw2-grp ${items.length ? '' : 'is-dim'}`}>
-          <span className="csw2-gh"><b>{MODES[m].kicker.replace('MODE', 'Mode')} · {MODES[m].title}</b><span>{rangeText(m)}</span><em className={items.length ? '' : 'is-no'}>{items.length ? `${items.length} plan${items.length > 1 ? 's' : ''} fit` : 'none fit'}</em></span>
-          {items.length === 0 && <div className="csw2-op is-skip"><span className="csw2-m">{MODES[m].short}</span><div><b>No setup fits</b><span className="csw2-d">Your balance is too high for this mode at any plan length.</span></div></div>}
-          {items.map((fit) => <div key={key(fit)} role="button" tabIndex={0} className={`csw2-op ${sel === key(fit) ? 'is-pick' : ''}`} onClick={() => setSel(key(fit))} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSel(key(fit)); } }}>
-            <span className="csw2-m">{MODES[m].short}</span>
-            <div><b>{fit.levelCount} levels</b><span className="csw2-d">Fits with any R from {fit.rewardMin}R to {fit.rewardMax}R</span></div>
-            {fit === closest ? <span className="csw2-chip is-sm">Closest to yours</span> : <span className="csw2-chip">Fits</span>}
-            <label className="csw2-rin" onClick={(event) => event.stopPropagation()}>R<input type="number" step="0.1" value={rOf(fit)} onChange={(event) => setRs({ ...rs, [key(fit)]: event.target.value })} onBlur={(event) => { const v = r1(parseFloat(event.target.value)); setRs({ ...rs, [key(fit)]: Number.isFinite(v) ? Math.min(fit.rewardMax, Math.max(fit.rewardMin, v)) : fit.rewardMin }); }} /></label>
-          </div>)}
-        </div>)}
-        <div className="csw2-grp"><span className="csw2-gh"><b>Mode 3 · Adaptive Balance</b><span>1R and above</span><em>always fits</em></span>
-          <div role="button" tabIndex={0} className={`csw2-op ${sel.startsWith('adaptive') ? 'is-pick' : ''}`} onClick={() => setSel(`adaptive|${levelCount}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSel(`adaptive|${levelCount}`); } }}><span className="csw2-m">M3</span><div><b>Adaptive Balance</b><span className="csw2-d">Uses your own balance, drawdown and percent risk. Starts at Level 1.</span></div><span className="csw2-chip">Fits</span></div>
-        </div>
+    <div className="csw2-dlg csw2-cp">
+      <header className="csw2-cph">
+        <span className="csw2-ico"><AlertTriangle size={22} /></span>
+        <div><h3>{only ? 'Only Adaptive Balance fits' : 'Choose a compatible setup'}</h3>
+          <p className="csw2-sub">{only ? <>Your balance <b>{money(start)}</b> is above the halfway level of every Mode 1 and Mode 2 plan.</> : <>Your balance starts at <b>Level {where.level}</b>. {MODES[mode].kicker.replace('MODE', 'Mode')} · {reward}R · {levelCount} levels only allows Level {where.max}.</>}</p></div>
+        <button type="button" className="csw2-x" aria-label="Close" onClick={onClose}><X size={16} /></button>
+      </header>
+      <div className="csw2-cpb">
+        {groups.map(([m, items]) => <section key={m} className={`csw2-grp ${items.length ? '' : 'is-dim'}`}>
+          <span className="csw2-gh"><b>{MODES[m].kicker.replace('MODE', 'Mode')} · {MODES[m].title}</b><span>{rangeLine(m)}</span><em className={items.length ? '' : 'is-no'}>{items.length ? `${items.length} plan${items.length > 1 ? 's' : ''} fit` : 'none fit'}</em></span>
+          {items.length === 0 ? <div className="csw2-none">Your balance is too high for this mode at any plan length.</div>
+            : <div className="csw2-cgrid">{items.map((fit) => <div key={key(fit)} role="button" tabIndex={0} className={`csw2-cc ${sel === key(fit) ? 'is-pick' : ''}`} onClick={() => setSel(key(fit))} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSel(key(fit)); } }}>
+              <div className="csw2-cc1"><span className="csw2-m">{MODES[m].short}</span><b>{fit.levelCount} levels</b>{fit === closest ? <span className="csw2-chip is-sm">Closest</span> : <span className="csw2-chip">Fits</span>}</div>
+              <span className="csw2-d">Any R from {fit.rewardMin}R to {fit.rewardMax}R</span>
+              <div className="csw2-rin2" onClick={(event) => event.stopPropagation()}><small>Your R</small>
+                <button type="button" aria-label="Lower R" onClick={() => bump(fit, -0.1)}><Minus size={14} /></button>
+                <input type="number" step="0.1" value={rOf(fit)} onChange={(event) => setRs({ ...rs, [key(fit)]: event.target.value })} onBlur={(event) => { const v = r1(parseFloat(event.target.value)); setRs({ ...rs, [key(fit)]: Number.isFinite(v) ? Math.min(fit.rewardMax, Math.max(fit.rewardMin, v)) : fit.rewardMin }); }} />
+                <button type="button" aria-label="Raise R" onClick={() => bump(fit, 0.1)}><Plus size={14} /></button></div>
+            </div>)}</div>}
+        </section>)}
+        <section className="csw2-grp"><span className="csw2-gh"><b>Mode 3 · Adaptive Balance</b><span>1R and above</span><em>always fits</em></span>
+          <div role="button" tabIndex={0} className={`csw2-cc csw2-cc-wide ${sel.startsWith('adaptive') ? 'is-pick' : ''}`} onClick={() => setSel(`adaptive|${levelCount}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSel(`adaptive|${levelCount}`); } }}>
+            <div className="csw2-cc1"><span className="csw2-m">M3</span><b>Adaptive Balance</b><span className="csw2-chip">Fits</span></div>
+            <span className="csw2-d">Uses your own balance, drawdown and percent risk. Starts at Level 1.</span></div>
+        </section>
       </div>
-      <div className="csw2-act"><button type="button" className="csw2-bt" onClick={onClose}>Cancel</button><button type="button" className="csw2-bt is-pri" disabled={!chosen} onClick={() => chosen && onApply(chosen.mode === 'adaptive' ? chosen : { ...chosen, reward: Math.min(chosen.rewardMax, Math.max(chosen.rewardMin, Number(rOf(chosen)))) })}>{chosen?.mode === 'adaptive' ? 'Use Adaptive Balance' : chosen ? `Use ${MODES[chosen.mode].kicker.replace('MODE', 'Mode')} · ${Number(rOf(chosen))}R · ${chosen.levelCount} levels` : 'Choose a setup'}</button></div>
+      <footer className="csw2-cpf"><button type="button" className="csw2-bt" onClick={onClose}>Cancel</button><button type="button" className="csw2-bt is-pri" disabled={!chosen} onClick={() => chosen && onApply(chosen.mode === 'adaptive' ? chosen : { ...chosen, reward: Math.min(chosen.rewardMax, Math.max(chosen.rewardMin, Number(rOf(chosen)))) })}>{chosen?.mode === 'adaptive' ? 'Use Adaptive Balance' : chosen ? `Use ${MODES[chosen.mode].kicker.replace('MODE', 'Mode')} · ${Number(rOf(chosen))}R · ${chosen.levelCount} levels` : 'Choose a setup'}</button></footer>
     </div>
   </div>;
 }

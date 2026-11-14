@@ -5104,7 +5104,7 @@ export function BacktestCenterPage({ trades = [], onAddTrade, onEditTrade, onDel
 }
 
 const FINANCE_V2 = true;
-function FinancePage({ account, onRecord, onDelete, onSaveSavings }) {
+function FinancePage({ account, onRecord, onDelete, onSaveSavings, onCheckDeposit }) {
   const confirm = useConfirmation();
   const [savingsOpen, setSavingsOpen] = useState(false);
   const [savingsBusy, setSavingsBusy] = useState(false);
@@ -5156,7 +5156,7 @@ function FinancePage({ account, onRecord, onDelete, onSaveSavings }) {
   const visibleMovements = showOlder ? cashMovements : cashMovements.slice(0, 6);
   const savingsWindow = savingsOpen ? <SavingsSetupWindow plans={account.savingsAccounts || []} balances={multiBalance ? balances.filter(item => item.isActive !== false) : []} currency={selectedBalance?.baseCurrency || account.baseCurrency} saving={savingsBusy} startNew={!(account.savingsAccounts || []).length} onClose={() => { if (!savingsBusy) setSavingsOpen(false); }} onSave={async list => { setSavingsBusy(true); try { if (await onSaveSavings(list)) setSavingsOpen(false); } finally { setSavingsBusy(false); } }}/> : null;
   const manageSavings = () => setSavingsOpen(true);
-  if (phone) return <><MobileFinance onManageSavings={manageSavings}
+  if (phone) return <><MobileFinance onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
     balances={balances} balanceId={selectedBalance?.id || ''} onBalance={setBalanceId}
     totals={totals} baseline={profitCycle.baseline} currency={selectedBalance?.baseCurrency || account.baseCurrency}
     savings={savingsAccounts.map(saving => ({...saving,ownerName:balanceName(savingsOwner(account,saving)),saved:financeSavingsBalance(account,saving.id),allocation:savingsAllocation(account,saving)}))}
@@ -5180,7 +5180,7 @@ function FinancePage({ account, onRecord, onDelete, onSaveSavings }) {
         .sort((left, right) => `${left.date || ""} ${left.time}`.localeCompare(`${right.date || ""} ${right.time}`))
         .forEach((event) => { running += event.value; if (event.id != null) balanceAfter[event.id] = +running.toFixed(2); });
     }
-    return <><DesktopFinanceV2 onManageSavings={manageSavings}
+    return <><DesktopFinanceV2 onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
       balances={balances} balanceId={selectedBalance?.id || ''} onBalance={setBalanceId}
       totals={totals} baseline={profitCycle.baseline} currency={selectedBalance?.baseCurrency || account.baseCurrency}
       savings={savingsAccounts.map(saving => ({...saving,ownerName:balanceName(savingsOwner(account,saving)),saved:financeSavingsBalance(account,saving.id),allocation:savingsAllocation(account,saving)}))}
@@ -8592,6 +8592,26 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const handleDeleteMarkup = async (id) => {  const res=await deleteMarkup(id); if(res.error)return showError(res.error); setMarkups(x=>x.filter(m=>m.id!==id)); };
   const handleSaveReview = async (r) => { const res=await saveTradeReview(user.id,account.id,{ ...r, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) }); if(res.error){showError(res.error);return false;}setReviews(x=>{const i=x.findIndex(v=>v.id===res.data.id);return i<0?[res.data,...x]:x.map(v=>v.id===res.data.id?res.data:v);}); return true; };
   const handleSavePeriodReview = async (review) => { const res = await savePeriodReview(user.id, account.id, review); if (res.error) { showError(res.error); return false; } setPeriodReviews((items) => { const index = items.findIndex((item) => item.id === res.data.id || (item.accountId === account.id && item.type === res.data.type && item.key === res.data.key)); return index < 0 ? [res.data, ...items] : items.map((item, itemIndex) => itemIndex === index ? res.data : item); }); return true; };
+  // Shared by the Add funds form (live warning) and the save step (hard block).
+  const checkDepositFunding = async (movement) => {
+    if (movement.type !== 'deposit' || !(Number(movement.amount) > 0)) return { allowed: true };
+    const targetBalance = movement.balanceId ? (account.balances || []).find(item => item.id === movement.balanceId) : null;
+    const scoped = targetBalance ? scopeChallengeAccount(account, targetBalance) : account;
+    if (!scoped.challengeEnabled) return { allowed: true };
+    const record = await challengeDb.read(targetBalance ? 'balance' : 'account', targetBalance?.id || account.id, user.id);
+    if (record.error) return { allowed: false, error: record.error.message };
+    const baseState = record.data ? { activeLevel: record.data.active_level, statuses: record.data.statuses || {}, notes: record.data.notes || {}, automation: record.data.automation || null } : null;
+    if (!baseState?.automation?.startedAt) return { allowed: true };
+    const replayed = replayChallenge(baseState, scoped);
+    const currentBalance = Number(liveChallengeBalance(scoped));
+    const resultingBalance = Math.round((currentBalance + Number(movement.amount)) * 100) / 100;
+    const config = baseState.automation;
+    const linked = linkedChallengeTrades(baseState, scoped).length > 0;
+    const rule = challengeDepositFundingRule({ mode: config.mode, reward: config.rewardRatio ?? scoped.challengeReward, balance: resultingBalance, levelCount: config.levelCount, activeLevel: replayed.activeLevel, failed: replayed.failed, linked, startingBalance: config.startingBalance });
+    if (rule.allowed) return { allowed: true };
+    const maximum = Math.max(0, Math.floor(((rule.firstProhibitedStart ?? 0) - currentBalance - 0.01) * 100) / 100);
+    return { allowed: false, reason: rule.reason, maxLevel: rule.maxLevel, totalLevels: rule.totalLevels, fundedLevel: rule.fundedLevel, maximum: Number.isFinite(maximum) ? maximum : 0 };
+  };
   // Loss guardrails restrict trade entry, not bookkeeping or funding the account.
   const handleRecordFinanceMovement = async (movement) => {
     const movementValidation = validateFinanceMovement(movement);
@@ -8599,31 +8619,12 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     // Enforce the challenge funding limit at the persistence boundary. A
     // warning in Finance is useful, but this check is what prevents an
     // invalid deposit from ever being written to the ledger.
-    if (movement.type === 'deposit' && Number(movement.amount) > 0) {
-      const targetBalance=movement.balanceId ? (account.balances || []).find(item=>item.id===movement.balanceId) : null;
-      const scoped=targetBalance ? scopeChallengeAccount(account,targetBalance) : account;
-      if (scoped.challengeEnabled) {
-        const record=await challengeDb.read(targetBalance ? 'balance' : 'account',targetBalance?.id || account.id,user.id);
-        if (record.error) { showError(record.error.message); return false; }
-        const baseState=record.data ? {activeLevel:record.data.active_level,statuses:record.data.statuses || {},notes:record.data.notes || {},automation:record.data.automation || null} : null;
-        if (baseState?.automation?.startedAt) {
-          const replayed=replayChallenge(baseState,scoped);
-          const currentBalance=Number(liveChallengeBalance(scoped));
-          const resultingBalance=Math.round((currentBalance+Number(movement.amount))*100)/100;
-          const config=baseState.automation;
-          const linked=linkedChallengeTrades(baseState,scoped).length>0;
-          const rule=challengeDepositFundingRule({mode:config.mode,reward:config.rewardRatio ?? scoped.challengeReward,balance:resultingBalance,levelCount:config.levelCount,activeLevel:replayed.activeLevel,failed:replayed.failed,linked,startingBalance:config.startingBalance});
-          if (!rule.allowed) {
-            if (rule.reason==='active-cap') {
-              showError(`Deposits are unavailable after Level ${rule.maxLevel} in this ${rule.totalLevels}-level challenge. Continue through trading to progress further.`);
-            } else {
-              const maximum=Math.max(0,Math.floor((rule.firstProhibitedStart-currentBalance-0.01)*100)/100);
-              showError(`Deposit exceeds challenge funding limit. This deposit would fund Level ${rule.fundedLevel}, but your ${rule.totalLevels}-level challenge only allows deposit-funded progression up to Level ${rule.maxLevel}. Reduce the deposit to ${fmtMoney(maximum)} or less to continue.`);
-            }
-            return false;
-          }
-        }
-      }
+    const funding = await checkDepositFunding(movement);
+    if (funding.error) { showError(funding.error); return false; }
+    if (!funding.allowed) {
+      if (funding.reason === 'active-cap') showError(`Deposits are unavailable after Level ${funding.maxLevel} in this ${funding.totalLevels}-level challenge. Continue through trading to progress further.`);
+      else showError(`Deposit exceeds challenge funding limit. This deposit would fund Level ${funding.fundedLevel}, but your ${funding.totalLevels}-level challenge only allows deposit-funded progression up to Level ${funding.maxLevel}. Reduce the deposit to ${fmtMoney(funding.maximum)} or less to continue.`);
+      return false;
     }
     const result = await createFinanceMovement(user.id, account.id, movement);
     if (result.error) { showError(`${result.error} Apply supabase/finance_migration.sql if this is a new database.`); return false; }
@@ -9263,7 +9264,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           
           {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} membership={membership} api={localBacktests ? localBacktestApi : backtestCloud} localOnly={localBacktests} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
           {page === "analytics" && (financialValidation.valid ? <AnalyticsPage account={dashboardAccount} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveTradeReview={handleSaveReview} onViewMarkups={() => setPage("markups")} onOpenAccountSettings={guardrails.tradeEntryLocked ? undefined : () => setModal("account")} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {page === "finance" && (financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} onSaveSavings={handleSaveSavings} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
+          {page === "finance" && (financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} onSaveSavings={handleSaveSavings} onCheckDeposit={checkDepositFunding} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "challenge" && (financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)} 
           {page === "calendar" && (phoneCalendar
             ? <MobileCalendarV2 account={dashboardAccount} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} formatMoney={fmtMoney} formatDate={formatDate} cashImpact={financeTradingImpact} renderReadout={view => <CalendarPerformanceNarrative phone view={view} trades={dashboardAccount.trades} cap={dashboardAccount.breakevenCap} balance={dashboardAccount.balance}/>}/>

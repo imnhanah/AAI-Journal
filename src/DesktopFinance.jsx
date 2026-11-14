@@ -5,6 +5,7 @@ import { useConfirmation } from './ConfirmationDialog.jsx';
 import { DECIMAL_INPUT_MODE } from './mobileFinanceConstants.js';
 import { financeMonthGroups, financeMovementIssue, financeMovementSign } from './mobileFinanceModel.js';
 import { savingsCardModel } from './savingsCardModel.js';
+import { useDepositCheck, depositBlockText } from './useDepositCheck.js';
 import './desktopFinance.css';
 
 // Desktop Finance v2 (FINANCE_V2 in TradingJournal.jsx), after aaicorefx-desktop-finance.html.
@@ -60,6 +61,7 @@ export default function DesktopFinanceV2(p) {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
   const amountRef = useRef(null);
+  const depositBlock = useDepositCheck(p, drawer);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
   useEffect(() => { setError(''); }, [p.amount, p.date, p.savingsId, p.type, p.source, p.balanceId]);
   useEffect(() => { if (drawer) requestAnimationFrame(() => amountRef.current?.focus()); }, [drawer]);
@@ -161,7 +163,8 @@ export default function DesktopFinanceV2(p) {
           <div className="fn2-f"><small>Date</small><ThemeDate value={p.date} onChange={(event) => p.onDate(event.target.value)} label="Movement date"/></div>
           <div className="fn2-f"><small>Note <i>optional</i></small><label className="fn2-in"><input aria-label="Movement note" value={p.note} placeholder="Optional reference" onChange={(event) => p.onNote(event.target.value)}/></label></div>
         </div>
-        <footer><p className="fn2-err" role="alert">{error}</p><div className="fn2-fb"><button type="button" className="fn2-btn is-ghost" onClick={() => setDrawer(false)} disabled={saving}>Cancel</button><button type="button" className="fn2-btn" onClick={submit} disabled={saving}>{React.createElement(TYPES[p.type]?.[2] || ArrowDown, { size: 16 })}{saving ? 'Saving…' : TYPES[p.type]?.[3] || 'Record movement'}</button></div></footer>
+        {depositBlock && <div className="fn2-cap" role="alert"><span className="fn2-cap-ic"><Shield size={20}/></span><div><b>{depositBlock.reason === 'active-cap' ? 'Deposits are closed' : 'Above the challenge limit'}</b><p>{depositBlockText(depositBlock, p.money)}</p>{depositBlock.reason !== 'active-cap' && depositBlock.maximum > 0 && <button type="button" className="fn2-cap-use" onClick={() => p.onAmount(String(depositBlock.maximum))}>Use {p.money(depositBlock.maximum)}</button>}</div></div>}
+        <footer><p className="fn2-err" role="alert">{error}</p><div className="fn2-fb"><button type="button" className="fn2-btn is-ghost" onClick={() => setDrawer(false)} disabled={saving}>Cancel</button><button type="button" className="fn2-btn" onClick={submit} disabled={saving || !!depositBlock}>{React.createElement(TYPES[p.type]?.[2] || ArrowDown, { size: 16 })}{saving ? 'Saving…' : TYPES[p.type]?.[3] || 'Record movement'}</button></div></footer>
       </aside>
     </div>}
     {toast && <div className="fn2-toast" role="status" key={toast.id}>{toast.message}</div>}
