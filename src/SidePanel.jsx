@@ -52,9 +52,12 @@ export default function SidePanel({open, side = 'right', behavior = 'push', user
   }, []);
 
   // Push: the page gives up exactly the panel's width. Shared with the page through .tj-root.
+  // Several panels share these root settings. A panel that is closing or unmounting must never
+  // wipe the settings of another panel that is open (switching Profile to a setup panel did this).
   useLayoutEffect(() => {
     const root = panel.current?.closest('.tj-root');
     if (!root) return undefined;
+    if (!open && [...root.querySelectorAll('.sp-panel.is-open')].some(node => node !== panel.current)) return undefined;
     root.style.setProperty('--sp-push', open && !overlay ? `${shown}px` : '0px');
     root.classList.toggle('sp-side-left', left);
     root.classList.toggle('sp-side-right', !left);
@@ -64,6 +67,7 @@ export default function SidePanel({open, side = 'right', behavior = 'push', user
   }, [open, overlay, shown, left, dragging]);
   useEffect(() => () => {
     const root = panel.current?.closest('.tj-root') || document.querySelector('.tj-root');
+    if (root && [...root.querySelectorAll('.sp-panel.is-open')].some(node => node !== panel.current)) return;
     root?.style.removeProperty('--sp-push');
     root?.classList.remove('sp-side-left', 'sp-side-right', 'sp-overlay-open', 'sp-dragging');
   }, []);
