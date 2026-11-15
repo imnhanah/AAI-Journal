@@ -169,7 +169,7 @@ import { FinancialDisclaimerGate } from './FinancialDisclaimer.jsx';
 import { acceptFinancialDisclaimer, getFinancialDisclaimerStatus } from './financialDisclaimer.js';
 import { supabase } from "./supabaseClient";
 import { readCloudSyncAccess } from './storageAccess';
-import { onAuthStateChange, getSession, signOut, signOutAll, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady } from "./auth";
+import { onAuthStateChange, getSession, signOut, signOutAll, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady, checkSession } from "./auth";
 import { membershipPreviewEnabled, resolveJournalMembership } from './membership.js';
 import { getCalendarWindow } from "./forexFactory";
 import { newsWeekKey, archivedNewsEvents, readNewsArchive } from "./newsArchive";
@@ -6581,6 +6581,23 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     window.addEventListener('focus', refresh);
     return () => { live = false; window.removeEventListener('focus', refresh); };
   }, [user.id]);
+  const onLogoutRef = useRef(onLogout);
+  useEffect(() => { onLogoutRef.current = onLogout; });
+  useEffect(() => {
+    const runCheck = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const result = await checkSession();
+      if (result.authError) onLogoutRef.current?.();
+    };
+    document.addEventListener('visibilitychange', runCheck);
+    window.addEventListener('focus', runCheck);
+    const id = setInterval(runCheck, 60000);
+    return () => {
+      document.removeEventListener('visibilitychange', runCheck);
+      window.removeEventListener('focus', runCheck);
+      clearInterval(id);
+    };
+  }, []);
   const [showMembershipsOnEmpty, setShowMembershipsOnEmpty] = useState(false);
   // Keep native chart animations aligned with preference changes, not just reloads.
   const [, refreshChartMotion] = useState(0);

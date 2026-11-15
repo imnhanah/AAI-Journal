@@ -146,6 +146,28 @@ export async function signOutAll() {
   }
 }
 
+export async function checkSession() {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      const status = error.status;
+      if (status === 401 || status === 403 ||
+          msg.includes('invalid') || msg.includes('expired') ||
+          msg.includes('not found') || msg.includes('jwt') ||
+          msg.includes('session') || msg.includes('missing') ||
+          msg.includes('token')) {
+        return { authError: true };
+      }
+      return { networkError: true };
+    }
+    if (!data?.user) return { authError: true };
+    return { valid: true };
+  } catch {
+    return { networkError: true };
+  }
+}
+
 export async function requestPasswordReset(email, captchaToken) {
   const cleanEmail = (email || "").trim().toLowerCase();
   if (!cleanEmail || !cleanEmail.includes("@")) return { error: "Please enter a valid email address." };
