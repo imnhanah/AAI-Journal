@@ -1,4 +1,5 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import SidePanel from './SidePanel.jsx';
 import { PanelPrefsContext } from './panelPrefsContext.js';
 
@@ -14,6 +15,12 @@ export default function SetupPanel({ label, panelKey, defaultWidth = 880, busy =
   const [open, setOpen] = useState(false);
   const closing = useRef(false);
   const host = useRef(null);
+  const anchor = useRef(null);
+  const [root, setRoot] = useState(null);
+  // The panel is fixed to the window. Page wrappers can act as its containing block (a finished
+  // animation leaves a transform on them), which pushed it far to the right. It is therefore
+  // mounted on the app root, like Log trade and Profile.
+  useLayoutEffect(() => { setRoot(anchor.current?.closest('.tj-root') || null); }, []);
   const timer = useRef(0);
   useEffect(() => {
     const media = window.matchMedia(PHONE), update = () => setPhone(media.matches);
@@ -62,7 +69,7 @@ export default function SetupPanel({ label, panelKey, defaultWidth = 880, busy =
 
   const body = typeof children === 'function' ? children(close) : children;
   if (phone) return <div className="csw2-ov" role="presentation"><div className="csw2-bk" onClick={close} />{body}</div>;
-  return <SidePanel open={open} side={prefs.position} behavior={prefs.behavior} userId={`${prefs.userId || 'guest'}:${panelKey}`} defaultWidth={defaultWidth} label={label}>
+  return <><span ref={anchor} hidden />{root && createPortal(<SidePanel open={open} side={prefs.position} behavior={prefs.behavior} userId={`${prefs.userId || 'guest'}:${panelKey}`} defaultWidth={defaultWidth} label={label}>
     <div ref={host} className="csw2-ov csw2-panel" role="presentation">{body}</div>
-  </SidePanel>;
+  </SidePanel>, root)}</>;
 }
