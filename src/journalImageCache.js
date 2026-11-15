@@ -24,7 +24,7 @@ const imageSnapshot = (data = {}) => ({
 // Never replace current revisioned references with an old cached screenshot.
 const restore = (item, saved, revisioned) => {
   if (revisioned && !item._cachedImagePayload) return item.screenshots;
-  return JSON.stringify(item.screenshots || null).includes('tj-image:') ? item.screenshots : (saved ?? item.screenshots);
+  return /tj-(?:image|trade-media):/.test(JSON.stringify(item.screenshots || null)) ? item.screenshots : (saved ?? item.screenshots);
 };
 
 export async function writeJournalImageCache(userId, data) {

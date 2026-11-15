@@ -7,7 +7,7 @@ export const THIN_COLUMNS = {
   trade_reviews: 'id,account_id,trade_id,updated_at,review_date,review_time,done_well,went_wrong,execution_review,rule_adherence,psychology,execution_score,adherence_score,psychology_score,lessons,action_items,notes',
 };
 const canonical = value => JSON.stringify(value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.keys(value).sort().map(key => [key, JSON.parse(canonical(value[key]) ?? 'null')])) : Array.isArray(value) ? value.map(item => JSON.parse(canonical(item) ?? 'null')) : value);
-export const hasMedia = value => typeof value === 'string' ? value.startsWith('data:image/') || value.startsWith('tj-image:') || /^https?:/.test(value) : Array.isArray(value) ? value.some(hasMedia) : value && typeof value === 'object' ? Object.values(value).some(hasMedia) : false;
+export const hasMedia = value => typeof value === 'string' ? value.startsWith('data:image/') || value.startsWith('tj-image:') || value.startsWith('tj-trade-media:') || /^https?:/.test(value) : Array.isArray(value) ? value.some(hasMedia) : value && typeof value === 'object' ? Object.values(value).some(hasMedia) : false;
 export function normalizeMedia(table, value) {
   if (table === 'trades') {
     if (Array.isArray(value)) return { entry: value.slice(0,2), exit: value.slice(2,4) };

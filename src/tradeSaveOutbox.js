@@ -1,32 +1,30 @@
-import { privateCache } from './privateCacheRuntime';
-
-const keyFor = userId => `journal:${userId || 'anonymous'}:pending-trades`;
-const usable = value => Array.isArray(value) ? value.filter(item => item?.trade?.id && item?.accountId) : [];
-// The queue is a safeguard, never a prerequisite for the primary cloud save.
-// IndexedDB may be unavailable in privacy mode, so cache errors intentionally
-// fall back to a session-only retry state rather than interrupting the trade.
-const read = async userId => {
-  try { return usable(await privateCache.read(keyFor(userId))); }
-  catch { return []; }
-};
-const write = async (userId, items) => {
-  try { await privateCache.write(keyFor(userId), items); return true; }
-  catch { return false; }
-};
-
-export const pendingTradeSaves = userId => read(userId);
-
-export const queueTradeSave = async (userId, accountId, trade, kind) => {
-  const items = await read(userId);
-  const next = { accountId, trade, kind:kind === 'update' ? 'update' : 'create', savedAt:new Date().toISOString() };
-  const index = items.findIndex(item => item.accountId === accountId && item.trade?.id === trade.id);
-  if (index >= 0) items[index] = next; else items.unshift(next);
-  await write(userId, items);
-  return next;
-};
-
-export const clearPendingTradeSave = async (userId, accountId, tradeId) => {
-  const next = (await read(userId)).filter(item => item.accountId !== accountId || item.trade?.id !== tradeId);
-  await write(userId, next);
-  return next;
-};
+import {privateCache} from './privateCacheRuntime';
+import {getJournalSafety,listSafetyDrafts} from './journalDataSafety.js';
+import {decodeDraftValue} from './journalPayloadCodecs.js';
+import {isLocalJournal} from './localJournalDb';
+const legacyKey=user=>`journal:${user}:pending-trades`;
+export async function pendingTradeSaves(userId){
+  const mode=isLocalJournal()?'local':'cloud';
+  let legacy=[];try{legacy=(await privateCache.read(legacyKey(userId)))||[];}catch{}
+  const rows=await listSafetyDrafts(userId,'pending-trade',{mode});
+  const result=new Map((Array.isArray(legacy)?legacy:[]).filter(x=>x?.trade?.id&&x?.accountId).map(x=>[JSON.stringify([x.accountId,x.trade.id]),x]));
+  for(const row of rows){
+    if(row.payload?.codecVersion!==1)throw new Error('Unknown pending-trade format. Original data is retained.');
+    const item=decodeDraftValue(row.payload.value),key=JSON.stringify([item.accountId,item.trade.id]);
+    if(row.payload.state==='dirty')result.set(key,item);else result.delete(key);
+  }
+  if((isLocalJournal()?'local':'cloud')!==mode)throw new Error('Storage mode changed during pending-work recovery.');
+  return [...result.values()];
+}
+export async function queueTradeSave(userId,accountId,trade,kind){
+  const mode=isLocalJournal()?'local':'cloud',context=getJournalSafety(userId,{mode}).forWorkspace(accountId);
+  const next={accountId,trade,kind:kind==='update'?'update':'create',savedAt:new Date().toISOString(),token:globalThis.crypto.randomUUID()};
+  const draft=context.draft('pending-trade',trade.id,next);
+  await draft.ready();draft.edit(next);const captured=await draft.capture();
+  return {...next,receipt:{captured,mode,accountId,tradeId:trade.id}};
+}
+export async function clearPendingTradeSave(userId,accountId,tradeId,receipt){
+  if(!receipt||receipt.accountId!==accountId||receipt.tradeId!==tradeId)throw new Error('A matching complete-operation receipt is required.');
+  const draft=getJournalSafety(userId,{mode:receipt.mode}).forWorkspace(accountId).draft('pending-trade',tradeId,{});
+  return draft.acknowledge(receipt.captured);
+}

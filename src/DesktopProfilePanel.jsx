@@ -1,7 +1,7 @@
 // Desktop Profile in the side panel (shell v2, after aaicorefx-desktop-shell.html). Presentation only:
 // ProfileSettingsModal owns every value and handler, exactly as it does for the phone layout.
-import { Check, Globe, ImagePlus, KeyRound, Lock, Monitor, Moon, PanelRight, Palette, Pencil, Sun, Trash2, X } from 'lucide-react';
-import { useRef } from 'react';
+import { Check, Globe, ImagePlus, KeyRound, Lock, LogOut, Monitor, Moon, PanelRight, Palette, Pencil, Sun, Trash2, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { ThemeSelect } from './JournalControls';
 import { DARK_THEMES, LIGHT_THEMES } from './ThemeGrid';
 import './desktopProfile.css';
@@ -26,8 +26,9 @@ function nowPreview({ timezone, dateFormat, timeFormat }) {
   } catch { return '—'; }
 }
 
-export default function DesktopProfilePanel({ identity, photo, appearance, region, panels, privacy, sync, password, onDelete, onClose, onSave, saveDisabled, saving, dirty }) {
+export default function DesktopProfilePanel({ identity, photo, appearance, region, panels, privacy, sync, password, onDelete, onSignOutAll, onClose, onSave, saveDisabled, saving, dirty }) {
   const photoRef = useRef(null);
+  const [signOutAllConfirm, setSignOutAllConfirm] = useState(false);
   const themes = appearance.mode === 'light' ? LIGHT_THEMES : DARK_THEMES;
   const current = appearance.palettes?.[appearance.mode] || 'default';
   const currentName = themes.find((theme) => theme.id === `${appearance.mode}-${current}`)?.name || 'Default';
@@ -93,11 +94,17 @@ export default function DesktopProfilePanel({ identity, photo, appearance, regio
           <div className="pf2-row is-line"><div><b>Change password</b><p>Set a new password for this account.</p></div>
             <button type="button" className="pf2-btn" aria-expanded={password.open} onClick={password.open ? password.onClose : password.onOpen}><KeyRound size={15}/>{password.open ? 'Cancel' : 'Change password'}</button></div>
           {password.open && <div className="pf2-pw">
+            <p className="pf2-pw-note">Changing your password signs you out on your other devices.</p>
             <input type="password" className="tj-input" aria-label="New password" placeholder="New password" autoComplete="new-password" value={password.next} onChange={(event) => password.onNext(event.target.value)}/>
             <input type="password" className="tj-input" aria-label="Confirm password" placeholder="Confirm password" autoComplete="new-password" value={password.confirm} onChange={(event) => password.onConfirm(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && password.onSubmit()}/>
             <button type="button" className="pf2-btn is-pri" disabled={password.busy} onClick={password.onSubmit}>{password.busy ? 'Saving…' : 'Save password'}</button>
             {password.status && <span className={`pf2-pws ${password.status.type === 'error' ? 'is-err' : 'is-ok'}`} role="status">{password.status.text}</span>}
           </div>}
+          <div className="pf2-row is-line"><div><b>Sign out of all devices</b><p>Signs out your account everywhere, including this device.</p></div>
+            {signOutAllConfirm
+              ? <div className="pf2-signout-confirm"><span>Sign out everywhere?</span><button type="button" className="pf2-btn" onClick={() => setSignOutAllConfirm(false)}>Cancel</button><button type="button" className="pf2-btn is-dng" onClick={() => { setSignOutAllConfirm(false); onSignOutAll?.(); }}><LogOut size={15}/>Sign out all</button></div>
+              : <button type="button" className="pf2-btn is-dng" onClick={() => setSignOutAllConfirm(true)}><LogOut size={15}/>Sign out of all devices</button>}
+          </div>
         </Card>
         <section className="sp-card pf2-danger"><div className="pf2-row"><div><b>Delete profile</b><p>Permanently deletes your profile and all your journal data.</p></div><button type="button" className="pf2-btn is-dng" onClick={onDelete}><Trash2 size={15}/>Delete profile</button></div></section>
       </div>

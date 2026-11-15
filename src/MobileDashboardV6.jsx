@@ -59,7 +59,7 @@ function ChallengeJourney({workspace,selectedBalanceId,userId,fallbackChallenge,
     : buildChallengePlan(target.startingBalance,mode,state?.automation?.levelCount,state?.automation?.rewardRatio ?? target.challengeReward,state?.automation);
   const journey = mobileChallengeJourney(state,plan);
   const head = <div className="tj-md6-section-head"><h2>Challenge journey</h2>{target&&journey.enabled&&<button type="button" onClick={onOpen}>View challenge</button>}</div>;
-  if(!target || !journey.enabled)return <section className="tj-md6-section">{head}<div className="tj-md6-empty-challenge"><Trophy size={20}/><span>No active challenge for this balance.</span></div></section>;
+  if(!target || !journey.enabled)return <section className="tj-md6-section">{head}<div className="tj-md6-empty-challenge"><Trophy size={20}/><span>No active challenge for this balance.</span><button type="button" className="tj-md6-start-btn" onClick={onOpen}>Start a challenge</button></div></section>;
   const currency = target.baseCurrency || workspace.baseCurrency || 'USD';
   const current = plan[journey.activeLevel-1], next = plan[Math.min(plan.length-1,journey.activeLevel)];
   return <section className="tj-md6-section">{head}<article className="tj-md6-card">

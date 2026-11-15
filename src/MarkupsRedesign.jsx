@@ -1,3 +1,4 @@
+import {additionalScreenshotImages} from './legacyScreenshotMedia.js';
 import {useEffect, useMemo, useState} from 'react';
 import {ArrowDownRight, ArrowDownUp, ArrowUpRight, Check, MoreHorizontal, Pencil, Plus, ScanLine, SlidersHorizontal, Trash2, X} from 'lucide-react';
 import {ThemeSelect} from './JournalControls';
@@ -13,7 +14,7 @@ const dateLabel=value=>{const {year,month,day}=dateParts(value);return year?`${d
 const monthLabel=value=>{const {year,month}=dateParts(value);return year?`${months[Number(month)-1]} ${year}`:'Undated';};
 const monthKey=value=>{const {year,month}=dateParts(value);return `${year}-${month}`;};
 const money=value=>`${Number(value||0)<0?'−':'+'}$${Math.abs(Number(value||0)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-const shots=(markup,prefix)=>Object.entries(markup.screenshots||{}).filter(([key])=>key.toLowerCase().startsWith(prefix)).flatMap(([,items])=>Array.isArray(items)?items:[]);
+const shots=(markup,prefix)=>['preHTF','preH4','preM15','postH4','postM15'].filter(key=>key.startsWith(prefix)).flatMap(key=>Array.isArray(markup.screenshots?.[key])?markup.screenshots[key]:[]);
 const source=item=>{
   if(typeof item==='string')return item;
   const value=item?.src||item?.url||item?.dataUrl||item?.source||item?.data||item?.image||item?.preview||item?.file?.dataUrl||item?.file?.src||'';
@@ -72,6 +73,7 @@ export default function MarkupsRedesign({markups=[],trades=[],onNew,onEdit,onDel
   const pnl=current?totalFor(current):0;
   const pre=current?shots(current,'pre'):[];
   const post=current?shots(current,'post'):[];
+  const recovered=current?additionalScreenshotImages(current.screenshots,['preHTF','preH4','preM15','postH4','postM15']):[];
   const plan=current?[['Structure',current.structure],['Levels / zones',current.levels],['Expectations',current.notes]].filter(([,value])=>String(value||'').trim()):[];
   const planFilled=current?Math.round(plan.length/3*100):0;
   const sorts=[['Newest first','newest'],['Oldest','oldest'],['Linked','linked'],['Unlinked','unlinked'],['Profit','profit'],['Loss','loss']];
@@ -132,6 +134,7 @@ export default function MarkupsRedesign({markups=[],trades=[],onNew,onEdit,onDel
         <div className="mk2-two">
           <div className="mk2-card mk2-pad"><div className="mk2-row"><h3>Pre-session charts</h3><span className="mk2-pill">{count(pre.length,'chart')}</span></div><Charts items={pre} empty="Add a chart to capture the context." onView={onViewImage}/></div>
           <div className="mk2-card mk2-pad"><div className="mk2-row"><h3>Post-session charts</h3><span className="mk2-pill">{count(post.length,'chart')}</span></div><Charts items={post} empty="Add a chart after the session to compare." onView={onViewImage}/></div>
+          {recovered.length>0&&<div className="mk2-card mk2-pad"><h3>Recovered legacy images</h3><Charts items={recovered} onView={onViewImage}/></div>}
         </div>
       </section>}
     </div>:<div className="mk2-card mk2-pad"><div className="mk2-empty"><b>{markups.length?'No markups match':'No markups yet'}</b>{markups.length?'Try another filter.':'Create a markup to plan the session before you trade.'}<button type="button" className="mk2-btn is-primary" onClick={()=>markups.length?clearFilters():onNew?.()}>{markups.length?'Clear filters':<><Plus size={15} aria-hidden="true"/>New markup</>}</button></div></div>}

@@ -224,3 +224,10 @@
   .fn2 > *,.fn2-dr,.fn2-bk,.fn2-pop,.fn2-toast {animation:none;}
   .fn2-rg-value {transition:none;}
 }
+  .tj-root .fn2 .fn2-mg {display:flex;justify-content:flex-end;}
+  .tj-root .fn2 .fn2-btn.is-ghost {height:42px;background:var(--surface);color:var(--text);border-color:var(--border);box-shadow:none;}
+  .tj-root .fn2 .fn2-cap {display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px;align-items:start;margin:0 28px 14px;padding:18px;overflow:hidden;border:.5px solid color-mix(in srgb,var(--warn) 55%,var(--border));border-radius:26px;background:radial-gradient(140% 120% at 100% 0,color-mix(in srgb,var(--warn) 28%,transparent),transparent 65%),radial-gradient(90% 90% at 0 110%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%),color-mix(in srgb,var(--warn) 6%,var(--surface));box-shadow:0 22px 44px -26px var(--warn);color:var(--text);}
+  .tj-root .fn2 .fn2-cap-ic {display:grid;place-items:center;width:44px;height:44px;border-radius:15px;color:var(--warn);border:.5px solid color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 16%,transparent);box-shadow:0 0 22px -4px color-mix(in srgb,var(--warn) 55%,transparent);}
+  .tj-root .fn2 .fn2-cap b {display:block;margin-top:2px;color:var(--warn);font-size:12px;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-root .fn2 .fn2-cap p {margin:6px 0 0;color:var(--text);font-size:14px;line-height:1.5;}
+  .tj-root .fn2 .fn2-cap-use {grid-column:2;justify-self:start;min-height:44px;margin-top:12px;padding:0 20px;border:0;border-radius:15px;background:linear-gradient(135deg,color-mix(in srgb,var(--warn) 78%,var(--on-accent)),var(--warn));color:var(--on-accent);font:inherit;font-weight:700;box-shadow:0 14px 28px -14px var(--warn);cursor:pointer;}

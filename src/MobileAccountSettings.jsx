@@ -108,32 +108,26 @@ export function TextField({label, suffix, ...input}) {
   return <label className="tj-ma-field"><span>{label}</span><span className="tj-ma-input">{<input {...input}/>}{suffix && <em aria-hidden="true">{suffix}</em>}</span></label>;
 }
 
-const TABS = [['account','Account'],['goals','Goals & Risk'],['danger','Danger']];
-
 export default function MobileAccountSettings({initialTab = 'account', onClose, summaryRef, hero, account, goals, danger, onSave, saveDisabled, saveTitle, saving, dirty}) {
   useLeaveGuard(!!dirty, 'account');
-  const [tab, setTab] = useState(initialTab);
   const scroll = useRef(null);
-  const choose = next => { setTab(next); scroll.current?.scrollTo({top:0}); };
   return <div className="tj-ma">
     <div className="tj-ma-scroll" ref={scroll}>
       <header className="tj-ma-head">
-        <div className="tj-ma-title"><BackButton/><h1>Account settings</h1><span aria-hidden="true"/></div>
-        <div className="tj-ma-tabs" role="tablist" aria-label="Account settings sections">{TABS.map(([value, label]) => <button type="button" key={value} role="tab" aria-selected={tab === value} className={value === 'danger' ? 'is-danger' : ''} onClick={() => choose(value)}><span>{label}</span></button>)}</div>
+        <div className="tj-ma-title"><BackButton/><h1>Account</h1><span aria-hidden="true"/></div>
       </header>
-      <section className="tj-ma-hero" ref={summaryRef} hidden={tab === 'danger'}>
+      <section className="tj-ma-hero" ref={summaryRef}>
         <small>{hero.label}</small>
         <strong className={hero.negative ? 'is-negative' : ''}>{hero.value}</strong>
         <div className="tj-ma-pills" data-scroll-row="true">
           {hero.accounts.map(item => <button type="button" key={item.id} aria-pressed={item.id === hero.selectedId} onClick={() => hero.onSelect(item.id)}><span><b>{(item.name || '?').trim().charAt(0).toUpperCase()}</b>{item.name}</span></button>)}
           {hero.onAdd && <button type="button" className="is-add" onClick={hero.onAdd}><span>+ Add</span></button>}
         </div>
-        <div className="tj-ma-mode"><span>{hero.countLabel}</span><div className="tj-ma-seg" role="group" aria-label="Account type">{hero.types.map(([value, label, disabled]) => <button type="button" key={value} aria-pressed={value === hero.type} disabled={disabled} onClick={() => hero.onType(value)}><span>{label}</span></button>)}</div></div>
+        {hero.countLabel && <div className="tj-ma-mode"><span>{hero.countLabel}</span></div>}
       </section>
-      {tab === 'account' && <main className="tj-ma-main">{account}</main>}
-      {tab === 'goals' && <main className="tj-ma-main">{goals}</main>}
-      {tab === 'danger' && <main className="tj-ma-main"><h2 className="tj-ma-label">Danger zone</h2>{danger}</main>}
-      <p className="tj-ma-foot">Settings stay private to this workspace.</p>
+      <main className="tj-ma-main">{account}{goals}</main>
+      <div className="tj-ma-main"><h2 className="tj-ma-label">Danger zone</h2>{danger}</div>
+      <p className="tj-ma-foot">Settings stay private to this account.</p>
     </div>
     {dirty && <div className="tj-ma-savebar"><button type="button" onClick={onClose}>Discard</button><button type="button" className="is-save" disabled={saveDisabled} title={saveTitle} onClick={onSave}>{saving ? 'Saving…' : 'Save settings'}</button></div>}
   </div>;

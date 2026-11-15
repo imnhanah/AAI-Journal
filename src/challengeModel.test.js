@@ -6,8 +6,8 @@ import { buildChallengePlan, isChallengeEnabled, challengeFailureFloor } from '.
 test('Custom deposit preserves the original ladder; absent balance keeps challenge off', () => {
   for (const value of [1, 100, 1000, 12.5]) {
     const scaled = buildChallengePlan(value);
-    assert.deepEqual(scaled, plan);
-    assert.equal(scaled.at(-1).end, 52404);
+    assert.deepEqual(scaled, buildChallengePlan(20));
+    assert.equal(scaled.at(-1).end, 60464.75);
   }
   for (const value of ['', 0, -1, Infinity, undefined]) {
     assert.deepEqual(buildChallengePlan(value), []);
@@ -52,22 +52,22 @@ test('30 worksheet levels retain exact dollar calculations', () => {
     }
   });
 });
-test('Mode 2 retains the old risk, stop-loss and lot ladder but uses 3.1R profits', () => {
+test('Mode 2 retains the old risk, stop-loss and lot ladder but uses 2.8R profits', () => {
   const streak = buildChallengePlan(20, 'streak');
   assert.equal(streak.length, 30);
   assert.equal(streak[0].risk, 4.5);
   assert.equal(streak[0].sl, 15);
   assert.equal(streak[0].lots, .03);
-  assert.equal(streak[0].tp, 46.5);
-  assert.equal(streak[0].profit, 13.95);
+  assert.equal(streak[0].tp, 42);
+  assert.equal(streak[0].profit, 12.6);
   assert.equal(streak[1].risk, 6);
-  assert.equal(streak[1].start, 33.95);
-  assert.equal(streak.at(-1).end, 124939.15);
+  assert.equal(streak[1].start, 32.6);
+  assert.equal(streak.at(-1).end, 112850.2);
   assert.deepEqual(streak, STREAK_CHALLENGE_PLAN);
 });
 test('fixed modes cap initial and deposit funding at the selected plan halfway point', () => {
   assert.deepEqual([10,15,20,30].map(maxFundedChallengeLevel),[5,7,10,15]);
-  for (const [levels, mode, reward] of [[10,'risk',1.5],[15,'streak',2.8],[20,'risk',2],[30,'streak',3.1]]) {
+  for (const [levels, mode, reward] of [[10,'risk',1.5],[15,'streak',2.8],[20,'risk',2],[30,'streak',2.8]]) {
     const limit=challengeFundingLimit({mode,reward,levelCount:levels,balance:20});
     const accepted=challengeModeActivationRule({mode,reward,levelCount:levels,balance:limit.plan[limit.maxLevel-1].start});
     const rejected=challengeModeActivationRule({mode,reward,levelCount:levels,balance:limit.firstProhibitedStart});
@@ -87,9 +87,9 @@ test('funding recommendations are ladder-validated and retain their priority ord
   const balance=60;
   const recommendations=challengeFundingRecommendations({mode:'risk',reward:1.5,balance,levelCount:10});
   assert.ok(recommendations.length);
-  assert.equal(recommendations[0].kind,'length');
+  assert.equal(recommendations[0].kind,'fit');
   for (const recommendation of recommendations) {
-    if (recommendation.kind==='adaptive') continue;
+    if (recommendation.mode==='adaptive') continue;
     assert.equal(challengeFundingLimit({...recommendation,balance}).allowed,true);
   }
 });

@@ -1,3 +1,4 @@
+import {getJournalSafety} from './journalDataSafety.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {useNavigationCache} from './NavigationSession.jsx';
 import { challengeDb } from './challengeDb';
@@ -5,7 +6,7 @@ import { isLocalJournal } from './localJournalDb';
 import { changeChallengeStatus, emptyChallenge, normaliseChallengeLevelCount } from './challengeModel';
 import { replayChallenge, resetAutomation } from './challengeAutomation';
 import {scopeChallengeAccount, challengeLifecycle, liveChallengeBalance} from './challengeLifecycle';
-import {canUseLossStreak} from './challengeModel';
+import {canUseLossStreak, defaultChallengeReward} from './challengeModel';
 
 // Multi-balance challenge records deliberately live beside their balance, not
 // the shared workspace. This keeps level selection and notes independent.
@@ -14,6 +15,7 @@ const normaliseProgress = (progress) => progress ? {
   statuses: progress.statuses || {},
   notes: progress.notes || {},
   automation: progress.automation || null,
+  baseRevision: progress.updatedAt ?? progress.updated_at ?? null,
 } : null;
 
 export default function useBalanceChallenge(balance, userId, startupProgress = null, startupComplete = false) {
@@ -30,38 +32,50 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
   const mounted = useRef(true);
   useEffect(() => {mounted.current=true;return () => {mounted.current=false;request.current++;};}, []);
   const [loading, setLoading] = useState(() => Boolean(balanceId && userId && !cache.read(cacheKey) && !seed));
+  const [readVerified,setReadVerified]=useState(startupComplete===true);
+  const latest=useRef(null);
+  const draft=useMemo(()=>userId&&balanceId?getJournalSafety(userId).forWorkspace(balanceId).draft('challenge-progress','balance',{next:null}):null,[userId,cacheKey]);
+  useEffect(()=>{let active=true;void draft?.ready().then(snapshot=>{
+    if(active&&snapshot.dirty&&snapshot.value.next){latest.current={key:cacheKey,next:snapshot.value.next};setState(snapshot.value.next);setError('Recovered local progress. Review and retry before syncing.');}
+  }).catch(error=>{if(active)setError(error.message);});return()=>{active=false;};},[draft,cacheKey,setState]);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const hasSavedBalanceId = Boolean(balanceId && !String(balanceId).startsWith('draft-'));
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (quiet = false) => {
     const ticket = ++request.current;
     if (!hasSavedBalanceId || !userId) { setState(emptyChallenge()); setError(''); return; }
-    setLoading(true); setError('');
+    // A refresh behind data we already hold (cache or startup record) must not bring the loading card back.
+    if (!quiet) setLoading(true);
+    setSyncing(true);
+    setError('');
     try {
       const { data, error: failure } = await challengeDb.read('balance', balanceId, userId);
       if (failure) throw failure;
       if(!mounted.current || ticket!==request.current || currentKey.current!==cacheKey)return;
       const next=data ? { activeLevel:data.active_level, statuses:data.statuses || {}, notes:data.notes || {}, automation:data.automation ? { ...data.automation, startedAt:data.automation.startedAt || data.updated_at } : null } : emptyChallenge();
       cache.write(cacheKey,next);
-      setState(next);
+      setReadVerified(true);setState(latest.current?.key===cacheKey?latest.current.next:next);
     } catch (failure) {
+      if(mounted.current&&ticket===request.current&&currentKey.current===cacheKey)setReadVerified(false);
       if(mounted.current && ticket===request.current && currentKey.current===cacheKey)setError(`Could not load ${balance?.name || 'balance'} challenge: ${failure.message}. Apply supabase/multi_balance_workspaces_migration.sql and retry.`);
-    } finally { if(mounted.current && ticket===request.current && currentKey.current===cacheKey)setLoading(false); }
+    } finally { if(mounted.current && ticket===request.current && currentKey.current===cacheKey){setLoading(false);setSyncing(false);} }
   }, [balance?.name, balanceId, hasSavedBalanceId, userId, localMode, cache, cacheKey, setState]);
 
   useEffect(() => {
     const next = cache.read(cacheKey) || normaliseProgress(startupProgress) || (startupComplete ? emptyChallenge() : null);
-    setState(next || emptyChallenge());
-    if (next) { setLoading(false); return; }
+    if(latest.current?.key!==cacheKey){setState(next || emptyChallenge());latest.current=null;}
+    setReadVerified(startupComplete===true);
+    if (next) setLoading(false);
     // Bootstrap normally supplies this record. Account Settings can open
     // before that completes, however, so fall back to one direct read rather
     // than leaving its mode controls stuck on “Loading saved mode…”.
-    if (hasSavedBalanceId && userId) void reload();
+    if (hasSavedBalanceId && userId) void reload(Boolean(next));
     else setLoading(false);
   }, [hasSavedBalanceId, userId, reload, cache, cacheKey, setState, startupProgress, startupComplete]);
   useEffect(() => {
-    const restored = () => { void reload(); };
+    const restored = () => { void reload(true); };
     window.addEventListener('aaicorefx:backup-restored', restored);
     return () => window.removeEventListener('aaicorefx:backup-restored', restored);
   }, [reload]);
@@ -74,7 +88,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
       if (event.detail?.balanceId === balanceId && event.detail?.state) {
         request.current++;
         cache.write(cacheKey,event.detail.state);
-        setState(event.detail.state);setLoading(false);
+        setState(latest.current?.key===cacheKey?latest.current.next:event.detail.state);setLoading(false);setReadVerified(true);
       }
     };
     window.addEventListener('aaicorefx:balance-challenge-updated', sync);
@@ -84,20 +98,25 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
   const persist = useCallback(async (next) => {
     if (!userId) return false;
     if (!hasSavedBalanceId) { setState(next); setError(''); return true; }
+    latest.current={key:cacheKey,next};setState(next);draft.edit({next});
+    let attempt;try{attempt=await draft.capture();}catch(error){setError(error.message);return false;}
+    if(!readVerified){setError('Progress is retained on this device. Load the saved challenge before retrying.');return false;}
     setSaving(true); setError('');
     try {
       const { error: failure } = await challengeDb.save('balance', { balance_id:balanceId, user_id:userId, active_level:next.activeLevel, statuses:next.statuses, notes:next.notes, automation:next.automation || { mode:balance.challengeMode || 'risk' }, updated_at:new Date().toISOString() });
       if (failure) throw failure;
+      await draft.acknowledge(attempt);
       request.current++;
       cache.write(cacheKey,next);
-      if(mounted.current && currentKey.current===cacheKey){setState(next);setLoading(false);}
+      if(!draft.getSnapshot().dirty)latest.current=null;
+      if(mounted.current && currentKey.current===cacheKey){setState(latest.current?.next||next);setLoading(false);}
       window.dispatchEvent(new CustomEvent('aaicorefx:balance-challenge-updated', { detail:{ balanceId, state:next } }));
       return true;
     } catch (failure) {
       setError(`Could not save ${balance?.name || 'balance'} challenge: ${failure.message}`);
       return false;
     } finally { setSaving(false); }
-  }, [balance?.challengeMode, balance?.name, balanceId, hasSavedBalanceId, userId, cache, cacheKey, setState]);
+  }, [balance?.challengeMode, balance?.name, balanceId, hasSavedBalanceId, userId, cache, cacheKey, setState, readVerified, draft]);
 
   const challengeAccount = useMemo(() => scopeChallengeAccount({
     trades:balance?.trades || [],
@@ -110,7 +129,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
     return {...replay,...life,failed:replay.failed || life.failed};
   }, [state, challengeAccount, balance?.challengeReward]);
   const setMode = (mode) => mode
-    ? replayedState.settingsLocked || (mode==='streak' && !canUseLossStreak(balance?.challengeReward ?? 3.1)) ? false : persist(resetAutomation(replayedState, challengeAccount.trades, mode, replayedState.activeLevel,new Date(),undefined,liveChallengeBalance(challengeAccount)))
+    ? replayedState.settingsLocked || (mode==='streak' && !canUseLossStreak(balance?.challengeReward ?? defaultChallengeReward('streak'))) ? false : persist(resetAutomation(replayedState, challengeAccount.trades, mode, replayedState.activeLevel,new Date(),undefined,liveChallengeBalance(challengeAccount)))
     : replayedState.settingsLocked ? false : persist({ ...state, automation:null });
   const setLevel = (level) => {
     if(replayedState.settingsLocked) return false;
@@ -128,5 +147,5 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
     const activeLevel = Math.min(Number(replayedState.activeLevel) || 1, totalLevels);
     return persist({ ...replayedState, activeLevel, statuses, automation:{ ...(replayedState.automation || {}), levelCount:totalLevels } });
   };
-  return { state:replayedState, loading, saving, error, modesReady:true, retry:reload, setMode, setLevel, setLevelCount, setReward:reward=>replayedState.settingsLocked ? false : persist({...state,automation:{...state.automation,rewardRatio:reward}}), setStatus:(level, status) => replayedState.failed || replayedState.settingsLocked ? false : persist(changeChallengeStatus(replayedState, level, status)), setNote:(level, note) => persist({ ...state, notes:{ ...state.notes, [level]:note } }), acknowledgeCompletion:certificate => persist({ ...state, automation:{ ...(state.automation || {}), completionAcknowledgedAt:new Date().toISOString(), completionCertificate:certificate || null } }) };
+  return { state:replayedState, loading, syncing, saving, error, modesReady:true, retry:() => reload(), setMode, setLevel, setLevelCount, setReward:reward=>replayedState.settingsLocked ? false : persist({...state,automation:{...state.automation,rewardRatio:reward}}), setStatus:(level, status) => replayedState.failed || replayedState.settingsLocked ? false : persist(changeChallengeStatus(replayedState, level, status)), setNote:(level, note) => persist({ ...state, notes:{ ...state.notes, [level]:note } }), acknowledgeCompletion:certificate => persist({ ...state, automation:{ ...(state.automation || {}), completionAcknowledgedAt:new Date().toISOString(), completionCertificate:certificate || null } }) };
 }

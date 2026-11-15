@@ -14,7 +14,7 @@ test('DashboardSurface routes phone widths to the active V6 component',()=>{
   const source=read('./TradingJournal.jsx');
   assert.match(source,/function DashboardSurface\(props\)/);
   assert.match(source,/return phone \? <MobileDashboardV6 \{\.\.\.props\}\/> : <DesktopDashboardV2/);
-  assert.match(source,/page === "dashboard" && \(financialValidation\.valid \? <DashboardSurface/);
+  assert.match(source,/financialValidation\.valid \? <DashboardSurface/);
   assert.match(source,/stats=\{dashboardStats\} liveBalance=\{financeTotals\(dashboardAccount\)\.tradingBalance\}/);
 });
 test('active phone dashboard keeps the live balance and P&L hero',()=>{

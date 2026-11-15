@@ -1,3 +1,5 @@
+import {useReviewDraftController} from './journalDataSafety.js';
+import {normalizeSaveOutcome,saveSucceeded} from './syncOutcome.js';
 import { useEffect, useMemo, useState } from "react";
 import "./review.css";
 import "./desktopReview.css";
@@ -876,7 +878,7 @@ function YearDetail({ review, ctx, questions, written, sectionCount, onJump }) {
 }
 
 /* ---------- page ---------- */
-export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
+export default function ReviewPage({ draftContext, reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(() => { const media = window.matchMedia(MOBILE_MEDIA), change = () => setPhone(media.matches); media.addEventListener("change", change); return () => media.removeEventListener("change", change); }, []);
   const years = reviews.filter((r) => r.kind === "year");
@@ -892,6 +894,7 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
   useStepMotion(showDetail ? 1 : 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const reviewDraft=useReviewDraftController({context:draftContext,periodId:selId,confirmedAnswers:answers[selId]??{},onDrafts:setDrafts,onError:setError});
 
   const review = byId[selId];
   const annualSaveLocked = review?.kind === "year" && !canSaveAnnualReview(review.year);
@@ -904,28 +907,34 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
   const dirty = Object.keys(drafts).length > 0;
   const saved = (key) => answers[selId]?.[key] ?? "";
   const val = (key) => (drafts[key] !== undefined ? drafts[key] : saved(key));
-  const set = (key, text) =>
-    setDrafts((d) => {
-      const next = { ...d };
-      if (text === saved(key)) delete next[key];
-      else next[key] = text;
-      return next;
-    });
+  const set = (key,text) => reviewDraft.edit(key,text);
 
   const sectionKeys = [questions.technical.map((t) => t.key), ...questions.sections.map((s) => [s.key])];
   const written = sectionKeys.filter((keys) => keys.some((k) => val(k).trim())).length;
   const ctx = makeCtx(questions, val, set);
 
-  const goTo = (id) => { setSelId(id); setDrafts({}); setPending(null); setShowDetail(true); setError(""); window.scrollTo?.({ top: 0 }); };
+  const goTo = async (id,{discard=false}={}) => {
+    try{if(discard)await reviewDraft.dismissCurrent();else await reviewDraft.flushLocal();
+      if(!reviewDraft.isCurrent())return false;
+      setSelId(id);setDrafts({});setPending(null);setShowDetail(true);setError("");window.scrollTo?.({top:0});return true;
+    }catch{setError('Could not preserve your edits. Keep this review open and retry.');return false;}
+  };
+  const discardReviewDraft=()=>{void reviewDraft.dismissCurrent().catch(error=>setError(error.message));};
   const select = (id) => {
     if (id === selId) { setShowDetail(true); return; }
     if (dirty) { setPending(id); return; }
     goTo(id);
   };
   const doSave = async () => {
-    if (annualSaveLocked) return false;
+    if (annualSaveLocked || saving) return false;
     setSaving(true); setError("");
-    try { await onSave?.(selId, drafts); setDrafts({}); return true; }
+    try {
+      const attempt=await reviewDraft.captureAndPersist();
+      const response=await onSave?.(selId,attempt.changed,attempt);
+      if(!saveSucceeded(normalizeSaveOutcome(response?.outcome??response))){setError('Could not save. Your edits are still here.');return false;}
+      await reviewDraft.acknowledge(attempt,response);
+      return !reviewDraft.hasUnacknowledgedChanges(attempt.scopeKey);
+    }
     catch (e) { setError("Could not save. Your edits are still here."); return false; }
     finally { setSaving(false); }
   };
@@ -952,12 +961,12 @@ export default function ReviewPage({ reviews, answers = {}, questions = DEFAULT_
       <span>You have unsaved changes in {review.title}. Switch to {byId[pending].title}?</span>
       <span className="rv-bar-group">
         <button type="button" className="rv-btn rv-btn--primary" onClick={async () => { if (await doSave()) goTo(pending); }}>Save and switch</button>
-        <button type="button" className="rv-btn" onClick={() => goTo(pending)}>Discard and switch</button>
+        <button type="button" className="rv-btn" onClick={() => goTo(pending,{discard:true})}>Discard and switch</button>
         <button type="button" className="rv-btn" onClick={() => setPending(null)}>Keep editing</button>
       </span>
     </div>
   );
-  if (phone) return <MobilePeriodReviews showDetail={showDetail} review={review} years={years} quarterGroups={quarterGroups} questions={questions} val={val} set={set} written={written} sectionCount={sectionKeys.length} onOpen={select} onReviewTrades={onReviewTrades} onCancel={() => setDrafts({})} onSave={doSave} dirty={dirty} saving={saving} saveLocked={annualSaveLocked} error={error} pendingNotice={switchNotice} controls={phoneControls} onPhoneTitle={onPhoneTitle} h={{money, pct, has, rate, short, winLoss, statusOf, tone:sign, EquityChart, QuarterTrendChart}}/>;
+  if (phone) return <MobilePeriodReviews showDetail={showDetail} review={review} years={years} quarterGroups={quarterGroups} questions={questions} val={val} set={set} written={written} sectionCount={sectionKeys.length} onOpen={select} onReviewTrades={onReviewTrades} onCancel={discardReviewDraft} onSave={doSave} dirty={dirty} saving={saving} saveLocked={annualSaveLocked} error={error} pendingNotice={switchNotice} controls={phoneControls} onPhoneTitle={onPhoneTitle} h={{money, pct, has, rate, short, winLoss, statusOf, tone:sign, EquityChart, QuarterTrendChart}}/>;
 
   return (
     <div className="rv">

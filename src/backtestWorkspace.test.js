@@ -24,7 +24,7 @@ test('workspace switching no longer remounts or filters the profile test library
   assert.doesNotMatch(line,/workspaceId=/);
   const source=readFileSync(new URL('./BacktestAccounts.jsx',import.meta.url),'utf8');
   assert.doesNotMatch(source,/workspaceId/);
-  assert.match(source,/profileScope='profile'/);
+  assert.match(source,/profileScope=localOnly\?'profile-device':'profile'/);
   assert.doesNotMatch(journal,/findDemoWorkspaceId/);
   assert.match(journal,/readBacktestTrades\(user\.id,accounts\)/);
 });

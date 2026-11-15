@@ -1,0 +1,11 @@
+/* A background refresh shows this small tag while the page already shows the last saved levels. */
+.tj-ch-sync {display:inline-flex;flex:none;align-items:center;gap:7px;height:26px;padding:0 11px;border:1px solid var(--tj-border);border-radius:13px;background:var(--tj-panel-alt);color:var(--tj-muted);font-size:12px;font-weight:650;white-space:nowrap;}
+.tj-ch-sync i {width:7px;height:7px;border-radius:50%;background:var(--tj-accent);animation:tj-ch-sync-pulse 1.1s ease-in-out infinite;}
+@keyframes tj-ch-sync-pulse {50% {opacity:.25;}}
+
+/* First load with nothing saved on the device: shimmering shapes where the levels will be. */
+.tj-challenge-skeleton {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px;}
+.tj-challenge-skeleton i {display:block;height:48px;border-radius:12px;background:linear-gradient(100deg,var(--tj-panel-alt) 30%,var(--tj-panel) 50%,var(--tj-panel-alt) 70%);background-size:300% 100%;animation:tj-ch-skeleton 1.4s linear infinite;}
+@keyframes tj-ch-skeleton {from {background-position:100% 0;} to {background-position:0 0;}}
+@media (min-width:768px) {.tj-challenge-skeleton {grid-template-columns:repeat(10,minmax(0,1fr));}}
+@media (prefers-reduced-motion:reduce) {.tj-ch-sync i,.tj-challenge-skeleton i {animation:none;}}

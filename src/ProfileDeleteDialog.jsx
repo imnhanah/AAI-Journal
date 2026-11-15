@@ -26,10 +26,11 @@ export default function ProfileDeleteDialog({name, value, onChange, busy, ready 
         else if (!event.shiftKey && document.activeElement === last) {event.preventDefault();first.focus();}
       }
     }}>
+      <i aria-hidden="true" className="tj-sheet-handle"/>
       <div className="tj-profile-delete-icon"><Trash2 size={21}/></div>
       <h3 id="profile-delete-title">Delete your profile?</h3>
       <p id="profile-delete-description">This permanently deletes your profile and all your journal data.</p>
-      <ul><li>All workspaces and trading accounts</li><li>Saved trades, markups, reviews and cash movements</li><li>Your profile, settings and uploaded files — this cannot be undone</li></ul>
+      <ul><li>All your accounts and their trading data</li><li>Saved trades, markups, reviews and cash movements</li><li>Your profile, settings and uploaded files — this cannot be undone</li></ul>
       <label>Type <strong>{name}</strong> to confirm<input className="tj-input" aria-label="Profile name to confirm deletion" autoComplete="off" placeholder={name} value={value} disabled={busy} onChange={event => onChange(event.target.value)}/></label>
       {error && <p role="alert" className="tj-profile-delete-error">{error}</p>}
       <div className="tj-profile-delete-actions"><button type="button" className="tj-btn-outline" disabled={busy} onClick={onCancel}>Cancel</button><button type="button" className="tj-danger-button" disabled={busy || !ready || !name || value !== name} onClick={onConfirm}>{busy ? 'Deleting…' : 'Delete profile'}</button></div>

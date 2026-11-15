@@ -32,8 +32,9 @@ export async function saveTestTrade(run,trade,remove=false) {
 }
 export async function loadTestMedia(user,trade) {
   if(privateCache.token().owner!==user)throw new Error('Session changed before opening backtest screenshots.');
-  const scoped=await readBacktestCache(user);
-  if(!scoped?.trades.some(row=>row.id===trade.id&&row.runId===trade.runId))throw new Error('Backtest screenshot is not in this workspace.');
+  // The media RPC performs the authoritative user and row ownership checks.
+  // A receiving browser can legitimately have no local IndexedDB cache yet,
+  // so never use that cache as a prerequisite for reading private media.
   return privateCache.get(`${key(user)}:media:${trade.id}:${trade.updatedAt}`,()=>rpc('tj_backtest_media',{row_id:trade.id,media_version:trade.updatedAt}));
 }
 export async function refreshTestCache(user) {

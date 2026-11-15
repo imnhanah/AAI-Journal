@@ -1,11 +1,12 @@
 import React,{useEffect,useRef,useState} from 'react';
 import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
-import {ArrowDown,ArrowRightLeft,ArrowUp,MoreHorizontal,Trash2,X} from 'lucide-react';
+import {ArrowDown,ArrowRightLeft,ArrowUp,MoreHorizontal,Shield,Trash2,X} from 'lucide-react';
 import {ThemeSelect,ThemeDate,ConfirmDeleteButton} from './JournalControls';
 import './mobileFinance.css';
 import {DECIMAL_INPUT_MODE} from './mobileFinanceConstants.js';
 import {addToAmount,financeMonthGroups,financeMovementIssue,financeMovementSign} from './mobileFinanceModel.js';
 import SavingsPlanCard from './SavingsPlanCard.jsx';
+import {useDepositCheck,depositBlockText} from './useDepositCheck.js';
 
 const TYPES=[['deposit','Add funds',ArrowDown],['withdrawal','Withdraw',ArrowUp],['transfer','Transfer',ArrowRightLeft]];
 const typeIcon=(type,size=20)=>{const Icon=(TYPES.find(item=>item[0]===type)||TYPES[1])[2];return <Icon size={size} strokeWidth={2} aria-hidden="true"/>;};
@@ -40,6 +41,7 @@ export default function MobileFinance(p) {
     return()=>{document.removeEventListener('keydown',keydown,early);states.forEach(([node,inert])=>{node.inert=inert;});requestAnimationFrame(()=>prior?.isConnected&&prior.focus());};
   },[sheetOpen,saving]);
   useEffect(()=>{setError('');},[p.amount,p.date,p.savingsId,p.type,p.source,p.balanceId]);
+  const depositBlock=useDepositCheck(p,sheetOpen);
   const submit=async()=>{
     const issue=financeMovementIssue({amount:p.amount,date:p.date,requiresSavings:p.requiresSavings,savingsId:p.savingsId,balanceId:p.balanceId});
     if(issue){setError(issue);return;}
@@ -92,7 +94,7 @@ export default function MobileFinance(p) {
       </>}
       {tab==='savings'&&<section className="tj-phone-finance-plans" aria-label="Savings plans">{p.savings.map(s=>{
         return <SavingsPlanCard key={s.id} saving={s} saved={s.saved} allocation={s.allocation} ownerName={s.ownerName || p.balances.find(b=>b.id===s.ownerBalanceId)?.name || ''} money={p.money} onTransfer={()=>{p.onPlanned(s);setError('');setOpen(true);}}/>;
-      })}{!p.savings.length&&<p className="tj-phone-finance-empty">Add a savings account in Account Settings to use transfers.</p>}</section>}
+      })}{!p.savings.length&&<p className="tj-phone-finance-empty">Add a savings account to use transfers.</p>}<button type="button" className="tj-phone-finance-manage" onClick={p.onManageSavings}>{p.savings.length?'Add or edit savings accounts':'Add savings account'}</button></section>}
     </div>
     {open&&<div className="tj-phone-finance-layer"><div className="tj-phone-finance-backdrop" onClick={close}/><section className="tj-phone-finance-sheet" data-type={p.type} role="dialog" aria-modal="true" aria-label="New movement" ref={dialog}>
       <button type="button" className="tj-phone-finance-handle" aria-label="Close movement form" onClick={close} onTouchStart={e=>{swipe.current=e.touches[0].clientY;}} onTouchEnd={e=>{if(swipe.current!=null&&e.changedTouches[0].clientY-swipe.current>60)close();swipe.current=null;}}><span/></button>
@@ -108,7 +110,8 @@ export default function MobileFinance(p) {
         <label><span>Note</span><input aria-label="Movement note" value={p.note} placeholder="Optional reference" onChange={e=>p.onNote(e.target.value)}/></label>
         {error&&<p role="alert">{error}</p>}
       </div>
-      <footer><button type="button" className="tj-phone-finance-record" disabled={saving} onClick={submit}>{typeIcon(p.type,16)} {saving?'Saving…':'Record movement'}</button></footer>
+      {depositBlock&&<div className="tj-phone-finance-cap" role="alert"><span className="tj-phone-finance-cap-ic"><Shield size={20}/></span><div><b>{depositBlock.reason==='active-cap'?'Deposits are closed':'Above the challenge limit'}</b><p>{depositBlockText(depositBlock,p.money)}</p></div>{depositBlock.reason!=='active-cap'&&depositBlock.maximum>0&&<button type="button" onClick={()=>p.onAmount(String(depositBlock.maximum))}>Use {p.money(depositBlock.maximum)}</button>}</div>}
+      <footer><button type="button" className="tj-phone-finance-record" disabled={saving||!!depositBlock} onClick={submit}>{typeIcon(p.type,16)} {saving?'Saving…':'Record movement'}</button></footer>
     </section></div>}
     {menu&&<div className="tj-phone-finance-layer"><div className="tj-phone-finance-backdrop" onClick={closeMenu}/><section className="tj-phone-finance-sheet tj-phone-finance-menu" role="dialog" aria-modal="true" aria-label="Movement options" ref={dialog}>
       <button type="button" className="tj-phone-finance-handle tj-phone-finance-close" aria-label="Close movement options" onClick={closeMenu} onTouchStart={e=>{swipe.current=e.touches[0].clientY;}} onTouchEnd={e=>{if(swipe.current!=null&&e.changedTouches[0].clientY-swipe.current>60)closeMenu();swipe.current=null;}}><span/></button>

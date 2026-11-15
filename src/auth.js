@@ -126,12 +126,45 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) return { error: friendlyAuthError(error) };
     await activatePrivateUser(null);
     return {};
   } catch (e) {
     return { error: friendlyAuthError(e) };
+  }
+}
+
+export async function signOutAll() {
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    if (error) return { error: friendlyAuthError(error) };
+    await activatePrivateUser(null);
+    return {};
+  } catch (e) {
+    return { error: friendlyAuthError(e) };
+  }
+}
+
+export async function checkSession() {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      const status = error.status;
+      if (status === 401 || status === 403 ||
+          msg.includes('invalid') || msg.includes('expired') ||
+          msg.includes('not found') || msg.includes('jwt') ||
+          msg.includes('session') || msg.includes('missing') ||
+          msg.includes('token')) {
+        return { authError: true };
+      }
+      return { networkError: true };
+    }
+    if (!data?.user) return { authError: true };
+    return { valid: true };
+  } catch {
+    return { networkError: true };
   }
 }
 
@@ -158,6 +191,8 @@ export async function updatePassword(newPassword) {
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) return { error: friendlyAuthError(error) };
+    // Sign out other devices: they still hold the old password's sessions.
+    await supabase.auth.signOut({ scope: 'others' }).catch(() => {});
     return {};
   } catch (e) {
     return { error: friendlyAuthError(e) };

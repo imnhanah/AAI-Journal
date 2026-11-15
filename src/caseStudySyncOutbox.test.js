@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clearCaseStudySyncOutbox, conflictCaseStudySnapshot, pendingCaseStudySnapshot, readCaseStudySyncOutbox, saveCaseStudySyncOutbox } from './caseStudySyncOutbox.js';
+import { clearCaseStudySyncOutbox, confirmCaseStudySyncOutbox, conflictCaseStudySnapshot, pendingCaseStudySnapshot, readCaseStudySyncOutbox, saveCaseStudySyncOutbox } from './caseStudySyncOutbox.js';
 
 const memoryStorage = () => {
   const values=new Map();
@@ -27,6 +27,20 @@ test('conflict snapshots retain both versions through a reload',()=>{
   assert.equal(restored.conflict.local.studies[0].title,'local');
   assert.equal(restored.conflict.cloud.studies[0].title,'cloud');
   assert.equal(restored.conflict.cloudRevision,8);
+});
+
+test('a confirmed reconciliation archives both source copies instead of deleting its conflict history',()=>{
+  const storage=memoryStorage();
+  saveCaseStudySyncOutbox('user-a',conflictCaseStudySnapshot(workspace('local'),workspace('cloud'),8),storage);
+  const result=confirmCaseStudySyncOutbox('user-a',storage);
+  assert.ok(!result.error);
+  const restored=readCaseStudySyncOutbox('user-a',storage).data;
+  assert.equal(restored.conflict,null);
+  assert.equal(restored.pending,null);
+  assert.equal(restored.history.length,1);
+  assert.equal(restored.history[0].local.studies[0].title,'local');
+  assert.equal(restored.history[0].cloud.studies[0].title,'cloud');
+  assert.equal(restored.history[0].outcome,'merged');
 });
 
 test('local persistence failures are reported instead of being treated as durable',()=>{

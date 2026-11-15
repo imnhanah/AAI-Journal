@@ -46,7 +46,7 @@ function useCountUp(target, duration = 2200) {
 }
 
 export default function ChallengeCompletePopup({ facts, money, soundEnabled = true, onViewJourney, onClose, onComplete, initialView = 'popup' }) {
-  const { traderName, accountName, totalLevels, modeName, rewardLabel, completionBalance, finalTarget, daysTaken, trades, stepBacks, growth, completedAt, certificateId } = facts;
+  const { startingBalance, depositsAfterStart = 0, totalDeposited, netProfit, traderName, accountName, totalLevels, modeName, rewardLabel, completionBalance, finalTarget, daysTaken, trades, stepBacks, growth, completedAt, certificateId } = facts;
   // Archived certificates created before completionBalance existed continue to
   // render with their recorded target. New certificates always use the actual
   // equity that cleared the final level.
@@ -101,7 +101,7 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
   };
   if (view === 'certificate') return inViewport(<div ref={dialog} className="cc2-cv" role="dialog" aria-modal="true" aria-label="Certificate of achievement" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) setView('popup'); }}>
     <div className="cc2-wrap">
-      <div ref={certificate} className="cc3-cert">
+      <div className="cc2-rot"><div ref={certificate} className="cc3-cert">
         <i className="cc3-contour cc3-contour-a"/><i className="cc3-contour cc3-contour-b"/><i className="cc3-corner cc3-corner-t"/><i className="cc3-corner cc3-corner-b"/>
         <div className="cc3-frame"/><div className="cc3-inner-frame"/>
         <div className="cc3-content">
@@ -112,6 +112,7 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
           <div className="cc3-name-row"><span aria-hidden="true">❮❮❮</span><div className="cc2-nm">{name}</div><span aria-hidden="true">❯❯❯</span></div>
           <p className="cc2-txt">has completed all <b>{totalLevels} levels</b> of the <b>{accountName} · {modeName}</b> challenge{rewardLabel ? <> at <b>{rewardLabel}</b></> : null}, respecting every risk rule from the <b>first level</b> to the last.</p>
           <div className="cc2-row">{[[money(achievementBalance), 'Final balance', Target], ...stats.slice(0, 2).map(([value,label])=>[value,label,label==='Days taken'?CalendarDays:CandlestickChart]), [...stats[3], TrendingUp]].map(([value, label, Icon]) => <div key={label}><Icon aria-hidden="true"/><b>{value}</b><span>{label}</span></div>)}</div>
+          {depositsAfterStart > 0 && <div className="cc3-money">Total deposited <b>{money(totalDeposited)}</b> · Net profit <b>{netProfit >= 0 ? '+' : '−'}{money(Math.abs(netProfit))}</b></div>}
           <div className="cc2-foot">
             <div className="cc2-sg"><div className="cc2-l">{date}</div><span>Date completed</span></div>
             <div className="cc3-seal"><i/><img className="cc3-logo-light" src="/brand/aaicorefx-corefx-logo-light.png" alt="AAICOREFX achievement seal"/><img className="cc3-logo-dark" src="/brand/aaicorefx-corefx-logo-dark.png" alt=""/><span>Achievement</span></div>
@@ -119,7 +120,8 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
           </div>
           <div className="cc2-cid">Certificate No. {certificateId}</div>
         </div>
-      </div>
+      </div></div>
+      <p className="cc2-turn">Turn your phone sideways to see it larger</p>
       <div className="cc2-bar">
         <button ref={primary} type="button" className="cc2-cbtn is-pri" disabled={!!saving} onClick={() => saveCertificate('pdf')}>{saving === 'pdf' ? 'Saving…' : 'Save PDF'}</button>
         <button type="button" className="cc2-cbtn" disabled={!!saving} onClick={() => saveCertificate('image')}>{saving === 'image' ? 'Saving…' : 'Save image'}</button>
@@ -131,18 +133,22 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
     </div>
   </div>);
   return inViewport(<div ref={dialog} className="cc2-scrim" role="dialog" aria-modal="true" aria-labelledby="cc2-title" onKeyDown={keys} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section className="cc2">
+    <section className="cc2 is-wide">
       <div className="cc2-cf" aria-hidden="true">{confetti.map((c, i) => <i key={i} style={{ left: c.left, background: c.color, '--d': c.d, '--l': c.l, '--x': c.x, '--r': c.r }}/>)}</div>
-      <div className="cc2-top">
-        <i className="cc2-rays" aria-hidden="true"/>
-        <button type="button" className="cc2-x" aria-label="Close" onClick={onClose}>✕</button>
-        <div className="cc2-tag">★ Full challenge complete ★</div>
-        <Trophy/>
+      <div className="cc2-left">
+        <div className="cc2-top">
+          <i className="cc2-rays" aria-hidden="true"/>
+          <div className="cc2-tag">★ Full challenge complete ★</div>
+          <Trophy/>
+        </div>
+        <div className="cc2-in cc2-story">
+          <h2 id="cc2-title">You conquered all {totalLevels} levels</h2>
+          <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its rules. This is rare discipline.</p>
+          <div className="cc2-chips"><span>{accountName}</span><span>{modeName}</span>{rewardLabel && <span>{rewardLabel}</span>}</div>
+        </div>
       </div>
-      <div className="cc2-in">
-        <h2 id="cc2-title">You conquered all {totalLevels} levels</h2>
-        <p className="cc2-sub">Congratulations{traderName ? `, ${traderName}` : ''}. Every level cleared by respecting its rules. This is rare discipline.</p>
-        <div className="cc2-chips"><span>{accountName}</span><span>{modeName}</span>{rewardLabel && <span>{rewardLabel}</span>}</div>
+      <div className="cc2-right">
+        <button type="button" className="cc2-x" aria-label="Close" onClick={onClose}>✕</button>
         <div className="cc2-big">
           <small>Challenge completed at</small>
           <div className="cc2-amt">{money(shown)}</div>
@@ -150,6 +156,10 @@ export default function ChallengeCompletePopup({ facts, money, soundEnabled = tr
           <div className="cc2-lvl"><span>Level 1</span><span>Level {totalLevels} · {totalLevels} of {totalLevels} passed</span></div>
         </div>
         <div className="cc2-stats">{stats.map(([value, label]) => <div key={label}><b>{value}</b><span>{label}</span></div>)}</div>
+        <div className="cc2-ledger">
+          {startingBalance != null && <div><small>Started with</small><b>{money(startingBalance)}</b></div>}
+          {depositsAfterStart > 0 ? <><div className="is-dep"><small>Deposited</small><b>+{money(depositsAfterStart)}</b></div><div><small>Total deposited</small><b>{money(totalDeposited)}</b></div></> : <div><small>Final balance</small><b>{money(achievementBalance)}</b></div>}
+        </div>
         {blocked && <button type="button" className="cc2-play" onClick={async () => { if (await unlockSynthSounds()) setBlocked(!await playSynthSound('challenge')); }}><Play size={12} fill="currentColor"/>Play celebration sound</button>}
         {onViewJourney && <button type="button" className="cc2-link" onClick={onViewJourney}>View your journey</button>}
         <div className="cc2-cta"><button type="button" className="cc2-btn" onClick={onClose}>Later</button><button ref={primary} type="button" className="cc2-btn is-pri" onClick={() => setView('certificate')}>View certificate</button></div>

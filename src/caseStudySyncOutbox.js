@@ -17,7 +17,19 @@ const normalise = value => {
     cloudRevision:revision(value.conflict.cloudRevision),
     savedAt:String(value.conflict.savedAt || ''),
   } : null;
-  return pending || conflict ? { version:1, pending, conflict } : null;
+  const history=Array.isArray(value.history) ? value.history.map(entry => {
+    const local=workspace(entry?.local), cloud=workspace(entry?.cloud);
+    if (!local || !cloud) return null;
+    return {
+      local,
+      cloud,
+      cloudRevision:revision(entry.cloudRevision),
+      savedAt:String(entry.savedAt || ''),
+      resolvedAt:String(entry.resolvedAt || ''),
+      outcome:entry.outcome === 'merged' ? 'merged' : 'preserved',
+    };
+  }).filter(Boolean) : [];
+  return pending || conflict || history.length ? { version:1, pending, conflict, history } : null;
 };
 
 export const readCaseStudySyncOutbox = (userId, storage = globalThis.localStorage) => {
@@ -41,6 +53,18 @@ export const saveCaseStudySyncOutbox = (userId, value, storage = globalThis.loca
 export const clearCaseStudySyncOutbox = (userId, storage = globalThis.localStorage) => {
   try { storage?.removeItem(keyFor(userId)); return {}; }
   catch { return { error:'Cloud sync was confirmed, but the device recovery copy could not be cleared.' }; }
+};
+
+// A confirmed merge no longer needs an active conflict, but its two source
+// copies are still valuable recovery evidence. Archive them under the same
+// authenticated user instead of silently deleting them with the outbox.
+export const confirmCaseStudySyncOutbox = (userId, storage = globalThis.localStorage) => {
+  const current=readCaseStudySyncOutbox(userId,storage);
+  if (current.error) return current;
+  const active=current.data;
+  if (!active?.conflict) return clearCaseStudySyncOutbox(userId,storage);
+  const entry={...active.conflict,resolvedAt:new Date().toISOString(),outcome:'merged'};
+  return saveCaseStudySyncOutbox(userId,{version:1,pending:null,conflict:null,history:[...(active.history || []),entry]},storage);
 };
 
 export const pendingCaseStudySnapshot = (workspace, baseRevision) => ({

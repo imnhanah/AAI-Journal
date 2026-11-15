@@ -54,6 +54,13 @@
   .dd-chart .recharts-surface {overflow:visible;}
 
   /* Challenges (the shared per-account rows, restyled) */
+  .dd-empty-start {display:flex;flex-direction:column;align-items:flex-start;gap:12px;}
+  .dd-empty-start p {margin:0;}
+  .dd-challenge-deposit {display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--raised);font-size:13px;}
+  .dd-challenge-deposit span {color:var(--muted);}
+  .dd-challenge-deposit em {margin-left:auto;font-style:normal;font-weight:700;}
+  .dd-challenge-deposit .is-gain {color:var(--tj-green);}
+  .dd-challenge-deposit .is-loss {color:var(--loss);}
   .dd-challenge-list {display:flex;flex-direction:column;gap:14px;margin-top:14px;}
   .tj-root .dd-dashboard .tj-dashboard-account-challenge {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:0 12px;margin:0;padding:0;border:0;background:none;box-shadow:none;}
   .tj-root .dd-dashboard .tj-dashboard-account-challenge-top {grid-column:1;font-size:14px;font-weight:700;color:var(--text);}

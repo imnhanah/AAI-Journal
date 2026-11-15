@@ -9,7 +9,7 @@ const css = readFileSync(new URL('./desktopFinance.css', import.meta.url), 'utf8
 test('desktop Finance shows v2 after the phone branch; phones keep MobileFinance', () => {
   assert.match(journal, /const FINANCE_V2 = true;/);
   assert.match(journal, /import DesktopFinanceV2 from '\.\/DesktopFinance\.jsx';/);
-  const phone = journal.indexOf('if (phone) return <MobileFinance');
+  const phone = journal.indexOf('if (phone) return <><MobileFinance');
   const desktop = journal.indexOf('if (FINANCE_V2) {');
   assert.ok(phone > 0 && desktop > phone, 'v2 is returned only after the phone branch');
 });

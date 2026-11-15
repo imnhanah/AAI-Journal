@@ -39,6 +39,7 @@ import './borderlessInterface.css?borderless-interface=1';
 import './writingFields.css?writing-fields=1';
 import './mobileApp.css';
 import './mobileAlerts.css';
+import './toastRedesign.css';
 import { useLanguage } from './LanguageSelector';
 import { loadAccent } from './siteTheme';
 
@@ -48,15 +49,26 @@ const LocalTradeValidationHarness = import.meta.env.DEV
 const LocalOnboardingHarness = import.meta.env.DEV
   ? React.lazy(() => import('./LocalOnboardingHarness.jsx'))
   : null;
+const LocalSetupHarness = import.meta.env.DEV
+  ? React.lazy(() => import('./LocalSetupHarness.jsx'))
+  : null;
+const LocalChallengeHarness = import.meta.env.DEV
+  ? React.lazy(() => import('./LocalChallengeHarness.jsx'))
+  : null;
 
 function LocalizedApp() {
   const [language] = useLanguage();
   return <ConfirmationProvider><MobileAlertProvider><TradingJournal language={language}/></MobileAlertProvider></ConfirmationProvider>;
 }
 
+const DeviceRecovery = React.lazy(() => import('./DeviceRecovery.jsx'));
+
 function AppEntry() {
+  if (window.location.pathname === '/device-recovery') return <DeviceRecovery />;
   if (LocalTradeValidationHarness && window.location.pathname === '/__local-validation') return <LocalTradeValidationHarness />;
   if (LocalOnboardingHarness && window.location.pathname === '/__local-onboarding') return <LocalOnboardingHarness />;
+  if (LocalSetupHarness && window.location.pathname === '/__local-setup') return <LocalSetupHarness />;
+  if (LocalChallengeHarness && window.location.pathname === '/__local-challenge') return <LocalChallengeHarness />;
   return <LocalizedApp />;
 }
 

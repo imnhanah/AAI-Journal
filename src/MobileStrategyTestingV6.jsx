@@ -7,6 +7,7 @@ import {ArrowRight, CheckCircle2, ChevronDown, ChevronLeft, Edit3, FlaskConical,
 import {ConfirmDeleteButton} from './JournalControls.jsx';
 import {backtestStats, isClosedTest, orderTestTrades, testType, testTypeLabel} from './backtestModel.js';
 import {strategyEquityPath, strategyResult, strategyStreakTitle, strategyTotals, strategyTradeMeta} from './mobileStrategyTestingModel.js';
+import {backtestMediaVersion, shouldLoadBacktestMedia} from './backtestSharedMedia.js';
 import {scrollPhoneTo} from './phoneScroll.js';
 import './mobileStrategyTestingV6.css';
 
@@ -14,7 +15,7 @@ const money = (value, currency = 'USD') => new Intl.NumberFormat(undefined, {sty
 const signedMoney = (value, currency) => `${Number(value) > 0 ? '+' : ''}${money(value, currency)}`;
 const rValue = (value, signed = true) => value == null || value === '' || !Number.isFinite(Number(value)) ? '—' : `${signed && Number(value) > 0 ? '+' : ''}${Number(value).toFixed(2)}R`;
 const dateLabel = value => { const date = value && new Date(`${String(value).slice(0,10)}T12:00:00`); return !date || Number.isNaN(date.getTime()) ? 'Date not set' : new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(date); };
-const imageSource = image => typeof image === 'string' ? image : image?.src || image?.url || image?.dataUrl || image?.source || image?.data || '';
+const imageSource = image => typeof image === 'string' ? image : image?.displaySrc || image?.src || image?.url || image?.dataUrl || image?.source || image?.data || '';
 const tone = value => Number(value) > 0 ? 'is-profit' : Number(value) < 0 ? 'is-loss' : '';
 const figureSize = text => text.length > 15 ? 'is-longest' : text.length > 11 ? 'is-long' : '';
 const sheetHost = () => document.querySelector('.tj-root') || document.body;
@@ -119,8 +120,15 @@ function Overview({run,stats,onEditSetup}) {
 
 function TradeImages({trade,onLoadMedia,onViewImage}) {
   const [images,setImages] = useState(null), [error,setError] = useState('');
-  useEffect(() => { setImages(null); setError(''); },[trade.id,trade.updatedAt]);
+  const mediaVersion = backtestMediaVersion(trade);
   const load = async () => { setError(''); try { setImages(await onLoadMedia(trade) || {}); } catch (reason) { setError(reason.message || 'Could not load screenshots.'); } };
+  useEffect(() => {
+    let cancelled = false;
+    setImages(null); setError('');
+    if (!shouldLoadBacktestMedia(trade)) return undefined;
+    void onLoadMedia(trade).then(value => { if (!cancelled) setImages(value || {}); }).catch(reason => { if (!cancelled) setError(reason.message || 'Could not load screenshots.'); });
+    return () => { cancelled = true; };
+  },[mediaVersion]); // Media is versioned; parent callback identity is intentionally excluded.
   const sources = Object.entries(images || trade.screenshots || {}).flatMap(([label,value]) => (Array.isArray(value) ? value : [value]).map(imageSource).filter(Boolean).map(src => ({label,src})));
   if (error) return <p className="tj-st6-foot is-error" role="alert">{error}</p>;
   if (!sources.length && !images) return <button type="button" className="tj-st6-load" onClick={load}><ImageIcon size={15}/>Load screenshots</button>;

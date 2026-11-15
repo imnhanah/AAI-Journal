@@ -111,3 +111,5 @@
   .tj-md6-score-tiles b{display:block;color:var(--text);font-size:15px;font-weight:500}
   .tj-md6-score-tiles small{display:block;font-size:12px;line-height:1.2}
 }
+.tj-md6-empty-challenge{flex-wrap:wrap;}
+.tj-md6-start-btn{margin-left:auto;min-height:40px;padding:0 16px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:700;}

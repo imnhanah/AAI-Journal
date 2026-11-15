@@ -1,0 +1,115 @@
+/* Memberships admin (desktop Journal Setup panel and the phone Setup page). Theme tokens only.
+   Gold (Owners) is --amber / --warn, sync-on is --tj-green. The list reflows by its own width. */
+.tj-ma-layer {--mg:var(--amber,var(--warn));}
+.tj-membership {--mg:var(--amber,var(--warn));container:jm/inline-size;display:flex;flex-direction:column;gap:16px;min-width:0;color:var(--text);}
+.tj-membership,.tj-membership * {box-sizing:border-box;}
+.tj-membership :is(h2,p,ul) {margin:0;padding:0;}
+.jm-head {display:flex;align-items:center;gap:14px;min-width:0;}
+.jm-ico {display:grid;flex:none;place-items:center;width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));color:var(--on-accent);box-shadow:0 12px 22px -12px color-mix(in srgb,var(--accent) 70%,transparent);}
+.jm-head h2 {font-size:20px;letter-spacing:-.02em;}
+.jm-head p {margin-top:3px;color:var(--muted);font-size:13px;}
+.jm-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.jm-stats>div {display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:var(--surface,var(--card));}
+.jm-stats small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.jm-stats b {font-size:22px;letter-spacing:-.03em;line-height:1.1;}
+.jm-stats .is-owner {border-color:color-mix(in srgb,var(--mg) 38%,var(--border));background:color-mix(in srgb,var(--mg) 11%,var(--surface,var(--card)));}
+.jm-stats .is-owner small {color:var(--mg);}
+.jm-bar {display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+.jm-seg {display:flex;flex:none;gap:2px;padding:3px;border:1px solid var(--border);border-radius:14px;background:var(--raised,var(--phone-raised));}
+.tj-membership button {margin:0;font:inherit;cursor:pointer;touch-action:manipulation;}
+.tj-membership button:disabled {cursor:default;opacity:.5;}
+.tj-membership :is(button,input):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+.jm-seg button {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:0 14px;border:0;border-radius:11px;background:none;color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap;}
+.jm-seg button em {min-width:22px;padding:1px 7px;border-radius:99px;background:color-mix(in srgb,var(--text) 8%,transparent);font-size:12px;font-style:normal;text-align:center;}
+.jm-seg button.is-on {background:var(--accent);color:var(--on-accent);box-shadow:0 6px 14px -8px var(--accent);}
+.jm-seg button.is-on em {background:color-mix(in srgb,var(--on-accent) 22%,transparent);}
+.jm-search {display:flex;flex:1;align-items:center;gap:8px;min-width:min(100%,220px);height:44px;padding:0 5px 0 14px;border:1px solid var(--border);border-radius:14px;background:var(--raised,var(--phone-raised));color:var(--muted);}
+.jm-search:focus-within {border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);}
+.tj-root .tj-membership .jm-search input {flex:1;width:auto;min-width:0;height:auto;min-height:0;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;outline:0!important;color:var(--text);font:inherit;font-size:16px;}
+.jm-x {display:grid;flex:none;place-items:center;width:30px;height:30px;border:0;border-radius:9px;background:none;color:var(--muted);}
+.jm-btn {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:0 15px;border:1px solid var(--border);border-radius:11px;background:var(--surface,var(--card));color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;}
+.jm-btn:hover:not(:disabled) {border-color:color-mix(in srgb,var(--accent) 45%,var(--border));}
+.jm-btn.is-pri {border-color:transparent;background:var(--accent);color:var(--on-accent);}
+.jm-msg {display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:13px;}
+.jm-msg:not(.is-err) svg {color:var(--tj-green,var(--accent));}
+.jm-msg.is-err {color:var(--loss);}
+.jm-empty {padding:30px 16px;border:1px dashed var(--border);border-radius:16px;color:var(--muted);font-size:13px;text-align:center;}
+.jm-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.jm-th {display:grid;grid-template-columns:minmax(0,1fr) 120px 170px 44px;gap:12px;padding:0 16px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+.jm-list {display:flex;flex-direction:column;gap:8px;list-style:none;}
+.jm-row {position:relative;display:grid;grid-template-columns:minmax(0,1fr) 120px 170px 44px;align-items:center;gap:12px;min-width:0;padding:10px 16px;border:1px solid var(--border);border-radius:16px;background:var(--surface,var(--card));}
+.jm-row.is-owner {border-color:color-mix(in srgb,var(--mg) 42%,var(--border));background:linear-gradient(100deg,color-mix(in srgb,var(--mg) 13%,var(--surface,var(--card))),var(--surface,var(--card)) 70%);}
+.jm-row.is-open {border-color:var(--accent);}
+.jm-main {display:flex;align-items:center;gap:12px;min-width:0;}
+.jm-main strong {min-width:0;overflow:hidden;font-size:14px;font-weight:600;text-overflow:ellipsis;white-space:nowrap;}
+.jm-av {position:relative;display:grid;flex:none;place-items:center;width:38px;height:38px;border-radius:50%;font-size:12px;font-weight:800;letter-spacing:.02em;--t:var(--accent);background:color-mix(in srgb,var(--t) 20%,var(--surface,var(--card)));color:var(--t);}
+.jm-av.is-t1 {--t:var(--tj-blue,var(--accent));}
+.jm-av.is-t2 {--t:var(--purple,var(--accent));}
+.jm-av.is-t3 {--t:var(--loss);}
+.jm-av.is-t4 {--t:var(--tj-green,var(--accent));}
+.jm-av.is-owner {background:linear-gradient(145deg,var(--mg),color-mix(in srgb,var(--mg) 55%,var(--bg)));color:var(--on-accent,var(--bg));}
+.jm-av i {position:absolute;right:-3px;bottom:-3px;display:grid;place-items:center;width:17px;height:17px;border:2px solid var(--surface,var(--card));border-radius:50%;background:var(--mg);color:var(--on-accent,var(--bg));}
+.jm-av.is-lg {width:46px;height:46px;font-size:14px;}
+.jm-pill {display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--muted);font-size:12px;font-style:normal;font-weight:700;}
+.jm-pill.is-owner {background:color-mix(in srgb,var(--mg) 20%,transparent);color:var(--mg);}
+.jm-sync {display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px;white-space:nowrap;}
+.jm-sync i {width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--text) 28%,transparent);}
+.jm-sync.is-on {color:var(--text);}
+.jm-sync.is-on i {background:var(--tj-green,var(--accent));box-shadow:0 0 0 3px color-mix(in srgb,var(--tj-green,var(--accent)) 22%,transparent);}
+.jm-edit {display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);border-radius:50%;background:var(--surface,var(--card));color:var(--muted);}
+.jm-edit:hover:not(:disabled) {border-color:var(--accent);color:var(--accent);}
+.jm-inline {grid-column:1/-1;padding-top:10px;border-top:1px solid var(--border);}
+.jm-inline .jm-ewho {display:none;}
+.jm-editor {display:flex;flex-direction:column;gap:14px;min-width:0;}
+.jm-ewho {display:flex;align-items:center;gap:12px;min-width:0;}
+.jm-ewho div {min-width:0;}
+.jm-ewho strong {display:block;overflow:hidden;font-size:15px;text-overflow:ellipsis;white-space:nowrap;}
+.jm-ewho small {color:var(--muted);font-size:12.5px;}
+.jm-choice {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.jm-choice button {display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface,var(--card));color:var(--text);font-size:14px;font-weight:650;}
+.jm-choice button.is-on {border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);}
+.jm-choice button.is-on.is-owner {border-color:var(--mg);background:color-mix(in srgb,var(--mg) 14%,transparent);color:var(--mg);}
+.jm-check {display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;}
+.jm-check input {width:20px;height:20px;accent-color:var(--accent);}
+.jm-note,.jm-warn {color:var(--muted);font-size:13px;line-height:1.5;}
+.jm-warn {padding:10px 12px;border:1px solid color-mix(in srgb,var(--loss) 35%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--loss) 9%,transparent);color:var(--loss);font-weight:600;}
+.jm-diff {display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;border:1px solid var(--border);border-radius:16px;background:var(--raised,var(--phone-raised));color:var(--muted);}
+.jm-diff div {display:flex;flex-direction:column;align-items:center;gap:6px;}
+.jm-diff small {font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.jm-actions {display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;}
+.jm-pages {display:flex;justify-content:flex-end;gap:10px;}
+/* Narrow: each member becomes a card. */
+@container jm (max-width:640px) {
+  .jm-th {display:none;}
+  .jm-row {grid-template-columns:minmax(0,1fr) 44px;grid-template-areas:'main main' 'plan edit' 'sync edit';gap:6px 12px;padding:14px;}
+  .jm-main {grid-area:main;}
+  .jm-plan {grid-area:plan;padding-left:50px;}
+  .jm-sync {grid-area:sync;padding-left:50px;margin-top:-4px;}
+  .jm-edit {grid-area:edit;align-self:center;width:44px;height:44px;margin-top:-14px;}
+  .jm-inline {grid-row:4;grid-column:1/-1;}
+  .jm-main strong {font-size:15px;}
+  .jm-plan,.jm-sync {align-self:start;}
+  .jm-seg {flex:1;}
+  .jm-seg button {flex:1;padding:0 8px;}
+  .jm-search {flex-basis:100%;}
+  .jm-head p {font-size:12.5px;}
+}
+@container jm (max-width:400px) {
+  .jm-stats b {font-size:19px;}
+  .jm-stats>div {padding:10px 9px;}
+  .jm-stats {gap:8px;}
+  .jm-stats small {font-size:12px;letter-spacing:0;text-transform:none;white-space:nowrap;}
+  .jm-row {padding:12px;}
+}
+/* Phone sheet (the app's bottom-sheet popup). */
+.tj-ma-layer .tj-ma-sheet-body .jm-editor {padding-bottom:6px;}
+.tj-ma-layer .jm-btn {min-height:48px;border:1px solid var(--border);border-radius:24px;background:var(--phone-raised,var(--raised));color:var(--text);font-size:15px;justify-content:center;text-align:center;}
+.tj-ma-layer .jm-actions {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+.tj-ma-layer .jm-actions .jm-btn {width:100%;}
+.tj-ma-layer .jm-choice button {min-height:50px;border-radius:25px;}
+.tj-ma-layer .jm-btn.is-pri {border-color:transparent;background:var(--accent);color:var(--on-accent);}
+.tj-ma-layer :is(.jm-btn,.jm-choice button):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+.tj-ma-layer .jm-choice button {border:1.5px solid var(--border);background:var(--phone-raised,var(--raised));color:var(--text);justify-content:center;text-align:center;}
+.tj-ma-layer .jm-choice button.is-on {border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);}
+.tj-ma-layer .jm-choice button.is-on.is-owner {border-color:var(--mg);background:color-mix(in srgb,var(--mg) 14%,transparent);color:var(--mg);}
+@media (prefers-reduced-motion:reduce) {.tj-membership * {transition:none!important;animation:none!important;}}

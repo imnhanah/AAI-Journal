@@ -26,6 +26,9 @@
   .sp-handle::after {content:"";position:absolute;top:50%;left:5px;width:4px;height:54px;margin-top:-27px;border-radius:4px;background:var(--border);transition:height .2s var(--sp-ease),margin-top .2s var(--sp-ease),background .2s;}
   .sp-handle:hover::after,.sp-handle:focus-visible::after,.sp-panel.is-dragging .sp-handle::after {height:76px;margin-top:-38px;background:var(--accent);}
   .sp-handle:focus-visible {outline:none;}
+  /* Suppress the pointer-lit hover-glow (via [tabindex] selector) and any
+     UA/global focus outline/border on the handle. The grip pill (::after) keeps its own hover and focus-visible styles. */
+  .tj-root .sp-handle,.tj-root .sp-handle:hover,.tj-root .sp-handle:focus,.tj-root .sp-handle:focus-visible,.tj-root .sp-handle:active {outline:0!important;border:0!important;box-shadow:none!important;background:transparent!important;}
   .sp-badge {position:absolute;top:18px;z-index:4;padding:5px 10px;border-radius:9px;background:var(--text);color:var(--bg);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;}
   .sp-right .sp-badge {left:-12px;transform:translateX(-100%);}
   .sp-left .sp-badge {right:-12px;transform:translateX(100%);}

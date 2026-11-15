@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronDown, Lock, Save, Settings, Trash2, TrendingUp, Undo2, X } from 'lucide-react';
+import { AlertTriangle, Plus, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronDown, Lock, Save, Settings, Trash2, TrendingUp, Undo2, X } from 'lucide-react';
 import { ThemeSelect } from './JournalControls';
 import { targetAmount, changeSetupTarget } from './challengeSetupTargets';
+import ChallengeSetupWindow from './ChallengeSetupWindow.jsx';
 import './desktopChallenge.css';
 
 // Desktop Challenge v2 (CHALLENGE_V2 in ChallengeLifecyclePage.jsx), after aaicorefx-desktop-challenge.html.
@@ -18,10 +19,10 @@ export const challengeVisual = (state, level) => {
 };
 const LABEL = { not: 'Not started', progress: 'In progress', passed: 'Passed', step: 'Step back', funded: 'Deposit-funded' };
 
-export function ChallengeHero({ cards, selectedId, onSelect }) {
+export function ChallengeHero({ cards, selectedId, onSelect, startable = [], onStart }) {
   return <section className="ch2-hero">
     <div className="ch2-hl"><span className="ch2-eb">Grow · Challenge</span><h1><em>Start with a plan.</em><br/>Respect each level.</h1><p>Progress is recorded across the challenge. Planned balances are targets, not guaranteed outcomes.</p></div>
-    {cards.length > 1 && <div className="ch2-sw" role="tablist" aria-label="Challenges">{cards.map((card) => <button type="button" role="tab" key={card.id} aria-selected={card.id === selectedId} className={card.id === selectedId ? 'is-on' : ''} onClick={() => onSelect(card.id)}><span className="ch2-av">{(card.name || '?').slice(0, 1).toUpperCase()}</span><span><b>{card.name}</b><small>{card.level ? `Level ${card.level} of ${card.total}` : 'Loading…'}</small></span></button>)}</div>}
+    {(cards.length > 1 || (cards.length > 0 && startable.length > 0)) && <div className="ch2-sw" role="tablist" aria-label="Challenges">{cards.map((card) => <button type="button" role="tab" key={card.id} aria-selected={card.id === selectedId} className={card.id === selectedId ? 'is-on' : ''} onClick={() => onSelect(card.id)}><span className="ch2-av">{(card.name || '?').slice(0, 1).toUpperCase()}</span><span><b>{card.name}</b><small>{card.level ? `Level ${card.level} of ${card.total}` : 'Loading…'}</small></span></button>)}{startable.map((item) => <button type="button" role="tab" aria-selected="false" key={item.id || 'main'} className="is-start" onClick={() => onStart?.(item)}><span className="ch2-av"><Plus size={14}/></span><span><b>Start</b><small>{item.name}</small></span></button>)}</div>}
   </section>;
 }
 
@@ -107,7 +108,7 @@ function NoteField({ level, value, disabled, onSave }) {
 }
 
 export default function DesktopChallengeCard(p) {
-  const { account, plan, current, state, life, failed, complete, modeName, rewardLabel, reward, adaptive, failureFloor, linked, fmt, challenge, openSetup, setup, setSetup, saveSetup, savingSetup, deleting, setDeleting, onDelete, locked, settingsLocked, rules, saving, error, completionArchived, onContinueAdaptive } = p;
+  const { money, onViewCertificate, account, plan, current, state, life, failed, complete, modeName, rewardLabel, reward, adaptive, failureFloor, linked, fmt, challenge, openSetup, setup, setSetup, saveSetup, savingSetup, deleting, setDeleting, onDelete, locked, settingsLocked, rules, saving, error, completionArchived, onContinueAdaptive } = p;
   const ranges = useMemo(() => Array.from({ length: Math.ceil(plan.length / 10) }, (_, index) => ({ key: `${index * 10 + 1}`, start: index * 10 + 1, end: Math.min(plan.length, index * 10 + 10) })), [plan.length]);
   const rangeOf = (level) => `${Math.floor((level - 1) / 10) * 10 + 1}`;
   const [range, setRange] = useState(() => rangeOf(current.level));
@@ -137,7 +138,7 @@ export default function DesktopChallengeCard(p) {
   return <article className="ch2-card-wrap" aria-label={`${account.name} challenge`}>
     <section className="ch2-card ch2-ov-card">
       <header className="ch2-ovh">
-        <div className="ch2-tt"><h2>{account.name}</h2><span className="ch2-chip">{modeName}</span>{rewardLabel && <span className="ch2-chip">{rewardLabel}</span>}<span className="ch2-chip">{plan.length} levels</span></div>
+        <div className="ch2-tt"><h2>{account.name}</h2><span className="ch2-chip">{modeName}</span>{rewardLabel && <span className="ch2-chip">{rewardLabel}</span>}<span className="ch2-chip">{plan.length} levels</span>{challenge?.syncing && <span className="tj-ch-sync" role="status"><i aria-hidden="true"/>Syncing</span>}</div>
         <div className="ch2-ovr">
           <span className="ch2-rw"><button type="button" className="ch2-btn" aria-haspopup="dialog" aria-expanded={!!rulesAnchor} onClick={(event) => setRulesAnchor(rulesAnchor ? null : event.currentTarget)}><BookOpen size={15}/>Rules<ChevronDown size={13}/></button>{rulesAnchor && <RulesPopover rules={rules} anchor={rulesAnchor} onClose={() => setRulesAnchor(null)}/>}</span>
           <span className={`ch2-act ${statusChip[0]}`}><i/>{statusChip[1]}</span>
@@ -148,7 +149,8 @@ export default function DesktopChallengeCard(p) {
       {failed && <p className="ch2-alert" role="alert"><b>Challenge is paused.</b> Live capital {fmt(life.liveBalance)} is below the {fmt(failureFloor)} minimum. Deposit at least {fmt(Math.max(0, failureFloor - life.liveBalance))} in Finance to reactivate it, or delete this run and start again.</p>}
       {complete && <section className="ch2-complete" aria-label="Completed challenge">
         <div><span className="ch2-eb2">Challenge completed</span><strong>Congratulations — all {plan.length} levels are complete.</strong><p>{completionArchived ? 'Your certificate is saved in Journal Setup.' : 'Complete the certificate to archive this achievement.'}</p></div>
-        <button type="button" className="ch2-btn is-pri" onClick={onContinueAdaptive}>Continue with Adaptive <ArrowRight size={15}/></button>
+        {!completionArchived && <button type="button" className="ch2-btn is-pri" onClick={onViewCertificate}>Claim your certificate</button>}
+        {completionArchived && <button type="button" className="ch2-btn is-pri" onClick={onContinueAdaptive}>Continue with Adaptive <ArrowRight size={15}/></button>}
       </section>}
       <div className="ch2-ovg">
         <div className="ch2-ovl"><span className="ch2-eb2">Challenge progress</span><div className="ch2-lv"><b>{complete ? 'Complete' : `Level ${current.level}`}</b><span>of {plan.length}</span></div>
@@ -160,7 +162,9 @@ export default function DesktopChallengeCard(p) {
       </div>
       <div className="ch2-str">
         {adaptive ? <div className="ch2-st"><span className="ch2-si"><AlertTriangle size={17}/></span><div><small>Max drawdown</small><b>{state.automation?.adaptiveDrawdownPct ?? 10}%</b></div></div>
-          : <div className="ch2-st"><span className="ch2-si"><AlertTriangle size={17}/></span><div><small>Loss streak</small><b>{state.lossStreak || 0}</b></div>{p.mode === 'streak' && <div className="ch2-pips" title="Two losses in a row trigger a step-back"><i className={(state.lossStreak || 0) >= 1 ? 'is-on' : ''}/><i className={(state.lossStreak || 0) >= 2 ? 'is-on' : ''}/></div>}</div>}
+          : <div className="ch2-st"><span className="ch2-si"><AlertTriangle size={17}/></span><div><small>Loss streak</small><b>{state.lossStreak || 0}</b></div>{p.mode === 'streak' && <div className="ch2-pips" title="Two losses on the same level trigger a step-back"><i className={(state.lossStreak || 0) >= 1 ? 'is-on' : ''}/><i className={(state.lossStreak || 0) >= 2 ? 'is-on' : ''}/></div>}</div>}
+        {money && money.depositsAfterStart > 0 && <div className="ch2-st ch2-st-dep" title="Starting balance plus every deposit made after you started. Deposits never count as growth."><span className="ch2-si"><ArrowDownToLine size={17}/></span><div><small>Total deposited</small><b>{fmt(money.totalDeposited)}</b></div></div>}
+        {money && money.depositsAfterStart > 0 && <div className="ch2-st"><span className="ch2-si"><TrendingUp size={17}/></span><div><small>Net profit</small><b className={money.netProfit >= 0 ? 'is-gain' : 'is-loss'}>{money.netProfit >= 0 ? '+' : '−'}{fmt(Math.abs(money.netProfit))}</b></div></div>}
         <div className="ch2-st"><span className="ch2-si"><TrendingUp size={17}/></span><div><small>Trades taken</small><b>{linked}</b></div></div>
         <div className="ch2-st"><span className="ch2-si"><Undo2 size={17}/></span><div><small>Step-backs</small><b>{state.stepBacks || 0}</b></div></div>
       </div>
@@ -187,6 +191,6 @@ export default function DesktopChallengeCard(p) {
         </div>
       </div>
     </section>
-    {setup && <SettingsDrawer setup={setup} setSetup={setSetup} account={account} locked={settingsLocked} saving={savingSetup} deleting={deleting} onCancel={() => setSetup(null)} onSave={saveSetup} onDelete={async () => { setDeleting(true); try { if (await onDelete()) setSetup(null); } finally { setDeleting(false); } }}/>}
+    {setup && <ChallengeSetupWindow setup={setup} setSetup={setSetup} account={account} balance={Number(setup.startingBalance)} locked={settingsLocked} saving={savingSetup} deleting={deleting} onCancel={() => setSetup(null)} onSave={saveSetup} onDelete={async () => { setDeleting(true); try { if (await onDelete()) setSetup(null); } finally { setDeleting(false); } }}/>}
   </article>;
 }

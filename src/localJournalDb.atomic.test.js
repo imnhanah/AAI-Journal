@@ -226,3 +226,33 @@ test('an edit and its new reward preset are visible to another local tab', async
   keepSenderOpen();
   unsubscribe();
 });
+
+test('local Strategy Testing saves screenshots durably and rejects a stale edit', async () => {
+  const journal = await import('./localJournalDb.js');
+  const { createLocalBacktestApi } = await import('./backtestLocal.js');
+  const userId = 'local-strategy-testing';
+  journal.configureLocalJournal(userId, true);
+  const api = createLocalBacktestApi(userId);
+  const run = await api.saveTestRun({ id: 'test-run', instrument: 'EUR/USD' });
+  const screenshots = { entry: [{ src: 'data:image/png;base64,AA==' }] };
+  const original = await api.saveTestTrade(run, {
+    id: 'test-trade', asset: run.instrument, mediaEdited: true, _mediaLoaded: true, screenshots,
+  });
+  const revised = await api.saveTestTrade(run, { ...original, notes: 'Updated' });
+  await assert.rejects(() => api.saveTestTrade(run, original), /changed/);
+  assert.deepEqual(await api.loadTestMedia(userId, revised), screenshots);
+  const backup = await journal.exportLocalJournal(userId);
+  assert.deepEqual(backup.data.backtestWorkspace.trades[0].screenshots, screenshots);
+  const reloaded = createLocalBacktestApi(userId);
+  assert.equal((await reloaded.syncBacktests(userId)).trades[0].notes, 'Updated');
+  assert.throws(() => reloaded.readBacktestCache('another-user'), /another user/);
+
+  // Restore into a clean device workspace, then reopen without a cloud client.
+  const restoredUserId = 'local-strategy-restore';
+  const restored = await journal.importLocalJournal(restoredUserId, JSON.parse(JSON.stringify(backup)));
+  assert.equal(restored.error, undefined);
+  journal.configureLocalJournal(restoredUserId, true);
+  const restoredApi = createLocalBacktestApi(restoredUserId);
+  const restoredTrade = (await restoredApi.syncBacktests(restoredUserId)).trades[0];
+  assert.deepEqual(await restoredApi.loadTestMedia(restoredUserId, restoredTrade), screenshots);
+});

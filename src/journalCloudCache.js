@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import { journalManifest, mergeJournalDelta, imageReference, resolveImageReferences } from './journalDelta';
 import { privateCache } from './privateCacheRuntime';
 import { loadRevisionedImage } from './journalImageLoader.js';
+import { isTradeJournalMediaReference, tradeJournalSharedMedia } from './tradeJournalSharedMedia.js';
 
 export async function fetchSlimJournal(userId) {
   const { data: session } = await supabase.auth.getSession();
@@ -22,13 +23,23 @@ export async function fetchSlimJournal(userId) {
 }
 
 export async function loadJournalImage(source) {
-  const ref = imageReference(source);
-  if (!ref) return source;
+  const sourceValue = typeof source === 'string' ? source : source?.src || '';
+  if (isTradeJournalMediaReference(sourceValue)) {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id || '';
+    if (!userId) throw new Error('Sign in to view this screenshot.');
+    if (privateCache.token().owner !== userId) throw new Error('Session changed before loading screenshot.');
+    const [resolved] = await tradeJournalSharedMedia.resolveScreenshots({ userId, screenshots:[typeof source === 'string' ? {src:source} : source] });
+    if (resolved?.displaySrc) return resolved.displaySrc;
+    throw new Error(resolved?.displayError === 'missing-cloud-reference' ? 'This image is not available on this device yet.' : 'Could not load screenshot. Check your connection and retry.');
+  }
+  const ref = imageReference(sourceValue);
+  if (!ref) return sourceValue;
   const { data: session } = await supabase.auth.getSession();
   if (session?.session?.user?.id !== ref.user) throw new Error('Sign in to view this screenshot.');
   if (privateCache.token().owner !== ref.user) throw new Error('Session changed before loading screenshot.');
-  return privateCache.get(source, async () => {
-    const data = await loadRevisionedImage(source, {
+  return privateCache.get(sourceValue, async () => {
+    const data = await loadRevisionedImage(sourceValue, {
       readImage: async currentRef => {
         const {data, error} = await supabase.rpc('tj_journal_image', {source_table:currentRef.table, row_id:currentRef.id, image_path:currentRef.path, image_version:currentRef.version});
         if (error) throw new Error(error.message || 'Could not load screenshot. Check your connection and retry.');

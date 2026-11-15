@@ -204,9 +204,9 @@
   .an2-inst-compact-metrics>span {display:flex;flex-direction:column;gap:3px;min-width:0;padding:10px 13px;border-right:1px solid var(--border);}
   .an2-inst-compact-metrics>span:nth-child(2n) {border-right:0;}
   .an2-inst-compact-metrics>span:nth-child(-n+2) {border-bottom:1px solid var(--border);}
-  .an2-inst-compact-metrics small {overflow:hidden;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.09em;text-overflow:ellipsis;text-transform:uppercase;white-space:nowrap;}
+  .an2-inst-compact-metrics small {overflow:hidden;color:var(--muted);font-size:var(--text-min);font-weight:700;letter-spacing:.09em;text-overflow:ellipsis;text-transform:uppercase;white-space:nowrap;}
   .an2-inst-compact-metrics b {overflow:hidden;font-size:14px;text-overflow:ellipsis;white-space:nowrap;}
-  .an2-inst-compact-best {display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .an2-inst-compact-best {display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:var(--text-min);font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
   .an2-inst-compact-best b {margin-left:5px;font-size:13px;letter-spacing:0;}
   .an2-inst-carousel-controls {display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px 13px;}
   .tj-root .an2 .an2-inst-carousel-controls>button {display:grid;width:28px;height:28px;place-items:center;padding:0;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);cursor:pointer;}

@@ -5,6 +5,7 @@ import { useConfirmation } from './ConfirmationDialog.jsx';
 import { DECIMAL_INPUT_MODE } from './mobileFinanceConstants.js';
 import { financeMonthGroups, financeMovementIssue, financeMovementSign } from './mobileFinanceModel.js';
 import { savingsCardModel } from './savingsCardModel.js';
+import { useDepositCheck, depositBlockText } from './useDepositCheck.js';
 import './desktopFinance.css';
 
 // Desktop Finance v2 (FINANCE_V2 in TradingJournal.jsx), after aaicorefx-desktop-finance.html.
@@ -60,6 +61,7 @@ export default function DesktopFinanceV2(p) {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
   const amountRef = useRef(null);
+  const depositBlock = useDepositCheck(p, drawer);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
   useEffect(() => { setError(''); }, [p.amount, p.date, p.savingsId, p.type, p.source, p.balanceId]);
   useEffect(() => { if (drawer) requestAnimationFrame(() => amountRef.current?.focus()); }, [drawer]);
@@ -138,7 +140,7 @@ export default function DesktopFinanceV2(p) {
       </div>; }) : <div className="fn2-emp"><Wallet size={30} strokeWidth={1.6}/><b>{needle ? 'No movements match' : p.filter === 'all' ? 'No movements yet' : `No ${p.filter === 'deposit' ? 'deposits' : p.filter === 'withdrawal' ? 'withdrawals' : 'transfers'} yet`}</b><span>{needle ? 'Try a different search.' : 'Use the buttons above to record one.'}</span></div>}
       <div className="fn2-lf"><Shield size={14}/>Cash movements never change your trading statistics.</div>
     </section> : <div className="fn2-svg">
-      <div className="fn2-col">{p.savings.length ? p.savings.map((item) => <PlanCard key={item.id} saving={item} money={p.money} onTransfer={planTransfer}/>) : <section className="fn2-card fn2-emp"><Target size={30} strokeWidth={1.6}/><b>No savings plans yet</b><span>Add a savings account in Account Settings to plan transfers.</span></section>}</div>
+      <div className="fn2-col">{p.savings.length > 0 && <div className="fn2-mg"><button type="button" className="fn2-btn is-ghost" onClick={p.onManageSavings}><Plus size={16}/> Add or edit savings accounts</button></div>}{p.savings.length ? p.savings.map((item) => <PlanCard key={item.id} saving={item} money={p.money} onTransfer={planTransfer}/>) : <section className="fn2-card fn2-emp"><Target size={30} strokeWidth={1.6}/><b>No savings plans yet</b><span>Add a savings account to plan transfers.</span><button type="button" className="fn2-btn" onClick={p.onManageSavings}><Plus size={16}/> Add savings account</button></section>}</div>
       <div className="fn2-col">
         <section className="fn2-card fn2-hs"><div className="fn2-ph"><div><span className="fn2-eb2">History</span><h3>Transfers to savings</h3></div><button type="button" className="fn2-btn is-ghost is-sm" onClick={() => openNew('transfer')} disabled={!p.allSavings.length}><Plus size={14} strokeWidth={2.4}/>Move money</button></div>
           {transfers.length ? transfers.map((movement) => <div className="fn2-hr" key={movement.id}><span className="fn2-ti is-blue"><ArrowRightLeft size={16}/></span><div><b>{noPlus(p.money(movement.amount))}</b><small>{movement.date} · {movement.note || movement.title}</small></div></div>) : <div className="fn2-emp is-sm"><ArrowRightLeft size={26} strokeWidth={1.6}/><b>No transfers yet</b><span>Moves to savings will be listed here.</span></div>}
@@ -161,7 +163,8 @@ export default function DesktopFinanceV2(p) {
           <div className="fn2-f"><small>Date</small><ThemeDate value={p.date} onChange={(event) => p.onDate(event.target.value)} label="Movement date"/></div>
           <div className="fn2-f"><small>Note <i>optional</i></small><label className="fn2-in"><input aria-label="Movement note" value={p.note} placeholder="Optional reference" onChange={(event) => p.onNote(event.target.value)}/></label></div>
         </div>
-        <footer><p className="fn2-err" role="alert">{error}</p><div className="fn2-fb"><button type="button" className="fn2-btn is-ghost" onClick={() => setDrawer(false)} disabled={saving}>Cancel</button><button type="button" className="fn2-btn" onClick={submit} disabled={saving}>{React.createElement(TYPES[p.type]?.[2] || ArrowDown, { size: 16 })}{saving ? 'Saving…' : TYPES[p.type]?.[3] || 'Record movement'}</button></div></footer>
+        {depositBlock && <div className="fn2-cap" role="alert"><span className="fn2-cap-ic"><Shield size={20}/></span><div><b>{depositBlock.reason === 'active-cap' ? 'Deposits are closed' : 'Above the challenge limit'}</b><p>{depositBlockText(depositBlock, p.money)}</p>{depositBlock.reason !== 'active-cap' && depositBlock.maximum > 0 && <button type="button" className="fn2-cap-use" onClick={() => p.onAmount(String(depositBlock.maximum))}>Use {p.money(depositBlock.maximum)}</button>}</div></div>}
+        <footer><p className="fn2-err" role="alert">{error}</p><div className="fn2-fb"><button type="button" className="fn2-btn is-ghost" onClick={() => setDrawer(false)} disabled={saving}>Cancel</button><button type="button" className="fn2-btn" onClick={submit} disabled={saving || !!depositBlock}>{React.createElement(TYPES[p.type]?.[2] || ArrowDown, { size: 16 })}{saving ? 'Saving…' : TYPES[p.type]?.[3] || 'Record movement'}</button></div></footer>
       </aside>
     </div>}
     {toast && <div className="fn2-toast" role="status" key={toast.id}>{toast.message}</div>}

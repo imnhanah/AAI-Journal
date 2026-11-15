@@ -50,7 +50,16 @@ export function scopeChallengeAccount(workspace = {}, balance = {}) {
 }
 export const cashImpact = item => item.type === 'deposit' ? (item.note?.startsWith('[Imported account base]') ? 0 : Number(item.amount || 0)) : item.source === 'trading' ? -Number(item.amount || 0) : 0;
 export const liveChallengeBalance = account => {
-  if (!validateAccountFinancialData(account).valid) return null;
+  const validation = validateAccountFinancialData(account);
+  if (!validation.valid) {
+    console.warn('[liveChallengeBalance] validation failed — balance will be null', {
+      issues: validation.issues,
+      balance: account?.balance,
+      tradesPnl: (account?.trades || []).filter(closedChallengeTrade).reduce((sum,t)=>sum+Number(t.pnl || 0),0),
+      financeMovements: account?.financeMovements,
+    });
+    return null;
+  }
   return Math.round((Number(account.balance ?? account.challengeStartingBalance ?? 0) + (account.trades || []).filter(closedChallengeTrade).reduce((sum,trade)=>sum+Number(trade.pnl || 0),0) + (account.financeMovements || []).reduce((sum,item)=>sum+cashImpact(item),0))*100)/100;
 };
 // A challenge locks in the real trading balance at the instant it begins.
@@ -99,4 +108,22 @@ export function pruneChallengeTrades(workspace, balanceId, ids) {
     const total = key => retained.reduce((sum,result)=>sum+Number(result[key] || 0),0);
     return [{...trade,balanceResults:retained,grossPnl:total('grossPnl'),commission:total('commission'),swap:total('swap'),pnl:retained.reduce((sum,result)=>sum+Number(result.netPnl ?? (Number(result.grossPnl || 0)-Number(result.commission || 0)-Number(result.swap || 0))),0)}];
   });
+}
+
+// Money picture for one challenge: what the trader put in versus what the
+// account holds. Deposits made before the challenge started are already part
+// of its starting balance; only deposits after activation are added on top.
+// Growth is always trading P&L over the starting balance, never deposits.
+export function challengeMoney(state, account) {
+  const startingBalance = challengeStartingBalance(state, account);
+  const liveBalance = liveChallengeBalance(account);
+  if (startingBalance == null || liveBalance == null) return null;
+  const checkpoint = Date.parse(state?.automation?.startedAt || '');
+  const deposits = (account.financeMovements || [])
+    .filter(item => item.type === 'deposit' && cashImpact(item) > 0)
+    .filter(item => !Number.isFinite(checkpoint) || Date.parse(item.createdAt || `${item.date}T23:59:59`) >= checkpoint)
+    .reduce((sum, item) => sum + cashImpact(item), 0);
+  const depositsAfterStart = Math.round(deposits * 100) / 100;
+  const totalDeposited = Math.round((startingBalance + depositsAfterStart) * 100) / 100;
+  return { startingBalance, depositsAfterStart, totalDeposited, liveBalance, netProfit: Math.round((liveBalance - totalDeposited) * 100) / 100 };
 }

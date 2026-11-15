@@ -77,7 +77,7 @@ function LevelRow({row, rowStatus, isNow, open, adaptive, fmt, onToggle, onStatu
   </div>;
 }
 
-export default function MobileChallengesV6({account, plan, current, state, life, failed, complete, modeName, rewardLabel, adaptive, failureFloor, linked, fmt, challenge, locked, settingsLocked, onOpenSettings, error, onRetry, rules, rail, order = 0, completionArchived, onContinueAdaptive}) {
+export default function MobileChallengesV6({onViewCertificate, account, plan, current, state, life, failed, complete, modeName, rewardLabel, adaptive, failureFloor, linked, fmt, challenge, locked, settingsLocked, onOpenSettings, error, onRetry, rules, rail, order = 0, completionArchived, onContinueAdaptive}) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [statusLevel, setStatusLevel] = useState(null);
   const currentLevel = current.level;
@@ -98,13 +98,13 @@ export default function MobileChallengesV6({account, plan, current, state, life,
   const riskValue = adaptive ? `${state.automation?.adaptiveDrawdownPct ?? 10}%` : `${state.lossStreak || 0}`;
 
   const hero = <article ref={heroRef} className="tj-mc6-card" data-card-id={account.id} style={{order}} aria-label={`${account.name} challenge`}>
-    <header><h2>{account.name}</h2><b className={failed ? 'is-failed' : complete ? 'is-complete' : 'is-active'}>{failed ? 'Paused' : complete ? 'Complete' : 'Active'}</b></header>
+    <header><h2>{account.name}</h2>{challenge?.syncing && <span className="tj-ch-sync" role="status"><i aria-hidden="true"/>Syncing</span>}<b className={failed ? 'is-failed' : complete ? 'is-complete' : 'is-active'}>{failed ? 'Paused' : complete ? 'Complete' : 'Active'}</b></header>
     <div className="tj-mc6-tags"><span>{modeName}</span><span>{rewardLabel || `1:${rewardRatio(current)}`}</span></div>
     <div className="tj-mc6-level"><b>Level {currentLevel}</b><small>of {plan.length}</small></div>
     <div className="tj-mc6-segments" aria-hidden="true">{plan.map(row => { const status = mobileChallengeRowStatus(state, row.level, currentLevel, failed); return <i key={row.level} className={row.level === currentLevel ? 'is-now' : `is-${status.tone}`}/>; })}</div>
     <div className="tj-mc6-two"><div><span>This level</span><b>{fmt(current.start)} <em>→</em> {fmt(current.end)}</b></div><div><span>Full target</span><b className="is-gain">{fmt(plan.at(-1)?.end)}</b></div></div>
     <div className="tj-mc6-mini"><span><b>{linked}</b> trade{linked === 1 ? '' : 's'} taken</span><span><b>{state.stepBacks || 0}</b> step-back{state.stepBacks === 1 ? '' : 's'}</span></div>
-    {complete && <div className="tj-mc6-complete"><span>Challenge completed</span><b>All {plan.length} levels are complete.</b><small>{completionArchived ? 'Certificate saved in Journal Setup.' : 'Complete the certificate to archive this achievement.'}</small><button type="button" onClick={onContinueAdaptive}>Continue with Adaptive <ArrowRight size={14}/></button></div>}
+    {complete && <div className="tj-mc6-complete"><span>Challenge completed</span><b>All {plan.length} levels are complete.</b><small>{completionArchived ? 'Certificate saved in Journal Setup.' : 'Complete the certificate to archive this achievement.'}</small>{!completionArchived && <button type="button" onClick={onViewCertificate}>Claim your certificate</button>}{completionArchived && <button type="button" onClick={onContinueAdaptive}>Continue with Adaptive <ArrowRight size={14}/></button>}</div>}
     <div className="tj-mc6-buttons"><button type="button" onClick={() => setRulesOpen(true)}><BookOpen size={15}/>Rules</button><button type="button" aria-label={`Open ${account.name} challenge settings`} onClick={onOpenSettings}><Settings size={15}/>Settings</button></div>
   </article>;
 

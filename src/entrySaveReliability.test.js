@@ -23,13 +23,61 @@ test('trade and markup editors await one guarded save operation and expose a Sav
   }
 });
 
-test('cloud creates retain a stable caller id and upsert retries instead of inserting duplicates', () => {
+test('cloud creates retain a stable caller id and upsert retries instead of inserting duplicates', async () => {
   const createTrade = cloud.slice(cloud.indexOf('export async function createTrade'), cloud.indexOf('export async function updateTrade'));
   const createMarkup = cloud.slice(cloud.indexOf('export async function createMarkup'), cloud.indexOf('export async function updateMarkup'));
-  for (const source of [createTrade, createMarkup]) {
-    assert.match(source, /\.\.\.\(persistedUuid\(x\.id\)\?\{id:x\.id\}:\{\}\)/);
-    assert.match(source, /\.upsert\(/);
-    assert.match(source, /onConflict:"id"/);
+  const persistedUuid = new Function(`return (${cloud.match(/^const persistedUuid = (.+);$/m)[1]});`)();
+  const userId = '11111111-1111-4111-8111-111111111111';
+  const accountId = '22222222-2222-4222-8222-222222222222';
+  const entryId = '33333333-3333-4333-8333-333333333333';
+  for (const [name, source, table] of [['createTrade',createTrade,'trades'],['createMarkup',createMarkup,'premarket_markups']]) {
+    const rows = new Map();
+    const requests = [];
+    const mediaIds = [];
+    const input = {id:entryId,screenshots:{entry:[{src:'local-original'}]}};
+    const dependencies = {
+      persistedUuid,
+      recordUuid:() => assert.fail('a supplied UUID must survive every retry'),
+      supabase:{
+        auth:{getSession:async () => ({data:{session:{user:{id:userId}}}})},
+        from:actualTable => {
+          assert.equal(actualTable,table);
+          return {upsert(row,options) {
+            assert.deepEqual(options,{onConflict:'id'});
+            requests.push(structuredClone(row));
+            rows.set(row.id,row);
+            return {select:() => ({single:async () => requests.length === 1
+              ? {error:{message:'Synthetic lost response after commit'}} : {data:row}})};
+          }};
+        },
+      },
+      mediaForSave:async (actualTable,id,entry,create) => {
+        assert.equal(actualTable,table);
+        assert.equal(create,true);
+        assert.deepEqual(entry.screenshots,input.screenshots);
+        mediaIds.push(id);
+        return {value:'verified-cloud-reference',local:entry.screenshots};
+      },
+      toTrade:(user,account) => ({user_id:user,account_id:account}),
+      markupRow:() => ({}),
+      THIN_COLUMNS:{[table]:'id,user_id,account_id'},
+      trade:row => row, markup:row => row,
+      fail:error => ({error:error.message}),
+    };
+    // Execute the actual save implementation with a synthetic transport. The
+    // first commit loses its response; retrying must upsert the same record.
+    const create = new Function(...Object.keys(dependencies), source.replace('export ','') + `; return ${name};`)(...Object.values(dependencies));
+    assert.match((await create(userId,accountId,input)).error,/lost response/);
+    const result = await create(userId,accountId,input);
+    assert.equal(result.error,undefined);
+    assert.equal(result.data.id,entryId);
+    assert.deepEqual(result.data.screenshots,input.screenshots);
+    assert.deepEqual(mediaIds,[entryId,entryId]);
+    assert.equal(rows.size,1);
+    assert.deepEqual(requests.map(row => [row.id,row.user_id,row.account_id,row.screenshots]),[
+      [entryId,userId,accountId,'verified-cloud-reference'],
+      [entryId,userId,accountId,'verified-cloud-reference'],
+    ]);
   }
   assert.match(journal, /const persistentEntryId = \(\) => globalThis\.crypto\?\.randomUUID\?\.\(\)/);
   assert.match(journal, /const base = \{ id: persistentEntryId\(\), date: todayISO\(\)/);

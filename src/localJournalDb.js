@@ -55,14 +55,17 @@ function cachedRoutine(userId) { try { const value=storage()?.getItem(routineCac
 function snapshotError(error) { try { globalThis.dispatchEvent?.(new CustomEvent('aaicorefx:local-snapshot-error',{detail:{message:error?.message||'Could not save a device snapshot.'}})); } catch {} }
 function openSnapshots() { return new Promise((resolve,reject)=>{ const request=indexedDB.open(SNAPSHOT_DATABASE,1); request.onupgradeneeded=()=>{ if(!request.result.objectStoreNames.contains(SNAPSHOT_STORE)) request.result.createObjectStore(SNAPSHOT_STORE,{keyPath:'id'}); }; request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); }); }
 const snapshotSize = value => new Blob([JSON.stringify(value)]).size;
-async function saveSnapshot(userId,data,{kind='auto',force=false,routine=cachedRoutine(userId)}={}) {
+async function saveSnapshot(userId,data,{kind='auto',force=false,routine=cachedRoutine(userId),preserveExisting=false}={}) {
   const database=await openSnapshots();
   try { return await new Promise((resolve,reject)=>{ const transaction=database.transaction(SNAPSHOT_STORE,'readwrite'),store=transaction.objectStore(SNAPSHOT_STORE); let outcome;
     transaction.oncomplete=()=>resolve(outcome); transaction.onerror=()=>reject(transaction.error||new Error('Could not save device snapshot.')); transaction.onabort=()=>reject(transaction.error||new Error('Device snapshot was cancelled.'));
-    const request=store.getAll(); request.onerror=()=>{try{transaction.abort();}catch{}}; request.onsuccess=()=>{ const previous=(request.result||[]).filter(row=>row.userId===userId).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); const latest=previous.find(row=>row.kind==='auto'); if(!force&&kind==='auto'&&latest&&Date.now()-Date.parse(latest.createdAt)<3600000){outcome={skipped:true};return;} const backup={version:1,exportedAt:now(),data:clone(data),routine:clone(routine)}; const record={id:`snapshot-${id()}`,userId,kind,createdAt:now(),tradeCount:(data.accounts||[]).reduce((sum,account)=>sum+(account.trades||[]).length,0),size:snapshotSize(backup),backup}; store.put(record); previous.filter(row=>row.kind===kind).slice(kind==='safety'?2:4).forEach(row=>store.delete(row.id)); outcome={data:{...record,backup:undefined}}; }; }); } finally { database.close(); }
+    const request=store.getAll(); request.onerror=()=>{try{transaction.abort();}catch{}}; request.onsuccess=()=>{ const previous=(request.result||[]).filter(row=>row.userId===userId).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); const latest=previous.find(row=>row.kind==='auto'); if(!force&&kind==='auto'&&latest&&Date.now()-Date.parse(latest.createdAt)<3600000){outcome={skipped:true};return;} const backup={version:1,exportedAt:now(),data:clone(data),routine:clone(routine)}; const record={id:`snapshot-${id()}`,userId,kind,createdAt:now(),tradeCount:(data.accounts||[]).reduce((sum,account)=>sum+(account.trades||[]).length,0),size:snapshotSize(backup),backup}; store.put(record); if(!preserveExisting) previous.filter(row=>row.kind===kind).slice(kind==='safety'?2:4).forEach(row=>store.delete(row.id)); outcome={data:{...record,backup:undefined}}; }; }); } finally { database.close(); }
 }
 export async function listLocalJournalSnapshots(userId=localUserId) { if(!userId)return {data:[]}; const database=await openSnapshots(); try { const rows=await requestValue(database.transaction(SNAPSHOT_STORE,'readonly').objectStore(SNAPSHOT_STORE).getAll()); return {data:(rows||[]).filter(row=>row.userId===userId).map(({backup,...row})=>row).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))}; } catch(error){return {error:error?.message||'Could not read device snapshots.'};} finally{database.close();} }
 export async function createSafetySnapshot(userId=localUserId,routine) { try { return await saveSnapshot(userId,await dataFor(userId),{kind:'safety',force:true,routine}); } catch(error) { snapshotError(error); return {error:error?.message||'Could not save safety snapshot.'}; } }
+export async function createPromotionSnapshot(userId, backup) {
+  return saveSnapshot(userId, backup.data, {kind:'safety',force:true,routine:backup.routine,preserveExisting:true});
+}
 export async function readLocalJournalSnapshot(userId,id) { const database=await openSnapshots(); try { const row=await requestValue(database.transaction(SNAPSHOT_STORE,'readonly').objectStore(SNAPSHOT_STORE).get(id)); return !row||row.userId!==userId?{error:'Snapshot not found.'}:{data:row.backup}; } catch(error){return {error:error?.message||'Could not read snapshot.'};} finally{database.close();} }
 
 function open() {
@@ -153,8 +156,8 @@ function change(mutator) {
           };
           store.put({ ...clone(data), savedAt: now(), version: 1 }, userId);
         } catch (error) {
-          try { transaction.abort(); } catch {}
           finish(reject, error);
+          try { transaction.abort(); } catch {}
         }
       };
     });
@@ -319,3 +322,21 @@ export async function savePeriodReview(userId, accountId, value) { return change
 export async function hasMigratedLocalData() { return true; }
 export async function markLocalDataMigrated() { return {}; }
 export async function importLegacyAccount(userId, value) { const account=await createAccount(userId,value); if(account.error)return account; for(const trade of value.trades||[])await createTrade(userId,account.data.id,trade); for(const rule of value.rules||[])await createRule(userId,account.data.id,rule.text); return okay({accountId:account.data.id}); }
+
+// Strategy Testing uses the same durable, serialized journal transaction as
+// local trades. The local workspace is independent of the cloud cache.
+export async function readBacktestWorkspace(userId) {
+  await pendingChanges.get(userId);
+  const data = await dataFor(userId);
+  return data.backtestWorkspace || { runs: [], trades: [] };
+}
+
+export function changeBacktestWorkspace(userId, mutate) {
+  if (!userId || userId !== localUserId) throw new Error('This Strategy Testing workspace is no longer active on this device.');
+  return change(data => {
+    const workspace = data.backtestWorkspace || { runs: [], trades: [] };
+    const result = mutate(workspace);
+    data.backtestWorkspace = workspace;
+    return result;
+  });
+}

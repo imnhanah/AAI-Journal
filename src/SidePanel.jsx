@@ -52,18 +52,31 @@ export default function SidePanel({open, side = 'right', behavior = 'push', user
   }, []);
 
   // Push: the page gives up exactly the panel's width. Shared with the page through .tj-root.
+  // Several panels share these root settings. A panel that is closing or unmounting must never
+  // wipe the settings of another panel that is open (switching Profile to a setup panel did this).
   useLayoutEffect(() => {
     const root = panel.current?.closest('.tj-root');
     if (!root) return undefined;
-    root.style.setProperty('--sp-push', open && !overlay ? `${shown}px` : '0px');
-    root.classList.toggle('sp-side-left', left);
-    root.classList.toggle('sp-side-right', !left);
-    root.classList.toggle('sp-overlay-open', open && overlay);
-    root.classList.toggle('sp-dragging', dragging);
-    return undefined;
+    if (!open && [...root.querySelectorAll('.sp-panel.is-open')].some(node => node !== panel.current)) return undefined;
+    const apply = () => {
+      root.style.setProperty('--sp-push', open && !overlay ? `${shown}px` : '0px');
+      root.classList.toggle('sp-side-left', left);
+      root.classList.toggle('sp-side-right', !left);
+      root.classList.toggle('sp-overlay-open', open && overlay);
+      root.classList.toggle('sp-dragging', dragging);
+    };
+    apply();
+    // The page re-renders the root's className when the theme changes, which wipes the classes above
+    // while a panel is open (the page stops making room and the panel slides under the header).
+    // Put them back whenever the root's class list changes.
+    if (!open) return undefined;
+    const observer = new MutationObserver(apply);
+    observer.observe(root, {attributes:true, attributeFilter:['class']});
+    return () => observer.disconnect();
   }, [open, overlay, shown, left, dragging]);
   useEffect(() => () => {
     const root = panel.current?.closest('.tj-root') || document.querySelector('.tj-root');
+    if (root && [...root.querySelectorAll('.sp-panel.is-open')].some(node => node !== panel.current)) return;
     root?.style.removeProperty('--sp-push');
     root?.classList.remove('sp-side-left', 'sp-side-right', 'sp-overlay-open', 'sp-dragging');
   }, []);

@@ -105,7 +105,7 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
             {quickTile('markups',Pencil,'Markup','is-blue',{lock:startDayLock,note:'Plan before execution'})}
             {quickTile('journal',NotebookText,'Trade Logs','is-purple',{lock:startDayLock,note:tradeLocked?'Trade locked':'Track every trade'})}
             {quickTile('reviews',ClipboardCheck,'Review','is-accent',{note:'Turn trades into lessons'})}
-            {quickTile('challenge',Trophy,'Challenge','is-amber',{lock:challengeEnabled?'':'Enable it in Account settings',note:'Build your account'})}
+            {quickTile('challenge',Trophy,'Challenge','is-amber',{note:challengeEnabled?'Build your account':'Start a challenge'})}
           </div>
         </div>}
         {sheet==='search' && <><header className="tj-mobile-sheet-title"><h2>Search</h2><button type="button" aria-label="Close search" onClick={()=>onSheet(null)}><X/></button></header>{search}</>}

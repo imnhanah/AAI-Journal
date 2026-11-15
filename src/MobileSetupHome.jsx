@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {AlertTriangle, ArrowLeftRight, ChevronRight, Database, Gauge, Layers, ListChecks, Sun, Target, TrendingUp} from 'lucide-react';
+import {AlertTriangle, ArrowLeftRight, ChevronRight, Database, Gauge, Layers, ListChecks, ShieldCheck, Sun, Target, TrendingUp} from 'lucide-react';
 import {activeRoutineItems, routineWeekStats} from './dailyRoutine.js';
 import './mobileSetup.css';
 
@@ -31,6 +31,7 @@ export default function MobileSetupHome({routine,onUpdateRoutine,lists,onChoose}
     <h3>Workflow</h3>
     <div className="tj-setup-list"><Row tone="is-green" Icon={Sun} label="Daily routine" note={`${active} items on · before the chart & pre-trade`} count={active} onClick={() => onChoose('daily-routine')}/></div>
     {GROUPS.map(([title,ids]) => <React.Fragment key={title}><h3>{title}</h3><div className="tj-setup-list">{ids.map(id => { const [tone,Icon,note] = ROWS[id]; return <Row key={id} tone={tone} Icon={Icon} label={byId[id]?.label} note={note} count={byId[id]?.count ?? ''} onClick={() => onChoose(id)}/>; })}</div></React.Fragment>)}
+    {byId.memberships && <><h3>Administration</h3><div className="tj-setup-list"><Row tone="is-slate" Icon={ShieldCheck} label="Memberships" note="Manage account access" count="" onClick={() => onChoose('memberships')}/></div></>}
     <p className="tj-setup-note">Changes apply across your journal, trade logging and Review. Risk presets and import mappings are saved on this device.</p>
   </div>;
 }

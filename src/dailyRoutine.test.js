@@ -151,7 +151,7 @@ test('default routine items can be renamed, moved, deleted, and restored through
 });
 test('both new-markup triggers are gated; editing and markup form stay unchanged',()=>{
   const source=readFileSync(new URL('./TradingJournal.jsx',import.meta.url),'utf8');
-  assert.match(source,/onClick=\{openNewMarkup\}/);assert.match(source,/onNew=\{openNewMarkup\}/);
+  assert.match(source,/requireWorkspace\(openNewMarkup\)|onClick=\{openNewMarkup\}/);assert.match(source,/onNew=\{openNewMarkup\}/);
   assert.match(source,/loadRoutine: \(\) => routineStore.refresh\(\)/);
   assert.match(source,/const openNewMarkup = \(\) => \{/);
   assert.match(source,/routineGate\.current\.request\('markup'\)/);
@@ -160,7 +160,7 @@ test('both new-markup triggers are gated; editing and markup form stay unchanged
   assert.match(source,/setRoutineContinueOnly\(false\); routineGate\.current\.cancel\(\); setRoutineOpenMarkupAfterSave\(false\);/);
   assert.match(source,/Routine \{routineToday\.ticked\}\/\{routineToday\.total\}/);
   assert.match(source,/const continueDailyRoutine = \(\) => \{/);
-  assert.match(source,/useDailyRoutine\(user\)/);
+  assert.match(source,/useDailyRoutine\(user,\s*\{\s*localMode: localBacktests/);
   assert.match(source,/setRoutineOpenMarkupAfterSave\(true\)/);
   assert.match(source,/await routineGate\.current\.request\('markup'\)/);
 });

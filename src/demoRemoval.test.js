@@ -9,7 +9,8 @@ test('journal startup has no automatic cloud demo workspace path', () => {
   assert.doesNotMatch(journal, /ensureDemoAccount/);
   assert.match(journal, /Start your trading journal/);
   assert.match(journal, /Create your first journal/);
-  assert.match(journal, /if \(loaded && !account\)/);
+  assert.match(journal, /PLACEHOLDER_ACCOUNT/);
+  assert.match(journal, /isPlaceholder/);
 });
 
 test('device storage starts empty and does not import synthetic history', () => {

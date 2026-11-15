@@ -13,7 +13,7 @@ import CaseStudyConnectionsExplorer from './CaseStudyConnectionsExplorer.jsx';
 import RichDocumentEditor, { insertImageInView } from './RichDocumentEditor.jsx';
 import { addEvidenceRecords, attachDocumentImageEvidence, caseStudyBackup, linkEvidence, linkRelatedStudy, mergeCaseStudyWorkspace, normaliseCaseStudyWorkspace, unlinkEvidence, validateEvidenceImage } from './caseStudyWorkspace.js';
 import { CASE_STUDY_CONNECTION_RELATIONSHIPS, CaseStudyConnectionError, caseStudyConnectionsForStudy, createCaseStudyConnection, isDirectionalCaseStudyRelationship, removeCaseStudyConnection, removeConnectionsForCaseStudy, updateCaseStudyConnection } from './caseStudyConnections.js';
-import { saveEvidenceImage, useEvidenceImageUrl } from './caseStudyEvidenceImages.js';
+import { reportCaseStudyImageDecodeFailure, useEvidenceImageUrl } from './caseStudyEvidenceImages.js';
 import { isDocumentImageReference, readCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
 import { activeEvidenceId as resolveActiveEvidenceId, outlineHasVirtualEvidence } from './caseStudyPresentation.js';
 import { emptyRichDocument, isSafeLink, migrateSectionRichDocument, patchSectionRichDocument, richDocumentFromSections, richDocumentText } from './studyRichDocument.js';
@@ -23,10 +23,17 @@ import {caseStudyDraftError, createCaseStudyDraft, hasCaseStudyDraftChanges, ini
 import { REVIEW_STEPS, normaliseCaseStudyReview, patchStudyReview, reviewReadiness } from './caseStudyReview.js';
 import { clearCaseStudyNavigation, readCaseStudyNavigation, writeCaseStudyNavigation } from './caseStudyNavigation.js';
 import { evidenceImageReference, resolveCaseStudyCover } from './caseStudyCover.js';
-import { synchronizeCaseStudyEvidenceImages } from './caseStudyEvidenceCloud.js';
+import { applyVerifiedCaseStudyImageReferences, caseStudySharedImageIntegration, isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
+import { resolveJournalMembership } from './membership.js';
 import { BUILT_IN_CASE_STUDY_TEMPLATES, applyTemplateToStudy, templateSectionNames, templateSections } from './caseStudyTemplates.js';
+import { caseStudyReconciliationCounts, createCaseStudyReconciliationProposal } from './caseStudyReconciliation.js';
 
 const now = () => new Date().toISOString();
+const CaseStudyImageOwnerContext = createContext('');
+const useCaseStudyEvidenceImage = item => {
+  const ownerUserId = useContext(CaseStudyImageOwnerContext);
+  return useEvidenceImageUrl(evidenceImageReference(item), { userId: ownerUserId, cloudRef: item?.cloudRef || '' });
+};
 const uid = (prefix) => globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const NOTEBOOKS = [
   ['structure', 'Market Structure'], ['liquidity', 'Liquidity'], ['entries', 'Entries & Setups'],
@@ -255,8 +262,7 @@ function Cs2StudyCard({ view, study, notebook, evidence, menuOpen, menuRootRef, 
 
 // Evidence tab (stage 2): searchable card grid with a details aside for the selected item.
 function Cs2EvidenceThumb({ item }) {
-  const source = evidenceImageReference(item);
-  const image = useEvidenceImageUrl(source);
+  const image = useCaseStudyEvidenceImage(item);
   return image.url ? <img src={image.url} alt=""/> : <ImageIcon size={26} aria-hidden="true"/>;
 }
 function Cs2Field({ label, value, multiline = false, onCommit }) {
@@ -608,7 +614,7 @@ const removeStudySection = (study, index) => {
   }
   return patch;
 };
-function Cs2Toolbar({ editor, meta }) {
+function Cs2Toolbar({ editor, meta, onStoreImage }) {
   const [, setTick] = useState(0);
   const [linkOpen, setLinkOpen] = useState(false);
   const [href, setHref] = useState('');
@@ -627,7 +633,7 @@ function Cs2Toolbar({ editor, meta }) {
     else editor.chain().focus().extendMarkRange('link').setLink({ href: value }).run();
     setLinkOpen(false);
   };
-  const insertImage = async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file || !ready) return; try { await insertImageInView(editor.view, file); setNotice(''); } catch (error) { setNotice(error.message); } };
+  const insertImage = async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file || !ready) return; try { await insertImageInView(editor.view, file, undefined, {saveImage:onStoreImage}); setNotice(''); } catch (error) { setNotice(error.message); } };
   const is = (name, attrs) => ready && editor.isActive(name, attrs);
   return <div className="cs2-tbar" role="toolbar" aria-label="Document formatting">
     <div className="cs2-tbtns">
@@ -653,7 +659,7 @@ function Cs2SectionHeading({ name, index, words, onRename, onRemove }) {
     <button type="button" className="cs2-ic is-sm" aria-label={`Remove section ${name}`} onClick={() => onRemove(index)}><Trash2 size={14}/></button>
   </div>;
 }
-function Cs2StudyWorkspace({ study, workspace, templates, trades = [], markups = [], saveState, onRetrySave, storageNotice, syncStatus, profileName, onBack, onUpdate, onRemove, onDuplicate, onToggle, onAddEvidence, onSaveDocumentImage, onViewEvidence, onExport, onSaveTemplate, onCreateConnection, onEditConnection, onDeleteConnection, onOpenStudy, onOpenViewer, onOpenTemplates, onOpenReview }) {
+function Cs2StudyWorkspace({ study, workspace, templates, trades = [], markups = [], saveState, onRetrySave, storageNotice, syncStatus, profileName, onBack, onUpdate, onRemove, onDuplicate, onToggle, onAddEvidence, onSaveDocumentImage, onStoreDocumentImage, imageOwnerUserId, onViewEvidence, onExport, onSaveTemplate, onCreateConnection, onEditConnection, onDeleteConnection, onOpenStudy, onOpenViewer, onOpenTemplates, onOpenReview }) {
   const confirm = useConfirmation();
   const notify = useCs2Toast();
   const toggleLink = (field, id, added, removed) => { const linked = (study[field] || []).includes(id); onToggle(field, id); notify(linked ? removed : added); };
@@ -742,12 +748,12 @@ function Cs2StudyWorkspace({ study, workspace, templates, trades = [], markups =
         <div className="cs2-oa"><button type="button" className="cs2-btn is-full" onClick={addSection}><Plus size={14}/>Add section</button><button type="button" className="cs2-btn is-full" onClick={onOpenTemplates}><LayoutTemplate size={14}/>Add from template</button></div>
       </aside>
       <section className="cs2-doc" aria-label="Study document">
-        <Cs2Toolbar editor={activeEditor} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
+        <Cs2Toolbar editor={activeEditor} onStoreImage={onStoreDocumentImage} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
         {notice && <p className="cs2-err cs2-docn" role="alert">{notice}</p>}
         {sections.map((name, index) => <section className="cs2-sec" key={`${study.id}:${name}`} ref={(node) => { sectionRefs.current[index] = node; }} onFocusCapture={() => setActiveIndex(index)}>
           <Cs2SectionHeading name={name} index={index} words={cs2Words(texts[index])} onRename={rename} onRemove={removeSection}/>
           <RichDocumentBoundary value={texts[index]} onChange={(value) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, { version: 1, content: { type: 'doc', content: String(value).split(/\n{2,}/).map((block) => ({ type: 'paragraph', content: block ? [{ type: 'text', text: block }] : undefined })) } }))}>
-            <RichDocumentEditor bare document={migrateSectionRichDocument(study, name, index)} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onViewEvidence={onViewEvidence}/>
+            <RichDocumentEditor bare document={migrateSectionRichDocument(study, name, index)} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/>
           </RichDocumentBoundary>
         </section>)}
         <section className="cs2-sec" ref={(node) => { sectionRefs.current.evidence = node; }}>
@@ -856,7 +862,60 @@ function Cs2RestoreDialog({ onClose, onImport }) {
   </Cs2Dialog>;
 }
 
-function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncActionLabel='Upload device library', syncConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace }) {
+const reconciliationCountLabel = counts => `${counts.notebooks} notebooks · ${counts.studies} studies · ${counts.evidence} evidence · ${counts.templates} templates · ${counts.connections} connections · ${counts.placements} placements · ${counts.annotations} annotations`;
+const reconciliationRecordPreview = value => JSON.stringify(value, null, 2);
+const reconciliationText = value => {
+  if (value === undefined || value === null || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (Array.isArray(value)) return value.length ? value.map(item => typeof item === 'string' ? item : item?.name || item?.title || item?.id || 'Untitled').join(', ') : 'None';
+  if (typeof value === 'object') return `${Object.keys(value).length} item${Object.keys(value).length === 1 ? '' : 's'}`;
+  return String(value);
+};
+function ReconciliationChoice({ choiceKey, choice, onChoose, label }) {
+  return <div className="case-reconcile__choices" role="radiogroup" aria-label={label}><button type="button" role="radio" aria-checked={choice==='local'} className={choice==='local'?'is-selected':''} onClick={()=>onChoose(choiceKey,'local')}>Keep device version</button><button type="button" role="radio" aria-checked={choice==='cloud'} className={choice==='cloud'?'is-selected':''} onClick={()=>onChoose(choiceKey,'cloud')}>Keep cloud version</button></div>;
+}
+function StudyConflictComparison({ record, resolution, selections, onChoose }) {
+  return <div className="case-reconcile__field-list">{(resolution?.fields || []).map(field => {
+    const needsChoice=field.state==='different';
+    return <details key={field.id} className={`case-reconcile__field is-${field.state}`} open={field.id==='title'||field.id==='objective'||field.id==='sections'||needsChoice}><summary><span><b>{field.label}</b><small>{field.state==='identical' ? 'Identical · retained automatically' : 'Different · choose a version'}</small></span></summary><div className="case-reconcile__field-values"><div><small>Device</small><p>{reconciliationText(field.device)}</p></div><div><small>Cloud</small><p>{reconciliationText(field.cloud)}</p></div></div>{needsChoice && <ReconciliationChoice choiceKey={`study:${record.id}:field:${field.id}`} choice={selections[`study:${record.id}:field:${field.id}`]} onChoose={onChoose} label={`Choose ${field.label}`}/>}</details>;
+  })}<section className="case-reconcile__placements"><b>Evidence associations</b><small>Unique and identical links are retained automatically. Only different placement details need a choice.</small>{(resolution?.placements || []).map(placement => <article key={placement.evidenceId} className={placement.state==='conflict'?'is-conflict':''}><header><strong>{placement.evidenceId}</strong><small>{placement.state==='conflict' ? 'Placement details differ' : placement.state==='identical' ? 'Identical · retained automatically' : `${placement.state === 'device-only' ? 'Device' : 'Cloud'} only · retained automatically`}</small></header>{placement.state==='conflict' && <><div className="case-reconcile__field-values"><div><small>Device placement</small><p>{reconciliationText(placement.devicePlacement)}</p></div><div><small>Cloud placement</small><p>{reconciliationText(placement.cloudPlacement)}</p></div></div><ReconciliationChoice choiceKey={placement.key} choice={selections[placement.key]} onChoose={onChoose} label={`Choose evidence placement ${placement.evidenceId}`}/></>}</article>)}</section></div>;
+}
+export function CaseStudyReconciliationDialog({ conflict, onClose, onSave }) {
+  const [selections, setSelections] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const proposal = useMemo(() => createCaseStudyReconciliationProposal({ local:conflict.local, cloud:conflict.cloud, selections }), [conflict, selections]);
+  const choose = (key, side) => setSelections(current => ({ ...current, [key]:side }));
+  const save = async () => {
+    if (!proposal.canSave || busy) return;
+    setBusy(true); setMessage('');
+    try {
+      const result=await onSave(selections);
+      if (result?.kind === 'refreshed') {
+        setMessage('The cloud library changed while this merge was open. The comparison was refreshed; review it again before saving. Your choices were retained where they still apply.');
+        return;
+      }
+      if (result?.kind === 'saved') { onClose(); return; }
+      setMessage('The merge could not be confirmed. Both device and cloud copies remain preserved.');
+    } catch (error) { setMessage(error?.message || 'The merge could not be saved. Both copies remain preserved.'); }
+    finally { setBusy(false); }
+  };
+  return <Cs2Dialog labelledBy="case-reconcile-title" busy={busy} onClose={onClose}>
+    <Cs2DialogHead id="case-reconcile-title" eyebrow="Protected sync conflict" title="Review and merge libraries" intro="Nothing will be replaced automatically. Unique records from both copies are included; choose a version only where the same record changed on both browsers." onClose={onClose} busy={busy}/>
+    <div className="cs2-mbody case-reconcile">
+      <div className="case-reconcile__revisions"><div><small>Safari device copy</small><b>Revision {Number.isSafeInteger(conflict.localRevision) ? conflict.localRevision : 'saved locally'}</b><span>{reconciliationCountLabel(proposal.comparison.localCounts)}</span></div><div><small>Latest cloud copy</small><b>Revision {Number.isSafeInteger(conflict.cloudRevision) ? conflict.cloudRevision : 'unknown'}</b><span>{reconciliationCountLabel(proposal.comparison.cloudCounts)}</span></div><div><small>{proposal.unresolved.length ? 'Potential merge · choices pending' : 'Reviewed merge'}</small><b>{proposal.unresolved.length ? `${proposal.unresolved.length} decision${proposal.unresolved.length===1?'':'s'} needed` : proposal.canSave ? 'Ready to save' : 'Relationship review needed'}</b><span>{reconciliationCountLabel(proposal.unresolved.length ? proposal.possibleCounts : proposal.mergedCounts)}</span></div></div>
+      <section className="case-reconcile__safety" aria-label="Merge safety summary"><b>Relationship safety summary</b><div><span>Study count <em>{proposal.comparison.localCounts.studies} device · {proposal.comparison.cloudCounts.studies} cloud · {proposal.unresolved.length ? proposal.possibleCounts.studies : proposal.mergedCounts.studies} proposed</em></span><span>Evidence count <em>{proposal.comparison.localCounts.evidence} device · {proposal.comparison.cloudCounts.evidence} cloud · {proposal.unresolved.length ? proposal.possibleCounts.evidence : proposal.mergedCounts.evidence} proposed</em></span><span>Placement count <em>{proposal.relationshipIntegrity.placements.local} device · {proposal.relationshipIntegrity.placements.cloud} cloud · {proposal.unresolved.length ? proposal.relationshipIntegrity.placements.sourceDistinct : proposal.relationshipIntegrity.placements.proposed} safe total</em></span><span>{proposal.unresolved.length} decision{proposal.unresolved.length===1?'':'s'} still required</span><span>{proposal.unresolvedReferences.length} missing or orphaned reference{proposal.unresolvedReferences.length===1?'':'s'}</span><span>{proposal.relationshipIntegrity.placements.pending.length + proposal.relationshipIntegrity.annotations.pending.length} relationship detail{proposal.relationshipIntegrity.placements.pending.length + proposal.relationshipIntegrity.annotations.pending.length===1?'':'s'} awaiting a choice</span></div></section>
+      {proposal.comparison.collections.map(collection => <section className="case-reconcile__collection" key={collection.key}><header><b>{collection.label}s</b><span>{collection.counts['local-only'] || 0} local only · {collection.counts['cloud-only'] || 0} cloud only · {collection.counts.conflict || 0} conflict{(collection.counts.conflict || 0)===1?'':'s'}</span></header>{collection.records.filter(record => record.state !== 'same').map(record => record.state === 'conflict' ? <article className="case-reconcile__conflict" key={record.key}><div><b>{record.label}: {record.local?.title || record.local?.name || record.id}</b><small>{record.collection==='studies' ? 'Identical fields and unique evidence associations are retained automatically. Choose only where a field or placement actually differs.' : 'Both copies changed this record. Review both versions, then select the one to retain.'}</small></div>{record.collection==='studies' ? <StudyConflictComparison record={record} resolution={proposal.studyResolutions[record.id]} selections={selections} onChoose={choose}/> : <><div className="case-reconcile__versions"><details><summary>Device version (advanced)</summary><pre>{reconciliationRecordPreview(record.local)}</pre></details><details><summary>Cloud version (advanced)</summary><pre>{reconciliationRecordPreview(record.cloud)}</pre></details></div><ReconciliationChoice choiceKey={record.key} choice={selections[record.key]} onChoose={choose} label={`Choose ${record.label} ${record.id}`}/></>}<details className="case-reconcile__raw"><summary>Inspect original raw JSON</summary><pre>Device\n{reconciliationRecordPreview(record.local)}\n\nCloud\n{reconciliationRecordPreview(record.cloud)}</pre></details></article> : <div className="case-reconcile__unique" key={record.key}><Check size={14}/><span>{record.local?.title || record.local?.name || record.cloud?.title || record.cloud?.name || record.id}</span><small>{record.state === 'local-only' ? 'Included from this device' : 'Included from cloud'}</small></div>)}</section>)}
+      {proposal.relationshipIntegrity.pendingPlacements.length > 0 && <p className="case-reconcile__warning">{proposal.relationshipIntegrity.pendingPlacements.length} placement{proposal.relationshipIntegrity.pendingPlacements.length===1?'':'s'} has different details. Both source versions remain protected until you choose one; none are being deleted.</p>}
+      {proposal.unresolvedReferences.length > 0 && <p className="cs2-err">{proposal.unresolvedReferences.length} relationship reference{proposal.unresolvedReferences.length===1?'':'s'} is missing or orphaned. Saving is blocked; nothing will be deleted.</p>}
+      {message && <p className="cs2-err" role="alert">{message}</p>}
+      <p className="case-reconcile__note">Evidence image references, annotations, placements and connections are retained with their selected records. A missing local image binary never removes its evidence metadata.</p>
+      <div className="cs2-mf"><span/><button type="button" className="cs2-btn" onClick={onClose} disabled={busy}>Keep copies for now</button><button type="button" className="cs2-btn is-pri" onClick={save} disabled={busy || !proposal.canSave}>{busy ? 'Saving reviewed merge…' : 'Save reviewed merge'}</button></div>
+    </div>
+  </Cs2Dialog>;
+}
+
+function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudImages=true, temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncActionLabel='Upload device library', syncConflict = null, onReconcileConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace }) {
   const prompt=usePrompt();
   const alert=useAlert();
   const confirm=useConfirmation();
@@ -887,6 +946,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [evidenceDialog, setEvidenceDialog] = useState(false);
   const [restoreDialog, setRestoreDialog] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const [evidenceSelection,setEvidenceSelection]=useState(null);
   const saveTimer = useRef();
   const saveVersion = useRef(0);
@@ -896,7 +956,27 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   const cardMenuRoot = useRef(null);
   const headerMenuRoot = useRef(null);
   saveWorkspaceRef.current=onSaveWorkspace;
-
+  const imageSyncOwner = useRef('');
+  useEffect(() => {
+    imageSyncOwner.current = sessionOwner;
+    return () => { imageSyncOwner.current = ''; };
+  }, [sessionOwner]);
+  const [imageMembership,setImageMembership]=useState({status:'loading',membership:null});
+  useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner]);
+  const syncSharedCaseStudyImages=async currentWorkspace=>{
+    if (!sessionOwner || !allowCloudImages) return {processed:0,failed:0,workspace:currentWorkspace};
+    const result=await caseStudySharedImageIntegration.synchronizeWorkspace({
+      userId:sessionOwner,
+      membership:imageMembership,
+      getMembership:()=>resolveJournalMembership({authenticated:true}),
+      workspace:currentWorkspace,
+    });
+    if (imageSyncOwner.current !== sessionOwner) return result;
+    const latest = workspaceRef.current;
+    const updated = applyVerifiedCaseStudyImageReferences(latest, result.workspace.evidence);
+    const referencesSaved = updated === latest || await save(updated, true);
+    return { ...result, referencesSaved };
+  };
   const libraryCounts = value => ({
     studies:Array.isArray(value?.studies) ? value.studies.length : 0,
     evidence:Array.isArray(value?.evidence) ? value.evidence.length : 0,
@@ -938,6 +1018,15 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
       clearCaseStudyNavigation(sessionOwner); setScreen('library'); return null;
     });
   }, [profileWorkspace,sessionOwner]);
+  // Recover any evidence selected during the short membership-resolution
+  // window. Run after the latest profile workspace is installed, so a
+  // refresh can promote the original browser's local bytes without ever
+  // replacing records from the cloud. Free and unresolved accounts remain
+  // local-only.
+  useEffect(()=>{
+    if (!allowCloudImages || !sessionOwner || imageMembership?.status !== 'ready' || imageMembership?.membership !== 'owner') return;
+    void syncSharedCaseStudyImages(workspaceRef.current);
+  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.cloudWritesAllowed]);
   useEffect(() => {
     if (screen === 'editor' && selectedId) writeCaseStudyNavigation(sessionOwner,{studyId:selectedId,...editorNavigation});
     else clearCaseStudyNavigation(sessionOwner);
@@ -972,6 +1061,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
   }, [screen, libraryView, sort, workspace.settings.query, workspace.settings.status, workspace.settings.instrument, workspace.settings.tag, workspace.settings.notebook]);
 
   const save = (next, immediate = false) => {
+    next = applyVerifiedCaseStudyImageReferences(next, workspaceRef.current.evidence);
     const version=++saveVersion.current;
     workspaceRef.current=next;
     pendingSave.current={next,version};
@@ -986,8 +1076,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
         if (saveVersion.current===version) setSaveState('Saved');
         return true;
       }
-      catch {
-        if (saveVersion.current===version) { failedSave.current={next,version}; setSaveState('Save failed'); }
+      catch (error) {
+        if (saveVersion.current===version) { failedSave.current={next,version,error}; setSaveState('Save failed'); }
         return false;
       }
     };
@@ -1090,42 +1180,52 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
     const files=Array.isArray(fields?.files) ? fields.files : [];
     if (!fields?.title?.trim() && !files.length) throw new Error('Add a title or choose at least one image.');
     const currentWorkspace=workspaceRef.current;
-    const records=await Promise.all((files.length ? files : [null]).map(async(file,index)=>({
-      id:uid('evidence'),
+    const records=await Promise.all((files.length ? files : [null]).map(async(file,index)=>{
+      const id=uid('evidence');
+      const stored=file ? await caseStudySharedImageIntegration.saveEvidenceImage({userId:sessionOwner,membership:allowCloudImages ? imageMembership : null,file,sourceRecordId:id}) : null;
+      return {
+      id,
       title:(files.length > 1 ? (file?.name || `Evidence ${index+1}`).replace(/\.[^.]+$/,'') : fields.title.trim()) || `Evidence ${index+1}`,
-      source:fields.source?.trim() || '', url:file ? await saveEvidenceImage(file) : fields.url?.trim() || '', notes:fields.notes?.trim() || '',
+      source:fields.source?.trim() || '', url:stored?.reference || fields.url?.trim() || '', notes:fields.notes?.trim() || '',
       tags:Array.isArray(fields.tags) ? fields.tags : [], kind:fields.kind || 'Chart', createdAt:now()
-    })));
+    };}));
     const next=addEvidenceRecords(currentWorkspace,records,{studyId:linkToSelectedStudy ? selectedId : null});
     const persisted=await save(next,true);
     if (!persisted) {
       workspaceRef.current=currentWorkspace;
       pendingSave.current=null;
       setWorkspace(currentWorkspace);
-      throw new Error('Evidence could not be saved to your local library. Your selected files and details are still available to retry.');
+      const saveError=failedSave.current?.error;
+      if (/sync conflict|reconcil/i.test(String(saveError?.message || ''))) {
+        throw new Error('Evidence was saved on this device, but cloud synchronization needs reconciliation. Your files and details are preserved.');
+      }
+      throw new Error('Evidence could not be saved locally. Your selected files and details are still available to retry.');
     }
-    const imageSync=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:next});
-    if (imageSync.uploaded) {
-      workspaceRef.current=imageSync.workspace;
-      setWorkspace(imageSync.workspace);
-      await save(imageSync.workspace,true);
-    }
-    if (imageSync.failures.length) notify('Evidence saved on this device. Image upload can be retried from Backup.');
+    const imageSync=await syncSharedCaseStudyImages(workspaceRef.current);
+    if (imageSync.failed) notify('Evidence saved locally. Its private cloud copy will retry when available.');
     setEvidenceDialog(false);
     return records;
   };
+  const storeDocumentImage=async file=>{
+    const stored=await caseStudySharedImageIntegration.saveDocumentImage({userId:sessionOwner,membership:allowCloudImages ? imageMembership : null,file,sourceRecordId:selectedId || ''});
+    void syncSharedCaseStudyImages(workspaceRef.current);
+    return stored.reference;
+  };
   const saveDocumentImageToEvidence=async ({imageRef,title,source='',tags=[]})=>{
-    if (!isDocumentImageReference(imageRef)) throw new Error('This document image cannot be shared safely.');
-    const blob=await readCaseStudyDocumentImage(imageRef);
-    if (!blob) throw new Error('This image is unavailable in this browser. Your document was left unchanged.');
+    if (!isDocumentImageReference(imageRef) && !isCaseStudySharedImageReference(imageRef)) throw new Error('This document image cannot be shared safely.');
     const currentWorkspace=workspaceRef.current;
-    const evidence={id:uid('evidence'),title:title.trim(),source:source.trim(),url:imageRef,documentImageRef:imageRef,notes:'',tags,kind:'Chart',createdAt:now()};
+    const id=uid('evidence');
+    let reference=imageRef;
+    if (isDocumentImageReference(imageRef)) {
+      const blob=await readCaseStudyDocumentImage(imageRef);
+      if (!blob) throw new Error('This image is unavailable in this browser. Your document was left unchanged.');
+      const stored=await caseStudySharedImageIntegration.saveDocumentImage({userId:sessionOwner,membership:allowCloudImages ? imageMembership : null,file:new File([blob],`document-${id}.${blob.type==='image/png'?'png':'image'}`,{type:blob.type}),sourceRecordId:id});
+      reference=stored.reference;
+    }
+    const evidence={id,title:title.trim(),source:source.trim(),url:reference,documentImageRef:imageRef,notes:'',tags,kind:'Chart',createdAt:now()};
     const attached=attachDocumentImageEvidence(currentWorkspace,selectedId,evidence);
     const persisted=await save(attached.workspace,true);
-    if (persisted) {
-      const imageSync=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:attached.workspace});
-      if (imageSync.uploaded) { workspaceRef.current=imageSync.workspace; setWorkspace(imageSync.workspace); await save(imageSync.workspace,true); }
-    }
+    if (persisted) await syncSharedCaseStudyImages(attached.workspace);
     return attached.evidence;
   };
   const openEvidenceLibrary=(id)=>{setEvidenceSelection(id);returnToLibrary();setLibraryView('evidence');};
@@ -1145,7 +1245,11 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
     const references=workspaceRef.current.studies.filter(study=>(study.evidenceIds||[]).includes(id));
     const description=references.length ? `This shared image is linked to ${references.length} ${references.length===1?'study':'studies'} and will be unlinked everywhere. Study-specific captions, observations, and chart annotations for it will no longer be reachable.` : 'Delete this unlinked shared evidence item?';
     if (!await confirm({title:'Delete shared evidence?',description,confirmLabel:'Delete evidence',tone:'danger'})) return;
-    save(unlinkEvidence(workspaceRef.current,id),true);
+    const item=workspaceRef.current.evidence.find(entry=>entry.id===id);
+    await save(unlinkEvidence(workspaceRef.current,id),true);
+    // This is reversible locally and cancels a pending upload. A verified
+    // private cloud object is deliberately retained for historical safety.
+    await caseStudySharedImageIntegration.deleteReference({reference:item?.url,userId:sessionOwner});
   };
   const savePersonalTemplate = (fields, existingId = null) => {
     if (!fields?.name?.trim()) return;
@@ -1172,7 +1276,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
     catch { await alert({title:'That backup can’t be restored',description:'Choose a Case Study Library backup created by AAI Journal. Nothing in your current library has changed.',confirmLabel:'Choose another file'}); return false; }
   };
   if (screen === 'editor' && selected) return <>
-    <StudyEditor study={selected} workspace={workspace} templates={creationTemplates} profileName={profileName} storageNotice={temporaryNotice ? 'Saved only on this device. Your recovered legacy library is unchanged.' : ''} syncStatus={syncStatus} trades={trades} markups={markups} saveState={saveState} onRetrySave={retrySave} initialMode={editorNavigation.mode} initialReviewStep={editorNavigation.reviewStep} initialViewerId={editorViewer} onNavigationChange={setEditorNavigation} onBack={returnToLibrary} onUpdate={updateStudy} onRemove={removeStudy} onDuplicate={duplicateStudy} onToggle={toggleSelection} onAddEvidence={()=>setEvidenceDialog(true)} onSaveDocumentImage={saveDocumentImageToEvidence} onViewEvidence={openEvidenceLibrary} onExport={exportStudy} onApplyTemplate={template=>applyTemplate(selected.id,template)} onSaveTemplate={(name)=>savePersonalTemplate({name:name||`${studyTitle(selected)} template`,description:`Based on ${studyTitle(selected)}.`,sections:selected.sections||[]})} onCreateConnection={addConnection} onEditConnection={editConnection} onDeleteConnection={deleteConnection} onOpenStudy={openEditor}/>
+    <StudyEditor study={selected} workspace={workspace} templates={creationTemplates} profileName={profileName} storageNotice={temporaryNotice ? 'Saved only on this device. Your recovered legacy library is unchanged.' : ''} syncStatus={syncStatus} trades={trades} markups={markups} saveState={saveState} onRetrySave={retrySave} initialMode={editorNavigation.mode} initialReviewStep={editorNavigation.reviewStep} initialViewerId={editorViewer} onNavigationChange={setEditorNavigation} onBack={returnToLibrary} onUpdate={updateStudy} onRemove={removeStudy} onDuplicate={duplicateStudy} onToggle={toggleSelection} onAddEvidence={()=>setEvidenceDialog(true)} onSaveDocumentImage={saveDocumentImageToEvidence} onStoreDocumentImage={storeDocumentImage} imageOwnerUserId={sessionOwner} onViewEvidence={openEvidenceLibrary} onExport={exportStudy} onApplyTemplate={template=>applyTemplate(selected.id,template)} onSaveTemplate={(name)=>savePersonalTemplate({name:name||`${studyTitle(selected)} template`,description:`Based on ${studyTitle(selected)}.`,sections:selected.sections||[]})} onCreateConnection={addConnection} onEditConnection={editConnection} onDeleteConnection={deleteConnection} onOpenStudy={openEditor}/>
     {evidenceDialog && <EvidenceDialog onClose={()=>setEvidenceDialog(false)} onSave={(fields)=>addEvidence(fields,{linkToSelectedStudy:true})}/>} 
   </>;
   if (screen === 'create') return <NewCaseStudyWorkspace templates={creationTemplates} notebooks={workspace.notebooks} saveState={syncStatus || saveState} onCreate={createStudyFromSetup} onBack={returnToLibrary} onOpenTemplates={()=>{returnToLibrary();setLibraryView('templates');}}/>;
@@ -1214,15 +1318,14 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
         <div className="cs2-h1"><span className="cs2-eb">{profileName} · Research workspace</span><h1>Case Study Library</h1><p>Explore setups, continue your research, and turn observations into tested playbooks.</p></div>
         <div className="cs2-stats"><div><b>{studies.length}</b><small>Studies</small></div><div><b className="is-gain">{validated.length}</b><small>Validated</small></div><div><b className="is-warn">{drafts.length}</b><small>In draft</small></div><div><b>{workspace.evidence.length}</b><small>Evidence</small></div></div>
         <div className="cs2-ha">
-          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button><button type="button" role="menuitem" onClick={() => { void (async()=>{const result=await synchronizeCaseStudyEvidenceImages({userId:sessionOwner,workspace:workspaceRef.current}); if(result.uploaded){workspaceRef.current=result.workspace;setWorkspace(result.workspace);await save(result.workspace,true);} notify(result.failures.length?'Some images are still device-only. Retry after checking cloud storage.':'Evidence images synced');})(); setHeaderMenuOpen(false); }}><Upload size={15}/>Sync evidence images</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { void uploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
+          <div ref={headerMenuRoot} className="cs2-more"><button type="button" className="cs2-btn" aria-haspopup="menu" aria-expanded={headerMenuOpen} onClick={() => setHeaderMenuOpen((open) => !open)}><Download size={15}/>Backup</button>{headerMenuOpen && <div className="cs2-menu" role="menu"><button type="button" role="menuitem" onClick={() => { exportLibrary(); setHeaderMenuOpen(false); notify('Library exported'); }}><Download size={15}/>Export library</button><button type="button" role="menuitem" onClick={() => { setRestoreDialog(true); setHeaderMenuOpen(false); }}><Upload size={15}/>Restore library</button><button type="button" role="menuitem" onClick={() => { void (async()=>{const result=await syncSharedCaseStudyImages(workspaceRef.current); notify(result.failed ? 'Some images remain saved locally and will retry.' : result.referencesSaved === false ? 'Verified image references are waiting for library sync.' : result.processed ? 'Evidence images uploaded and verified.' : 'No pending evidence images were uploaded.');})(); setHeaderMenuOpen(false); }}><Upload size={15}/>Sync evidence images</button>{onUploadDeviceLibrary && <button type="button" role="menuitem" onClick={() => { void uploadDeviceLibrary(); setHeaderMenuOpen(false); }}><Upload size={15}/>{syncActionLabel}</button>}</div>}</div>
           <button type="button" className="cs2-btn is-pri is-lg" onClick={() => setCs2NewDialog({ templateId: null })}><Plus size={16}/>New Case Study</button>
         </div>
       </section>
-      {(temporaryNotice || syncStatus) && <p className="cs2-sync" role="status">{temporaryNotice || syncStatus}</p>}
-      {syncConflict && <p className="case-sync-conflict" role="alert">Sync conflict: both device and cloud versions are preserved. Reconciliation is required before another cloud save.</p>}
+      {(temporaryNotice || syncStatus) && <p className="cs2-sync" role="status">{temporaryNotice || (syncStatus === 'Synced' ? 'Library records synced' : syncStatus)}</p>}
       <nav className="cs2-tabs" aria-label="Case Study Library sections">{tabs.map(([id, label, icon, count]) => <button key={id} type="button" aria-current={tabOf === id ? 'page' : undefined} className={tabOf === id ? 'is-on' : ''} onClick={() => openTab(id)}>{icon}{label}<b>{count}</b></button>)}</nav>
       <div className="cs2-body">
-      {tabOf === 'evidence' ? <Cs2Evidence evidence={workspace.evidence} studies={workspace.studies} selectedId={evidenceSelection} onSelect={setEvidenceSelection} onUpload={async (fields) => { await addEvidence(fields); notify('Evidence uploaded'); }} onPatch={patchEvidence} onRemove={removeEvidence} onOpenStudy={(id) => openEditor(id)} onOpenViewer={(evidenceId, studyId) => { if (studyId) openEditor(studyId, evidenceId); }}/>
+      {tabOf === 'evidence' ? <Cs2Evidence evidence={workspace.evidence} studies={workspace.studies} selectedId={evidenceSelection} onSelect={setEvidenceSelection} onUpload={async (fields) => { await addEvidence(fields); notify('Evidence saved'); }} onPatch={patchEvidence} onRemove={removeEvidence} onOpenStudy={(id) => openEditor(id)} onOpenViewer={(evidenceId, studyId) => { if (studyId) openEditor(studyId, evidenceId); }}/>
         : tabOf === 'connections' ? <Cs2Connections studies={studies} connections={workspace.connections || []} evidence={workspace.evidence} onOpenStudy={(id) => openEditor(id)} onCreate={async (fields) => { const created = await addConnection(fields); notify('Connection created'); return created; }} onEdit={async (id, fields) => { const edited = await editConnection(id, fields); notify('Connection updated'); return edited; }} onRemove={async (id) => { if (await confirm({ title: 'Remove this connection?', description: 'The two studies stay as they are; only the link between them is removed.', confirmLabel: 'Remove connection', tone: 'danger' })) { await deleteConnection(id); notify('Connection removed'); } }}/>
         : tabOf === 'templates' ? <Cs2Templates templates={creationTemplates} onUse={(id) => setCs2NewDialog({ templateId: id })} onDuplicate={duplicateTemplateV2} onRemove={removeTemplate} onNew={() => setCs2TemplateEdit({ sections: ['Overview'] })} onEdit={(template) => setCs2TemplateEdit({ ...template, sections: templateSectionNames(template) })}/>
         : <>
@@ -1243,10 +1346,12 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
             : <div className="cs2-empty"><BookOpen size={30} strokeWidth={1.6} aria-hidden="true"/><b>{cs2Filter === 'archived' ? 'No archived studies' : 'No studies match'}</b><span>{cs2Filter === 'archived' ? 'Archived studies stay here until you restore them.' : 'Try another filter or start a new case study.'}</span>{cs2Filter !== 'archived' && <button type="button" className="cs2-btn is-pri" onClick={() => setScreen('create')}><Plus size={15}/>New Case Study</button>}</div>}
         </>}
       </div>
-      {evidenceDialog && <EvidenceDialog onClose={() => setEvidenceDialog(false)} onSave={(fields) => addEvidence(fields, { linkToSelectedStudy: true })}/>}
+          {syncConflict && <p className="case-sync-conflict" role="alert">Sync conflict: both device and cloud versions are preserved. <button type="button" onClick={() => setReconcileOpen(true)}>Review and merge</button></p>}
+          {evidenceDialog && <EvidenceDialog onClose={() => setEvidenceDialog(false)} onSave={(fields) => addEvidence(fields, { linkToSelectedStudy: true })}/>}
       {restoreDialog && <Cs2RestoreDialog onClose={() => setRestoreDialog(false)} onImport={async (file, conflict) => { const restored = await importLibrary(file, conflict); if (restored) notify('Library restored'); return restored; }}/>}
       {cs2NewDialog && <Cs2NewStudyDialog templates={creationTemplates} notebooks={workspace.notebooks} initialTemplateId={cs2NewDialog.templateId} onCreate={async (draft, template) => { const created = await createStudyFromSetup(draft, template); if (created) setCs2NewDialog(null); return created; }} onClose={async (dirty) => { if (!dirty || await confirm({ title: 'Discard this new study?', description: 'The title and notes you entered will be lost.', confirmLabel: 'Discard' })) setCs2NewDialog(null); }}/>}
       {cs2TemplateEdit && <PersonalTemplateDialog template={cs2TemplateEdit} onClose={() => setCs2TemplateEdit(null)} onSave={(fields) => { savePersonalTemplate(fields, cs2TemplateEdit.id || null); setCs2TemplateEdit(null); }}/>}
+      {reconcileOpen && syncConflict && onReconcileConflict && <CaseStudyReconciliationDialog conflict={syncConflict} onClose={() => setReconcileOpen(false)} onSave={onReconcileConflict}/>}
     </main>;
   }
 
@@ -1255,7 +1360,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
       <div><p className="case-eyebrow">{profileName} · research workspace</p><h1>Case Study Library</h1><p>Explore setups, continue your research, and turn observations into tested playbooks.</p></div>
       <div className="case-header-actions"><button className="case-button case-button--quiet" onClick={() => setLibraryView('evidence')}><ImageIcon size={16}/>Evidence Library</button><button className="case-button case-button--quiet" onClick={() => setLibraryView('templates')}><LayoutTemplate size={16}/>Template Manager</button><div ref={headerMenuRoot} className="case-header-more"><button className="case-button case-button--quiet" aria-haspopup="menu" aria-expanded={headerMenuOpen} aria-controls="case-library-more-actions" onClick={()=>setHeaderMenuOpen(open=>!open)}><MoreHorizontal size={16}/>More</button>{headerMenuOpen&&<div id="case-library-more-actions" className="case-header-more__menu" role="menu"><button role="menuitem" onClick={()=>{setLibraryView('connections');setHeaderMenuOpen(false);}}><Link2 size={16}/>Connections Explorer</button><button role="menuitem" onClick={()=>{exportLibrary();setHeaderMenuOpen(false);}}><Download size={16}/>Export library</button><button role="menuitem" onClick={()=>{setRestoreDialog(true);setHeaderMenuOpen(false);}}>Restore library</button>{onUploadDeviceLibrary&&<button role="menuitem" onClick={()=>{onUploadDeviceLibrary();setHeaderMenuOpen(false);}}>{syncActionLabel}</button>}</div>}</div><button className="case-button case-button--primary" onClick={() => setScreen('create')}><Plus size={17}/>New Case Study</button></div>
     </header>}
-    {syncConflict && <p className="case-sync-conflict" role="alert">Sync conflict: both device and cloud versions are preserved. Reconciliation is required before another cloud save.</p>}
+    {syncConflict && <p className="case-sync-conflict" role="alert">Sync conflict: both device and cloud versions are preserved. <button type="button" onClick={() => setReconcileOpen(true)}>Review and merge</button></p>}
     <div className="case-library-content case-library-content--prototype">
       {libraryView === 'connections' ? <CaseStudyConnectionsExplorer workspace={workspace} onBack={()=>setLibraryView('library')} onOpenStudy={openEditor}/> : libraryView === 'evidence' ? <EvidenceLibrary evidence={workspace.evidence} studies={studies} selectedEvidenceId={evidenceSelection} onAdd={(fields)=>addEvidence(fields)} onPatch={patchEvidence} onRemove={removeEvidence} onBack={()=>setLibraryView('library')}/> : libraryView === 'templates' ? <TemplateManager templates={TEMPLATES} personalTemplates={workspace.personalTemplates} onChoose={createStudy} onSave={savePersonalTemplate} onDuplicate={duplicateTemplate} onRemove={removeTemplate} onBack={()=>setLibraryView('library')}/> : <>
         <nav className="case-library-nav" aria-label="Case Study Library navigation">
@@ -1274,6 +1379,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', temporaryNot
     </div>
     {evidenceDialog && <EvidenceDialog onClose={()=>setEvidenceDialog(false)} onSave={(fields)=>addEvidence(fields,{linkToSelectedStudy:true})}/>} 
     {restoreDialog && <RestoreDialog onClose={()=>setRestoreDialog(false)} onImport={importLibrary}/>} 
+    {reconcileOpen && syncConflict && onReconcileConflict && <CaseStudyReconciliationDialog conflict={syncConflict} onClose={() => setReconcileOpen(false)} onSave={onReconcileConflict}/>}
   </main>;
 }
 
@@ -1284,7 +1390,7 @@ export default function CaseStudyLibrary({ libraryState = { status:'ready', mess
   if (libraryState.status === 'loading') return <CaseStudyLoadingShell profileName={profileName}/>;
   if (libraryState.status === 'recovery') return <CaseStudyRecoveryLibrary workspace={libraryState.workspace} libraryState={libraryState} profileName={profileName} onRetryLoad={onRetryLoad}/>;
   if (libraryState.status !== 'ready') return <CaseStudyLoadState libraryState={libraryState} profileName={profileName} onRetryLoad={onRetryLoad}/>;
-  return <Cs2Feedback><CaseStudyLibraryReady {...props} profileName={profileName} temporaryNotice={temporaryNotice} syncStatus={syncStatus} onUploadDeviceLibrary={onUploadDeviceLibrary} syncActionLabel={syncActionLabel} syncConflict={syncConflict}/></Cs2Feedback>;
+  return <CaseStudyImageOwnerContext.Provider value={props.sessionOwner || ''}><Cs2Feedback><CaseStudyLibraryReady {...props} profileName={profileName} temporaryNotice={temporaryNotice} syncStatus={syncStatus} onUploadDeviceLibrary={onUploadDeviceLibrary} syncActionLabel={syncActionLabel} syncConflict={syncConflict}/></Cs2Feedback></CaseStudyImageOwnerContext.Provider>;
 }
 
 function StudyCard({view='grid',study,notebook,evidence = [],onOpen,onPatch,onDuplicate,onDelete,onMenu,menuOpen,menuRootRef}) {
@@ -1304,8 +1410,8 @@ function StudyCardActions({favorite,onToggle,onMenu,menuOpen,menuRootRef,study,o
   return <div ref={menuRootRef} className="case-study-card__actions"><button type="button" className={`case-study-card__favorite${favorite?' is-favorite':''}`} aria-label={favorite?'Remove from favorites':'Add to favorites'} aria-pressed={favorite} onClick={onToggle}><Star size={17} fill={favorite?'currentColor':'none'}/></button><button type="button" aria-label="Study menu" aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={menuId} onClick={event=>{event.stopPropagation();onMenu();}}><MoreHorizontal size={17}/></button>{menuOpen&&<div id={menuId} className="case-card-menu" role="menu" onClick={event=>event.stopPropagation()}><button type="button" role="menuitem" className={favorite?'is-favorite':''} aria-pressed={favorite} onClick={event=>{onToggle(event);onMenu();}}><Star size={15} fill={favorite?'currentColor':'none'}/>{favorite?'Remove favorite':'Favorite'}</button><button type="button" role="menuitem" onClick={runAction(()=>onPatch({pinned:!study.pinned}))}><Pin size={15}/>{study.pinned?'Unpin':'Pin playbook'}</button><button type="button" role="menuitem" onClick={runAction(onDuplicate)}><Copy size={15}/>Duplicate</button>{study.archived?<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:false}))}><Archive size={15}/>Restore to Library</button>:<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:true}))}><Archive size={15}/>Archive</button>}<button type="button" role="menuitem" className="is-danger" onClick={runAction(onDelete)}><Trash2 size={15}/>Delete</button></div>}</div>;
 }
 function LibraryShelf({title,subtitle,studies,total=studies.length,emptyMessage,notebooks,evidence = [],onOpen,onViewAll,compact=false}) { return <section className={`case-shelf ${compact?'case-shelf--compact':''}`}><div className="case-shelf__heading"><div><h2>{title}</h2><p>{subtitle}</p></div>{total > studies.length&&<button className="case-button case-button--quiet" onClick={onViewAll}>View all</button>}</div><div className={`case-shelf__items ${!studies.length?'is-empty':''}`}>{studies.length ? studies.map(study=>{const notebook=notebooks.find(item=>item.id===study.notebookId);return <button key={study.id} onClick={()=>onOpen(study.id)}><div className="case-shelf__preview" aria-hidden="true"><StudyCover study={study} evidence={evidence} notebook={notebook} compact/></div><div className="case-shelf__copy"><strong>{studyTitle(study)}</strong><small>{notebook?.name || 'Notebook'} · Updated {dateLabel(study.updatedAt)}</small></div><span><i className={`case-status case-status--${study.status.toLowerCase().replaceAll(' ','-')}`}>{study.status}</i>{study.pinned&&<Pin size={13} aria-label="Pinned"/>}</span></button>;}) : <p className="case-shelf__empty"><BookOpen size={17}/>{emptyMessage}</p>}</div></section>; }
-function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const source=evidenceImageReference(cover); const image=useEvidenceImageUrl(source); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[source,image.url]); if(!cover || !image.url || failed) return <><BookOpen size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>setFailed(true)}/>; }
-function EvidenceImage({item,alt='',className=''}) { const image=useEvidenceImageUrl(evidenceImageReference(item)); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
+function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const image=useCaseStudyEvidenceImage(cover); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[cover?.url,cover?.cloudRef,image.url]); if(!cover || !image.url || failed) return <><BookOpen size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>{reportCaseStudyImageDecodeFailure();setFailed(true);}}/>; }
+function EvidenceImage({item,alt='',className=''}) { const image=useCaseStudyEvidenceImage(item); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
 function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch,onRemove,onBack}) {
   const [query,setQuery]=useState(''),[kind,setKind]=useState('All'),[sort,setSort]=useState('recent'),[view,setView]=useState('grid'),[selectedId,setSelectedId]=useState(evidence[0]?.id||null),[uploadOpen,setUploadOpen]=useState(false);
   useEffect(()=>{if(!evidence.some(item=>item.id===selectedId))setSelectedId(evidence[0]?.id||null);},[evidence,selectedId]);
@@ -1319,7 +1425,7 @@ function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch
     {uploadOpen&&<EvidenceDialog onClose={()=>setUploadOpen(false)} onSave={async fields=>{await onAdd(fields);setUploadOpen(false);}}/>}
   </section>;
 }
-function EvidenceDetails({evidence,related,onPatch,onRemove}) { const [tags,setTags]=useState((evidence.tags||[]).join(', ')); const image=useEvidenceImageUrl(evidenceImageReference(evidence)); useEffect(()=>setTags((evidence.tags||[]).join(', ')),[evidence.id]); return <aside className="case-evidence-details"><div className="case-evidence-details__preview">{image.url?<img src={image.url} alt={evidence.title}/>:<ImageIcon size={42}/>}</div><label>Title<input value={evidence.title||''} onChange={event=>onPatch(evidence.id,{title:event.target.value})}/></label><label>Source<input value={evidence.source||''} onChange={event=>onPatch(evidence.id,{source:event.target.value})} placeholder="Source or URL"/></label><label>Tags<input value={tags} onChange={event=>setTags(event.target.value)} onBlur={()=>onPatch(evidence.id,{tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="EUR/USD, liquidity"/></label><label>Research notes<textarea value={evidence.notes||''} onChange={event=>onPatch(evidence.id,{notes:event.target.value})} placeholder="What does this support or challenge?"/></label><section className="case-v2-reference-list"><h3>Linked Case Studies · {related.length}</h3>{related.length?related.map(study=><div key={study.id}><FileText size={15}/><span>{studyTitle(study)}</span><small>{study.status}</small></div>):<p>Link this shared item from a Case Study’s Evidence tab.</p>}</section><footer><span>Uploaded {dateLabel(evidence.createdAt)}</span><button className="case-button case-button--danger" onClick={()=>onRemove(evidence.id)}><Trash2 size={15}/>Delete</button></footer></aside>; }
+function EvidenceDetails({evidence,related,onPatch,onRemove}) { const [tags,setTags]=useState((evidence.tags||[]).join(', ')); const image=useCaseStudyEvidenceImage(evidence); useEffect(()=>setTags((evidence.tags||[]).join(', ')),[evidence.id]); return <aside className="case-evidence-details"><div className="case-evidence-details__preview">{image.url?<img src={image.url} alt={evidence.title}/>:<ImageIcon size={42}/>}</div><label>Title<input value={evidence.title||''} onChange={event=>onPatch(evidence.id,{title:event.target.value})}/></label><label>Source<input value={evidence.source||''} onChange={event=>onPatch(evidence.id,{source:event.target.value})} placeholder="Source or URL"/></label><label>Tags<input value={tags} onChange={event=>setTags(event.target.value)} onBlur={()=>onPatch(evidence.id,{tags:tags.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="EUR/USD, liquidity"/></label><label>Research notes<textarea value={evidence.notes||''} onChange={event=>onPatch(evidence.id,{notes:event.target.value})} placeholder="What does this support or challenge?"/></label><section className="case-v2-reference-list"><h3>Linked Case Studies · {related.length}</h3>{related.length?related.map(study=><div key={study.id}><FileText size={15}/><span>{studyTitle(study)}</span><small>{study.status}</small></div>):<p>Link this shared item from a Case Study’s Evidence tab.</p>}</section><footer><span>Uploaded {dateLabel(evidence.createdAt)}</span><button className="case-button case-button--danger" onClick={()=>onRemove(evidence.id)}><Trash2 size={15}/>Delete</button></footer></aside>; }
 function TemplateManager({templates,personalTemplates,onChoose,onSave,onDuplicate,onRemove,onBack}) {
   const [scope,setScope]=useState('All');
   const [query,setQuery]=useState('');
@@ -1514,7 +1620,7 @@ function StudyConnectionsPanel({study,workspace,onOpenStudy,onCreate,onEdit,onRe
   </div>;
 }
 
-function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',syncStatus='',trades,markups,saveState,onRetrySave,initialMode='Write',initialReviewStep=0,initialViewerId=null,onNavigationChange=()=>{},onBack,onUpdate,onRemove,onDuplicate,onToggle,onAddEvidence,onSaveDocumentImage,onViewEvidence,onExport,onApplyTemplate,onSaveTemplate,onCreateConnection,onEditConnection,onDeleteConnection,onOpenStudy}) {
+function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',syncStatus='',trades,markups,saveState,onRetrySave,initialMode='Write',initialReviewStep=0,initialViewerId=null,onNavigationChange=()=>{},onBack,onUpdate,onRemove,onDuplicate,onToggle,onAddEvidence,onSaveDocumentImage,onStoreDocumentImage,imageOwnerUserId,onViewEvidence,onExport,onApplyTemplate,onSaveTemplate,onCreateConnection,onEditConnection,onDeleteConnection,onOpenStudy}) {
   const [mode,setMode] = useState(initialMode);
   const [panel,setPanel] = useState('Evidence');
   const [activeSection,setActiveSection] = useState(0);
@@ -1542,7 +1648,7 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
   }, [study.id,initialMode]);
   useEffect(()=>onNavigationChange({mode,reviewStep:initialReviewStep}),[mode,initialReviewStep,onNavigationChange]);
   useEffect(() => { setSelectedEvidenceId((current) => resolveActiveEvidenceId(linkedEvidence, current)); }, [study.id, study.evidenceIds, workspace.evidence]);
-  if (viewerId) return <ChartViewerBoundary onBack={()=>setViewerId(null)}><ChartViewer study={study} evidence={linkedEvidence} allEvidence={workspace.evidence} studies={workspace.studies} activeId={viewerId} accountId="profile" saveState={saveState} onRetrySave={onRetrySave} onBack={()=>setViewerId(null)} onUpdate={onUpdate}/></ChartViewerBoundary>;
+  if (viewerId) return <ChartViewerBoundary onBack={()=>setViewerId(null)}><ChartViewer study={study} evidence={linkedEvidence} allEvidence={workspace.evidence} studies={workspace.studies} activeId={viewerId} accountId="profile" imageOwnerUserId={imageOwnerUserId} saveState={saveState} onRetrySave={onRetrySave} onBack={()=>setViewerId(null)} onUpdate={onUpdate}/></ChartViewerBoundary>;
 
   const currentDocument = migrateSectionRichDocument(study, currentSection, activeSection);
   const updateDocument = (document) => onUpdate((latestStudy) => patchSectionRichDocument(latestStudy, currentSection, activeSection, document));
@@ -1592,12 +1698,12 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
     setSafePanelWidth(next,{persist:true});
   };
   const documentEvidence=Object.fromEntries(workspace.evidence.filter(item=>item.documentImageRef).map(item=>[item.documentImageRef,item]));
-  const writing = <div className="cse-writing"><RichDocumentEditor key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onViewEvidence={onViewEvidence}/></div>;
+  const writing = <div className="cse-writing"><RichDocumentEditor key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}:${imageOwnerUserId||''}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/></div>;
   const editorHeader = <header className="cse-header">
     <button className="cse-crumb" onClick={onBack}><ArrowLeft size={16}/>Library</button><span className="cse-crumb-separator">/</span><select className="cse-notebook" value={study.notebookId} onChange={(e) => onUpdate({ notebookId: e.target.value })}>{workspace.notebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.name}</option>)}</select><input className="cse-title" value={study.title} onChange={(e) => onUpdate({ title: e.target.value })} aria-label="Study title"/><select className="cse-status" value={study.status || 'Draft'} onChange={(e) => onUpdate({ status: e.target.value })}>{STATUSES.map((status) => <option key={status} disabled={status==='Validated'&&study.status!=='Validated'&&!reviewCanValidate}>{status}</option>)}</select><div className="cse-mode-switch" aria-label="Editor mode">{['Write','Split','Analyze','Review'].map((item) => <button key={item} className={mode === item ? 'is-active' : ''} onClick={() => switchMode(item)}>{item}</button>)}</div><span className="cse-save"><Check size={14}/>{saveState}</span>{mode!=='Review'&&<><button className={showOutline ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowOutline((value) => !value)}>Outline</button><button className={showPanel ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowPanel((value) => !value)}>Panel</button></>}<div className="cse-overflow"><button className="case-icon-button" title="Duplicate study" onClick={onDuplicate}><Copy size={16}/></button><button className="case-icon-button" title="Export study" onClick={onExport}><Download size={16}/></button><button className="case-icon-button case-icon-button--danger" title="Delete study" onClick={onRemove}><Trash2 size={16}/></button></div>
   </header>;
   if (mode !== 'Review' && typeof window !== 'undefined' && window.matchMedia(CS2_DESKTOP).matches) return <>
-    <Cs2StudyWorkspace study={study} workspace={workspace} templates={templates} trades={trades} markups={markups} saveState={saveState} onRetrySave={onRetrySave} storageNotice={storageNotice} syncStatus={syncStatus} profileName={profileName} onBack={onBack} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggle={onToggle} onAddEvidence={onAddEvidence} onSaveDocumentImage={onSaveDocumentImage} onViewEvidence={onViewEvidence} onExport={onExport} onSaveTemplate={onSaveTemplate} onCreateConnection={onCreateConnection} onEditConnection={onEditConnection} onDeleteConnection={onDeleteConnection} onOpenStudy={onOpenStudy} onOpenViewer={(id) => setViewerId(id)} onOpenTemplates={() => setTemplatePickerOpen(true)} onOpenReview={() => setMode('Review')}/>
+    <Cs2StudyWorkspace study={study} workspace={workspace} templates={templates} trades={trades} markups={markups} saveState={saveState} onRetrySave={onRetrySave} storageNotice={storageNotice} syncStatus={syncStatus} profileName={profileName} onBack={onBack} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggle={onToggle} onAddEvidence={onAddEvidence} onSaveDocumentImage={onSaveDocumentImage} onStoreDocumentImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence} onExport={onExport} onSaveTemplate={onSaveTemplate} onCreateConnection={onCreateConnection} onEditConnection={onEditConnection} onDeleteConnection={onDeleteConnection} onOpenStudy={onOpenStudy} onOpenViewer={(id) => setViewerId(id)} onOpenTemplates={() => setTemplatePickerOpen(true)} onOpenReview={() => setMode('Review')}/>
     {templatePickerOpen && <Cs2AddTemplateDialog study={study} templates={templates} onClose={() => setTemplatePickerOpen(false)} onApply={(template) => { onApplyTemplate?.(template); setTemplatePickerOpen(false); }}/>}
   </>;
   if (mode === 'Review') return <main className="case-study-editor case-study-editor--review">{editorHeader}<ReviewWorkspace study={study} linkedEvidence={linkedEvidence} onOpenViewer={openViewer} onUpdate={onUpdate} saveState={saveState} initialStep={initialReviewStep} onStepChange={reviewStep=>onNavigationChange({mode:'Review',reviewStep})}/></main>;

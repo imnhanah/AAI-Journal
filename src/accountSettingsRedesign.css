@@ -203,3 +203,10 @@
   .tj-root .tj-account-settings-redesign .tj-account-context-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
   .tj-root .tj-account-settings-redesign .tj-input {font-size:16px;min-height:40px;height:40px;}
 }
+/* Flat (tab-free) account settings layout */
+.tj-root .tj-account-settings-redesign .tj-settings-flat {padding:18px 22px;display:grid;gap:14px;background:var(--surface);}
+.tj-root .tj-account-settings-redesign .tj-settings-danger-row {display:flex;align-items:center;justify-content:flex-end;padding:12px 0 2px;}
+.tj-root .tj-account-settings-redesign .tj-settings-danger-row .tj-settings-danger-menu {margin-left:0;}
+@media(max-width:600px) {
+  .tj-root .tj-account-settings-redesign .tj-settings-flat {padding:14px;}
+}

@@ -76,14 +76,14 @@ test('Mode 2 keeps its funded level after one loss until the second consecutive 
 });
 test('a risk-limit step-back is never re-promoted by the remaining funded balance',()=>{
   const baseline=resetAutomation(emptyChallenge(),[],'risk',1,now,30,100);
-  // $100 starts on level 7. The gross loss fails that rung, while the small
-  // net loss leaves enough capital to fund it; replay must retain level 6.
+  // $100 starts on level 6. The gross loss fails that rung, while the small
+  // net loss leaves enough capital to fund it; replay must retain level 5.
   const state=replayChallenge(baseline,{...account,balance:100,trades:[row(1,-30,{pnl:-0.01})]});
   assert.equal(state.liveBalance,99.99);
-  assert.equal(state.activeLevel,6);
-  assert.equal(state.statuses[7],'Step back');
-  assert.equal(state.statuses[6],'In progress');
-  assert.equal(state.fundingJumps[7],undefined);
+  assert.equal(state.activeLevel,5);
+  assert.equal(state.statuses[6],'Step back');
+  assert.equal(state.statuses[5],'In progress');
+  assert.equal(state.fundingJumps[6],undefined);
 });
 test('cash out within current funding preserves progress; savings-funded transfers do not reduce trading capital',()=>{
   const when=new Date(2026,8,14,12).toISOString();
@@ -118,7 +118,7 @@ test('manual and disabled accounts never move',()=>{
   assert.equal(replay(start('risk'),[row(1,100)],{challengeEnabled:false}).activeLevel,1);
 });
 test('gross profits accumulate, ignore costs, and excess advances one level only',()=>{
-  const state=replay(start('risk'),[row(1,2),row(2,4)]);
+  const state=replay(start('risk'),[row(1,3),row(2,4)]);
   assert.equal(state.activeLevel,2);assert.equal(state.levelPnl,0);
   assert.equal(replay(start('risk'),[row(1,100000)]).activeLevel,2);
 });
@@ -165,16 +165,16 @@ test('manual checkpoint freezes prior progress and resets counters',()=>{
 });
 test('mode changes start fresh and preserve manually selected level',()=>{
   const base=resetAutomation({...emptyChallenge(),activeLevel:5},[row(1,200)],'risk',5,now);
-  assert.equal(replay(base,[row(1,200),row(2,18)]).activeLevel,6);
+  assert.equal(replay(base,[row(1,200),row(2,18)]).activeLevel,5);
 });
 test('pre-checkpoint and foreign-account trades do not count; close timing is optional',()=>{
   const result=replay(start('risk'),[row(2,100,{createdAt:new Date(2026,8,14,9,59).toISOString()}),row(3,100,{accountId:'b'})]);
   assert.equal(result.counted,0);
-  assert.equal(replay(start('risk'),[row(1,6,{closeDate:'',closeTime:''})]).activeLevel,2);
-  assert.equal(replay(start('risk'),[row(4,6,{closeTime:''})]).activeLevel,2);
+  assert.equal(replay(start('risk'),[row(1,6.75,{closeDate:'',closeTime:''})]).activeLevel,2);
+  assert.equal(replay(start('risk'),[row(4,6.75,{closeTime:''})]).activeLevel,2);
 });
 test('gross edits and deletions replay; close date and time changes have no effect',()=>{
-  const base=start('risk');const trade=row(1,6);
+  const base=start('risk');const trade=row(1,6.75);
   assert.equal(replay(base,[trade]).activeLevel,2);
   assert.equal(replay(base,[{...trade,grossPnl:1}]).activeLevel,1);
   assert.equal(replay(base,[]).activeLevel,1);
@@ -184,7 +184,7 @@ test('gross edits and deletions replay; close date and time changes have no effe
 });
 test('bounds stop at level one and complete after level thirty',()=>{
   assert.equal(replay(start('risk'),[row(1,-10)]).activeLevel,1);
-  const state=replay(start('risk'),CHALLENGE_PLAN.map((item,index)=>row(index+1,item.profit,{pnl:item.profit})));
+  const state=replay(start('risk'),buildChallengePlan(20,'risk',30,1.5).map((item,index)=>row(index+1,item.profit,{pnl:item.profit})));
   assert.equal(state.activeLevel,31);
 });
 test('available capital does not complete the final level without its trade-earned pass',()=>{
@@ -265,11 +265,11 @@ test('reset excludes all existing trades, including those without close timing',
   const old=row(1,100,{closeDate:'',closeTime:''});
   const base=start('risk',1,[old]);
   assert.deepEqual(base.automation.excludedIds,[1]);
-  assert.equal(replay(base,[old,row(2,6,{closeDate:'',closeTime:''})]).activeLevel,2);
+  assert.equal(replay(base,[old,row(2,6.75,{closeDate:'',closeTime:''})]).activeLevel,2);
   assert.equal(replay(base,[old]).counted,0);
 });
 test('entry dates in the past do not exclude newly logged trades',()=>{
-  assert.equal(replay(start('risk'),[row(1,6,{date:'2020-01-01',time:'00:00',closeDate:''})]).activeLevel,2);
+  assert.equal(replay(start('risk'),[row(1,6.75,{date:'2020-01-01',time:'00:00',closeDate:''})]).activeLevel,2);
 });
 test('a trade imported after automation starts is explicitly included in challenge replay',()=>{
   const imported=row(99,-1,{id:'imported',createdAt:new Date(2026,8,14,9,0).toISOString()});

@@ -24,6 +24,7 @@ test('Write, Split, and Analyze use linked evidence instead of the legacy mock c
   assert.match(editor, /mode === 'Split'.*cse-split-workspace/s);
   assert.match(editor, /nextMode === 'Analyze' && activeEvidence/);
   assert.match(editor, /<ChartViewer study=\{study\} evidence=\{linkedEvidence\}/);
+  assert.match(editor, /imageOwnerUserId=\{imageOwnerUserId\}/);
   assert.match(editor, /Use for Split \/ Analyze/);
   assert.doesNotMatch(editor, /cse-chart-grid|cse-trend|cse-zone/);
   assert.doesNotMatch(css, /cse-chart-grid|cse-trend|cse-zone|cse-analysis-canvas/);
