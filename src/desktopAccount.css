@@ -10,6 +10,31 @@
   .tj-root .sp-body .tj-account-panel-modal>:is(.tj-modal-head,.tj-trade-validation-summary) {display:none!important;}
   .tj-root .sp-body .tj-account-panel-modal.tj-account-panel-modal>.tj-modal-body {display:flex!important;flex:1;flex-direction:column;min-height:0;padding:0!important;overflow:hidden!important;background:transparent!important;}
 
+  /* Add a workspace shares the Account panel's hero/sections/footer; give it the same scroll chain
+     (modal and body fill the panel, only the sections scroll, hero and footer stay pinned). */
+  .tj-root .sp-body .tj-modal.tj-new-workspace-panel {display:flex;flex-direction:column;}
+  .tj-root .sp-body .tj-new-workspace-panel>.tj-modal-body {display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections {flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections::-webkit-scrollbar {display:none;}
+  .tj-root .sp-body .tj-new-workspace-panel :is(.tj-settings-account-hero,.tj-settings-hub-footer) {flex:none;}
+
+  /* New workspace panel hero */
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-account-hero.tj-settings-account-hero {
+    display:flex!important;flex-direction:column;gap:10px;
+    margin:16px var(--sp-pad) 0!important;padding:14px 16px 16px!important;border:1px solid color-mix(in oklab,var(--accent) 22%,var(--border))!important;border-radius:20px!important;
+    background:linear-gradient(160deg,color-mix(in oklab,var(--accent) 9%,var(--surface)),color-mix(in oklab,var(--accent) 3%,var(--surface)))!important;box-shadow:none!important;
+  }
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-heading {display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-heading>span {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field {display:flex;align-items:center;gap:8px;min-width:0;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field svg {flex-shrink:0;color:var(--accent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field input {flex:1;min-width:0;border:none;background:none;padding:0;font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em;outline:none;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field input::placeholder {color:var(--muted);opacity:.6;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary {display:flex!important;flex-direction:row;gap:8px;flex-wrap:wrap;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary>div {display:flex;flex-direction:column;gap:1px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary strong {color:var(--text);font-size:14px;font-weight:700;}
+
   /* Danger Zone: the last row of the page, quiet until opened. */
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row {display:block;padding:4px 0 0;}
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-menu {display:block;margin:0;}

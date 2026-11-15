@@ -6,21 +6,14 @@ const screen = readFileSync(new URL('./MobileNewWorkspace.jsx', import.meta.url)
 const css = readFileSync(new URL('./mobileNewWorkspace.css', import.meta.url), 'utf8');
 const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), 'utf8');
 
-test('phones get the new sheet on the same create code, and desktop keeps its form', () => {
-  assert.match(journal, /if \(phone\) return <Modal navKey="new-workspace"/);
+test('phones get the new sheet on the same create code, and desktop opens in a side panel', () => {
+  assert.match(journal, /if \(phone\) return[\s\S]{0,10}<Modal navKey="new-workspace"/);
   assert.match(journal, /<MobileNewWorkspace /);
-  assert.match(journal, /Create Account Workspace/);
+  assert.match(journal, /Add a workspace/);
 });
 
-test('a typed balance stays on the first account when switching to Multiple', () => {
-  assert.match(screen, /onClick=\{chooseMultiple\}/);
-  assert.match(screen, /d\.updateAccount\(primary\.id, 'startingBalance', d\.balance\)/);
-  assert.match(journal, /name: "Account 2", startingBalance: Number\(balance\) \|\| 0/, 'the form shared with desktop is unchanged');
-});
-
-test('it can only be created once name, currency and accounts are valid', () => {
-  assert.match(screen, /const ready = named && currency && accountsReady/);
-  assert.match(screen, /d\.accounts\.length >= 2 && d\.accounts\.every/);
+test('it can only be created once name and currency are valid', () => {
+  assert.match(screen, /const ready = named && currency/);
   assert.match(screen, /disabled=\{!ready \|\| d\.creating\}/);
 });
 

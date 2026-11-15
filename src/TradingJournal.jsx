@@ -138,7 +138,7 @@ import {
   AlertTriangle, Sun, Moon, Monitor, Landmark, ArrowDownToLine, ArrowUpFromLine, Repeat2, RefreshCw, RotateCcw, WalletCards, UserRound, Banknote, BadgeDollarSign, PanelLeftClose, PanelLeftOpen, FlaskConical,
   Sparkles, Target, LineChart as LineChartIcon, Check, Info,
   BarChart3, Clock as ClockIcon, ArrowRight, Flag,
-  Layers, Link2, Zap,
+  Layers, Link2, Zap, Briefcase,
 } from "lucide-react";
 const PublicSite = React.lazy(() => import('./PublicSite'));
 import ChallengePage from './ChallengePage';
@@ -3454,19 +3454,9 @@ function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, review
 }
 
 
-export function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = false, multiBalanceUnavailableReason = "", allowImport = true }) {
-  const [challengeEnabled, setChallengeEnabled] = useState(false);
+export function AddAccountModal({ onClose, onCreate, userId = null, tradePanelPosition = 'right', tradePanelBehavior = 'push', allowImport = true }) {
   const [name, setName] = useState("");
   const [balance, setBalance] = useState(0);
-  const [workspaceType, setWorkspaceType] = useState(WORKSPACE_TYPES.STANDARD);
-  const [balanceDrafts, setBalanceDrafts] = useState([{ id: "primary", name: "Primary account", startingBalance: 0 }]);
-  const [selectedBalanceId, setSelectedBalanceId] = useState("primary");
-  const [platform, setPlatform] = useState("Manual");
-  const [importFile, setImportFile] = useState(null);
-  const [importPreview, setImportPreview] = useState([]);
-  const [importError, setImportError] = useState("");
-  const [importingTrades, setImportingTrades] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
   const [baseCurrency, setBaseCurrency] = useState("");
   const [breakevenCap, setBreakevenCap] = useState(0);
   const [defaultCommission, setDefaultCommission] = useState(0);
@@ -3481,17 +3471,17 @@ export function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = fal
   const [positionSizeEnabled, setPositionSizeEnabled] = useState(false);
   const [defaultRiskPct, setDefaultRiskPct] = useState(1);
   const [defaultStopLossPips, setDefaultStopLossPips] = useState("");
-  const [open, setOpen] = useState({ identity: true, balances: false, defaults: true, goals: true, guardrails: true, position: true, challenge: true });
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importError, setImportError] = useState("");
+  const [importingTrades, setImportingTrades] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
   const [creating, setCreating] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const accountId = useRef(uuid()).current;
-  const toggle = (section) => setOpen((current) => ({ ...current, [section]: !current[section] }));
-  const accountBase = workspaceType === WORKSPACE_TYPES.MULTI_BALANCE
-    ? balanceDrafts.reduce((total, item) => total + (Number(item.startingBalance) || 0), 0)
-    : Number(balance) || 0;
+  const accountBase = Number(balance) || 0;
   const moneyFromPercentage = (percentage, base) => Number(percentage) > 0 && base > 0 ? Number((Number(percentage) * base / 100).toFixed(2)) : "";
   const percentageFromMoney = (amount, base) => Number(amount) > 0 && base > 0 ? Number((Number(amount) / base * 100).toFixed(4)) : "";
-  const monthlyTarget = monthlyGoalSource === "amount" ? Number(monthlyGoalAmount) || 0 : accountBase * (Number(monthlyGoalPct) || 0) / 100;
-  const yearlyTarget = yearlyGoalSource === "amount" ? Number(yearlyGoalAmount) || 0 : accountBase * (Number(yearlyGoalPct) || 0) / 100;
   const dailyLimit = accountBase * (Number(dailyLossLimitPct) || 0) / 100;
   const monthlyLimit = accountBase * (Number(monthlyLossLimitPct) || 0) / 100;
   const setMonthlyGoalPercentage = (value) => { setMonthlyGoalPct(value); setMonthlyGoalAmount(moneyFromPercentage(value, accountBase)); setMonthlyGoalSource("percentage"); };
@@ -3506,70 +3496,61 @@ export function AddAccountModal({ onClose, onCreate, canCreateMultiBalance = fal
     if (monthlyGoalSource === "amount") setMonthlyGoalPct(percentageFromMoney(monthlyGoalAmount, nextBase)); else setMonthlyGoalAmount(moneyFromPercentage(monthlyGoalPct, nextBase));
     if (yearlyGoalSource === "amount") setYearlyGoalPct(percentageFromMoney(yearlyGoalAmount, nextBase)); else setYearlyGoalAmount(moneyFromPercentage(yearlyGoalPct, nextBase));
   };
-  const updateBalanceDraft = (id, field, value) => setBalanceDrafts((items) => items.map((item) => item.id === id ? { ...item, [field]: value } : item));
-  const selectedBalance = balanceDrafts.find((item) => item.id === selectedBalanceId) || balanceDrafts[0];
-  const selectedBalanceIndex = Math.max(0, balanceDrafts.findIndex((item) => item.id === selectedBalance?.id));
-  const addBalanceDraft = () => setBalanceDrafts((items) => [...items, { id: `balance-${uid()}`, name: `Account ${items.length + 1}`, startingBalance: "" }]);
-  const removeBalanceDraft = (id) => setBalanceDrafts((items) => items.length > 2 ? items.filter((item) => item.id !== id) : items);
-  const selectWorkspaceType = (nextType) => {
-    if (nextType === WORKSPACE_TYPES.MULTI_BALANCE && !canCreateMultiBalance) return;
-    if (nextType === WORKSPACE_TYPES.MULTI_BALANCE && balanceDrafts.length < 2) {
-      setBalanceDrafts((items) => [...items, { id: `balance-${uid()}`, name: "Account 2", startingBalance: Number(balance) || 0 }]);
-    }
-    if (nextType === WORKSPACE_TYPES.MULTI_BALANCE) setSelectedBalanceId(balanceDrafts[0]?.id || "primary");
-    setWorkspaceType(nextType);
-  };
+  const pickImportFile = async (file) => { setImportFile(file); setImportPreview([]); setImportError(""); setImportProgress(0); if (!file) return; const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); };
   const create = async () => {
-    const multiBalance = workspaceType === WORKSPACE_TYPES.MULTI_BALANCE;
-    const preparedBalances = multiBalance
-      ? balanceDrafts.map((item) => ({ ...item, name: String(item.name || "").trim(), startingBalance: Number(item.startingBalance) || 0 }))
-      : [{ id: "primary", name: "Primary account", startingBalance: Number(balance) || 0 }];
-    if (!name.trim() || !baseCurrency || (multiBalance && (preparedBalances.length < 2 || preparedBalances.some((item) => !item.name || !(item.startingBalance > 0)))) || creating) return;
+    if (!name.trim() || !baseCurrency || creating || importError) return;
     setCreating(true);
     setImportProgress(0); setImportingTrades(!!importPreview.trades?.length);
-    const challengeBalance = Number(preparedBalances[0]?.startingBalance) || 0;
-    const created = await onCreate({ challengeEnabled: !multiBalance && challengeEnabled && challengeBalance > 0, challengeStartingBalance: !multiBalance && challengeEnabled ? challengeBalance : 0, id: accountId, name: name.trim(), icon: baseCurrency, profileImage: "", platform, workspaceType, balances: preparedBalances.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0, riskSettings:{ defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0 }, goals:{ monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0 }, guardrails:{ dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0 } })), balance: accountBase, breakevenCap: parseFloat(breakevenCap) || 0, ratingStyle: "stars", theme: "dark", defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, trades: [], rules: [], checkins: {} }, allowImport ? importPreview : { trades: [], cashMovements: [] }, setImportProgress);
+    const created = await onCreate({ challengeEnabled: false, challengeStartingBalance: 0, id: accountId, name: name.trim(), icon: baseCurrency, profileImage: "", platform: "Manual", workspaceType: WORKSPACE_TYPES.STANDARD, balances: [{ id: "primary", name: "Primary account", startingBalance: Number(balance) || 0, baseCurrency, challengeStartingBalance: 0, riskSettings: { defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0 }, goals: { monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0 }, guardrails: { dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0 } }], balance: accountBase, breakevenCap: parseFloat(breakevenCap) || 0, ratingStyle: "stars", theme: "dark", defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, trades: [], rules: [], checkins: {} }, importPreview, setImportProgress);
     if (!created) { setCreating(false); setImportingTrades(false); }
   };
   const [isPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   const phone = isPhone && window.matchMedia(MOBILE_MEDIA).matches;
-  const pickImportFile = async (file) => { setImportFile(file); setImportPreview([]); setImportError(""); setImportProgress(0); if (!file) return; const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); };
-  if (phone) return <Modal navKey="new-workspace" title="New workspace" className="tj-nw-modal" centered wide onClose={onClose}>
-    <MobileNewWorkspace currencies={ACCOUNT_CURRENCIES} canMultiple={canCreateMultiBalance} multipleReason={multiBalanceUnavailableReason} allowImport={allowImport} moneyShort={fmtMoneyShort} symbol={currencySymbol} onClose={onClose} onCreate={create} onImportFile={pickImportFile}
-      importState={{fileName:importFile?.name || "", summary:importPreview.trades?.length ? `${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movements` : ""} will import` : "", error:importError, progress:importingTrades ? importProgress : null}}
-      draft={{name, setName, baseCurrency, setBaseCurrency, base:accountBase, isMultiple:workspaceType === WORKSPACE_TYPES.MULTI_BALANCE, setMultiple:(on) => selectWorkspaceType(on ? WORKSPACE_TYPES.MULTI_BALANCE : WORKSPACE_TYPES.STANDARD), accounts:balanceDrafts, updateAccount:updateBalanceDraft, addAccount:addBalanceDraft, removeAccount:removeBalanceDraft, balance, setBalance:setStartingBalance, breakevenCap, setBreakevenCap, commission:defaultCommission, setCommission:setDefaultCommission, positionOn:positionSizeEnabled, setPositionOn:setPositionSizeEnabled, risk:defaultRiskPct, setRisk:setDefaultRiskPct, stopLoss:defaultStopLossPips, setStopLoss:setDefaultStopLossPips, challengeOn:challengeEnabled, setChallengeOn:setChallengeEnabled, monthlyGoal:monthlyGoalPct, setMonthlyGoal:setMonthlyGoalPercentage, yearlyGoal:yearlyGoalPct, setYearlyGoal:setYearlyGoalPercentage, dailyLoss:dailyLossLimitPct, setDailyLoss:setDailyLossLimitPct, monthlyLoss:monthlyLossLimitPct, setMonthlyLoss:setMonthlyLossLimitPct, creating, touched:!!(name.trim() || baseCurrency || Number(balance) || Number(breakevenCap) || Number(defaultCommission) || importFile)}}/>
-  </Modal>;
-  const importTradeField = allowImport ? <Field label="Import trade"><input className="tj-input" type="file" accept=".html,.htm,.csv,.txt,.tsv" disabled={creating} onChange={async (event) => { const file = event.target.files?.[0] || null; setImportFile(file); setImportPreview([]); setImportError(""); setImportProgress(0); if (!file) return; const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); }} />{importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movement${importPreview.cashMovements.length === 1 ? "" : "s"}` : ""} will import when you create this account` : ""}</div>}{importingTrades && <div className="tj-settings-hint tj-import-live"><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing {platform} trades…</div>}{importError && <div className="tj-import-error">{importError}</div>}</Field> : null;
+  if (phone) return (
+    <Modal navKey="new-workspace" title="New workspace" className="tj-nw-modal" centered wide onClose={onClose}>
+      <MobileNewWorkspace currencies={ACCOUNT_CURRENCIES} allowImport={allowImport} moneyShort={fmtMoneyShort} symbol={currencySymbol} onClose={onClose} onCreate={create} onImportFile={pickImportFile}
+        importState={{fileName:importFile?.name || "", summary:importPreview.trades?.length ? `${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movements` : ""} will import` : "", error:importError, progress:importingTrades ? importProgress : null}}
+        draft={{name, setName, baseCurrency, setBaseCurrency, base:accountBase, balance, setBalance:setStartingBalance, breakevenCap, setBreakevenCap, commission:defaultCommission, setCommission:setDefaultCommission, positionOn:positionSizeEnabled, setPositionOn:setPositionSizeEnabled, risk:defaultRiskPct, setRisk:setDefaultRiskPct, stopLoss:defaultStopLossPips, setStopLoss:setDefaultStopLossPips, monthlyGoal:monthlyGoalPct, setMonthlyGoal:setMonthlyGoalPercentage, yearlyGoal:yearlyGoalPct, setYearlyGoal:setYearlyGoalPercentage, dailyLoss:dailyLossLimitPct, setDailyLoss:setDailyLossLimitPct, monthlyLoss:monthlyLossLimitPct, setMonthlyLoss:setMonthlyLossLimitPct, creating, touched:!!(name.trim() || baseCurrency || Number(balance) || Number(breakevenCap) || Number(defaultCommission) || importFile)}}
+      />
+    </Modal>
+  );
+  const closePanel = () => { if (!panelOpen) return; setPanelOpen(false); window.setTimeout(onClose, 420); };
+  const canCreate = !creating && !!name.trim() && !!baseCurrency && !importError;
   return (
-    <Modal title={<span className="tj-symbol-title"><WalletCards size={18}/>Create Account Workspace</span>} onClose={onClose} className="tj-new-account-modal tj-account-settings-hub-modal" centered wide headerActions={<button className="tj-icon-btn tj-modal-save" title="Create Account" aria-label="Create Account" disabled={!name.trim() || !baseCurrency || (workspaceType === WORKSPACE_TYPES.MULTI_BALANCE && (balanceDrafts.length < 2 || balanceDrafts.some((item) => !String(item.name || "").trim() || !(Number(item.startingBalance) > 0)))) || creating || !!importError} onClick={create}><CheckCircle2 size={18}/></button>}>
+    <Modal title={<span className="tj-symbol-title"><Briefcase size={18}/>Add a workspace</span>} onClose={closePanel} className="tj-new-workspace-panel tj-account-settings-hub-modal" entryPanel entryPanelOpen={panelOpen} entryPanelPosition={tradePanelPosition} entryPanelBehavior={tradePanelBehavior} entryPanelUserId={userId ? `${userId}:workspace` : 'workspace'} entryPanelWidth={640}>
       <div className="tj-settings-account-hero tj-new-account-hero tj-settings-account-hero-no-avatar">
-        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span>NEW WORKSPACE</span><label className="tj-settings-workspace-name"><Pencil size={15}/><input aria-label="Workspace name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Workspace name"/></label></div>
-        <div className="tj-settings-workspace-summary"><div><small>STARTING BALANCE</small><strong>{fmtMoneyShort(accountBase, baseCurrency)}</strong></div><div><small>ACCOUNTS</small><strong>{workspaceType === WORKSPACE_TYPES.MULTI_BALANCE ? balanceDrafts.length : 1}</strong></div><div><small>CURRENCY</small><strong>{baseCurrency || "Choose below"}</strong></div></div>
+        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span>NEW WORKSPACE</span><label className="tj-settings-workspace-name tj-nwp-name-field"><Briefcase size={15}/><input aria-label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Workspace name" autoFocus/></label></div>
+        <div className="tj-settings-workspace-summary"><div><small>STARTING BALANCE</small><strong>{fmtMoneyShort(accountBase, baseCurrency)}</strong></div><div><small>CURRENCY</small><strong>{baseCurrency || "Choose below"}</strong></div></div>
       </div>
-      <AccountSettingsLayout creation multiBalanceWorkspace={workspaceType === WORKSPACE_TYPES.MULTI_BALANCE} selectedBalance={selectedBalance} onSelectAccount={() => setOpen(current => ({...current,identity:true}))}>
-      <AccountSettingsSection title="Account" icon={<Banknote size={15}/>} tone="account" status={baseCurrency || "Currency required"} isOpen={open.identity} onToggle={() => toggle("identity")}>
-        {workspaceType === WORKSPACE_TYPES.MULTI_BALANCE ? <><div className="tj-account-context-grid"><Field label="Account Type"><ThemeSelect className="tj-input" value={workspaceType} onChange={(event) => selectWorkspaceType(event.target.value)}><option value={WORKSPACE_TYPES.STANDARD}>Single</option><option value={WORKSPACE_TYPES.MULTI_BALANCE}>Multiple</option></ThemeSelect></Field>{balanceDrafts.map((item, index) => <button key={item.id} type="button" className={`tj-balance-context-card ${item.id === selectedBalance?.id ? "tj-balance-context-card-active" : ""}`} aria-pressed={item.id === selectedBalance?.id} onClick={() => setSelectedBalanceId(item.id)}><small>{item.id === selectedBalance?.id ? "EDITING THIS ACCOUNT" : `ACCOUNT ${index + 1}`}</small><strong>{item.name || `Account ${index + 1}`}</strong><span>{fmtMoneyShort(item.startingBalance, baseCurrency)}</span></button>)}</div>{selectedBalance && <><div className="tj-settings-selected-balance">Editing Account {selectedBalanceIndex + 1}: <b>{selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={selectedBalance.name} onChange={(event) => updateBalanceDraft(selectedBalance.id, "name", event.target.value)} /></Field><Field label="Balance"><input className="tj-input" type="number" min="0" step="0.01" value={selectedBalance.startingBalance} onChange={(event) => updateBalanceDraft(selectedBalance.id, "startingBalance", event.target.value)} /></Field><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.label} ({currency.symbol})</option>)}</ThemeSelect></Field>{importTradeField}</div><div className="tj-balance-context-actions"><button type="button" className="tj-btn-outline tj-btn-small" onClick={() => { addBalanceDraft(); setSelectedBalanceId(null); }}><Plus size={14}/> Add account</button>{balanceDrafts.length > 2 && <ConfirmDeleteButton className="tj-btn-danger-outline tj-btn-small" title="Remove selected" onClick={() => { const fallback = balanceDrafts.find((item) => item.id !== selectedBalance.id); removeBalanceDraft(selectedBalance.id); setSelectedBalanceId(fallback?.id || null); }}><Trash2 size={13}/> Remove selected</ConfirmDeleteButton>}</div></>}</> : <div className="tj-grid4 tj-account-details-grid tj-single-account-details-grid"><Field label="Account Type"><ThemeSelect className="tj-input" value={workspaceType} onChange={(event) => selectWorkspaceType(event.target.value)}><option value={WORKSPACE_TYPES.STANDARD}>Single</option><option value={WORKSPACE_TYPES.MULTI_BALANCE} disabled={!canCreateMultiBalance}>Multiple</option></ThemeSelect></Field><section className="tj-balance-context-card tj-balance-context-card-static"><small>PRIMARY ACCOUNT</small><strong>Balance</strong><input type="number" min="0" className="tj-input" value={balance} onChange={(event) => setStartingBalance(event.target.value)} /></section><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.label} ({currency.symbol})</option>)}</ThemeSelect></Field>{importTradeField}</div>}
-      </AccountSettingsSection>
-      <AccountSettingsSection title="Breakeven / Commission" icon={<BadgeDollarSign size={15}/>} status={`B/E ${fmtMoneyShort(Number(breakevenCap) || 0, baseCurrency)} · Fee ${fmtMoneyShort(Number(defaultCommission) || 0, baseCurrency)}`} isOpen={open.defaults} onToggle={() => toggle("defaults")}>
-        <div className="tj-grid2"><Field label={`Breakeven Cap (${baseCurrency || "Currency"})`}><input type="number" min="0" className="tj-input" value={breakevenCap} onChange={(event) => setBreakevenCap(event.target.value)} /><div className="tj-chip-row">{[0].map((value) => <button type="button" key={value} className={`tj-chip ${Number(breakevenCap) === value ? "tj-chip-active" : ""}`} onClick={() => setBreakevenCap(value)}>{fmtMoneyShort(value, baseCurrency)}</button>)}</div></Field><Field label="Default Commission"><input type="number" min="0" className="tj-input" value={defaultCommission} onChange={(event) => setDefaultCommission(event.target.value)} /></Field></div>
-      </AccountSettingsSection>
-      <AccountSettingsSection title="Goals" icon={<Trophy size={15}/>} note="Optional monthly and yearly targets that appear in analytics and review summaries." status={monthlyGoalPct || yearlyGoalPct ? "Active" : "Optional"} isOpen={open.goals} onToggle={() => toggle("goals")}>
-        <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards label="Monthly Growth Goal" currency={baseCurrency} percentage={monthlyGoalPct} amount={monthlyGoalAmount} onPercentageChange={setMonthlyGoalPercentage} onAmountChange={setMonthlyGoalMoney} /><LinkedPercentageAmountCards label="Yearly Growth Goal" currency={baseCurrency} percentage={yearlyGoalPct} amount={yearlyGoalAmount} onPercentageChange={setYearlyGoalPercentage} onAmountChange={setYearlyGoalMoney} /></div>
-      </AccountSettingsSection>
-      <AccountSettingsSection title="Risk Guardrails" icon={<ShieldCheck size={15}/>} note="Optional loss caps that pause trade execution when a limit is reached." status={dailyLossLimitPct || monthlyLossLimitPct ? "Active" : "Optional"} isOpen={open.guardrails} onToggle={() => toggle("guardrails")}>
-        <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards label="Daily Loss Limit" currency={baseCurrency} percentage={dailyLossLimitPct} amount={dailyLimit ? Number(dailyLimit.toFixed(2)) : ""} onPercentageChange={setDailyLossLimitPct} onAmountChange={setDailyLossMoney} /><LinkedPercentageAmountCards label="Monthly Loss Limit" currency={baseCurrency} percentage={monthlyLossLimitPct} amount={monthlyLimit ? Number(monthlyLimit.toFixed(2)) : ""} onPercentageChange={setMonthlyLossLimitPct} onAmountChange={setMonthlyLossMoney} /></div>
-      </AccountSettingsSection>
-      {workspaceType === WORKSPACE_TYPES.STANDARD && <AccountSettingsSection title="Challenge" icon={<Trophy size={15}/>} note="Enable the 30 Level Challenge for this account." status={challengeEnabled && accountBase > 0 ? "On" : "Off"} isOpen={open.challenge} onToggle={() => toggle("challenge")}>
-        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-label="Enable Challenge" aria-checked={challengeEnabled && accountBase > 0} disabled={!(accountBase > 0)} className={`tj-settings-switch ${challengeEnabled && accountBase > 0 ? "tj-settings-switch-on" : ""}`} onClick={() => setChallengeEnabled(value => !value)}><i/></button><span><strong>Enable Challenge</strong><small>Uses this account's balance and starts at Level 1 in manual mode.</small></span></label>
-      </AccountSettingsSection>}
-      <AccountSettingsSection title="Position Size Calculator" icon={<DollarSign size={15}/>} note="Optional risk-based lot sizing for new trades." status={positionSizeEnabled ? "On" : "Off"} isOpen={open.position} onToggle={() => toggle("position")}>
-        <label className="tj-settings-switch-row"><button type="button" role="switch" aria-checked={positionSizeEnabled} className={`tj-settings-switch ${positionSizeEnabled ? "tj-settings-switch-on" : ""}`} onClick={() => setPositionSizeEnabled((enabled) => !enabled)}><i /></button><span><strong>Enable Position Size Calculator</strong><small>Show live risk-based lot suggestions in Log Trade.</small></span></label><div className="tj-grid2"><Field label="Default Risk % Per Trade"><input type="number" min="0" step="0.1" className="tj-input" disabled={!positionSizeEnabled} value={defaultRiskPct} onChange={(event) => setDefaultRiskPct(event.target.value)} /></Field><Field label="Default Stop Loss (Pips)"><input type="number" min="0" className="tj-input" disabled={!positionSizeEnabled} value={defaultStopLossPips} placeholder="Optional" onChange={(event) => setDefaultStopLossPips(event.target.value)} /></Field></div>
-      </AccountSettingsSection>
-      </AccountSettingsLayout>
+      <div className="tj-nwp-sections">
+        <AccountSettingsSection title="Account" icon={<Banknote size={15}/>} tone="account" status={baseCurrency ? baseCurrency : "Currency required"}>
+          <div className="tj-grid2">
+            <Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" value={balance} onChange={(e) => setStartingBalance(e.target.value)} /></Field>
+            <Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.label} ({c.symbol})</option>)}</ThemeSelect></Field>
+          </div>
+          <div className="tj-nwp-import-zone"><label className="tj-nwp-import-label" aria-label="Import trades (optional)"><input type="file" accept=".html,.htm,.csv,.txt,.tsv" disabled={creating} onChange={async (e) => { await pickImportFile(e.target.files?.[0] || null); e.target.value = ''; }} style={{display:"none"}}/><span><b>Choose a file</b> or drop a CSV</span></label><p className="tj-settings-hint">Import trades (optional)</p></div>
+          {importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movements` : ""} will import` : ""}</div>}
+          {importingTrades && <div className="tj-settings-hint tj-import-live"><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing trades…</div>}
+          {importError && <div className="tj-import-error">{importError}</div>}
+          <p className="tj-settings-hint">Need several balances? You can switch to Multiple later in Account settings.</p>
+        </AccountSettingsSection>
+        <AccountSettingsSection title="Trade defaults" icon={<BadgeDollarSign size={15}/>} status={`B/E ${fmtMoneyShort(Number(breakevenCap)||0,baseCurrency)} · Fee ${fmtMoneyShort(Number(defaultCommission)||0,baseCurrency)}`}>
+          <div className="tj-grid2"><Field label={`Breakeven Cap (${baseCurrency||"Currency"})`}><input type="number" min="0" className="tj-input" value={breakevenCap} onChange={(e) => setBreakevenCap(e.target.value)} /><div className="tj-chip-row"><button type="button" className={`tj-chip ${Number(breakevenCap)===0?"tj-chip-active":""}`} onClick={() => setBreakevenCap(0)}>{fmtMoneyShort(0,baseCurrency)}</button></div></Field><Field label="Default Commission"><input type="number" min="0" className="tj-input" value={defaultCommission} onChange={(e) => setDefaultCommission(e.target.value)} /></Field></div>
+        </AccountSettingsSection>
+        <AccountSettingsSection title="Position Size Calculator" icon={<DollarSign size={15}/>} enabled={positionSizeEnabled} onEnabledChange={setPositionSizeEnabled}>
+          <div className="tj-grid2"><Field label="Default Risk % Per Trade"><input type="number" min="0" step="0.1" className="tj-input" value={defaultRiskPct} onChange={(e) => setDefaultRiskPct(e.target.value)} /></Field><Field label="Default Stop Loss (Pips)"><input type="number" min="0" className="tj-input" value={defaultStopLossPips} placeholder="Optional" onChange={(e) => setDefaultStopLossPips(e.target.value)} /></Field></div>
+        </AccountSettingsSection>
+        <AccountSettingsSection title="Goals" icon={<Trophy size={15}/>} status={monthlyGoalPct||yearlyGoalPct?"Active":"Optional"}>
+          <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards label="Monthly Growth Goal" currency={baseCurrency} percentage={monthlyGoalPct} amount={monthlyGoalAmount} onPercentageChange={setMonthlyGoalPercentage} onAmountChange={setMonthlyGoalMoney} /><LinkedPercentageAmountCards label="Yearly Growth Goal" currency={baseCurrency} percentage={yearlyGoalPct} amount={yearlyGoalAmount} onPercentageChange={setYearlyGoalPercentage} onAmountChange={setYearlyGoalMoney} /></div>
+        </AccountSettingsSection>
+        <AccountSettingsSection title="Risk Guardrails" icon={<ShieldCheck size={15}/>} status={dailyLossLimitPct||monthlyLossLimitPct?"Active":"Optional"}>
+          <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards label="Daily Loss Limit" currency={baseCurrency} percentage={dailyLossLimitPct} amount={dailyLimit?Number(dailyLimit.toFixed(2)):""} onPercentageChange={setDailyLossLimitPct} onAmountChange={setDailyLossMoney} /><LinkedPercentageAmountCards label="Monthly Loss Limit" currency={baseCurrency} percentage={monthlyLossLimitPct} amount={monthlyLimit?Number(monthlyLimit.toFixed(2)):""} onPercentageChange={setMonthlyLossLimitPct} onAmountChange={setMonthlyLossMoney} /></div>
+        </AccountSettingsSection>
+      </div>
       <div className="tj-modal-actions tj-settings-hub-footer">
         <span>Name and currency are required.</span>
-        <button className="tj-btn-outline" onClick={onClose}>Cancel</button>
-        <button className="tj-btn-primary" disabled={!name.trim() || !baseCurrency || (workspaceType === WORKSPACE_TYPES.MULTI_BALANCE && (balanceDrafts.length < 2 || balanceDrafts.some((item) => !String(item.name || "").trim() || !(Number(item.startingBalance) > 0)))) || creating || !!importError} onClick={create}>{creating ? (importingTrades ? <><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing trades</> : "Creating…") : importPreview.trades?.length ? `Create Account & Import ${importPreview.trades.length} Trades` : "Create Account"}</button>
+        <button className="tj-btn-outline" onClick={closePanel} disabled={creating}>Cancel</button>
+        <button className="tj-btn-primary" disabled={!canCreate} onClick={create}>{creating?(importingTrades?<><i className="tj-import-progress" style={{"--progress":`${importProgress}%`}}>{importProgress}%</i>Importing trades</>:"Creating…"):importPreview.trades?.length?`Create & import ${importPreview.trades.length} trades`:<><Plus size={14}/>Create workspace</>}</button>
       </div>
     </Modal>
   );
@@ -6625,6 +6606,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       // Recharts owns pointer feedback inside charts. Avoid repainting its
       // focusable SVG wrapper with the general moving button glow as well.
       if (target?.closest('.recharts-wrapper, .recharts-tooltip-wrapper')) return clear();
+      // The side-panel resize handle is focusable ([tabindex]) but draws its own grip; the glow would outline the whole 14px strip.
+      if (target?.closest('.sp-handle')) return clear();
       // Keep a single stable hover target across the row and its nested controls.
       const challengeTable = target?.closest('.tj-challenge-scroll');
       const journalRow = target?.closest('.tj-tlog-row, .tj-reference-markup-row, .tj-challenge-scroll tbody tr');
@@ -9160,7 +9143,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       {modal === "import" && !account.isPlaceholder && !guardrails.tradeEntryLocked && <ImportTradesModal account={account} onClose={() => setModal(null)} onImport={(plan, onProgress, balanceId) => importTradesToAccount(account, plan, onProgress, balanceId)} />}
       {modal === "profile" && <ProfileSettingsModal navVia={modalVia.current} onLogout={onLogout} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onOpenRoutine={openRoutineManagement} user={{ ...user, user_metadata: { ...user.user_metadata, full_name: profileDetails.fullName, display_name: displayName, avatar_url: personalProfileImage, timezone: profileDetails.timezone, date_format: profileDetails.dateFormat, time_format: profileDetails.timeFormat, privacy_screen_enabled: privacySettings.enabled, privacy_screen_timeout_minutes: privacySettings.timeoutMinutes, theme_palettes: profilePalettes, trade_panel_position:entryPanelPosition, trade_panel_behavior:entryPanelBehavior, ...displayMetadata(displaySettings) } }} account={account} themeValue={profileTheme} themePreference={profileThemePreference} paletteValue={profilePalettes} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior} onPreviewAppearance={(nextTheme, nextPalettes) => { const resolvedTheme = nextTheme === "system" ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") : nextTheme; applyProfilePalettes(nextPalettes, resolvedTheme); setProfileTheme(nextTheme); setProfilePalettes(nextPalettes); }} onClose={() => setModal(null)} onSave={handleSaveProfileSettings} onDeleteProfile={handleDeleteProfile} onSync={syncJournal} syncing={syncing} lastSyncedAt={lastSyncedAt} cloudSyncAccess={cloudSyncAccess} cloudSyncEntitled={cloudSyncEntitled} onOpenPricing={() => window.location.assign('/pricing')} onToggleCloudSync={toggleCloudSync} />}
       {routinePrompt && isRoutineTradingDay() && <DailyRoutinePopup continueOnly={routineContinueOnly} saveAndOpenMarkup={routineOpenMarkupAfterSave} entryKind={routineEntryKind} routine={routineStore.routine} firstName={(displayName || "Trader").split(/\s+/)[0]} sessionFor={now => entrySessionFromOpenTime(now.toISOString().slice(11,16), now.toISOString().slice(0,10))} accountSummary={{name:routineBalance?.name || account.name,balance:fmtMoney(routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance),cap:guardrails.dailyLossHit ? "Daily cap reached" : "Daily cap open",level:Math.min(routineChallenge.state?.activeLevel || challenge.state?.activeLevel || 1, routineBalance?.challengeLevelCount || account.challengeLevelCount || 30)}} onClose={closeDailyRoutine} onSave={saveDailyRoutine} onSaveTicks={tickedIds => routineStore.update(latest => completeRoutine(latest, tickedIds, new Date()))} onEdit={openRoutineManagement} onNews={() => {closeDailyRoutine();setPage("news");}} onGuardrails={() => {closeDailyRoutine();setPage("analytics");}}/>}
-      {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={handleCreateAccount} canCreateMultiBalance />}
+      {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={handleCreateAccount} userId={user.id} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior}/>}
       {dayModalDate && (
         <DayTradesModal
           date={dayModalDate}
