@@ -9,7 +9,7 @@ const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), '
 test('phones get the new sheet on the same create code, and desktop opens in a side panel', () => {
   assert.match(journal, /if \(phone\) return[\s\S]{0,10}<Modal navKey="new-workspace"/);
   assert.match(journal, /<MobileNewWorkspace /);
-  assert.match(journal, /Add an account/);
+  assert.match(journal, /Create new account/);
 });
 
 test('it can only be created once name and currency are valid', () => {
@@ -31,4 +31,13 @@ test('the switcher opens this sheet instead of creating from a name alone', () =
 test('text stays readable and colours come from the theme', () => {
   for (const size of css.matchAll(/font-size:([\d.]+)px/g)) assert.ok(Number(size[1]) >= 12, size[0]);
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b|rgba?\(/i);
+});
+
+test('the account type is chosen once at creation and has no switch in Account settings', () => {
+  const settings = readFileSync(new URL('./MobileAccountSettings.jsx', import.meta.url), 'utf8');
+  assert.match(journal, /workspaceType: workspaceKind/);
+  assert.match(screen, /d\.setType\(value\)/);
+  assert.match(screen, /Can't be changed later/);
+  assert.doesNotMatch(journal, /className="tj-account-mode-toggle"/);
+  assert.doesNotMatch(settings, /hero\.onType|aria-label="Account type"/);
 });

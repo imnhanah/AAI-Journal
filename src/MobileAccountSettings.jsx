@@ -123,7 +123,7 @@ export default function MobileAccountSettings({initialTab = 'account', onClose, 
           {hero.accounts.map(item => <button type="button" key={item.id} aria-pressed={item.id === hero.selectedId} onClick={() => hero.onSelect(item.id)}><span><b>{(item.name || '?').trim().charAt(0).toUpperCase()}</b>{item.name}</span></button>)}
           {hero.onAdd && <button type="button" className="is-add" onClick={hero.onAdd}><span>+ Add</span></button>}
         </div>
-        <div className="tj-ma-mode"><span>{hero.countLabel}</span><div className="tj-ma-seg" role="group" aria-label="Account type">{hero.types.map(([value, label, disabled]) => <button type="button" key={value} aria-pressed={value === hero.type} disabled={disabled} onClick={() => hero.onType(value)}><span>{label}</span></button>)}</div></div>
+        {hero.countLabel && <div className="tj-ma-mode"><span>{hero.countLabel}</span></div>}
       </section>
       <main className="tj-ma-main">{account}{goals}</main>
       <div className="tj-ma-main"><h2 className="tj-ma-label">Danger zone</h2>{danger}</div>

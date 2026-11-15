@@ -138,7 +138,7 @@ export default function DesktopChallengeCard(p) {
   return <article className="ch2-card-wrap" aria-label={`${account.name} challenge`}>
     <section className="ch2-card ch2-ov-card">
       <header className="ch2-ovh">
-        <div className="ch2-tt"><h2>{account.name}</h2><span className="ch2-chip">{modeName}</span>{rewardLabel && <span className="ch2-chip">{rewardLabel}</span>}<span className="ch2-chip">{plan.length} levels</span></div>
+        <div className="ch2-tt"><h2>{account.name}</h2><span className="ch2-chip">{modeName}</span>{rewardLabel && <span className="ch2-chip">{rewardLabel}</span>}<span className="ch2-chip">{plan.length} levels</span>{challenge?.syncing && <span className="tj-ch-sync" role="status"><i aria-hidden="true"/>Syncing</span>}</div>
         <div className="ch2-ovr">
           <span className="ch2-rw"><button type="button" className="ch2-btn" aria-haspopup="dialog" aria-expanded={!!rulesAnchor} onClick={(event) => setRulesAnchor(rulesAnchor ? null : event.currentTarget)}><BookOpen size={15}/>Rules<ChevronDown size={13}/></button>{rulesAnchor && <RulesPopover rules={rules} anchor={rulesAnchor} onClose={() => setRulesAnchor(null)}/>}</span>
           <span className={`ch2-act ${statusChip[0]}`}><i/>{statusChip[1]}</span>

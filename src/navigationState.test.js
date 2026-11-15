@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {parse} from '@babel/parser';
+import {runInNewContext} from 'node:vm';
 import {createNavigationState} from './navigationState.js';
 
 test('navigation memory preserves false, zero, null, filters and expanded views independently', () => {
@@ -45,13 +47,21 @@ test('news restores its archived feed synchronously and still checks for fresh d
   assert.match(code,/usePageState\('news', 'tj-nav-calendarWindow', \(\) => \(\{archive:readNewsArchive/);
   assert.match(code,/getCalendarWindow\(\(progress\) => \{ if \(!cancelled\)/);
 });
-test('Challenge retains only loaded or saved progress, rejects stale reads and surfaces failures', () => {
+test('Challenge retains only loaded or saved progress, rejects stale reads and surfaces failures', async () => {
   const code=readFileSync(new URL('./useBalanceChallenge.js',import.meta.url),'utf8');
   assert.match(code,/useNavigationCache\('challenge-progress'\)/);
   assert.match(code,/record.key === cacheKey \? record.state : cache.read\(cacheKey\)/);
   assert.match(code,/ticket!==request.current \|\| currentKey.current!==cacheKey/);
   assert.match(code,/if \(failure\) throw failure;\s*if\(!mounted.current/);
-  assert.match(code,/cache.write\(cacheKey,next\);\s*setState\(next\)/);
+  const ast=parse(code,{sourceType:'module',plugins:['jsx']});let callback;
+  const visit=n=>{if(!n||typeof n!=='object')return;if(n.type==='VariableDeclarator'&&n.id?.name==='reload')callback=n.init.arguments[0];for(const[k,v]of Object.entries(n)){if(['loc','start','end'].includes(k))continue;if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);}};visit(ast);assert.ok(callback);
+  for(const scenario of ['clean','dirty','failed','superseded']){
+    const key='cloud:owner:balance',request={current:0},cached={notes:{1:'cached'}},local={notes:{1:'newer local draft'}},writes=[];let visible=cached,error='',verified=false;
+    const reload=runInNewContext(`(${code.slice(callback.start,callback.end)})`,{request,hasSavedBalanceId:true,userId:'owner',balanceId:'balance',balance:{name:'Balance'},cacheKey:key,currentKey:{current:key},mounted:{current:true},latest:{current:scenario==='dirty'?{key,next:local}:null},setLoading:()=>{},setSyncing:()=>{},setError:value=>{error=value;},setReadVerified:value=>{verified=value;},setState:value=>{visible=value;},cache:{write:(k,v)=>writes.push([k,v])},emptyChallenge:()=>({}),challengeDb:{read:async()=>{if(scenario==='superseded')request.current++;return scenario==='failed'?{error:new Error('offline')}:{data:{active_level:2,statuses:{},notes:{1:'server'},automation:null}};}}});
+    await reload();
+    if(scenario==='failed'||scenario==='superseded'){assert.equal(visible,cached);assert.equal(writes.length,0);assert.equal(verified,false);if(scenario==='failed')assert.match(error,/offline/);}
+    else {assert.equal(writes.length,1);assert.equal(writes[0][0],key);assert.equal(writes[0][1].notes[1],'server');assert.equal(visible.notes[1],scenario==='dirty'?'newer local draft':'server');assert.equal(verified,true);}
+  }
   assert.match(code,/Could not load/);
   assert.match(code,/Could not save/);
   const page=readFileSync(new URL('./ChallengeLifecyclePage.jsx',import.meta.url),'utf8');

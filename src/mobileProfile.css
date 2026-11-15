@@ -78,12 +78,17 @@
   .tj-root.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer>.tj-danger-button {display:none;}
   .tj-root.tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-studio-footer button {height:48px!important;min-height:48px!important;font-size:14px;border-radius:12px;}
   .tj-root.tj-root.tj-root.tj-root .tj-profile-redesign .tj-phone-profile-delete {display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--card));border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;margin:16px 0 0;}
-  .tj-root.tj-root.tj-root .tj-profile-delete-overlay {padding:20px;isolation:isolate;background:none;z-index:400;}
-  .tj-profile-delete-backdrop {display:block;position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--bg) 55%,transparent);}
-  .tj-root.tj-root.tj-root .tj-profile-delete-dialog {position:relative;width:100%;max-width:390px;padding:22px;max-height:calc(100dvh - 40px);border-radius:20px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-overlay {display:flex;align-items:flex-end;justify-content:center;padding:0;isolation:isolate;background:none;z-index:400;}
+  .tj-profile-delete-backdrop {display:block;position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--bg) 62%,transparent);backdrop-filter:blur(3px);}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-dialog {position:relative;width:100%;max-width:none;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 60px);overflow-y:auto;border-radius:30px 30px 0 0;text-align:center;animation:tj-pd-sheet-up .28s cubic-bezier(.2,.8,.2,1);}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-dialog .tj-sheet-handle {display:block;position:relative;width:44px;height:5px;margin:0 auto 16px;border-radius:3px;background:color-mix(in srgb,var(--muted) 55%,transparent);}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-dialog .tj-profile-delete-icon {width:52px;height:52px;border-radius:18px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-dialog li {padding:11px 14px;border-radius:14px;}
+  .tj-root.tj-root.tj-root.tj-root .tj-profile-delete-actions {grid-template-columns:1fr 1.3fr!important;}
+  @keyframes tj-pd-sheet-up {from {translate:0 40px;opacity:0;} to {translate:0 0;opacity:1;}}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog h3 {font-size:20px;}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog :is(p,li,label) {font-size:13px;line-height:1.5;}
   .tj-root.tj-root.tj-root .tj-profile-delete-dialog .tj-input {height:48px;font-size:15px;padding:10px;}
-  .tj-root.tj-root.tj-root .tj-profile-delete-actions {display:grid;grid-template-columns:1fr;gap:10px;}
+  .tj-root.tj-root.tj-root .tj-profile-delete-actions {display:grid;gap:10px;}
   .tj-root.tj-root.tj-root .tj-profile-delete-actions button {min-height:48px;font-size:14px;border-radius:12px;}
 }

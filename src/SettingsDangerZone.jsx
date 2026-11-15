@@ -1,11 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {Trash2, RefreshCw} from 'lucide-react';
+import {Trash2, RefreshCw, AlertTriangle, ChevronRight} from 'lucide-react';
 import './settingsDangerZone.css';
 import {MOBILE_MEDIA} from './mobileNavigation.js';
 import PhoneWorkspaceDangerSheet from './PhoneWorkspaceDangerSheet.jsx';
 
-export default function SettingsDangerZone({account, accountNames, onReset, onDelete, inline = false}) {
+export default function SettingsDangerZone({account, accountNames, onReset, onDelete, inline = false, panelCard = false}) {
   const [phone,setPhone]=useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(()=>{const media=window.matchMedia(MOBILE_MEDIA),change=()=>{setPhone(media.matches);setOpen(false);};media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const [open, setOpen] = useState(false);
@@ -20,11 +20,11 @@ export default function SettingsDangerZone({account, accountNames, onReset, onDe
   const inFlight = useRef(false);
   const workspaceName = account.name || 'account';
   useEffect(() => {
-    if (!open || phone) return;
+    if (!open || phone || panelCard) return;
     const dismiss = event => {if (!container.current?.contains(event.target)) setOpen(false);};
     document.addEventListener('pointerdown', dismiss);
     return () => document.removeEventListener('pointerdown', dismiss);
-  }, [open,phone]);
+  }, [open,phone,panelCard]);
   useEffect(() => {
     if (!action) return;
     const modal = trigger.current?.closest('.tj-modal');
@@ -75,6 +75,15 @@ export default function SettingsDangerZone({account, accountNames, onReset, onDe
       <button ref={trigger} type="button" onClick={() => request('reset')}><span className="tj-ma-icon is-red"><RefreshCw size={18}/></span><span className="tj-ma-copy"><strong>Reset account data</strong><small>Erases all trade history and check-ins for {workspaceName}. Settings stay.</small></span></button>
       <button type="button" className="is-delete" onClick={() => request('delete')}><span className="tj-ma-icon is-red"><Trash2 size={18}/></span><span className="tj-ma-copy"><strong>Delete account</strong><small>Permanently removes {workspaceName} and all its data.</small></span></button>
     </div>
+    {root && confirmation ? createPortal(confirmation, root) : confirmation}
+  </div>;
+  // Desktop panel: a quiet card that opens in place. Reset and Delete still go through the same confirmation dialog.
+  if (!phone && panelCard) return <div className={`tj-dz ${open ? 'is-open' : ''}`} ref={container}>
+    <button ref={trigger} type="button" className="tj-dz-head" aria-expanded={open} aria-controls="settings-danger-body" onClick={() => setOpen(value => !value)}><span className="tj-dz-icon"><AlertTriangle size={17}/></span><span className="tj-dz-copy"><strong>Danger zone</strong><small>Reset or delete this account</small></span><ChevronRight size={17} className="tj-dz-chev" aria-hidden="true"/></button>
+    <div className="tj-dz-body" id="settings-danger-body" aria-hidden={!open}><div><div className="tj-dz-list">
+      <div className="tj-dz-row"><span><strong>Reset account data</strong><small>Erases all trade history and check-ins for this account. Your settings stay.</small></span><button type="button" className="tj-dz-btn" tabIndex={open ? 0 : -1} onClick={() => request('reset')}><RefreshCw size={14}/> Reset</button></div>
+      <div className="tj-dz-row"><span><strong>Delete account</strong><small>Permanently removes this account and everything in it.</small></span><button type="button" className="tj-dz-btn is-delete" tabIndex={open ? 0 : -1} onClick={() => request('delete')}><Trash2 size={14}/> Delete</button></div>
+    </div></div></div>
     {root && confirmation ? createPortal(confirmation, root) : confirmation}
   </div>;
   return <div className="tj-settings-danger-menu" ref={container} onKeyDown={event => {if (event.key === 'Escape' && open) {event.stopPropagation();setOpen(false);trigger.current?.focus();}}}>

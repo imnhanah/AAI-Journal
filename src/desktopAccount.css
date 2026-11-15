@@ -16,24 +16,37 @@
   .tj-root .sp-body .tj-new-workspace-panel>.tj-modal-body {display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;}
   .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections {flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;}
   .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections::-webkit-scrollbar {display:none;}
-  .tj-root .sp-body .tj-new-workspace-panel :is(.tj-settings-account-hero,.tj-settings-hub-footer) {flex:none;}
+  .tj-root .sp-body .tj-new-workspace-panel :is(.tj-settings-account-hero,.tj-nwp-hero,.tj-settings-hub-footer) {flex:none;}
 
-  /* New workspace panel hero */
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-account-hero.tj-settings-account-hero {
-    display:flex!important;flex-direction:column;gap:10px;
-    margin:16px var(--sp-pad) 0!important;padding:14px 16px 16px!important;border:1px solid color-mix(in oklab,var(--accent) 22%,var(--border))!important;border-radius:20px!important;
-    background:linear-gradient(160deg,color-mix(in oklab,var(--accent) 9%,var(--surface)),color-mix(in oklab,var(--accent) 3%,var(--surface)))!important;box-shadow:none!important;
+  /* Create new account panel hero: logo, title, close, name field, two summary chips (after the approved mockup). */
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero {
+    position:relative;flex:none;display:flex;flex-direction:column;gap:14px;margin:0;padding:20px var(--sp-pad) 16px;
+    background:radial-gradient(120% 140% at 0 0,color-mix(in oklab,var(--accent) 11%,transparent),transparent 70%);
   }
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-heading {display:flex;flex-direction:column;gap:4px;min-width:0;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-heading>span {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field {display:flex;align-items:center;gap:8px;min-width:0;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field svg {flex-shrink:0;color:var(--accent);}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field input {flex:1;min-width:0;border:none;background:none;padding:0;font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em;outline:none;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-name.tj-nwp-name-field input::placeholder {color:var(--muted);opacity:.6;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary {display:flex!important;flex-direction:row;gap:8px;flex-wrap:wrap;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary>div {display:flex;flex-direction:column;gap:1px;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
-  .tj-root .sp-body .tj-new-workspace-panel .tj-settings-workspace-summary strong {color:var(--text);font-size:14px;font-weight:700;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero-row {display:flex;align-items:center;gap:14px;min-width:0;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-logo {display:grid;flex:none;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--accent);color:var(--on-accent,var(--surface));box-shadow:0 12px 24px -12px var(--accent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero-copy {display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero-copy>span {color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero-copy>h2 {margin:0;color:var(--text);font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.15;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero .tj-modal-close {position:static!important;display:grid;flex:none;place-items:center;width:40px;height:40px;margin-left:auto;padding:0;border:1px solid var(--border)!important;border-radius:13px!important;background:var(--surface)!important;color:var(--muted)!important;box-shadow:none!important;transform:none!important;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero .tj-modal-close:hover {color:var(--text)!important;border-color:color-mix(in oklab,var(--accent) 40%,var(--border))!important;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-name {display:flex;flex-direction:column;gap:6px;min-width:0;margin:0;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-name>span {color:var(--muted);font-size:12px;font-weight:700;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-name>input {box-sizing:border-box;width:100%;height:54px;padding:0 16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:18px;font-weight:650;letter-spacing:-.01em;outline:0;transition:border-color .15s,box-shadow .15s;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-name>input::placeholder {color:var(--muted);font-weight:500;opacity:.7;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-name>input:focus {border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 16%,transparent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-chips {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-chips>div {display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 14px;border:1px solid var(--border);border-radius:16px;background:color-mix(in oklab,var(--surface) 70%,transparent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-chips small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-chips strong {color:var(--text);font-size:19px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections {padding:6px var(--sp-pad) 22px;display:flex;flex-direction:column;gap:14px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections>.tj-settings-section {flex:none;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero~.tj-nwp-sections {border-top:1px solid var(--border);padding-top:16px;}
+  @container sp-panel (max-width:479px) {
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-hero {padding-inline:16px;}
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-sections {padding-inline:16px;}
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-chips strong {font-size:16px;}
+  }
 
   /* Danger Zone: the last row of the page, quiet until opened. */
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row {display:block;padding:4px 0 0;}
@@ -132,3 +145,125 @@
     .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer>span {display:none;}
   }
 }
+
+/* Account settings redesign (desktop side panel): hero with summary chips, icon-tile section cards,
+   three-up calculator, stacked currency and import, and the Danger zone card. Theme tokens only. */
+@media (min-width:768px) {
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero {
+    position:relative;flex:none;display:flex;flex-direction:column;gap:14px;margin:0;padding:20px var(--sp-pad) 16px;border-bottom:1px solid var(--border);
+    background:radial-gradient(120% 140% at 0 0,color-mix(in oklab,var(--accent) 11%,transparent),transparent 70%);
+  }
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero-row {display:flex;align-items:center;gap:14px;min-width:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-nwp-logo {display:grid;flex:none;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--accent);color:var(--on-accent,var(--surface));box-shadow:0 12px 24px -12px var(--accent);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero-copy {display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero-copy>span {color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero-copy>h2 {margin:0;color:var(--text);font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero .tj-modal-close {position:static!important;display:grid;flex:none;place-items:center;width:40px;height:40px;margin-left:auto;padding:0;border:1px solid var(--border)!important;border-radius:13px!important;background:var(--surface)!important;color:var(--muted)!important;box-shadow:none!important;transform:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero .tj-modal-close:hover {color:var(--text)!important;border-color:color-mix(in oklab,var(--accent) 40%,var(--border))!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips>div {display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 14px;border:1px solid var(--border);border-radius:16px;background:color-mix(in oklab,var(--surface) 70%,transparent);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips small {color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips strong {color:var(--text);font-size:19px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips .is-hot strong {color:var(--tj-green,var(--accent));}
+  .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips .is-loss strong {color:var(--loss);}
+
+  /* Section cards: icon tile, title with a one-line subtitle, status pill. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section {border-radius:22px!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-head {padding:0;margin:0 0 14px;min-height:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-title>i {width:36px;height:36px;flex:0 0 36px;border:0!important;border-radius:12px;background:color-mix(in oklab,var(--accent) 12%,transparent);color:var(--accent);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-title small {display:block;margin-top:1px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-body {padding:0!important;border-top:0!important;}
+
+  /* Calculator: three cards side by side, smaller as the panel narrows. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-body .tj-grid3,
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-enabled-fields>.tj-grid3 {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px;align-items:end;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-grid3 .tj-field>label,.tj-root .sp-body .tj-account-panel-modal .tj-grid3 .tj-field>span:first-child {line-height:1.25;}
+  @container sp-panel (max-width:479px) {
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-section-body .tj-grid3,
+    .tj-root .sp-body .tj-account-panel-modal .tj-settings-enabled-fields>.tj-grid3 {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-grid3 input.tj-input,.tj-root .sp-body .tj-account-panel-modal .tj-grid3 .tj-picker-trigger {padding:0 10px!important;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-acct-hero {padding-inline:16px;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips strong {font-size:15px;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-acct-chips>div {padding:9px 10px;}
+  }
+
+  /* Currency and import: stacked, and the drop card stays inside its card. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-grid2.tj-grid-stack {grid-template-columns:minmax(0,1fr)!important;gap:14px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-import-field {min-width:0;max-width:100%;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-import-drop {position:relative;box-sizing:border-box;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;width:100%;max-width:100%;min-height:64px;padding:14px;overflow:hidden;border:1.5px dashed var(--border);border-radius:16px;background:var(--raised);text-align:center;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-import-drop:hover {border-color:color-mix(in oklab,var(--accent) 50%,var(--border));background:color-mix(in oklab,var(--accent) 6%,var(--raised));}
+
+  /* Footer: unsaved-changes marker. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer>span.is-dirty {display:flex;align-items:center;gap:8px;color:var(--text);font-weight:650;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-footer>span.is-dirty>i {flex:none;width:8px;height:8px;border-radius:50%;background:var(--tj-amber,var(--accent));}
+
+  /* Danger zone: a quiet card that opens in place. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row {padding:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz {overflow:hidden;border:1px solid color-mix(in oklab,var(--loss) 38%,var(--border));border-radius:22px;background:linear-gradient(180deg,color-mix(in oklab,var(--loss) 9%,transparent),transparent 70%),var(--surface);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-head {display:flex!important;align-items:center;gap:12px;width:100%;min-height:0!important;margin:0!important;padding:16px 20px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-align:left;color:inherit;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-icon {display:grid;flex:none;place-items:center;width:36px;height:36px;border-radius:12px;background:color-mix(in oklab,var(--loss) 12%,transparent);color:var(--loss);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-copy {display:flex;flex-direction:column;min-width:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-copy strong {color:var(--loss);font-size:15px;font-weight:700;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-copy small {color:var(--muted);font-size:12.5px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-chev {margin-left:auto;flex:none;color:var(--loss);transition:transform .25s;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz.is-open .tj-dz-chev {transform:rotate(90deg);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-body {display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz.is-open .tj-dz-body {grid-template-rows:1fr;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-body>div {overflow:hidden;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-list {display:flex;flex-direction:column;gap:10px;padding:0 20px 18px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-row {display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid color-mix(in oklab,var(--loss) 22%,var(--border));border-radius:16px;background:var(--surface);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-row>span {display:flex;flex:1;flex-direction:column;gap:2px;min-width:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-row strong {color:var(--text);font-size:14px;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-row small {color:var(--muted);font-size:12.5px;line-height:1.45;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-btn {display:inline-flex;flex:none;align-items:center;gap:7px;height:40px!important;min-height:0!important;padding:0 16px!important;border:1px solid color-mix(in oklab,var(--loss) 50%,var(--border))!important;border-radius:13px!important;background:color-mix(in oklab,var(--loss) 9%,transparent)!important;color:var(--loss)!important;font-size:13px!important;font-weight:650;white-space:nowrap;cursor:pointer;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-dz-btn.is-delete {border-color:transparent!important;background:var(--loss)!important;color:var(--surface)!important;}
+  @container sp-panel (max-width:479px) {
+    .tj-root .sp-body .tj-account-panel-modal .tj-dz-row {flex-wrap:wrap;}
+    .tj-root .sp-body .tj-account-panel-modal .tj-dz-btn {width:100%;justify-content:center;}
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .tj-root .sp-body .tj-account-panel-modal :is(.tj-dz-body,.tj-dz-chev) {transition:none;}
+}
+
+/* Create account: live preview, account type tiles, lock warning, confirm. */
+@media (min-width:768px) {
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live {position:relative;overflow:hidden;margin-top:16px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--border));border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%),var(--surface);box-shadow:0 22px 50px -34px color-mix(in srgb,var(--accent) 60%,transparent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live::after {content:"";position:absolute;top:-60px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 35%,transparent),transparent);opacity:.35;pointer-events:none;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live small {display:block;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-top {position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-bal {text-align:right;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-bal strong {display:block;color:var(--text);font-size:24px;font-weight:800;letter-spacing:-.02em;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-name {position:relative;z-index:1;margin:2px 0 12px;overflow:hidden;color:var(--text);font-size:22px;font-weight:800;letter-spacing:-.02em;text-overflow:ellipsis;white-space:nowrap;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-name.is-empty {color:var(--muted);font-weight:650;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-meta {position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:10px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-meta>span {display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--border);border-radius:99px;background:color-mix(in srgb,var(--surface) 75%,transparent);color:var(--text);font-size:12.5px;font-weight:700;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-meta>span.is-accent {border-color:color-mix(in srgb,var(--accent) 35%,var(--border));background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-types {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type {position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding:14px;border:1px solid var(--border);border-radius:18px;background:var(--raised);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type:hover:not(:disabled) {transform:translateY(-1px);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type b {font-size:15px;font-weight:700;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type small {color:var(--muted);font-size:12.5px;line-height:1.4;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type-ic {display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--surface);color:var(--muted);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type-ck {position:absolute;top:12px;right:12px;display:grid;place-items:center;width:20px;height:20px;border:1.5px solid var(--border);border-radius:50%;color:transparent;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type.is-on {border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:0 14px 30px -20px var(--accent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type.is-on .tj-nwp-type-ic {background:var(--accent);color:var(--on-accent,var(--surface));}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-type.is-on .tj-nwp-type-ck {border-color:var(--accent);background:var(--accent);color:var(--on-accent,var(--surface));}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-warn {display:flex;gap:11px;margin-top:14px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:16px;background:color-mix(in srgb,var(--warn) 12%,transparent);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-warn>svg {flex:none;margin-top:1px;color:var(--warn);}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-warn b {display:block;color:var(--text);font-size:13.5px;font-weight:700;}
+  .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-warn span {color:var(--muted);font-size:12.5px;}
+  @container sp-panel (max-width:479px) {
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-types {grid-template-columns:1fr;}
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-bal {text-align:left;}
+    .tj-root .sp-body .tj-new-workspace-panel .tj-nwp-live-top {flex-direction:column-reverse;}
+  }
+}
+.tj-root .tj-nwp-veil {position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--bg) 60%,transparent);backdrop-filter:blur(4px);}
+.tj-root .tj-nwp-dialog {width:380px;max-width:100%;padding:22px;border:1px solid var(--border);border-radius:24px;background:var(--surface);color:var(--text);text-align:center;box-shadow:0 40px 90px -30px color-mix(in srgb,var(--bg) 80%,transparent);}
+.tj-root .tj-nwp-dialog-ic {display:grid;place-items:center;width:48px;height:48px;margin:0 auto 12px;border-radius:16px;background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);}
+.tj-root .tj-nwp-dialog h3 {margin:0 0 6px;font-size:18px;font-weight:700;}
+.tj-root .tj-nwp-dialog p {margin:0 0 16px;color:var(--muted);font-size:13.5px;}
+.tj-root .tj-nwp-dialog-acts {display:flex;gap:10px;}
+.tj-root .tj-nwp-dialog-acts>button {flex:1;justify-content:center;}

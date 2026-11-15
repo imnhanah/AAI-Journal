@@ -389,3 +389,5 @@
   .tj-root.tj-root.tj-root .tj-profile-redesign .tj-profile-region-display-card .tj-regional-fields { grid-template-columns:1fr; }
   .tj-root.tj-root.tj-root .tj-profile-redesign .tj-theme-gallery .tg { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+.tj-root.tj-root .tj-profile-delete-dialog .tj-sheet-handle {display:none;}

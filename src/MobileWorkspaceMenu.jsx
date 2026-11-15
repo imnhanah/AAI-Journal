@@ -40,6 +40,7 @@ export default function MobileWorkspaceMenu({accounts, activeId, figures, onSele
   return <>
     <button type="button" className="tj-wm-shade" aria-label="Close accounts" onClick={onClose}/>
     <section className="tj-wm" ref={panel} role="dialog" aria-label="Accounts">
+      <i aria-hidden="true" className="tj-sheet-handle"/>
       <div className="tj-wm-head">
         <div><h3>Accounts</h3><small>{accounts.length} available</small></div>
         <button type="button" className="tj-wm-manage" aria-pressed={manage} onClick={() => setManage(value => !value)}><span>{manage ? 'Done' : 'Manage'}</span></button>

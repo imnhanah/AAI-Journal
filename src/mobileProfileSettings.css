@@ -60,8 +60,19 @@
   .tj-mp .tj-mp-sync button {display:flex;flex:none;align-items:center;min-height:44px;}
   .tj-mp-sync b {display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:17px;background:var(--mp-soft);color:var(--accent);font-size:13px;font-weight:700;white-space:nowrap;}
 
-  .tj-mp-exit {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px;}
-  .tj-mp .tj-mp-delete {display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:54px;border-radius:27px;background:var(--phone-drop-bg);color:var(--phone-loss);font-weight:700;text-align:center;}
+  .tj-mp-exit {display:grid;gap:12px;margin-top:26px;}
+  .tj-mp-danger-card {overflow:hidden;border:.5px solid color-mix(in srgb,var(--phone-loss) 28%,var(--border));border-radius:26px;background:color-mix(in srgb,var(--phone-loss) 8%,var(--card));}
+  .tj-root .tj-mp .tj-mp-danger-row {display:flex;align-items:center;gap:13px;width:100%;min-height:72px!important;padding:12px 16px!important;color:var(--phone-loss);text-align:left;}
+  .tj-root .tj-mp .tj-mp-danger-row + .tj-mp-danger-row {border-top:.5px solid color-mix(in srgb,var(--phone-loss) 22%,var(--border));}
+  .tj-mp-danger-tile {display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:14px;background:color-mix(in srgb,var(--phone-loss) 16%,transparent);}
+  .tj-mp-danger-copy {display:grid;flex:1;gap:3px;min-width:0;}
+  .tj-mp-danger-copy strong {margin:0;}
+  .tj-mp-danger-copy strong,.tj-mp-delete-solid strong {display:block;font-size:15px;font-weight:700;line-height:1.2;}
+  .tj-mp-danger-copy small {color:color-mix(in srgb,var(--phone-loss) 70%,var(--muted));font-size:12.5px;}
+  .tj-mp-danger-chev {flex:none;opacity:.7;}
+  .tj-root .tj-mp .tj-mp-delete-solid {display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:68px!important;padding:12px 18px!important;border-radius:26px;background:var(--phone-loss);color:var(--bg);text-align:left;box-shadow:0 10px 26px color-mix(in srgb,var(--phone-loss) 32%,transparent);}
+  .tj-mp-delete-solid span {display:grid;gap:2px;}
+  .tj-mp-delete-solid small {font-size:12.5px;font-weight:550;opacity:.85;}
 
   /* Popups live outside .tj-mp, in the modal */
   .tj-ma-layer .tj-mp-opt {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:54px;padding:0 14px;border-radius:16px;font-size:15px;font-weight:600;}

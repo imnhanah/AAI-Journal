@@ -99,9 +99,11 @@ export default function MobileProfileSettings({summaryRef, onClose, onDiscard, o
       </Section>
 
       <div className="tj-mp-exit">
-        <button type="button" className="tj-mp-delete" onClick={logOut}><LogOut size={19} aria-hidden="true"/>Log out</button>
-        <button type="button" className="tj-mp-delete tj-mp-delete-all" onClick={signOutAllDevices}><LogOut size={19} aria-hidden="true"/>Sign out of all devices</button>
-        <button type="button" className="tj-mp-delete" onClick={onDelete}><Trash2 size={19} aria-hidden="true"/>Delete profile</button>
+        <div className="tj-mp-danger-card">
+          <button type="button" className="tj-mp-danger-row" onClick={logOut}><span className="tj-mp-danger-tile"><LogOut size={19} aria-hidden="true"/></span><span className="tj-mp-danger-copy"><strong>Log out</strong><small>On this device only</small></span><ChevronRight className="tj-mp-danger-chev" size={17} aria-hidden="true"/></button>
+          <button type="button" className="tj-mp-danger-row" onClick={signOutAllDevices}><span className="tj-mp-danger-tile"><Monitor size={19} aria-hidden="true"/></span><span className="tj-mp-danger-copy"><strong>Sign out of all devices</strong><small>Ends every active session</small></span><ChevronRight className="tj-mp-danger-chev" size={17} aria-hidden="true"/></button>
+        </div>
+        <button type="button" className="tj-mp-delete-solid" onClick={onDelete}><Trash2 size={19} aria-hidden="true"/><span><strong>Delete profile</strong><small>Permanent. Cannot be undone</small></span></button>
       </div>
     </div>
 

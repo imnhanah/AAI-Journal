@@ -1,0 +1,31 @@
+/* Notices. Desktop: a card in the bottom-right corner with a timer line.
+   Phone: a small floating pill under the status bar, clear of the page and the dock. */
+.tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) {position:fixed;z-index:200000;top:auto;right:24px;bottom:24px;left:auto;display:flex;align-items:center;gap:12px;width:min(340px,calc(100vw - 48px));max-width:none;margin:0;padding:14px 12px 15px 14px;overflow:hidden;border:1px solid color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 42%,var(--tj-border));border-radius:18px;background:var(--tj-panel);color:var(--tj-text);box-shadow:0 18px 44px color-mix(in srgb,var(--tj-text) 18%,transparent),0 0 26px color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 16%,transparent);font-size:13.5px;font-weight:650;line-height:1.4;animation:tj-toast-in-card .38s cubic-bezier(.2,.9,.2,1);}
+.tj-root.tj-root.tj-root .tj-toast-error {--toast-tone:var(--tj-red);}
+.tj-root.tj-root.tj-root .tj-toast-warning {--toast-tone:var(--tj-amber);}
+.tj-root.tj-root.tj-root .tj-toast-info {--toast-tone:var(--tj-green);}
+.tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge)>span:first-child {display:grid;flex:none;width:36px;height:36px;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 15%,transparent);color:var(--toast-tone,var(--tj-accent));}
+.tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge)>div {flex:1;min-width:0;}
+.tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) p {margin:0;overflow-wrap:anywhere;}
+.tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) button[aria-label="Dismiss notification"] {display:grid;flex:none;width:30px;height:30px;place-items:center;margin:0;padding:0;border-radius:10px;color:var(--tj-muted);}
+.tj-toast-timer {position:absolute;right:0;bottom:0;left:0;height:3px;background:var(--toast-tone,var(--tj-accent));box-shadow:0 0 10px var(--toast-tone,var(--tj-accent));transform-origin:left;animation:tj-toast-drain var(--toast-ms,4000ms) linear forwards;}
+@keyframes tj-toast-drain {to {transform:scaleX(0);}}
+@keyframes tj-toast-in-card {from {opacity:0;translate:40px 0;} to {opacity:1;translate:0 0;}}
+@keyframes tj-toast-in-pill {from {opacity:0;translate:-50% -26px;} to {opacity:1;translate:-50% 0;}}
+
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) {top:calc(10px + env(safe-area-inset-top,0px));right:auto;bottom:auto;left:50%;width:max-content;max-width:calc(100% - 24px);gap:9px;padding:7px 8px 7px 7px;border-radius:30px;font-size:13.5px;animation:tj-toast-in-pill .34s cubic-bezier(.2,.9,.2,1);translate:-50% 0;}
+  .tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge)>span:first-child {width:32px;height:32px;border-radius:50%;}
+  .tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) .tj-toast-timer {display:none;}
+  .tj-root.tj-root.tj-root .tj-toast:not(.tj-toast-challenge) button[aria-label="Dismiss notification"] {width:32px;height:32px;border-radius:50%;}
+
+  .tj-mobile-alert.tj-mobile-alert {top:calc(10px + env(safe-area-inset-top,0px));right:auto;bottom:auto;left:50%;display:flex;align-items:center;gap:9px;width:max-content;min-height:0;max-width:calc(100% - 24px);padding:7px 8px 7px 7px;border:1px solid color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 42%,var(--tj-border));border-radius:30px;box-shadow:0 14px 36px color-mix(in srgb,var(--tj-text) 18%,transparent),0 0 24px color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 16%,transparent);animation:tj-toast-in-pill .34s cubic-bezier(.2,.9,.2,1);translate:-50% 0;}
+  .tj-mobile-alert.is-warning {--toast-tone:var(--tj-amber);}
+  .tj-mobile-alert.is-error {--toast-tone:var(--tj-red);}
+  .tj-mobile-alert.is-info {--toast-tone:var(--tj-green);}
+  .tj-mobile-alert.tj-mobile-alert .tj-mobile-alert-icon {width:32px;height:32px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--toast-tone,var(--tj-accent)) 15%,transparent);color:var(--toast-tone,var(--tj-accent));}
+  .tj-mobile-alert.tj-mobile-alert .tj-mobile-alert-copy {flex:1;min-width:0;}
+  .tj-mobile-alert.tj-mobile-alert .tj-mobile-alert-copy>span:not(:only-child) {font-size:12.5px;}
+  .tj-mobile-alert.tj-mobile-alert button {flex:none;border-radius:50%;}
+}
+@media (prefers-reduced-motion:reduce) {.tj-toast,.tj-mobile-alert{animation:none!important}.tj-toast-timer{animation:none!important;display:none}}

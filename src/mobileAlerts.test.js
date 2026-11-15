@@ -20,8 +20,12 @@ test('mobile feedback distinguishes status and actionable problems accessibly', 
   assert.match(alert, /Dismiss notification/);
 });
 
-test('global save and sync notices use the same mobile-safe placement', () => {
-  assert.match(css, /\.tj-toast \{top:auto;bottom:calc\(var\(--mobile-bottom,88px\)/);
-  assert.match(journal, /@media \(max-width:767px\) \{\s*\.tj-toast \{ top:auto; right:12px; bottom:calc\(var\(--mobile-bottom,88px\)/);
+test('notices float as a pill under the status bar on phones and as a corner card on desktop', () => {
+  const toast = readFileSync(new URL('./toastRedesign.css', import.meta.url), 'utf8');
+  assert.match(entry, /toastRedesign\.css/);
+  assert.match(toast, /@media \(max-width:767px\)[\s\S]*\.tj-toast:not\(\.tj-toast-challenge\) \{top:calc\(10px \+ env\(safe-area-inset-top,0px\)\)/);
+  assert.match(toast, /\.tj-mobile-alert\.tj-mobile-alert \{[^}]*top:calc\(10px \+ env\(safe-area-inset-top,0px\)\)/);
+  assert.match(toast, /right:24px;bottom:24px/);
+  assert.match(journal, /className="tj-toast-timer"/);
   assert.match(journal, /min-height:0; height:auto/);
 });

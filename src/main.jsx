@@ -39,6 +39,7 @@ import './borderlessInterface.css?borderless-interface=1';
 import './writingFields.css?writing-fields=1';
 import './mobileApp.css';
 import './mobileAlerts.css';
+import './toastRedesign.css';
 import { useLanguage } from './LanguageSelector';
 import { loadAccent } from './siteTheme';
 

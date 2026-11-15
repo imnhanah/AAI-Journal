@@ -69,11 +69,29 @@
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-modal .tj-mr-fab {bottom:46px;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-modal .tj-ma-scroll {padding-bottom:150px;}
 
+
+  /* Dock, header and full-screen page headers leave together and return together at the very top. */
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-100% - 16px));box-shadow:none;pointer-events:none;}
+  html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-100% - 16px));}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom {transition:transform .22s ease;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-mobile-bottom {transform:translateY(calc(100% + 4px));pointer-events:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-head {transition:transform .22s ease;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-ma-modal .tj-ma-head {transform:translateY(-110%);pointer-events:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-modal-overlay:has(.tj-ma-modal) {bottom:0!important;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-ma-modal .tj-ma-savebar,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-ma-modal .tj-mr-fab {bottom:max(14px,env(safe-area-inset-bottom,0px));}
+
   /* Things that sit above the bar */
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-layer.is-floating .tj-mobile-sheet {bottom:calc(var(--mobile-bottom) + 12px);right:10px;left:10px;max-height:calc(var(--tj-app-height,100dvh) - var(--mobile-bottom) - 32px - env(safe-area-inset-top,0px));}
 }
 @media (max-width:767px) and (prefers-reduced-motion:reduce) {
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar {transition:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-head {transition:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-add.has-due::after {animation:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom>.tj-mobile-tab-indicator {transition:none;}
+}
+
+/* Sheet handles are drag handles: no browser scrolling from them, and a generous touch area around the small bar. */
+@media (max-width:767px) {
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-routine-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mc6-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-st6-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-finance-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-phone-picker-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-day-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sheet-handle {touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mc6-sheet-handle::after,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-st6-sheet-handle::after,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sheet-handle::after {content:'';position:absolute;inset:-14px -48px -10px;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mc6-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-st6-sheet-handle,.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-sheet-handle {position:relative;}
 }

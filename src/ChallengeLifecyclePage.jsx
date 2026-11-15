@@ -15,6 +15,7 @@ import {buildChallengePlan, challengeFailureFloor, isAdaptiveBalanceMode, defaul
 import {scopeChallengeAccount,challengeLifecycle,linkedChallengeTrades,challengeStartingBalance,closedChallengeTrade,challengeTradingDays,challengeMoney,liveChallengeBalance} from './challengeLifecycle';
 import {accountLossGuardrails} from './accountRisk';
 import useBalanceChallenge from './useBalanceChallenge';
+import './challengeSync.css';
 import JournalSignalHeader from './JournalSignalHeader';
 import ChallengeCelebration, {useCompletionCelebration, TraderNameContext} from './ChallengeCelebration';
 import ChallengeCompletePopup from './ChallengeCompletePopup.jsx';
@@ -149,7 +150,7 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   if(!plan.length)return null;
   // Do not render a made-up Level 1 while the saved challenge state is still
   // arriving. A stable loading card is preferable to a visible level jump.
-  if(loading)return <article className="tj-panel tj-balance-challenge-panel tj-challenge-reference"><header><div><h3>{account.name}</h3><p>{mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit'} · {plan.length} levels</p></div></header><p role="status" className="tj-challenge-loading-state">Loading saved challenge progress…</p></article>;
+  if(loading)return <article className="tj-panel tj-balance-challenge-panel tj-challenge-reference"><header><div><h3>{account.name}</h3><p>{mode==='streak'?'Mode 2 — Two-Loss Streak':'Mode 1 — Risk Limit'} · {plan.length} levels</p></div></header><div role="status" aria-label="Loading saved challenge progress" className="tj-challenge-loading-state tj-challenge-skeleton"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div></article>;
   const passed=Object.values(state.statuses || {}).filter(status=>status==='Pass'||status==='Jumped').length;
   const funded=Object.values(state.statuses || {}).filter(status=>status==='Jumped').length;
   const current=plan[Math.min(Math.max(state.activeLevel || 1,1),plan.length)-1];

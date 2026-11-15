@@ -98,7 +98,7 @@ export default function MobileChallengesV6({onViewCertificate, account, plan, cu
   const riskValue = adaptive ? `${state.automation?.adaptiveDrawdownPct ?? 10}%` : `${state.lossStreak || 0}`;
 
   const hero = <article ref={heroRef} className="tj-mc6-card" data-card-id={account.id} style={{order}} aria-label={`${account.name} challenge`}>
-    <header><h2>{account.name}</h2><b className={failed ? 'is-failed' : complete ? 'is-complete' : 'is-active'}>{failed ? 'Paused' : complete ? 'Complete' : 'Active'}</b></header>
+    <header><h2>{account.name}</h2>{challenge?.syncing && <span className="tj-ch-sync" role="status"><i aria-hidden="true"/>Syncing</span>}<b className={failed ? 'is-failed' : complete ? 'is-complete' : 'is-active'}>{failed ? 'Paused' : complete ? 'Complete' : 'Active'}</b></header>
     <div className="tj-mc6-tags"><span>{modeName}</span><span>{rewardLabel || `1:${rewardRatio(current)}`}</span></div>
     <div className="tj-mc6-level"><b>Level {currentLevel}</b><small>of {plan.length}</small></div>
     <div className="tj-mc6-segments" aria-hidden="true">{plan.map(row => { const status = mobileChallengeRowStatus(state, row.level, currentLevel, failed); return <i key={row.level} className={row.level === currentLevel ? 'is-now' : `is-${status.tone}`}/>; })}</div>
