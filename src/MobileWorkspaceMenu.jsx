@@ -16,12 +16,12 @@ function EditSheet({workspace, accounts, onClose, onRename, onDelete}) {
   const text = name.trim(), taken = nameTaken(accounts, text, workspace.id);
   const save = async () => { setBusy(true); const saved = await onRename(workspace, text); setBusy(false); if (saved !== false) onClose(); };
   const canDelete = accounts.length > 1;
-  return <Popup title="Edit workspace" hint={canDelete ? 'Deleting a workspace removes all of its trades. This can’t be undone.' : 'Keep at least one workspace.'} onClose={onClose} dirty={text !== workspace.name.trim()} footer={<>
+  return <Popup title="Edit account" hint={canDelete ? "Deleting an account removes all of its trades. This can't be undone." : 'Keep at least one account.'} onClose={onClose} dirty={text !== workspace.name.trim()} footer={<>
     <button type="button" disabled={busy || !text || taken} onClick={save}>{busy ? 'Saving…' : 'Save name'}</button>
-    {canDelete && <ConfirmDeleteButton className="tj-mr-delete" title={`Delete ${workspace.name}`} onClick={() => onDelete(workspace)}>Delete workspace</ConfirmDeleteButton>}
+    {canDelete && <ConfirmDeleteButton className="tj-mr-delete" title={`Delete ${workspace.name}`} onClick={() => onDelete(workspace)}>Delete account</ConfirmDeleteButton>}
   </>}>
-    <TextField label="Workspace name" value={name} autoComplete="off" onChange={event => setName(event.target.value)}/>
-    {taken && <p className="tj-mp-status is-error" role="alert">You already have a workspace with this name.</p>}
+    <TextField label="Account name" value={name} autoComplete="off" onChange={event => setName(event.target.value)}/>
+    {taken && <p className="tj-mp-status is-error" role="alert">You already have an account with this name.</p>}
   </Popup>;
 }
 
@@ -38,10 +38,10 @@ export default function MobileWorkspaceMenu({accounts, activeId, figures, onSele
   const editing = accounts.find(item => item.id === editingId);
 
   return <>
-    <button type="button" className="tj-wm-shade" aria-label="Close workspaces" onClick={onClose}/>
-    <section className="tj-wm" ref={panel} role="dialog" aria-label="Workspaces">
+    <button type="button" className="tj-wm-shade" aria-label="Close accounts" onClick={onClose}/>
+    <section className="tj-wm" ref={panel} role="dialog" aria-label="Accounts">
       <div className="tj-wm-head">
-        <div><h3>Workspaces</h3><small>{accounts.length} available</small></div>
+        <div><h3>Accounts</h3><small>{accounts.length} available</small></div>
         <button type="button" className="tj-wm-manage" aria-pressed={manage} onClick={() => setManage(value => !value)}><span>{manage ? 'Done' : 'Manage'}</span></button>
       </div>
       <div className="tj-wm-list">{accounts.map(item => {
@@ -53,7 +53,7 @@ export default function MobileWorkspaceMenu({accounts, activeId, figures, onSele
           {manage ? <Pencil className="tj-wm-edit" size={16} aria-hidden="true"/> : current && <span className="tj-wm-check"><Check size={14} strokeWidth={3} aria-hidden="true"/></span>}
         </button>;
       })}</div>
-      <button type="button" className="tj-wm-add" onClick={onCreate}><Plus size={18} aria-hidden="true"/>Add workspace</button>
+      <button type="button" className="tj-wm-add" onClick={onCreate}><Plus size={18} aria-hidden="true"/>Add account</button>
     </section>
     {editing && <EditSheet workspace={editing} accounts={accounts} onClose={() => setEditingId(null)} onRename={onRename} onDelete={async workspace => { const deleted = await onDelete(workspace); if (deleted !== false) setEditingId(null); }}/>}
   </>;

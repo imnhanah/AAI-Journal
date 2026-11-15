@@ -14,9 +14,8 @@ function Switch({label, on, onChange}) {
 
 const hintFor = ({named, currency}) => {
   if (!named && !currency) return 'Name and currency are required.';
-  if (!named) return 'Add a workspace name.';
-  if (!currency) return 'Choose a currency.';
-  return 'Ready to create';
+  if (!named) return 'Add an account name.';
+  return 'Choose a currency.';
 };
 
 export default function MobileNewWorkspace({draft, currencies, allowImport, importState, onImportFile, moneyShort, symbol, onClose, onCreate}) {
@@ -28,15 +27,15 @@ export default function MobileNewWorkspace({draft, currencies, allowImport, impo
   const leave = () => { const nav = getBackNavigation(); if (nav.enabled) nav.back(); else onClose(); };
   return <div className="tj-nw">
     <i className="tj-nw-grab" aria-hidden="true"/>
-    <header className="tj-nw-head"><button type="button" className="tj-nw-close" aria-label="Close" disabled={d.creating} onClick={leave}><span><X size={18}/></span></button><small>New workspace</small></header>
-    <div className="tj-nw-name"><input aria-label="Workspace name" placeholder="Workspace name" autoComplete="off" value={d.name} onChange={e => d.setName(e.target.value)}/></div>
+    <header className="tj-nw-head"><button type="button" className="tj-nw-close" aria-label="Close" disabled={d.creating} onClick={leave}><span><X size={18}/></span></button><small>New account</small></header>
+    <div className="tj-nw-name"><input aria-label="Account name" placeholder="Account name" autoComplete="off" value={d.name} onChange={e => d.setName(e.target.value)}/></div>
     <div className="tj-nw-sum">
       <div><small>Starting balance</small><b>{moneyShort(d.base, d.baseCurrency)}</b></div>
       <div><small>Currency</small><b className={currency ? '' : 'is-dim'}>{d.baseCurrency || 'Choose'}</b></div>
     </div>
     <div className="tj-nw-body">
       <section className="tj-nw-group">
-        <h3>Account<span className={currency ? 'is-ok' : ''}>{currency ? `${d.baseCurrency} selected` : 'Currency required'}</span></h3>
+        <h3>Account<span className={currency ? '' : 'is-warn'}>{currency ? `${d.baseCurrency} selected` : 'Currency required'}</span></h3>
         <div className="tj-nw-label">Currency</div>
         <div className="tj-nw-chips" role="radiogroup" aria-label="Currency" data-scroll-row="true">{currencies.map(item => <button type="button" key={item.code} role="radio" aria-checked={item.code === d.baseCurrency} onClick={() => d.setBaseCurrency(item.code)}>{item.code}</button>)}</div>
         <Field label="Balance" prefix={symbol(d.baseCurrency)} inputMode="decimal" placeholder="0" value={d.balance || ''} onChange={e => d.setBalance(e.target.value)}/>
@@ -66,8 +65,8 @@ export default function MobileNewWorkspace({draft, currencies, allowImport, impo
       </div></section>
     </div>
     <footer className="tj-nw-foot">
-      <p aria-live="polite">{hintFor({named, currency})}</p>
-      <div><button type="button" disabled={d.creating} onClick={leave}>Cancel</button><button type="button" className="is-primary" disabled={!ready || d.creating} onClick={onCreate}>{d.creating ? 'Creating…' : 'Create workspace'}</button></div>
+      <p aria-live="polite">{!ready && hintFor({named, currency})}</p>
+      <div><button type="button" disabled={d.creating} onClick={leave}>Cancel</button><button type="button" className="is-primary" disabled={!ready || d.creating} onClick={onCreate}>{d.creating ? 'Creating…' : 'Create account'}</button></div>
     </footer>
   </div>;
 }

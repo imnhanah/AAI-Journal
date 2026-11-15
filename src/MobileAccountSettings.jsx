@@ -127,7 +127,7 @@ export default function MobileAccountSettings({initialTab = 'account', onClose, 
       </section>
       <main className="tj-ma-main">{account}{goals}</main>
       <div className="tj-ma-main"><h2 className="tj-ma-label">Danger zone</h2>{danger}</div>
-      <p className="tj-ma-foot">Settings stay private to this workspace.</p>
+      <p className="tj-ma-foot">Settings stay private to this account.</p>
     </div>
     {dirty && <div className="tj-ma-savebar"><button type="button" onClick={onClose}>Discard</button><button type="button" className="is-save" disabled={saveDisabled} title={saveTitle} onClick={onSave}>{saving ? 'Saving…' : 'Save settings'}</button></div>}
   </div>;

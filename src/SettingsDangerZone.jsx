@@ -18,7 +18,7 @@ export default function SettingsDangerZone({account, accountNames, onReset, onDe
   const trigger = useRef(null);
   const dialog = useRef(null);
   const inFlight = useRef(false);
-  const workspaceName = account.name || 'workspace';
+  const workspaceName = account.name || 'account';
   useEffect(() => {
     if (!open || phone) return;
     const dismiss = event => {if (!container.current?.contains(event.target)) setOpen(false);};
@@ -62,28 +62,28 @@ export default function SettingsDangerZone({account, accountNames, onReset, onDe
       }
     }}>
       <div className="tj-settings-danger-icon">{action === 'reset' ? <RefreshCw size={21}/> : <Trash2 size={21}/>}</div>
-      <h3 id="settings-danger-title">{action === 'reset' ? 'Reset' : 'Delete'} {workspaceName} workspace?</h3>
-      <p id="settings-danger-description">{action === 'reset' ? 'This erases the trade history and check-ins for every account in this workspace. Your account settings stay as they are.' : 'This permanently deletes the workspace and everything in it: every account, trade, markup, review, and history entry.'}</p>
+      <h3 id="settings-danger-title">{action === 'reset' ? 'Reset' : 'Delete'} {workspaceName} account?</h3>
+      <p id="settings-danger-description">{action === 'reset' ? 'This erases all trade history and check-ins for this account. Your settings stay as they are.' : 'This permanently deletes the account and everything in it: every trade, markup, review, and history entry.'}</p>
       <div className="tj-settings-danger-accounts">{accountNames.map((name, index) => <span key={index}>{name}</span>)}</div>
-      {action === 'reset' ? <label className="tj-settings-danger-ack"><input type="checkbox" checked={acknowledged} disabled={busy} onChange={event => setAcknowledged(event.target.checked)}/>I understand this can’t be undone</label> : <label className="tj-settings-danger-name">Type <strong>{workspaceName}</strong> to confirm<input className="tj-input" aria-label="Workspace name to confirm deletion" autoComplete="off" placeholder={workspaceName} disabled={busy} value={typedName} onChange={event => setTypedName(event.target.value)}/></label>}
+      {action === 'reset' ? <label className="tj-settings-danger-ack"><input type="checkbox" checked={acknowledged} disabled={busy} onChange={event => setAcknowledged(event.target.checked)}/>I understand this can't be undone</label> : <label className="tj-settings-danger-name">Type <strong>{workspaceName}</strong> to confirm<input className="tj-input" aria-label="Account name to confirm deletion" autoComplete="off" placeholder={workspaceName} disabled={busy} value={typedName} onChange={event => setTypedName(event.target.value)}/></label>}
       {error && <p className="tj-settings-danger-error" role="alert">{error}</p>}
-      <div className="tj-settings-danger-buttons"><button type="button" className="tj-btn-outline" disabled={busy} onClick={close}>Cancel</button><button type="button" className="tj-settings-danger-confirm" disabled={!allowed || busy} onClick={confirm}>{busy ? (action === 'reset' ? 'Resetting…' : 'Deleting…') : (action === 'reset' ? 'Reset data' : 'Delete workspace')}</button></div>
+      <div className="tj-settings-danger-buttons"><button type="button" className="tj-btn-outline" disabled={busy} onClick={close}>Cancel</button><button type="button" className="tj-settings-danger-confirm" disabled={!allowed || busy} onClick={confirm}>{busy ? (action === 'reset' ? 'Resetting…' : 'Deleting…') : (action === 'reset' ? 'Reset data' : 'Delete account')}</button></div>
     </section>
   </div>;
   if (inline) return <div ref={container}>
     <div className="tj-ma-danger">
-      <button ref={trigger} type="button" onClick={() => request('reset')}><span className="tj-ma-icon is-red"><RefreshCw size={18}/></span><span className="tj-ma-copy"><strong>Reset workspace data</strong><small>Erases trade history and check-ins for every account in {workspaceName}. Settings stay.</small></span></button>
-      <button type="button" className="is-delete" onClick={() => request('delete')}><span className="tj-ma-icon is-red"><Trash2 size={18}/></span><span className="tj-ma-copy"><strong>Delete workspace</strong><small>Permanently removes {workspaceName} and every account in it.</small></span></button>
+      <button ref={trigger} type="button" onClick={() => request('reset')}><span className="tj-ma-icon is-red"><RefreshCw size={18}/></span><span className="tj-ma-copy"><strong>Reset account data</strong><small>Erases all trade history and check-ins for {workspaceName}. Settings stay.</small></span></button>
+      <button type="button" className="is-delete" onClick={() => request('delete')}><span className="tj-ma-icon is-red"><Trash2 size={18}/></span><span className="tj-ma-copy"><strong>Delete account</strong><small>Permanently removes {workspaceName} and all its data.</small></span></button>
     </div>
     {root && confirmation ? createPortal(confirmation, root) : confirmation}
   </div>;
   return <div className="tj-settings-danger-menu" ref={container} onKeyDown={event => {if (event.key === 'Escape' && open) {event.stopPropagation();setOpen(false);trigger.current?.focus();}}}>
     <button ref={trigger} type="button" className="is-danger" aria-expanded={open} aria-controls="settings-danger-popover" onClick={() => setOpen(value => !value)}>Danger Zone</button>
     {open && phone && <PhoneWorkspaceDangerSheet workspaceName={workspaceName} trigger={trigger} onClose={()=>setOpen(false)} onRequest={request}/>}
-    {open && !phone && <section id="settings-danger-popover" className="tj-settings-danger-popover" aria-label="Workspace danger zone">
-      <header><strong><Trash2 size={14}/> Danger zone</strong><small>{workspaceName} workspace</small></header>
-      <div><span><strong>Reset workspace data</strong><small>Erases trade history and check-ins across all accounts in this workspace, but keeps your account settings.</small></span><button type="button" onClick={() => request('reset')}><RefreshCw size={12}/> Reset</button></div>
-      <div><span><strong>Delete workspace</strong><small>Permanently deletes this workspace, including all accounts and their trades, markups, reviews, and history.</small></span><button type="button" onClick={() => request('delete')}>Delete</button></div>
+    {open && !phone && <section id="settings-danger-popover" className="tj-settings-danger-popover" aria-label="Account danger zone">
+      <header><strong><Trash2 size={14}/> Danger zone</strong><small>{workspaceName}</small></header>
+      <div><span><strong>Reset account data</strong><small>Erases all trade history and check-ins for this account, but keeps your settings.</small></span><button type="button" onClick={() => request('reset')}><RefreshCw size={12}/> Reset</button></div>
+      <div><span><strong>Delete account</strong><small>Permanently deletes this account and everything in it: every trade, markup, review, and history entry.</small></span><button type="button" onClick={() => request('delete')}>Delete</button></div>
     </section>}
     {root && confirmation ? createPortal(confirmation, root) : confirmation}
   </div>;

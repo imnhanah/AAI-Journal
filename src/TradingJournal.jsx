@@ -1729,7 +1729,7 @@ function LinkedPercentageAmountCards({ label, currency, percentage, amount, onPe
 }
 
 
-function AccountSettingsSection({ title, children, status, icon, tone = "", danger = false, referencePosition = false, tradeCosts = null, enabled, onEnabledChange, description }) {
+function AccountSettingsSection({ title, children, status, statusClass, icon, tone = "", danger = false, referencePosition = false, tradeCosts = null, enabled, onEnabledChange, description }) {
   if (referencePosition) {
     const parts = React.Children.toArray(children);
     const switchParts = React.Children.toArray(parts[0]?.props.children);
@@ -1737,7 +1737,7 @@ function AccountSettingsSection({ title, children, status, icon, tone = "", dang
   }
   return <section className={`tj-settings-section ${tone ? `tj-settings-section-${tone}` : ""} ${danger ? "tj-settings-section-danger" : ""}`}>
     <div className="tj-settings-section-head" style={{cursor:"default"}}>
-      <span className="tj-settings-section-title">{icon && <i>{icon}</i>}<span><strong>{title}</strong>{description && <small>{description}</small>}</span></span>{onEnabledChange ? <button type="button" role="switch" aria-label={`Enable ${title}`} aria-checked={enabled} className={`tj-settings-switch ${enabled ? "tj-settings-switch-on" : ""}`} onClick={() => onEnabledChange(!enabled)}><i/></button> : status && <span className="tj-settings-section-end"><em>{status}</em></span>}
+      <span className="tj-settings-section-title">{icon && <i>{icon}</i>}<span><strong>{title}</strong>{description && <small>{description}</small>}</span></span>{onEnabledChange ? <button type="button" role="switch" aria-label={`Enable ${title}`} aria-checked={enabled} className={`tj-settings-switch ${enabled ? "tj-settings-switch-on" : ""}`} onClick={() => onEnabledChange(!enabled)}><i/></button> : status && <span className="tj-settings-section-end"><em className={statusClass || ''}>{status}</em></span>}
     </div>
     <div className="tj-settings-section-body">{onEnabledChange ? <fieldset className="tj-settings-enabled-fields" disabled={!enabled}>{children}</fieldset> : children}</div>
   </section>;
@@ -2019,7 +2019,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   return (
     <Modal title={phone?<span className="tj-phone-account-title"><strong>{name}</strong><small>Account settings</small></span>:<span className="tj-symbol-title"><WalletCards size={18} />Account</span>} className={`tj-account-settings-hub-modal tj-account-settings-redesign ${deskPanel ? "tj-account-panel-modal" : ""}`} centered={!deskPanel} entryPanel={deskPanel} entryPanelOpen={accountPanelOpen} entryPanelPosition={tradePanelPosition} entryPanelBehavior={tradePanelBehavior} entryPanelUserId={`${userId}:account`} entryPanelWidth={680} onClose={closeAccount} wide headerActions={<button className="tj-icon-btn tj-modal-save" title="Save Settings" aria-label="Save Settings" disabled={!name.trim() || !baseCurrency || savingSettings} onClick={saveSettings}><CheckCircle2 size={18}/></button>}>
       <div ref={summary} className="tj-settings-account-hero tj-settings-account-hero-no-avatar">
-        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span className="tj-settings-hero-badge">Your workspace</span><h2>Account</h2></div>
+        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span className="tj-settings-hero-badge">Your account</span><h2>Account</h2></div>
         <div className="tj-settings-workspace-summary"><small>{multiBalanceWorkspace ? selectedBalance?.name || "Selected account" : name || "Account 1"} balance</small><b className={deskPanel && settingsLiveBalance < 0 ? "is-loss" : undefined}>{settingsLiveBalance == null ? "—" : fmtMoney(settingsLiveBalance, baseCurrency)}</b></div>
         {deskPanel && <button type="button" className="tj-modal-close sp-close tj-account-panel-close" aria-label="Close account settings" title="Close (Esc)" onClick={closeAccount}><X size={16} strokeWidth={2.4}/></button>}
       </div>
@@ -2051,7 +2051,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       </div>
       </div>
       <div className="tj-modal-actions tj-settings-hub-footer">
-        <span>Settings stay private to this workspace.</span>
+        <span>Settings stay private to this account.</span>
         <button className="tj-btn-outline tj-settings-cancel-text" onClick={closeAccount}>Cancel</button>
         <button className="tj-btn-primary" disabled={!name.trim() || !baseCurrency || savingSettings} title={!baseCurrency ? "Choose an account base currency before saving" : ""} onClick={saveSettings}>{savingSettings ? "Saving…" : "Save Settings"}</button>
       </div>
@@ -3518,7 +3518,7 @@ export function AddAccountModal({ onClose, onCreate, userId = null, tradePanelPo
   const [isPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   const phone = isPhone && window.matchMedia(MOBILE_MEDIA).matches;
   if (phone) return (
-    <Modal navKey="new-workspace" title="New workspace" className="tj-nw-modal" centered wide onClose={onClose}>
+    <Modal navKey="new-workspace" title="New account" className="tj-nw-modal" centered wide onClose={onClose}>
       <MobileNewWorkspace currencies={ACCOUNT_CURRENCIES} allowImport={allowImport} moneyShort={fmtMoneyShort} symbol={currencySymbol} onClose={onClose} onCreate={create} onImportFile={pickImportFile}
         importState={{fileName:importFile?.name || "", summary:importPreview.trades?.length ? `${importPreview.trades.length} trades${importPreview.cashMovements?.length ? ` and ${importPreview.cashMovements.length} cash movements` : ""} will import` : "", error:importError, progress:importingTrades ? importProgress : null}}
         draft={{name, setName, baseCurrency, setBaseCurrency, base:accountBase, balance, setBalance:setStartingBalance, breakevenCap, setBreakevenCap, commission:defaultCommission, setCommission:setDefaultCommission, positionOn:positionSizeEnabled, setPositionOn:setPositionSizeEnabled, risk:defaultRiskPct, setRisk:setDefaultRiskPct, stopLoss:defaultStopLossPips, setStopLoss:setDefaultStopLossPips, monthlyGoal:monthlyGoalPct, setMonthlyGoal:setMonthlyGoalPercentage, yearlyGoal:yearlyGoalPct, setYearlyGoal:setYearlyGoalPercentage, dailyLoss:dailyLossLimitPct, setDailyLoss:setDailyLossLimitPct, monthlyLoss:monthlyLossLimitPct, setMonthlyLoss:setMonthlyLossLimitPct, creating, touched:!!(name.trim() || baseCurrency || Number(balance) || Number(breakevenCap) || Number(defaultCommission) || importFile)}}
@@ -3528,13 +3528,13 @@ export function AddAccountModal({ onClose, onCreate, userId = null, tradePanelPo
   const closePanel = () => { if (!panelOpen) return; setPanelOpen(false); window.setTimeout(onClose, 420); };
   const canCreate = !creating && !!name.trim() && !!baseCurrency && !importError;
   return (
-    <Modal title={<span className="tj-symbol-title"><Briefcase size={18}/>Add a workspace</span>} onClose={closePanel} className="tj-new-workspace-panel tj-account-settings-hub-modal" entryPanel entryPanelOpen={panelOpen} entryPanelPosition={tradePanelPosition} entryPanelBehavior={tradePanelBehavior} entryPanelUserId={userId ? `${userId}:workspace` : 'workspace'} entryPanelWidth={640}>
+    <Modal title={<span className="tj-symbol-title"><Briefcase size={18}/>Add an account</span>} onClose={closePanel} className="tj-new-workspace-panel tj-account-settings-hub-modal" entryPanel entryPanelOpen={panelOpen} entryPanelPosition={tradePanelPosition} entryPanelBehavior={tradePanelBehavior} entryPanelUserId={userId ? `${userId}:workspace` : 'workspace'} entryPanelWidth={640}>
       <div className="tj-settings-account-hero tj-new-account-hero tj-settings-account-hero-no-avatar">
-        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span>NEW WORKSPACE</span><label className="tj-settings-workspace-name tj-nwp-name-field"><Briefcase size={15}/><input aria-label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Workspace name" autoFocus/></label></div>
+        <div className="tj-settings-hero-copy tj-settings-workspace-heading"><span>NEW ACCOUNT</span><label className="tj-settings-workspace-name tj-nwp-name-field"><Briefcase size={15}/><input aria-label="Account name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Account name" autoFocus/></label></div>
         <div className="tj-settings-workspace-summary"><div><small>STARTING BALANCE</small><strong>{fmtMoneyShort(accountBase, baseCurrency)}</strong></div><div><small>CURRENCY</small><strong>{baseCurrency || "Choose below"}</strong></div></div>
       </div>
       <div className="tj-nwp-sections">
-        <AccountSettingsSection title="Account" icon={<Banknote size={15}/>} tone="account" status={baseCurrency ? baseCurrency : "Currency required"}>
+        <AccountSettingsSection title="Account" icon={<Banknote size={15}/>} tone="account" status={baseCurrency ? baseCurrency : "Currency required"} statusClass={baseCurrency ? 'tj-status-soft' : 'tj-status-warn'}>
           <div className="tj-grid2">
             <Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" value={balance} onChange={(e) => setStartingBalance(e.target.value)} /></Field>
             <Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.label} ({c.symbol})</option>)}</ThemeSelect></Field>
@@ -6556,9 +6556,9 @@ function NoWorkspaceState({ onAdd, importLink }) {
   return (
     <div className="tj-no-workspace-state">
       <Sparkles size={36} strokeWidth={1.4} aria-hidden="true"/>
-      <strong>No workspace yet</strong>
-      <p>Add your first workspace to start tracking your trades, plans, and performance.</p>
-      <button type="button" className="tj-btn-primary" onClick={onAdd}><Plus size={15}/>Add your first workspace</button>
+      <strong>No account yet</strong>
+      <p>Add your first account to start tracking your trades, plans, and performance.</p>
+      <button type="button" className="tj-btn-primary" onClick={onAdd}><Plus size={15}/>Add your first account</button>
       {importLink && <button type="button" className="tj-btn-outline" onClick={importLink}>Import trades instead</button>}
     </div>
   );
@@ -8983,7 +8983,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           closeTime: trade.closeTime,
           status: trade.closeDate || trade.closeTime || trade.pnl !== "" ? "closed" : "open",
         }]);
-        if (result.error) { showError(`${result.error} Your workspace was not changed locally; retry after the account-target tables are available.`); return false; }
+        if (result.error) { showError(`${result.error} Your account was not changed locally; retry after the account-target tables are available.`); return false; }
         savedByTradeId.set(trade.id, result.data);
       }
       migratedTradeResults = savedByTradeId;
@@ -9198,17 +9198,17 @@ export function TradingJournalApp({ user, membership, onLogout }) {
             <button type="button" className="tj-btn-primary" disabled={guardrails.tradeEntryLocked} onClick={() => requireWorkspace(() => openNewTrade())}><Plus size={16}/>Log trade</button>
             <div id={PHONE_HEADER_SLOT_ID} className="tj-phone-header-slot"/>
             <div className="tj-header-account-control" ref={accountMenuRef}>
-              <button type="button" className="tj-header-account-switcher" aria-label={account.isPlaceholder ? "Add workspace" : `Switch journal: ${account.name}`} aria-expanded={showAccountMenu} onClick={() => requireWorkspace(() => setShowAccountMenu((open) => !open))}><span className="tj-account-initial" aria-hidden="true">{account.isPlaceholder ? <Plus size={14}/> : accountInitial(account.name)}</span><span>{account.isPlaceholder ? 'Add workspace' : account.name.length > 14 ? `${account.name.slice(0, 14)}…` : account.name}</span><ChevronDown size={16}/></button>
+              <button type="button" className="tj-header-account-switcher" aria-label={account.isPlaceholder ? "Add account" : `Switch journal: ${account.name}`} aria-expanded={showAccountMenu} onClick={() => requireWorkspace(() => setShowAccountMenu((open) => !open))}><span className="tj-account-initial" aria-hidden="true">{account.isPlaceholder ? <Plus size={14}/> : accountInitial(account.name)}</span><span>{account.isPlaceholder ? 'Add account' : account.name.length > 14 ? `${account.name.slice(0, 14)}…` : account.name}</span><ChevronDown size={16}/></button>
               {showAccountMenu && phoneViewport && <MobileWorkspaceMenu accounts={accounts} activeId={activeId} onClose={() => setShowAccountMenu(false)}
                 figures={(item) => { const pnl = computeStats(item.trades || [], item.breakevenCap).netPnl; return {balance:fmtMoneyShort(financeTotals(item).tradingBalance, item.baseCurrency), pnl:fmtMoneyShort(pnl, item.baseCurrency), pnlTone:pnl > 0 ? "gain" : pnl < 0 ? "loss" : "flat"}; }}
                 onSelect={(item) => { setShowAccountMenu(false); if (item.id !== activeId) { setActiveId(item.id); showInfo(`Switched to ${item.name}`); } }}
                 onRename={handleRenameWorkspace} onDelete={handleDeleteAccount}
                 onCreate={() => { setShowAccountMenu(false); setModal("addaccount"); }}/>}
               {showAccountMenu && !phoneViewport && <div className="tj-account-menu">
-                <div className="tj-account-center-head"><div><strong>{SHELL_V2 ? "Switch workspace" : "Switch journal"}</strong><small>{accounts.length} {SHELL_V2 ? "workspace" : "journal"}{accounts.length === 1 ? "" : "s"} available</small></div><div className="tj-account-menu-actions"><button type="button" className="tj-icon-btn" aria-label="Open account settings" title="Account settings" onClick={() => { setShowAccountMenu(false); setModal("account"); }}><SlidersHorizontal size={16}/></button><button type="button" className="tj-icon-btn" aria-label="Close account center" onClick={() => setShowAccountMenu(false)}><X size={16}/></button></div></div>
-                <div className="tj-account-center-active"><div className="tj-account-center-active-head"><span className="tj-account-initial tj-account-initial-lg" aria-hidden="true">{accountInitial(account.name)}</span><div><strong>{account.name}</strong><small>{SHELL_V2 ? "Current workspace" : "Current journal"}</small></div><span className="tj-account-current-check" aria-label="Current journal">✓</span></div><div className="tj-account-center-metrics"><div><small>BALANCE</small><strong>{fmtMoneyShort(netTotal, account.baseCurrency)}</strong></div><div><small>NET P&amp;L</small><strong className={stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoneyShort(stats.netPnl, account.baseCurrency)}</strong></div></div></div>
+                <div className="tj-account-center-head"><div><strong>{SHELL_V2 ? "Switch account" : "Switch journal"}</strong><small>{accounts.length} {SHELL_V2 ? "account" : "journal"}{accounts.length === 1 ? "" : "s"} available</small></div><div className="tj-account-menu-actions"><button type="button" className="tj-icon-btn" aria-label="Open account settings" title="Account settings" onClick={() => { setShowAccountMenu(false); setModal("account"); }}><SlidersHorizontal size={16}/></button><button type="button" className="tj-icon-btn" aria-label="Close account center" onClick={() => setShowAccountMenu(false)}><X size={16}/></button></div></div>
+                <div className="tj-account-center-active"><div className="tj-account-center-active-head"><span className="tj-account-initial tj-account-initial-lg" aria-hidden="true">{accountInitial(account.name)}</span><div><strong>{account.name}</strong><small>{SHELL_V2 ? "Current account" : "Current journal"}</small></div><span className="tj-account-current-check" aria-label="Current journal">✓</span></div><div className="tj-account-center-metrics"><div><small>BALANCE</small><strong>{fmtMoneyShort(netTotal, account.baseCurrency)}</strong></div><div><small>NET P&amp;L</small><strong className={stats.netPnl >= 0 ? "tj-green" : "tj-red"}>{fmtMoneyShort(stats.netPnl, account.baseCurrency)}</strong></div></div></div>
                 <div className="tj-account-center-list">{accounts.filter((a) => a.id !== activeId).map((a) => <div key={a.id} className="tj-account-row-wrap"><button className="tj-account-row" aria-current={a.id === activeId ? "true" : undefined} onClick={() => { setActiveId(a.id); setShowAccountMenu(false); }}><span className="tj-account-initial" aria-hidden="true">{accountInitial(a.name)}</span><span className="tj-account-row-name"><strong>{a.name}</strong>{SHELL_V2 && <small>{fmtMoneyShort(financeTotals(a).tradingBalance, a.baseCurrency)} balance</small>}</span><span className="tj-account-row-radio" aria-hidden="true"/></button>{manageJournals && accounts.length > 1 && <ConfirmDeleteButton className="tj-account-delete" title={`Delete ${a.name} journal`} onClick={(event) => { event.stopPropagation(); handleDeleteAccount(a); }}>Delete</ConfirmDeleteButton>}</div>)}</div>
-                {manageJournals && <p className="tj-account-delete-warning">Deleting a journal removes all of its trades. This can't be undone.{accounts.length === 1 && " Keep at least one journal."}</p>}<button className="tj-add-account" onClick={() => { setModal("addaccount"); setShowAccountMenu(false); }}><Plus size={14}/> {SHELL_V2 ? "Add workspace" : "Add account"}</button>
+                {manageJournals && <p className="tj-account-delete-warning">Deleting a journal removes all of its trades. This can't be undone.{accounts.length === 1 && " Keep at least one journal."}</p>}<button className="tj-add-account" onClick={() => { setModal("addaccount"); setShowAccountMenu(false); }}><Plus size={14}/> Add account</button>
               </div>}
             </div>
           </div>
@@ -10265,7 +10265,7 @@ i.tj-dot-green { background: var(--tj-green); } i.tj-dot-red { background: var(-
 .tj-settings-section:not(.tj-settings-section-danger):nth-of-type(5n) .tj-settings-section-title > i { border-color: color-mix(in srgb, var(--tj-green) 34%, var(--tj-border)); background: color-mix(in srgb, var(--tj-green) 10%, transparent); color: var(--tj-green); }
 .tj-settings-section:not(.tj-settings-section-danger):nth-of-type(7n) .tj-settings-section-title > i { border-color: color-mix(in srgb, var(--tj-amber) 38%, var(--tj-border)); background: color-mix(in srgb, var(--tj-amber) 10%, transparent); color: var(--tj-amber); }
 .tj-settings-section-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: none; background: none; color: var(--tj-text); padding: 15px 16px; text-align: left; cursor: pointer; font: inherit; }.tj-settings-section-head:hover { background: color-mix(in srgb, var(--tj-panel) 42%, transparent); }
-.tj-settings-section-title { min-width: 0; display: flex; align-items: center; gap: 11px; }.tj-settings-section-title > i { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--tj-border) 78%, transparent); border-radius: 11px; color: var(--tj-muted); font-style: normal; }.tj-settings-section-title > span { min-width: 0; display: grid; gap: 3px; }.tj-settings-section-head small { color: var(--tj-muted); font-size: 0.8125rem; font-weight: 400; }.tj-settings-section-head svg { transition: transform .16s ease; color: var(--tj-muted); }.tj-settings-section-end { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; }.tj-settings-section-end em { max-width: 140px; overflow: hidden; padding: 4px 9px; border: 1px solid var(--tj-border); border-radius: 999px; color: var(--tj-muted); font-size: var(--text-min); font-style: normal; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.tj-settings-section-title { min-width: 0; display: flex; align-items: center; gap: 11px; }.tj-settings-section-title > i { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--tj-border) 78%, transparent); border-radius: 11px; color: var(--tj-muted); font-style: normal; }.tj-settings-section-title > span { min-width: 0; display: grid; gap: 3px; }.tj-settings-section-head small { color: var(--tj-muted); font-size: 0.8125rem; font-weight: 400; }.tj-settings-section-head svg { transition: transform .16s ease; color: var(--tj-muted); }.tj-settings-section-end { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; }.tj-settings-section-end em { max-width: 140px; overflow: hidden; padding: 4px 9px; border: 1px solid var(--tj-border); border-radius: 999px; color: var(--tj-muted); font-size: var(--text-min); font-style: normal; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }.tj-settings-section-end em.tj-status-warn { border-color: color-mix(in srgb,var(--tj-amber) 45%,var(--tj-border)); color: var(--tj-amber); background: color-mix(in srgb,var(--tj-amber) 10%,transparent); }.tj-settings-section-end em.tj-status-soft { border-color: color-mix(in srgb,var(--tj-accent) 45%,var(--tj-border)); color: var(--tj-accent); background: color-mix(in srgb,var(--tj-accent) 10%,transparent); }
 .tj-settings-section-body { border-top: 1px solid color-mix(in srgb, var(--tj-border) 72%, transparent); padding: 16px; }.tj-settings-section-body .tj-field:last-child { margin-bottom: 0; }.tj-settings-hint { font-size: 0.8125rem; line-height: 1.4; margin-top: 5px; }.tj-settings-off-note { margin-top: 4px; color: var(--tj-muted); font-size: 0.8125rem; line-height: 1.4; }
 .tj-root .tj-modal.tj-modal-wide.tj-account-settings-hub-modal { width:min(880px,calc(100vw - 40px)); height:min(920px,calc(100dvh - 40px)); max-height:calc(100dvh - 40px); display:flex; flex-direction:column; overflow:hidden; }
 .tj-root .tj-account-settings-hub-modal .tj-modal-body { padding:0; display:flex; flex-direction:column; min-height:0; flex:1; overflow:hidden; }

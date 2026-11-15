@@ -64,7 +64,7 @@ function ListSection({ id, title, desc, one, many, placeholder, items, grid, onA
   const shown = items.filter((item) => lower(item.label).includes(lower(query)));
   const exists = (text, except) => items.some((item) => item.id !== except && lower(item.label) === lower(text));
   const add = (text) => { if (exists(text)) { toast('Already in the list'); return false; } onAdd(text); toast(`Added “${text}”`); };
-  const rename = (item, text) => { if (!text) { toast('A name can’t be empty'); return false; } if (exists(text, item.id)) { toast('Already in the list'); return false; } if (text !== item.label) onRename(item.id, text); };
+  const rename = (item, text) => { if (!text) { toast("A name can't be empty"); return false; } if (exists(text, item.id)) { toast('Already in the list'); return false; } if (text !== item.label) onRename(item.id, text); };
   return <>
     <Head id={id} title={title} count={plural(items.length, one, many)} desc={desc}><SearchBox value={query} onChange={setQuery} placeholder="Search this list…"/></Head>
     <AddBar placeholder={placeholder} onAdd={add}/>
@@ -97,7 +97,7 @@ function RoutineSection({ routine, onUpdate, run, toast }) {
       return item.group !== targetGroup ? updateRoutineItem(next, item, { group: targetGroup }) : next;
     });
   };
-  const rename = async (item, text) => { if (!text) { toast('A name can’t be empty'); return false; } if (text === item.label) return; return save((current) => updateRoutineItem(current, item, { label: text })); };
+  const rename = async (item, text) => { if (!text) { toast("A name can't be empty"); return false; } if (text === item.label) return; return save((current) => updateRoutineItem(current, item, { label: text })); };
   const add = async (text) => { const item = { id: `custom-${crypto.randomUUID()}`, label: text, group, order: items.length, enabled: true }; const ok = await save((current) => ({ ...current, customItems: [...current.customItems, item], order: [...current.order, item.id] })); if (ok) toast(`Added “${text}”`); return ok; };
   const list = (key, title) => {
     const all = items.filter((item) => item.group === key), rows = all.filter((item) => lower(item.label).includes(lower(query)));
@@ -120,7 +120,7 @@ function RoutineSection({ routine, onUpdate, run, toast }) {
   };
   const day = (key) => new Date(`${key}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'narrow', timeZone: 'UTC' });
   return <>
-    <Head id="daily-routine" title="Daily routine" count={plural(activeRoutineItems(routine).length, 'item on', 'items on')} desc="the same in every workspace"><button type="button" className="js2-bn" disabled={listDisabled} onClick={async () => { if (await save(restoreRoutineItems)) toast('Recommended items restored'); }}>Restore recommended</button></Head>
+    <Head id="daily-routine" title="Daily routine" count={plural(activeRoutineItems(routine).length, 'item on', 'items on')} desc="the same in every account"><button type="button" className="js2-bn" disabled={listDisabled} onClick={async () => { if (await save(restoreRoutineItems)) toast('Recommended items restored'); }}>Restore recommended</button></Head>
     <div className="js2-st">
       <div><div><small>Today</small><b>{todayDone}<em>/{todayTotal}</em></b><span>{todayCompletion ? 'Saved for today' : 'Not started yet'}</span></div><i className="js2-ring" style={{ '--p': todayTotal ? Math.round((todayDone / todayTotal) * 100) : 0 }} aria-hidden="true"><u>{todayTotal ? Math.round((todayDone / todayTotal) * 100) : 0}%</u></i></div>
       <div><div><small>Current streak</small><b>{history.streak}<em> days</em></b><span>{history.streak ? 'Keep it going' : 'Complete a day to start'}</span></div><i className="js2-ic" aria-hidden="true"><Flame size={20}/></i></div>
@@ -156,7 +156,7 @@ function InstrumentSection({ instruments, onSave, toast }) {
   };
   const rename = (old, text) => {
     const next = normalizeInstrument(text);
-    if (!next) { toast('A name can’t be empty'); return false; }
+    if (!next) { toast("A name can't be empty"); return false; }
     if (available.some((item) => item.symbol !== old && sameInstrument(item.symbol, next))) { toast(`${next} is already in your list`); return false; }
     onSave(instruments.map((item) => symbolOf(item) === old ? (typeof item === 'string' ? { symbol: next, group: instrumentGroup(item) } : { ...item, symbol: next }) : item));
   };
@@ -210,7 +210,7 @@ function MappingSection({ userId, instruments, toast }) {
   const setMappings = (next) => { setMappingsState(next); try { window.localStorage.setItem(mappingKey(userId), JSON.stringify(next)); } catch { toast('Could not save on this device'); } };
   const add = () => {
     const name = source.trim();
-    if (!name) { toast('Enter the broker’s name'); return; }
+    if (!name) { toast("Enter the broker's name"); return; }
     if (mappings.some((item) => lower(item.source) === lower(name))) { toast('That mapping already exists'); return; }
     setMappings([...mappings, { source: name, target }]); setSource(''); toast('Mapping added');
   };

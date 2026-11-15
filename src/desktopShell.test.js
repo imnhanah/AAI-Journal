@@ -40,9 +40,9 @@ test('shell v2 styles stay off phones, use tokens and keep text at 12px or more'
 
 test('the v2 workspace switcher keeps its handlers, says workspace and shows each balance', () => {
   assert.match(journal, /showAccountMenu && !phoneViewport && <div className="tj-account-menu">/);
-  assert.match(journal, /\{SHELL_V2 \? "Switch workspace" : "Switch journal"\}/);
+  assert.match(journal, /\{SHELL_V2 \? "Switch account" : "Switch journal"\}/);
   assert.match(journal, /\{SHELL_V2 && <small>\{fmtMoneyShort\(financeTotals\(a\)\.tradingBalance, a\.baseCurrency\)\} balance<\/small>\}/);
-  assert.match(journal, /\{SHELL_V2 \? "Add workspace" : "Add account"\}/);
+  assert.match(journal, /"Add account"/);
   assert.match(css, /\.tj-shell-v2 \.tj-account-menu \{/);
   assert.match(css, /@keyframes tj-ws-pop/);
 });

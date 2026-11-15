@@ -9,7 +9,7 @@ const journal = readFileSync(new URL('./TradingJournal.jsx', import.meta.url), '
 test('phones get the new sheet on the same create code, and desktop opens in a side panel', () => {
   assert.match(journal, /if \(phone\) return[\s\S]{0,10}<Modal navKey="new-workspace"/);
   assert.match(journal, /<MobileNewWorkspace /);
-  assert.match(journal, /Add a workspace/);
+  assert.match(journal, /Add an account/);
 });
 
 test('it can only be created once name and currency are valid', () => {

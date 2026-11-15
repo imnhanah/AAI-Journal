@@ -26,9 +26,9 @@ export default function SingleAccountSwitchDialog({accountNames, keptAccountName
         else if (!event.shiftKey && document.activeElement === last) {event.preventDefault();first?.focus();}
       }
     }}>
-      <header><span className="tj-single-switch-icon"><UsersRound size={19}/></span><div><h3 id="single-switch-title">Switch to Single account?</h3><p id="single-switch-description">Only {keptAccountName} stays in this workspace.</p></div></header>
+      <header><span className="tj-single-switch-icon"><UsersRound size={19}/></span><div><h3 id="single-switch-title">Switch to Single account?</h3><p id="single-switch-description">Only {keptAccountName} stays.</p></div></header>
       <section className="tj-single-switch-deleted"><div className="tj-single-switch-section-heading"><strong>Will be deleted</strong><div>{accountNames.map((name, index) => <span key={index}>{name || `Account ${index + 2}`}</span>)}</div></div><ul><li><X/>Every Account 2+ result and challenge record</li><li><X/>Account-specific settings</li><li><X/>Trades tagged only to another account</li></ul></section>
-      <section className="tj-single-switch-kept"><div className="tj-single-switch-section-heading"><strong>Will be kept</strong></div><ul><li><Check/>{keptAccountName} and its trades</li><li><Check/><span>Trades shared with {keptAccountName} <small>· they keep only {keptAccountName}’s P&amp;L</small></span></li></ul></section>
+      <section className="tj-single-switch-kept"><div className="tj-single-switch-section-heading"><strong>Will be kept</strong></div><ul><li><Check/>{keptAccountName} and its trades</li><li><Check/><span>Trades shared with {keptAccountName} <small>· they keep only {keptAccountName}'s P&amp;L</small></span></li></ul></section>
       <label className="tj-single-switch-ack"><input type="checkbox" checked={acknowledged} onChange={event => setAcknowledged(event.target.checked)}/>I understand this is permanent once I save</label>
       <footer><button type="button" className="tj-btn-outline" onClick={onCancel}>Keep Multiple</button><button type="button" className="tj-single-switch-confirm" disabled={!acknowledged} onClick={() => {if (acknowledged) onConfirm();}}>Delete extra account data and switch</button></footer>
     </section>

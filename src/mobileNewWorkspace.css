@@ -32,7 +32,7 @@
   .tj-nw-group {flex:none;padding:14px;border:.5px solid var(--border);border-radius:18px;background:var(--bg);}
   .tj-root .tj-nw-group>h3 {display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
   .tj-nw-group>h3 span {padding:2px 8px;border-radius:99px;background:var(--nw-soft);color:var(--accent);font-size:12px;letter-spacing:0;text-transform:none;}
-  .tj-nw-group>h3 span.is-ok {background:color-mix(in srgb,var(--phone-profit) 14%,transparent);color:var(--phone-profit);}
+  .tj-nw-group>h3 span.is-warn {background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);}
   .tj-nw-label,.tj-nw-field>span:first-child {display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:600;}
   .tj-nw-label.is-spaced {margin-top:14px;}
   .tj-nw-chips {display:flex;gap:8px;margin:0 -14px;padding:0 14px;overflow-x:auto;}
