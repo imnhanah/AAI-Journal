@@ -126,7 +126,18 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) return { error: friendlyAuthError(error) };
+    await activatePrivateUser(null);
+    return {};
+  } catch (e) {
+    return { error: friendlyAuthError(e) };
+  }
+}
+
+export async function signOutAll() {
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) return { error: friendlyAuthError(error) };
     await activatePrivateUser(null);
     return {};
@@ -158,6 +169,8 @@ export async function updatePassword(newPassword) {
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) return { error: friendlyAuthError(error) };
+    // Sign out other devices: they still hold the old password's sessions.
+    await supabase.auth.signOut({ scope: 'others' }).catch(() => {});
     return {};
   } catch (e) {
     return { error: friendlyAuthError(e) };

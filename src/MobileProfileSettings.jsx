@@ -39,10 +39,11 @@ function ChoiceRow({glyph, label, note, options, value, onChange, disabled = fal
 const SwitchRow = ({glyph, label, note, on, onChange}) => <div className="tj-ma-row is-static"><Tile glyph={glyph}/><span className="tj-ma-copy"><strong>{label}</strong>{note && <small>{note}</small>}</span>
   <button type="button" className="tj-ma-switch" role="switch" aria-label={label} aria-checked={on} onClick={onChange}><i aria-hidden="true"/></button></div>;
 
-export default function MobileProfileSettings({summaryRef, onClose, onDiscard, onSave, saveDisabled, saving, dirty, identity, photo, appearance, region, privacy, sync, password, onDelete, onLogout}) {
+export default function MobileProfileSettings({summaryRef, onClose, onDiscard, onSave, saveDisabled, saving, dirty, identity, photo, appearance, region, privacy, sync, password, onDelete, onLogout, onSignOutAll}) {
   useLeaveGuard(!!dirty, 'profile');
   const confirm = useConfirmation();
   const logOut = async () => { if (await confirm({title:'Log out of AAICOREFX?', description:'You can sign back in at any time.', confirmLabel:'Log out', cancelLabel:'Stay'})) onLogout(); };
+  const signOutAllDevices = async () => { if (await confirm({title:'Sign out of all devices?', description:'Signs out your account everywhere, including this device.', confirmLabel:'Sign out all', cancelLabel:'Cancel'})) onSignOutAll?.(); };
   const [editing, setEditing] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const library = useRef(null), camera = useRef(null);
@@ -99,6 +100,7 @@ export default function MobileProfileSettings({summaryRef, onClose, onDiscard, o
 
       <div className="tj-mp-exit">
         <button type="button" className="tj-mp-delete" onClick={logOut}><LogOut size={19} aria-hidden="true"/>Log out</button>
+        <button type="button" className="tj-mp-delete tj-mp-delete-all" onClick={signOutAllDevices}><LogOut size={19} aria-hidden="true"/>Sign out of all devices</button>
         <button type="button" className="tj-mp-delete" onClick={onDelete}><Trash2 size={19} aria-hidden="true"/>Delete profile</button>
       </div>
     </div>
@@ -120,6 +122,7 @@ export default function MobileProfileSettings({summaryRef, onClose, onDiscard, o
     </Popup>}
 
     {password.open && <Popup title="Change password" onClose={password.onClose} footer={<button type="button" disabled={password.busy} onClick={password.onSubmit}>{password.busy ? 'Saving…' : 'Update password'}</button>}>
+      <p className="tj-mp-note">Changing your password signs you out on your other devices.</p>
       <TextField label="New password" type="password" value={password.next} placeholder="At least 6 characters" autoComplete="new-password" onChange={event => password.onNext(event.target.value)}/>
       <TextField label="Confirm new password" type="password" value={password.confirm} autoComplete="new-password" onChange={event => password.onConfirm(event.target.value)}/>
       {password.status && <p className={`tj-mp-status ${password.status.type === 'error' ? 'is-error' : ''}`} role="status">{password.status.text}</p>}

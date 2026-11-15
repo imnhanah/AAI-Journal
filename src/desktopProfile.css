@@ -90,6 +90,9 @@
   .pf2-pws {grid-column:1/-1;font-size:12.5px;font-weight:600;}
   .pf2-pws.is-err {color:var(--pf2-loss);}
   .pf2-pws.is-ok {color:var(--sp-gain);}
+  .pf2-pw-note {grid-column:1/-1;margin:0;font-size:12.5px;color:var(--muted);}
+  .pf2-signout-confirm {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pf2-signout-confirm>span {font-size:13px;font-weight:600;color:var(--muted);}
   .pf2-danger {border-color:color-mix(in oklab,var(--pf2-loss) 30%,var(--border))!important;background:color-mix(in oklab,var(--pf2-loss) 3%,var(--surface))!important;}
 
   /* Medium and narrow panels */

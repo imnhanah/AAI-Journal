@@ -1,3 +1,4 @@
+import {restorePortableDraftRecovery,withDurableDeviceRecovery,preservePortableDurableRecovery,verifyDeviceRecovery} from './deviceRecovery.js';
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from "react";
 import {PanelPrefsContext} from './panelPrefsContext.js';
@@ -168,7 +169,7 @@ import { FinancialDisclaimerGate } from './FinancialDisclaimer.jsx';
 import { acceptFinancialDisclaimer, getFinancialDisclaimerStatus } from './financialDisclaimer.js';
 import { supabase } from "./supabaseClient";
 import { readCloudSyncAccess } from './storageAccess';
-import { onAuthStateChange, getSession, signOut, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady } from "./auth";
+import { onAuthStateChange, getSession, signOut, signOutAll, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady } from "./auth";
 import { membershipPreviewEnabled, resolveJournalMembership } from './membership.js';
 import { getCalendarWindow } from "./forexFactory";
 import { newsWeekKey, archivedNewsEvents, readNewsArchive } from "./newsArchive";
@@ -176,7 +177,10 @@ import { NewsAlertsProvider, NewsAlertControls, NEWS_FOCUS_EVENT_KEY } from "./N
 import { NEWS_CURRENCIES, readNewsFilters, saveNewsFilters, toggleNewsCurrency, matchesNewsFilters } from "./newsPreferences";
 import { readJournalCache, writeJournalCache } from "./journalCache";
 import { hydrateJournalImages, writeJournalImageCache } from "./journalImageCache";
-import { loadJournalImage } from "./journalCloudCache";
+import { loadJournalImage, loadPeriodReviewContent } from "./journalCloudCache";
+import {useJournalDataSafety} from './journalDataSafety.js';
+import {savedOutcome,failedOutcome,unknownOutcome,conflictOutcome} from './syncOutcome.js';
+import {cloudMediaComplete,mergeHydratedMedia} from './journalMediaProjection.js';
 import { privateCache, activatePrivateUser } from './privateCacheRuntime';
 import { clearPendingTradeSave, pendingTradeSaves, queueTradeSave } from './tradeSaveOutbox';
 import { validateImageFile, shouldHandleImagePaste } from './mediaMutation';
@@ -2182,6 +2186,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
     finally { setDeleting(false); }
   };
   const openDelete = () => {setDeleteOpen(true);setPasswordOpen(false);setNewPassword('');setConfirmPassword('');setPasswordStatus(null);setDeleteConfirmation('');setDeleteError('');};
+  const handleSignOutAll = async () => { const result = await signOutAll(); if (!result.error) onLogout(); };
   if (SHELL_V2 && !phone) {
     const closePassword = () => {setPasswordOpen(false);setNewPassword('');setConfirmPassword('');setPasswordStatus(null);};
     const cancelDelete = () => {setDeleteOpen(false);setDeleteConfirmation('');setDeleteError('');};
@@ -2205,6 +2210,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
         sync={{on:cloudOn, note:cloudOn ? (syncedAt ? `Automatic backup across your devices. Last synced ${syncedAt}.` : 'Automatic backup across your devices.') : cloudSyncEntitled ? 'Cloud sync is turned off on this device.' : 'Automatic backup across your devices. Coming soon.', syncing, onSync, onToggle:() => cloudSyncEntitled ? onToggleCloudSync?.() : onOpenPricing?.()}}
         password={{open:passwordOpen, onOpen:() => {setPasswordOpen(true);setPasswordStatus(null);}, onClose:closePassword, next:newPassword, onNext:setNewPassword, confirm:confirmPassword, onConfirm:setConfirmPassword, busy:changingPassword, status:passwordStatus, onSubmit:changePassword}}
         onDelete={openDelete}
+        onSignOutAll={handleSignOutAll}
         onClose={closePanel}
         onSave={save}
         saveDisabled={saving || !displayName.trim()}
@@ -2242,6 +2248,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
         password={{open:passwordOpen, onOpen:() => setPasswordOpen(true), onClose:closePassword, next:newPassword, onNext:setNewPassword, confirm:confirmPassword, onConfirm:setConfirmPassword, busy:changingPassword, status:passwordStatus, onSubmit:changePassword}}
         onDelete={openDelete}
         onLogout={onLogout}
+        onSignOutAll={handleSignOutAll}
       />
       {deleteOpen && <ProfileDeleteDialog ready={deletionReady} name={fallbackDisplayName} value={deleteConfirmation} onChange={setDeleteConfirmation} busy={deleting} error={deleteError} onCancel={() => {setDeleteOpen(false);setDeleteConfirmation('');setDeleteError('');}} onConfirm={deleteProfile}/>}
     </Modal>;
@@ -3290,7 +3297,7 @@ function TwoUpCardCarousel({ items, label, children }) {
   </section>;
 }
 
-function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, reviews, markups = [], periodReviews, onSavePeriod, onSaveTrade, onPhoneTitle }) {
+function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, reviews, markups = [], periodReviews, onSavePeriod, onSaveTrade, onPhoneTitle, draftContext }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(() => { const media = window.matchMedia(MOBILE_MEDIA), change = () => setPhone(media.matches); media.addEventListener('change', change); return () => media.removeEventListener('change', change); }, []);
   const [monthTrades, setMonthTrades] = useState(null);
@@ -3419,18 +3426,22 @@ function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, review
     return [model.id, saved?.content || {}];
   })), [persisted, reviewModels]);
 
-  const save = async (id, changed) => {
+  const save = async (id, changed, attempt) => {
     const [type, ...keyParts] = id.split(":");
     const key = keyParts.join(":");
-    const previous = persisted.get(`${type}:${key}`);
-    const rawPrevious = rawPersisted.get(`${type}:${key}`);
-    const content = { ...(previous?.content || {}), ...changed };
+    let rawPrevious = rawPersisted.get(`${type}:${key}`);
+    if(rawPrevious?.contentLoaded===false){
+      try {rawPrevious={...rawPrevious,content:await loadPeriodReviewContent(rawPrevious),contentLoaded:true};}
+      catch(error){return {outcome:failedOutcome({error})};}
+    }
+    const previousContent=reviewBalanceId?rawPrevious?.content?.accountScopes?.[reviewBalanceId]?.content:rawPrevious?.content;
+    const content = { ...(previousContent || {}), ...changed };
     const completeKeys = ["overview", "invalid", "missedTrades", "strategyPerformance"];
     const completed = completeKeys.every((field) => String(content[field] || "").trim());
     const record = reviewBalanceId
       ? { type, key, completed: Boolean(rawPrevious?.completed), content: { ...(rawPrevious?.content || {}), accountScopes: { ...(rawPrevious?.content?.accountScopes || {}), [reviewBalanceId]: { content, completed } } } }
       : { type, key, content, completed };
-    return onSavePeriod(record);
+    return onSavePeriod({...record,id:rawPrevious?.id,updatedAt:rawPrevious?.updatedAt},attempt);
   };
 
   const reviewAnnual = reviewModels.find((model) => model.kind === "year")?.metrics;
@@ -3448,7 +3459,7 @@ function ReviewLibraryPage({ account: workspace, trades: workspaceTrades, review
       <PhoneHeaderSlot>{accountPicker}
       <div className="tj-review-year-switch"><button className="tj-icon-btn" aria-label="Previous review year" onClick={() => setReviewYear((year) => year - 1)}><ChevronLeft size={17}/></button><strong>{reviewYear}</strong><button className="tj-icon-btn" aria-label="Next review year" onClick={() => setReviewYear((year) => year + 1)}><ChevronRight size={17}/></button></div></PhoneHeaderSlot>
     </div>}
-    <ReviewPage reviews={reviewModels} answers={answers} questions={REVIEW_QUESTIONS} onSave={save} defaultSelectedId={`annual:${reviewYear}`} phoneControls={{year:reviewYear, onYear:setReviewYear, account:accountPicker}} onPhoneTitle={onPhoneTitle} onReviewTrades={reviewMonthTrades} />
+    <ReviewPage draftContext={draftContext.forReviewScope(reviewBalanceId || null)} reviews={reviewModels} answers={answers} questions={REVIEW_QUESTIONS} onSave={save} defaultSelectedId={`annual:${reviewYear}`} phoneControls={{year:reviewYear, onYear:setReviewYear, account:accountPicker}} onPhoneTitle={onPhoneTitle} onReviewTrades={reviewMonthTrades} />
     {monthTrades && <TradeReviewEditorModal trade={monthTrades[0]} trades={monthTrades} account={account} reviews={reviews} markups={markups} onClose={() => setMonthTrades(null)} onSave={onSaveTrade} />}
   </div>;
 }
@@ -6696,7 +6707,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     let cancelled = false;
     void pendingTradeSaves(user.id).then((pending) => {
       if (!cancelled && pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
-    });
+    }).catch(error=>showWarning('Pending trade recovery could not be read. Existing data is retained.'));
     return () => { cancelled = true; };
   }, [user.id]);
   const [challengeProgress, setChallengeProgress] = useState(null);
@@ -6886,6 +6897,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const [cloudSyncAccess, setCloudSyncAccess] = useState(null);
   const [cloudSyncEntitled, setCloudSyncEntitled] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
+  const journalSafety = useJournalDataSafety({userId:user.id,mode:storageReady?(localJournal.isLocalJournal()?'local':'cloud'):'unresolved'});
   const [cloudRecoveryBusy, setCloudRecoveryBusy] = useState(false);
   const localBacktestApi = useMemo(() => createLocalBacktestApi(user.id), [user.id]);
   const localBacktests = membershipPreviewEnabled && cloudSyncAccess === false;
@@ -7042,7 +7054,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       void pendingTradeSaves(user.id).then((pending) => {
         if (membershipPreviewEnabled && (request !== journalLoadSequence.current || localJournal.isLocalJournal())) return;
         if (pending.length) setAccounts(current => mergePendingTradeSaves(current, pending));
-      });
+      }).catch(error=>showWarning('Pending trade recovery could not be read. Existing data is retained.'));
     }
     setTypeTags(data.typeTags || []);
     setMistakeTags(data.mistakeTags || []);
@@ -7077,12 +7089,12 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       // it must never hold Challenge progress (or the main journal) hostage.
       void challengeDb.snapshot(user.id)
         .then(next => { if (current()) { setChallengeProgress(next); setChallengeProgressReady(true); } })
-        .catch(() => { if (current()) { setChallengeProgress(null); setChallengeProgressReady(true); } });
+        .catch(() => { if (current()) setChallengeProgressReady(false); });
       const readBacktests = membershipPreviewEnabled && localJournal.isLocalJournal()
         ? localJournal.readBacktestWorkspace : backtestCloud.preloadBacktests;
       void readBacktests(user.id)
         .then(next => { if (current()) { setBacktestSnapshot(next); setBacktestSnapshotReady(true); } })
-        .catch(() => { if (current()) { setBacktestSnapshot(null); setBacktestSnapshotReady(true); } });
+        .catch(() => { /* Preserve cached runs; a failed read is not an empty workspace. */ });
     };
     if (localJournal.isLocalJournal()) {
       setLoadError("");
@@ -7167,13 +7179,19 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     if (!storageReady) return;
     (async () => {
       const cached = readJournalCache(user.id);
-      if (!(membershipPreviewEnabled && localJournal.isLocalJournal()) && cached?.data?.challengeProgress && cached.data.backtestSnapshot) {
-        const hydrated = await hydrateJournalImages(user.id, cached.data);
-        setChallengeProgress(hydrated.data.challengeProgress || null);
-        setBacktestSnapshot(hydrated.data.backtestSnapshot || null);
-        setChallengeProgressReady(true);
-        setBacktestSnapshotReady(true);
-        applyJournalData(hydrated.data);
+      if (!(membershipPreviewEnabled && localJournal.isLocalJournal()) && Array.isArray(cached?.data?.accounts)) {
+        applyJournalData(cached.data);
+        setChallengeProgress(cached.data.challengeProgress ?? null);
+        setBacktestSnapshot(cached.data.backtestSnapshot ?? null);
+        setChallengeProgressReady(false);
+        setBacktestSnapshotReady(cached.data.backtestSnapshot != null);
+        const ticket=privateCache.token(),mode=localJournal.isLocalJournal();
+        void hydrateJournalImages(user.id,cached.data).then(hydrated=>{
+          if(!privateCache.valid(ticket)||mode!==localJournal.isLocalJournal())return;
+          setAccounts(items=>mergeHydratedMedia(items,cached.data.accounts,hydrated.data.accounts,true));
+          setMarkups(items=>mergeHydratedMedia(items,cached.data.markups,hydrated.data.markups));
+          setReviews(items=>mergeHydratedMedia(items,cached.data.reviews,hydrated.data.reviews));
+        }).catch(()=>{});
         setLastSyncedAt(cached.cachedAt || "");
         setSyncSignature(cached.syncSignature || "");
         setLoaded(true);
@@ -7284,11 +7302,13 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     void loadFromServer();
   }, [cloudSyncAccess, storageReady, loadFromServer]);
 
+  const deviceRecoveryOptions = () => ({projectId:new URL(import.meta.env.VITE_SUPABASE_URL).host,email:user.email,
+    assertOwner:async()=>{const {data}=await supabase.auth.getSession();if(data.session?.user?.id!==user.id)throw new Error('Account changed during recovery. Keep the source copy.');}});
   const exportCloudRecovery = async () => {
     if (cloudRecoveryBusy) return;
     setCloudRecoveryBusy(true);
     try {
-      const backup = await readCloudJournalRecovery(user.id, user.user_metadata?.dailyRoutine);
+      const backup = await withDurableDeviceRecovery(await readCloudJournalRecovery(user.id, user.user_metadata?.dailyRoutine),user.id,deviceRecoveryOptions());
       const url = URL.createObjectURL(new Blob([JSON.stringify(backup)], { type: 'application/json' }));
       const link = document.createElement('a');
       link.href = url;
@@ -7307,9 +7327,10 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const exportBackup = async () => {
     try {
       const deviceBackup = localJournal.isLocalJournal() ? await localJournal.exportLocalJournal(user.id) : null;
-      const backup = deviceBackup
+      const journalBackup = deviceBackup
         ? await readCloudJournalRecovery(user.id, deviceBackup.routine, { deviceBackup })
         : await readCloudJournalRecovery(user.id, user.user_metadata?.dailyRoutine);
+      const backup = await withDurableDeviceRecovery(journalBackup,user.id,deviceRecoveryOptions());
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -7330,11 +7351,18 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       const text = await file.text();
       const parsed = JSON.parse(text);
       if (parsed.recoveryOwnerId && parsed.recoveryOwnerId !== user.id) return showError('This recovery copy belongs to another account.');
+      const draftReceipt = await restorePortableDraftRecovery(parsed,user.id,deviceRecoveryOptions());
+      if (draftReceipt) {
+        showInfo('Draft recovery saved separately on this device. Your journal and cloud settings are unchanged; no pending writes were replayed.');
+        return;
+      }
+      if(parsed.durableRecoveryArchive)await verifyDeviceRecovery(parsed.durableRecoveryArchive,user.id,{expectedProjectId:deviceRecoveryOptions().projectId});
       if (localJournal.isLocalJournal() || ((membershipPreviewEnabled || parsed.recoveryOwnerId) && await localJournal.hasLocalJournal(user.id))) {
         if (parsed.recoveryOwnerId && !await confirm({title:'Restore recovery file?',description:'Replace the journal on this device with this recovery file? A safety snapshot will be saved first.',confirmLabel:'Restore recovery file'})) return;
         const safety=await localJournal.createSafetySnapshot(user.id,!membershipPreviewEnabled || localBacktests ? routineStore.routine : undefined);
         if(safety.error)return showError(safety.error);
       }
+      const durableReceipt = await preservePortableDurableRecovery(parsed,user.id,deviceRecoveryOptions());
       const result = await localJournal.importLocalJournal(user.id, parsed);
       if (result.error) return showError(result.error);
       // Restore into device storage, never silently upload/overwrite a cloud
@@ -7356,7 +7384,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       }
       window.dispatchEvent(new CustomEvent('aaicorefx:backup-restored'));
       await refreshLocalSnapshots();
-      showInfo('Backup restored on this device.');
+      showInfo(durableReceipt.copies?'Backup restored on this device. Pending drafts were preserved separately in device recovery; no pending writes were replayed.':'Backup restored on this device.');
     } catch (error) { showError('That file could not be restored. Choose an AAICOREFX backup file.'); }
   };
 
@@ -7472,15 +7500,24 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   }, [loaded, accounts, showError]);
 
   const runMigration = async () => {
-    setMigration((m) => ({ ...m, busy: true }));
-    for (const legacyAccount of migration.pending) {
-      const res = await importLegacyAccount(user.id, legacyAccount);
-      if (res.error) { showError(res.error); }
-    }
-    await markLocalDataMigrated(user.id);
-    try { window.localStorage.removeItem(LEGACY_STORAGE_PREFIX + user.email); } catch (e) {}
-    setMigration({ checked: true, pending: null, busy: false });
-    await loadFromServer();
+    setMigration(m=>({...m,busy:true}));
+    try {
+      const checkpoint=journalSafety.forWorkspace('legacy').draft('import',user.id,{state:'new'});
+      await checkpoint.ready();
+      if(checkpoint.getSnapshot().dirty){showError('An earlier import needs verification. Original data is retained; retry is paused.');return false;}
+      checkpoint.edit({state:'started',accounts:migration.pending});await checkpoint.flush();
+      const results=[];
+      for(const legacyAccount of migration.pending){
+        const res=await importLegacyAccount(user.id,legacyAccount);
+        results.push(res);checkpoint.edit({state:'needs-verification',accounts:migration.pending,results});await checkpoint.flush();
+        if(res.error){showError(res.error);return false;}
+      }
+      // Existing import helpers cannot prove every nested write. Keep originals and
+      // never mark verified completion or replay this attempt automatically.
+      setMigration({checked:true,pending:null,busy:false});
+      await loadFromServer();return false;
+    } catch(error){showError(error.message);return false;}
+    finally{setMigration(m=>({...m,busy:false}));}
   };
   const skipMigration = async () => {
     await markLocalDataMigrated(user.id);
@@ -7911,6 +7948,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const optimisticTrade = {
       ...trade,
       _syncState: 'saving',
+      _pendingSaveToken: globalThis.crypto.randomUUID(),
       ...(writesExistingTrade ? {} : { _pendingCreate:true }),
     };
     setAccounts((items) => items.map((item) => {
@@ -7921,7 +7959,11 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     // Queue before the request starts, not after it fails. A tab refresh or a
     // connection drop during the request therefore still leaves a retryable,
     // fully populated trade on this device.
-    void queueTradeSave(user.id, account.id, optimisticTrade, writesExistingTrade ? 'update' : 'create').catch(() => undefined);
+    let stagedTrade;
+    try {
+      stagedTrade=await queueTradeSave(user.id,account.id,optimisticTrade,writesExistingTrade?'update':'create');
+      if(localJournal.isLocalJournal()!==(stagedTrade.receipt.mode==='local'))throw new Error('Storage mode changed. Your trade draft is retained.');
+    }catch(error){setAccounts(items=>items.map(item=>item.id!==account.id?item:{...item,trades:item.trades.map(row=>row._pendingSaveToken===optimisticTrade._pendingSaveToken?{...row,_syncState:'failed'}:row)}));showError(error.message);return false;}
     setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0);
     showInfo('Saving trade…');
     void (async () => {
@@ -7937,20 +7979,20 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           persistedTrade = res.data || trade;
         }
         persistedTrade = { ...persistedTrade, balanceResults: trade.balanceResults || previousTrade?.balanceResults || [] };
-        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id ? persistedTrade : row) }));
-        await clearPendingTradeSave(user.id, account.id, trade.id);
+        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id && row._pendingSaveToken===optimisticTrade._pendingSaveToken ? persistedTrade : row) }));
+
       } catch (error) {
         const failedTrade = { ...optimisticTrade, _syncState:'failed', ...(writesExistingTrade ? { _pendingUpdate:true, _pendingCreate:false } : { _pendingCreate:true }) };
-        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id ? failedTrade : row) }));
-        await queueTradeSave(user.id, account.id, failedTrade, writesExistingTrade ? 'update' : 'create');
+        setAccounts((items) => items.map((item) => item.id !== account.id ? item : { ...item, trades:item.trades.map(row => row.id === trade.id && row._pendingSaveToken===optimisticTrade._pendingSaveToken ? failedTrade : row) }));
+        // The complete operation is already durable. Do not overwrite a newer retry draft.
         showWarning('Trade is saved on this device but could not reach cloud. Retry save or edit it without re-entering anything.');
         return;
       }
     if (isMultiBalanceWorkspace(account)) {
       const resultSave = await saveTradeBalanceResults(user.id, persistedTrade.id, trade.balanceResults || []);
-      if (resultSave.error) { showWarning(`Trade saved, but account-result synchronization needs attention: ${resultSave.error}`); }
+      if (resultSave.error) { showWarning(`Trade saved, but account-result synchronization needs attention: ${resultSave.error}`); return; }
       const deleteUnselected = await deleteTradeBalanceResultsNotIn(user.id, persistedTrade.id, (trade.balanceResults || []).map((result) => result.balanceId));
-      if (deleteUnselected.error) { showWarning(`Trade saved, but removed account results could not be synchronized: ${deleteUnselected.error}`); }
+      if (deleteUnselected.error) { showWarning(`Trade saved, but removed account results could not be synchronized: ${deleteUnselected.error}`); return; }
       // The parent trade mirrors only the accounts currently checked in the
       // editor. Unchecking Account 2 therefore removes its P&L from the log.
       const selectedResults = resultSave.error ? (trade.balanceResults || []) : (resultSave.data || []);
@@ -7959,10 +8001,15 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       const swap = selectedResults.reduce((sum, result) => sum + (Number(result.swap) || 0), 0);
       const pnl = selectedResults.reduce((sum, result) => sum + Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))), 0);
       const parentSave = await updateTrade(persistedTrade.id, { ...persistedTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
-      if (parentSave.error) { showWarning(`Trade saved, but its summary totals could not be synchronized: ${parentSave.error}`); }
+      if (parentSave.error) { showWarning(`Trade saved, but its summary totals could not be synchronized: ${parentSave.error}`); return; }
       persistedTrade = parentSave.error ? { ...persistedTrade, grossPnl, commission, swap, pnl } : (parentSave.data || { ...persistedTrade, grossPnl, commission, swap, pnl });
-      setAccounts((accs) => accs.map((item) => item.id !== account.id ? item : { ...item, trades: item.trades.map((itemTrade) => itemTrade.id === persistedTrade.id ? { ...persistedTrade, balanceResults:selectedResults } : itemTrade) }));
+      setAccounts((accs) => accs.map((item) => item.id !== account.id ? item : { ...item, trades: item.trades.map((itemTrade) => itemTrade.id === persistedTrade.id && (!itemTrade._pendingSaveToken || itemTrade._pendingSaveToken===optimisticTrade._pendingSaveToken) ? { ...persistedTrade, balanceResults:selectedResults } : itemTrade) }));
     }
+    if(stagedTrade.receipt.mode==='cloud'&&!cloudMediaComplete(persistedTrade.screenshots)){
+      showWarning('Trade metadata saved; original images remain on this device and their synchronization is pending.');return;
+    }
+    try{if(!await clearPendingTradeSave(user.id,account.id,trade.id,stagedTrade.receipt)){showWarning('A newer trade draft remains pending on this device.');return;}}
+    catch(error){showWarning('Trade saved, but its pending recovery copy could not be confirmed. It remains on this device.');return;}
     const rewardPreset = Number(trade.rr);
     if (Number.isFinite(rewardPreset) && rewardPreset > 0) {
       const existingPresets = (account.rewardPresets || []).map(Number).filter((value) => Number.isFinite(value) && value > 0);
@@ -8260,6 +8307,41 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     if (clearConfirmedCaseStudySnapshot(caseStudyWorkspace)) setProfileCaseStudySyncStatus('Synced');
     return res.data;
   };
+  const handleSaveMobileCaseStudyPatch = async request => {
+    const mode=localJournal.isLocalJournal();
+    const commit=async()=>{
+      caseStudySaveSeqRef.current++;
+      try {
+        if(mode!==localJournal.isLocalJournal())throw new Error('Storage mode changed; mobile edits are retained.');
+        if(membershipPreviewEnabled&&!mode&&membership?.cloudWritesAllowed!==true)throw new Error('Cloud write access could not be confirmed.');
+        if(profileCaseStudyState.status!=='ready')throw new Error('Case Study Library must load before changes can be saved.');
+        let workspace,revision;
+        if(mode){
+          const saved=await localJournal.saveProfileCaseStudyLibrary(user.id,request.workspace);
+          if(saved.error)throw new Error(saved.error);workspace=saved.data;revision=null;setProfileCaseStudySyncStatus('Saved locally');
+        }else{
+          if(profileCaseStudyConflictRef.current)throw new Error('Reconcile the existing Case Study conflict before saving.');
+          if(profileCaseStudyRevisionRef.current!==request.baseRevision){
+            persistCaseStudyConflict(request.workspace,profileCaseStudyWorkspaceRef.current||{},profileCaseStudyRevisionRef.current);
+            return {outcome:conflictOutcome('The library changed. Both versions are retained.')};
+          }
+          persistPendingCaseStudySnapshot(request.workspace,request.baseRevision);
+          const saved=await saveProfileCaseStudyLibrary(user.id,request.workspace,request.baseRevision);
+          if(saved.conflict){persistCaseStudyConflict(request.workspace,saved.data||{},saved.revision);return {outcome:conflictOutcome()};}
+          if(saved.error){workspace=await confirmAmbiguousCaseStudySave(request.workspace,saved.error);revision=profileCaseStudyRevisionRef.current;}
+          else {workspace=saved.data;revision=saved.revision;}
+          if(!workspace||!Number.isInteger(revision))throw new Error('The Case Study save returned no verified revision. Your edits are retained.');
+          profileCaseStudyRevisionRef.current=revision;setProfileCaseStudyRevision(revision);
+          if(clearConfirmedCaseStudySnapshot(workspace))setProfileCaseStudySyncStatus('Synced');
+        }
+        profileCaseStudyWorkspaceRef.current=workspace;profileCaseStudyWorkspaceOwnerRef.current=user.id;
+        setProfileCaseStudyWorkspace(workspace);setProfileCaseStudyState({status:'ready',workspace,message:''});
+        return {workspace,revision,outcome:savedOutcome({target:mode?'local':'cloud',operationId:request.operationId,revision:mode?Math.max(1,request.draftRevision):String(revision)})};
+      }catch(error){showError(error.message);return {outcome:unknownOutcome(error.message)};}
+      finally{caseStudySaveSeqRef.current++;}
+    };
+    caseStudySaveQueue.current=caseStudySaveQueue.current.then(commit,commit);return caseStudySaveQueue.current;
+  };
   const handleSaveCaseStudyWorkspace = async (caseStudyWorkspace) => {
     caseStudySaveSeqRef.current+=1;
     try { return await saveCaseStudyWorkspaceNow(caseStudyWorkspace); }
@@ -8448,7 +8530,15 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   };
   const handleDeleteMarkup = async (id) => {  const res=await deleteMarkup(id); if(res.error)return showError(res.error); setMarkups(x=>x.filter(m=>m.id!==id)); };
   const handleSaveReview = async (r) => { if (!account?.id) return false; const res=await saveTradeReview(user.id,account.id,{ ...r, mediaMembership: membership, mediaGetMembership: () => resolveJournalMembership({ authenticated: true }) }); if(res.error){showError(res.error);return false;}setReviews(x=>{const i=x.findIndex(v=>v.id===res.data.id);return i<0?[res.data,...x]:x.map(v=>v.id===res.data.id?res.data:v);}); return true; };
-  const handleSavePeriodReview = async (review) => { if (!account?.id) return false; const res = await savePeriodReview(user.id, account.id, review); if (res.error) { showError(res.error); return false; } setPeriodReviews((items) => { const index = items.findIndex((item) => item.id === res.data.id || (item.accountId === account.id && item.type === res.data.type && item.key === res.data.key)); return index < 0 ? [res.data, ...items] : items.map((item, itemIndex) => itemIndex === index ? res.data : item); }); return true; };
+  const handleSavePeriodReview = async (review,attempt) => {
+    if (!account?.id) return false;
+    const res=await savePeriodReview(user.id,account.id,review);
+    if(res.error){showError(res.error);return {outcome:failedOutcome({error:res.error})};}
+    setPeriodReviews(items=>{const index=items.findIndex(item=>item.id===res.data.id||(item.accountId===account.id&&item.type===res.data.type&&item.key===res.data.key));return index<0?[res.data,...items]:items.map((item,i)=>i===index?res.data:item);});
+    const local=localJournal.isLocalJournal();
+    if(!attempt?.operationId||(!local&&!res.data.updatedAt))return {outcome:unknownOutcome('The review write returned no complete confirmation.'),record:res.data};
+    return {outcome:savedOutcome({target:local?'local':'cloud',operationId:attempt.operationId,revision:local?Math.max(1,attempt.revision):res.data.updatedAt}),record:res.data};
+  };
   // Shared by the Add funds form (live warning) and the save step (hard block).
   const checkDepositFunding = async (movement) => {
     if (movement.type !== 'deposit' || !(Number(movement.amount) > 0)) return { allowed: true };
@@ -9128,8 +9218,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           {page === "news" && <NewsPage userId={user.id}/>}
           {page === "management" && <ManagementPage membershipAdmin={membershipAdmin} revokeMembershipAdmin={revokeMembershipAdmin} onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onExportCloudRecovery={exportCloudRecovery} promotionPanel={membershipPreviewEnabled && cloudSyncEntitled ? <JournalPromotion userId={user.id}/> : null} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
           {page === "markups" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : phoneCalendar ? <MobileMarkupsV2 markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} currency={account.baseCurrency} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} /> : <MarkupsRedesign markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} />)}
-          {page === "reviews" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <ReviewLibraryPage onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />)}
-          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
+          {page === "reviews" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <ReviewLibraryPage draftContext={journalSafety.forWorkspace(account.id)} onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />)}
+          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies draftContext={journalSafety.forWorkspace("profile")} profileRevision={profileCaseStudyRevision} onSavePatch={handleSaveMobileCaseStudyPatch} sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
           </div>
           </MobilePageStage>
           </BacktestViewSession>
