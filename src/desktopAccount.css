@@ -10,6 +10,14 @@
   .tj-root .sp-body .tj-account-panel-modal>:is(.tj-modal-head,.tj-trade-validation-summary) {display:none!important;}
   .tj-root .sp-body .tj-account-panel-modal.tj-account-panel-modal>.tj-modal-body {display:flex!important;flex:1;flex-direction:column;min-height:0;padding:0!important;overflow:hidden!important;background:transparent!important;}
 
+  /* Danger Zone: the last row of the page, quiet until opened. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row {display:block;padding:4px 0 0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-menu {display:block;margin:0;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-menu>button.is-danger {display:flex!important;align-items:center;justify-content:space-between;width:100%;min-height:48px!important;padding:0 18px!important;border:1px solid color-mix(in oklab,var(--loss) 24%,var(--border))!important;border-radius:16px!important;background:color-mix(in oklab,var(--loss) 4%,transparent)!important;color:var(--loss)!important;font-size:13px;font-weight:600;text-decoration:none;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-popover {top:auto;bottom:calc(100% + 10px);width:min(360px,100%);}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-menu>button.is-danger::after {content:"›";font-size:18px;line-height:1;opacity:.7;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-danger-row .tj-settings-danger-menu>button.is-danger:hover {background:color-mix(in oklab,var(--loss) 9%,transparent)!important;text-decoration:none;}
+
   /* Hero */
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-account-hero.tj-settings-account-hero {
     display:grid!important;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"copy close" "sum sum";align-items:center;gap:6px 12px;

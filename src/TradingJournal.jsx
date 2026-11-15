@@ -155,7 +155,7 @@ import { DEFAULT_INSTRUMENTS, INSTRUMENT_GROUPS, instrumentGroup, normalizeInstr
 import { calculatePositionSize, getInstrumentSpec } from './positionSizing.js';
 import useChallenge from './useChallenge';
 import useBalanceChallenge from './useBalanceChallenge';
-import ChallengeModeSettings, {ChallengeCompatibleDialog} from './ChallengeModeSettings';
+import {ChallengeCompatibleDialog} from './ChallengeModeSettings';
 import { normaliseAdaptiveStepBack } from "./challengeRules";
 import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule, defaultChallengeReward, snapChallengeReward } from "./challengeModel";
 import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney} from './challengeLifecycle';
@@ -1725,40 +1725,7 @@ function LinkedPercentageAmountCards({ label, currency, percentage, amount, onPe
 }
 
 
-function FinanceReadOnlyPanel({ plans, currency }) {
-  const fmt = (value) => fmtMoney(value, currency).replace(/^\+/, "");
-  return <div className="tj-challenge-readonly">
-    {plans.length ? <dl>
-      {plans.map((plan) => <div key={plan.id}><dt>{plan.name || "Savings"}</dt><dd>{Number(plan.allocationPct) || 0}% of profit · {plan.interval || "Manual"}{Number(plan.target) > 0 ? ` · target ${fmt(plan.target)}` : ""}</dd></div>)}
-    </dl> : <p>No savings account yet.</p>}
-    <button type="button" className="tj-btn-outline" onClick={() => window.dispatchEvent(new CustomEvent("aaicorefx:open-finance"))}>{plans.length ? "Open Finance page" : "Add one on the Finance page"}</button>
-  </div>;
-}
-
-// Challenge setup now lives on the Challenge page. Account settings only reflect it.
-function ChallengeReadOnlyPanel({ on, state, account, currency }) {
-  const mode = state?.automation?.mode || account?.challengeMode || "risk";
-  const levels = state?.automation?.levelCount || account?.challengeLevelCount || 30;
-  const reward = state?.automation?.rewardRatio ?? account?.challengeReward;
-  const money = on ? challengeMoney(state, account) : null;
-  const fmt = (value) => fmtMoney(value, currency).replace(/^\+/, "");
-  const name = mode === "adaptive" ? "Mode 3 · Adaptive balance" : mode === "streak" ? "Mode 2 · Two losses on a level" : "Mode 1 · Risk limit";
-  return <div className="tj-challenge-readonly">
-    {on ? <dl>
-      <div><dt>Mode</dt><dd>{name}</dd></div>
-      <div><dt>Plan</dt><dd>{levels} levels{reward ? ` · ${reward}R` : ""}</dd></div>
-      <div><dt>Current level</dt><dd>{Math.min(state?.activeLevel || 1, levels)} of {levels}</dd></div>
-      {money && money.depositsAfterStart > 0 && <div><dt>Total deposited</dt><dd>{fmt(money.totalDeposited)}</dd></div>}
-    </dl> : <p>No challenge is running on this account.</p>}
-    <button type="button" className="tj-btn-outline" onClick={() => window.dispatchEvent(new CustomEvent("aaicorefx:open-challenge"))}>{on ? "Open Challenge page" : "Start on the Challenge page"}</button>
-  </div>;
-}
 function AccountSettingsSection({ title, children, status, icon, tone = "", danger = false, referencePosition = false, tradeCosts = null, enabled, onEnabledChange, description }) {
-  if (title === "Challenge") {
-    const parts = React.Children.toArray(children);
-    const switchParts = React.Children.toArray(parts[0]?.props.children);
-    return <section className="tj-reference-challenge-card"><header><div><h4>Challenge</h4><p>Uses this account's balance as the challenge balance.</p></div>{switchParts[0]}</header>{parts.slice(1).map((part,index) => React.isValidElement(part) && part.type === ChallengeModeSettings ? React.cloneElement(part,{key:index,referenceLayout:true}) : part)}</section>;
-  }
   if (referencePosition) {
     const parts = React.Children.toArray(children);
     const switchParts = React.Children.toArray(parts[0]?.props.children);
@@ -1770,54 +1737,6 @@ function AccountSettingsSection({ title, children, status, icon, tone = "", dang
     </div>
     <div className="tj-settings-section-body">{onEnabledChange ? <fieldset className="tj-settings-enabled-fields" disabled={!enabled}>{children}</fieldset> : children}</div>
   </section>;
-}
-
-const ACCOUNT_SETTINGS_PANES = [
-  { id: "account", label: "Account & Challenge", icon: WalletCards, description: "Balances, trade defaults and your compounding plan", sections: ["Account", "Breakeven / Commission", "Position Size Calculator", "Challenge"] },
-  { id: "risk", label: "Goals, Risk & Finance", icon: ShieldCheck, description: "Growth targets, loss protection and savings plans", sections: ["Goals", "Risk Guardrails", "Finance"] },
-  { id: "danger", label: "Danger Zone", icon: Trash2, description: "Reset or permanently remove account data", sections: ["Danger Zone"] },
-];
-
-function AccountSettingsLayout({ children, multiBalanceWorkspace, selectedBalance, onSelectAccount, creation = false, initialPane = "account" }) {
-  const [activePane, setActivePane] = useState(initialPane);
-  const items = React.Children.toArray(children);
-  const panes = creation ? ACCOUNT_SETTINGS_PANES.filter(pane => ["account", "risk"].includes(pane.id)).map(pane => pane.id === "risk" ? {...pane, label:"Goals & Risk", description:"Growth targets and loss protection", sections:["Goals", "Risk Guardrails"]} : pane) : ACCOUNT_SETTINGS_PANES.filter(pane => pane.id !== "danger");
-  const positionSection = items.find(child => child.props?.title === "Position Size Calculator");
-  const accountSection = items.find(child => child.props?.title === "Account");
-  const commissionSection = items.find(child => child.props?.title === "Breakeven / Commission");
-  const accountParts = React.Children.toArray(accountSection?.props.children);
-  const flattenDetails = nodes => React.Children.toArray(nodes).flatMap(node => node.type === React.Fragment ? flattenDetails(node.props.children) : [node]);
-  const detailParts = flattenDetails(accountParts.slice(1));
-  const detailGrid = detailParts.find(node => node.props?.className?.includes("tj-account-details-grid"));
-  const detailFields = React.Children.toArray(detailGrid?.props.children);
-  const referenceAccountPane = !creation && accountSection && <>
-    <section className="tj-reference-accounts-card">{accountParts[0]}</section>
-    <div className="tj-reference-details-row">
-      <section className="tj-reference-details-card"><h4>{selectedBalance?.name || accountSection.props.accountName || "Account"} · Details</h4><div className="tj-grid2">{detailFields.slice(0,2)}</div>{commissionSection?.props.children}{detailParts.filter(node => node !== detailGrid && !node.props?.className?.includes("tj-settings-selected-balance"))}</section>
-      {positionSection && React.cloneElement(positionSection, { title:"Position calculator", icon:null, status:null, referencePosition:true })}
-    </div>
-    {detailFields.length > 2 && <div className="tj-reference-details-row tj-reference-utilities-row"><section className="tj-reference-details-card"><h4>Currency</h4>{React.cloneElement(detailFields[2],{label:'Base currency'})}</section><section className="tj-reference-details-card"><h4>Import trades</h4>{detailFields[3]}</section></div>}
-  </>;
-  const renderPaneItems = pane => items.filter(child => child.props?.title !== "Position Size Calculator" && (pane.sections.includes(child.props?.title) || (pane.id === "account" && child.type !== AccountSettingsSection)))
-    .sort((a,b) => pane.sections.indexOf(a.props?.title) - pane.sections.indexOf(b.props?.title))
-    .map(child => child.props?.title === "Breakeven / Commission" ? <div key="trade-defaults" className="tj-settings-trade-defaults-card">
-      {React.cloneElement(child, {status:null})}
-      {multiBalanceWorkspace && !selectedBalance ? <div className="tj-settings-position-placeholder"><DollarSign size={18}/><strong>Position Calculator</strong><p>Select an account above to edit its sizing defaults.</p></div> : positionSection && React.cloneElement(positionSection, {title:"Position Calculator",status:null})}
-    </div> : child);
-  return <div className="tj-settings-hub">
-    <nav className="tj-settings-hub-nav" aria-label="Account settings categories">
-      {panes.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-current={activePane === id ? "page" : undefined} className={`${activePane === id ? "is-active" : ""} ${id === "danger" ? "is-danger" : ""}`} onClick={() => setActivePane(id)}><Icon size={17}/><span>{label}</span></button>)}
-      {!creation && items.find(child => child.props?.title === "Danger Zone")?.props.children}
-      <small>{creation ? "Goals and risk limits are optional. You can adjust everything later." : "Changes apply when you save."}</small>
-    </nav>
-    <div className="tj-settings-hub-content">
-      {panes.map(pane => <div key={pane.id} hidden={activePane !== pane.id}>
-        <header className="tj-settings-pane-heading"><h3>{pane.label}</h3><p>{pane.description}</p>{multiBalanceWorkspace && selectedBalance && ["account", "risk"].includes(pane.id) && <span className="tj-pill">{selectedBalance.name || "Selected account"}</span>}</header>
-        {pane.id === "account" && referenceAccountPane ? <>{referenceAccountPane}{items.filter(child => !["Account", "Breakeven / Commission", "Position Size Calculator"].includes(child.props?.title) && (pane.sections.includes(child.props?.title) || child.type !== AccountSettingsSection))}</> : multiBalanceWorkspace && !selectedBalance && pane.id === "risk" ? <div className="tj-settings-account-prompt"><WalletCards size={25}/><strong>Choose an account first</strong><p>Each account keeps its own goals, risk limits and sizing defaults.</p><button type="button" className="tj-btn-outline" onClick={() => { setActivePane("account"); onSelectAccount(); }}>Choose account</button></div> : renderPaneItems(pane)}
-        {pane.id === "account" && multiBalanceWorkspace && !selectedBalance && <div className="tj-settings-account-prompt"><Trophy size={23}/><strong>A challenge for each account</strong><p>Select an account above to set up its own compounding plan.</p></div>}
-      </div>)}
-    </div>
-  </div>;
 }
 
 function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onImport: importIntoAccount, challenge, userId, canUseMultiBalance = true, initialPane = "account", navVia = 'page', tradePanelPosition = 'right', tradePanelBehavior = 'push' }) {
@@ -1833,25 +1752,11 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   // an empty placeholder when the user opens Account Settings.
   const [selectedBalanceId, setSelectedBalanceId] = useState(() => activeBalances(account)[0]?.id || null);
   const [singleConversionWarning, setSingleConversionWarning] = useState(false);
-  const [challengeDraft, setChallengeDraft] = useState(null);
   const [savingSettings, setSavingSettings] = useState(false);
   // Shell v2: on desktop, Account settings is a side panel. Closing slides it out first.
   const [accountPanelOpen, setAccountPanelOpen] = useState(true);
   const accountCloseTimer = useRef(0);
   useEffect(() => () => window.clearTimeout(accountCloseTimer.current), []);
-  const draftReward=challengeDraft?.rewardRatio ?? challenge.state.automation?.rewardRatio;
-  const draftAdaptiveRisk=challengeDraft?.adaptiveRiskPct ?? challenge.state.automation?.adaptiveRiskPct ?? 1;
-  const draftAdaptiveDrawdown=challengeDraft?.adaptiveDrawdownPct ?? challenge.state.automation?.adaptiveDrawdownPct ?? 10;
-  const draftChallenge = {
-    ...challenge, saving: savingSettings,
-    state: challengeDraft ? {...challenge.state, activeLevel: challengeDraft.level, automation: {...challenge.state.automation, mode: challengeDraft.mode, levelCount: challengeDraft.levelCount,rewardRatio:challengeDraft.rewardRatio,adaptiveRiskPct:challengeDraft.adaptiveRiskPct,adaptiveDrawdownPct:challengeDraft.adaptiveDrawdownPct}} : challenge.state,
-    setMode: mode => setChallengeDraft(current => ({...current,mode, rewardRatio:draftReward,adaptiveRiskPct:draftAdaptiveRisk,adaptiveDrawdownPct:draftAdaptiveDrawdown,level: current?.level ?? challenge.state.activeLevel, levelCount: current?.levelCount ?? challenge.state.automation?.levelCount ?? 30})),
-    setLevel: level => setChallengeDraft(current => ({...current,level,rewardRatio:draftReward,adaptiveRiskPct:draftAdaptiveRisk,adaptiveDrawdownPct:draftAdaptiveDrawdown, mode: current ? current.mode : challenge.state.automation?.mode ?? null, levelCount: current?.levelCount ?? challenge.state.automation?.levelCount ?? 30})),
-    setLevelCount: levelCount => setChallengeDraft(current => ({...current,rewardRatio:draftReward,adaptiveRiskPct:draftAdaptiveRisk,adaptiveDrawdownPct:draftAdaptiveDrawdown,level: current?.level ?? challenge.state.activeLevel, mode: current ? current.mode : challenge.state.automation?.mode ?? null, levelCount})),
-    setReward: rewardRatio=>setChallengeDraft(current=>({rewardRatio,adaptiveRiskPct:draftAdaptiveRisk,adaptiveDrawdownPct:draftAdaptiveDrawdown,level:current?.level ?? challenge.state.activeLevel,levelCount:current?.levelCount ?? challenge.state.automation?.levelCount ?? 30,mode:canUseLossStreak(rewardRatio)?(current?.mode || challenge.state.automation?.mode || 'risk'):'risk'})),
-    setAdaptiveRisk: adaptiveRiskPct=>setChallengeDraft(current=>({...current,rewardRatio:draftReward,adaptiveRiskPct,adaptiveDrawdownPct:draftAdaptiveDrawdown,level:current?.level ?? challenge.state.activeLevel,levelCount:current?.levelCount ?? challenge.state.automation?.levelCount ?? 30,mode:current?.mode || challenge.state.automation?.mode || 'adaptive'})),
-    setAdaptiveDrawdown: adaptiveDrawdownPct=>setChallengeDraft(current=>({...current,rewardRatio:draftReward,adaptiveRiskPct:draftAdaptiveRisk,adaptiveDrawdownPct,level:current?.level ?? challenge.state.activeLevel,levelCount:current?.levelCount ?? challenge.state.automation?.levelCount ?? 30,mode:current?.mode || challenge.state.automation?.mode || 'adaptive'}))
-  };
   const [balance, setBalance] = useState(account.balance);
   const platform = account.platform || "Manual";
   const [importFile, setImportFile] = useState(null);
@@ -1917,15 +1822,6 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
   const settingsLiveBalance = multiBalanceWorkspace
     ? (selectedBalance ? financeTotals(settingsBalanceAccount, selectedBalance.id).tradingBalance : null)
     : financeTotals(settingsBalanceAccount).tradingBalance;
-  const settingsChallengeEnabled=multiBalanceWorkspace ? !!selectedBalance?.challengeEnabled : challengeEnabled && Number(balance)>0;
-  const settingsChallengeMode=multiBalanceWorkspace
-    ? (selectedBalance?.challengeMode || 'risk')
-    : (challengeDraft?.mode ?? challenge.state.automation?.mode ?? 'risk');
-  const settingsChallengeReward=multiBalanceWorkspace
-    ? (selectedBalance?.challengeReward ?? (selectedBalance?.challengeMode==='streak' ? defaultChallengeReward('streak') : null))
-    : (challengeDraft?.rewardRatio ?? challenge.state.automation?.rewardRatio);
-  const settingsChallengeLevelCount=multiBalanceWorkspace ? (selectedBalance?.challengeLevelCount ?? 30) : (challengeDraft?.levelCount ?? challenge.state.automation?.levelCount ?? 30);
-  const challengeActivationIssue=settingsChallengeEnabled ? challengeModeActivationRule({mode:settingsChallengeMode,reward:settingsChallengeReward,balance:settingsLiveBalance,levelCount:settingsChallengeLevelCount}) : null;
   const selectedBalanceChallenge = useBalanceChallenge({...selectedBalance || balanceDrafts[0],trades:account.trades,balances:account.balances,financeMovements:account.financeMovements}, userId);
   const selectedBalanceChallengeState = startingNewBalanceChallenge
     ? {...selectedBalanceChallenge.state, settingsLocked:false}
@@ -2044,23 +1940,17 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
     const standardChallengeBalance = Number(balance) || 0;
     setSavingSettings(true);
     try {
-      await onSave({ ...account, workspaceType, challengeEnabled: !multiBalanceWorkspace && challengeEnabled && standardChallengeBalance > 0, challengeStartingBalance: !multiBalanceWorkspace && challengeEnabled ? standardChallengeBalance : 0, financeEnabled, platform, name: name.trim() || "Main Account", icon: baseCurrency, balance: multiBalanceWorkspace ? multiBalanceTotal : (parseFloat(balance) || 0), breakevenCap: parseFloat(beCap) || 0, defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, positionSizing, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, defaultRiskMethod }, challengeDraft, { enabled: financeEnabled, savingsAccounts: savingsDraft }, [], balanceDrafts.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0 })), selectedBalance?.id || null);
+      await onSave({ ...account, workspaceType, challengeEnabled: !multiBalanceWorkspace && challengeEnabled && standardChallengeBalance > 0, challengeStartingBalance: !multiBalanceWorkspace && challengeEnabled ? standardChallengeBalance : 0, financeEnabled, platform, name: name.trim() || "Main Account", icon: baseCurrency, balance: multiBalanceWorkspace ? multiBalanceTotal : (parseFloat(balance) || 0), breakevenCap: parseFloat(beCap) || 0, defaultCommission: parseFloat(defaultCommission) || 0, monthlyGoalPct: parseFloat(monthlyGoalPct) || 0, yearlyGoalPct: parseFloat(yearlyGoalPct) || 0, monthlyGoalAmount: parseFloat(monthlyGoalAmount) || 0, yearlyGoalAmount: parseFloat(yearlyGoalAmount) || 0, monthlyGoalSource, yearlyGoalSource, dailyLossLimitPct: parseFloat(dailyLossLimitPct) || 0, monthlyLossLimitPct: parseFloat(monthlyLossLimitPct) || 0, positionSizeEnabled, positionSizing, baseCurrency, defaultRiskPct: parseFloat(defaultRiskPct) || 0, defaultStopLossPips: parseFloat(defaultStopLossPips) || 0, defaultRiskMethod }, null, { enabled: financeEnabled, savingsAccounts: savingsDraft }, [], balanceDrafts.map((item) => ({ ...item, baseCurrency, challengeStartingBalance:item.challengeEnabled ? Number(item.startingBalance) || 0 : 0 })), selectedBalance?.id || null);
     } finally {
       setSavingSettings(false);
     }
   };
   const prepareSettingsImport = async file => { setImportFile(file); setImportError(""); setImportPreview([]); setImportProgress(0); if (!file) return; try { const parsed = await parseBrokerFile(file); if (!parsed.trades.length) setImportError("No completed BUY or SELL trades were found in this file."); else setImportPreview(parsed); } catch { setImportError("Could not read this trade file. Please choose another file."); } };
   const importTradeField = <div className="tj-settings-import-field"><label className="tj-settings-import-drop" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); void prepareSettingsImport(event.dataTransfer.files?.[0] || null); }}><input aria-label="Choose trade import file" type="file" accept=".html,.htm,.csv,.txt,.tsv" onChange={event => void prepareSettingsImport(event.target.files?.[0] || null)}/><strong>Choose a file</strong><span>or drop a CSV here</span></label>{importFile && <div className="tj-settings-hint">{importFile.name}{importPreview.trades?.length ? ` · ${importPreview.trades.length} trades ready${importPreview.cashMovements?.length ? ` · ${importPreview.cashMovements.length} cash movement${importPreview.cashMovements.length === 1 ? "" : "s"}` : ""}` : ""}</div>}{importError && <div className="tj-import-error">{importError}</div>}{importPreview.trades?.length > 0 && <button type="button" className="tj-btn-primary tj-btn-small tj-import-button" disabled={importingTrades} onClick={async () => { setImportingTrades(true); setImportProgress(0); const ok = await onImport(importPreview, setImportProgress); if (ok) { setImportFile(null); setImportPreview([]); } setImportingTrades(false); }}>{importingTrades ? <><i className="tj-import-progress" style={{ "--progress": `${importProgress}%` }}>{importProgress}%</i>Importing trades</> : `Import ${importPreview.trades.length} trades now`}</button>}</div>;
-  const singleAccountSettings = <div className="tj-single-account-reference-grid">
-    <section className="tj-single-account-reference-card"><h4>Account</h4><Field label="Starting balance"><input type="number" min="0" className="tj-input tj-single-balance-input" disabled={challenge.state.settingsLocked} value={balance} onChange={(event) => setStartingBalance(event.target.value)} /></Field><div className="tj-grid2"><Field label="Type"><ThemeSelect className="tj-input" value={workspaceType} onChange={(event) => selectWorkspaceType(event.target.value)}><option value={WORKSPACE_TYPES.STANDARD}>Single</option><option value={WORKSPACE_TYPES.MULTI_BALANCE} disabled={!canUseMultiBalance}>Multiple</option></ThemeSelect></Field><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} ({currency.symbol})</option>)}</ThemeSelect></Field></div><div className="tj-single-import-slot">{importTradeField}</div></section>
-    <section className="tj-single-account-reference-card"><div className="tj-grid2"><Field label={`Breakeven cap (${baseCurrency || "Currency"})`}><input type="number" min="0" className="tj-input" value={beCap} onChange={(event) => setBeCap(event.target.value)} /></Field><Field label="Commission ($)"><input type="number" min="0" className="tj-input" value={defaultCommission} onChange={(event) => setDefaultCommission(event.target.value)} /></Field></div><div className="tj-single-position-reference"><div><strong>Position calculator</strong><small>Live lot sizing in Log Trade</small></div><button type="button" role="switch" aria-label="Enable Position Size Calculator" aria-checked={positionSizeEnabled} className={`tj-settings-switch ${positionSizeEnabled ? "tj-settings-switch-on" : ""}`} onClick={() => setPositionSizeEnabled(value => !value)}><i/></button></div><div className="tj-grid2"><Field label="Risk per trade (%)"><input type="number" min="0" step="0.1" className="tj-input" disabled={!positionSizeEnabled} value={defaultRiskPct} onChange={(event) => setDefaultRiskPct(event.target.value)} /></Field><Field label="Stop loss (pips)"><input type="number" min="0" step="0.1" className="tj-input" disabled={!positionSizeEnabled} value={defaultStopLossPips} onChange={(event) => setDefaultStopLossPips(event.target.value)} /></Field></div></section>
-  </div>;
   const brokerSpecs = <details className="tj-position-spec-settings"><summary>Broker contract specifications</summary><p>Journal defaults are estimates. Enter your broker's contract data to make this account's sizing broker-specific. When a conversion is required, Trade Log asks for a current manual rate for that calculation only.</p><div className="tj-grid4"><Field label="Instrument"><ThemeSelect className="tj-input" value={sizingInstrument} onChange={(event) => setSizingInstrument(event.target.value)}>{DEFAULT_INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}</ThemeSelect></Field><Field label="Contract size"><input type="number" min="0" step="any" className="tj-input" value={sizingSpec?.contractSize ?? ''} onChange={(event) => updateSizingSpec('contractSize',event.target.value)} /></Field><Field label="Tick size"><input type="number" min="0" step="any" className="tj-input" value={sizingSpec?.tickSize ?? ''} onChange={(event) => updateSizingSpec('tickSize',event.target.value)} /></Field><Field label="Profit currency"><input className="tj-input" maxLength="3" value={sizingSpec?.profitCurrency ?? ''} onChange={(event) => updateSizingSpec('profitCurrency',event.target.value.toUpperCase())} /></Field><Field label="Minimum volume"><input type="number" min="0" step="any" className="tj-input" value={sizingSpec?.volumeMin ?? ''} onChange={(event) => updateSizingSpec('volumeMin',event.target.value)} /></Field><Field label="Maximum volume"><input type="number" min="0" step="any" className="tj-input" value={sizingSpec?.volumeMax ?? ''} onChange={(event) => updateSizingSpec('volumeMax',event.target.value)} /></Field><Field label="Volume step"><input type="number" min="0" step="any" className="tj-input" value={sizingSpec?.volumeStep ?? ''} onChange={(event) => updateSizingSpec('volumeStep',event.target.value)} /></Field><Field label="Tick value (optional)"><input type="number" min="0" step="any" className="tj-input" placeholder="Derived from contract" value={sizingSpec?.tickValue ?? ''} onChange={(event) => updateSizingSpec('tickValue',event.target.value)} /></Field></div></details>;
-  const selectedBalancePlan = multiBalanceWorkspace && selectedBalance ? <ChallengeModeSettings challenge={{ ...selectedBalanceChallenge, state:{ ...selectedBalanceChallengeState, activeLevel:selectedBalance.challengeActiveLevel ?? selectedBalanceChallengeState.activeLevel, automation:{ ...(selectedBalanceChallengeState.automation || {}), mode:selectedBalance.challengeMode || "risk", rewardRatio:selectedBalance.challengeReward ?? selectedBalanceChallengeState.automation?.rewardRatio, levelCount:selectedBalance.challengeLevelCount || 30, adaptiveRiskPct:selectedBalance.challengeAdaptiveRiskPct ?? selectedBalanceChallengeState.automation?.adaptiveRiskPct ?? 1, adaptiveDrawdownPct:selectedBalance.challengeAdaptiveDrawdownPct ?? selectedBalanceChallengeState.automation?.adaptiveDrawdownPct ?? 10 } }, setMode:mode=>updateSelectedBalance({challengeMode:mode || "risk"}), setReward:reward=>updateSelectedBalance({challengeReward:reward,...(!canUseLossStreak(reward)?{challengeMode:"risk"}:{})}), setAdaptiveRisk:adaptiveRiskPct=>updateSelectedBalance({challengeAdaptiveRiskPct:adaptiveRiskPct}), setAdaptiveDrawdown:challengeAdaptiveDrawdownPct=>updateSelectedBalance({challengeAdaptiveDrawdownPct}), setLevel:level=>updateSelectedBalance({challengeActiveLevel:level}), setLevelCount:levelCount=>updateSelectedBalance({challengeLevelCount:levelCount}) }} enabled={selectedBalance.challengeEnabled && Number(selectedBalance.startingBalance) > 0} liveBalance={settingsLiveBalance}/> : null;
   if (phone) {
     const plain = value => fmtMoney(value, baseCurrency).replace(/^\+/, "");
     const symbol = ACCOUNT_CURRENCIES.find(item => item.code === baseCurrency)?.symbol || "$";
-    const modeName = mode => mode === "adaptive" ? "Adaptive Balance" : mode === "streak" ? "Two-loss streak" : mode === "risk" ? "Risk limit" : "Choose a mode";
     const number = (label, value, onChange, suffix, extra = {}) => <TextField label={label} type="number" min="0" step="any" inputMode="decimal" value={value ?? ""} suffix={suffix} onChange={event => onChange(event.target.value)} {...extra}/>;
     const linked = (pct, amount, onPct, onAmount) => <><div className="tj-ma-two">{number("Percent", pct, onPct, "%")}{number("Amount", amount, onAmount, symbol)}</div><p className="tj-ma-note">Type either one. The other updates.</p></>;
     const linkedStat = (key, label, title, hint, pct, amount, onPct, onAmount, resetNote) => ({ key, label, title, hint, empty:!(Number(pct) > 0), value:`${pct}%`, sub:Number(pct) > 0 ? [Number(amount) > 0 ? plain(amount) : "", resetNote].filter(Boolean).join(" · ") : resetNote, node:linked(pct, amount, onPct, onAmount) });
@@ -2074,9 +1964,6 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       { key:"commission", icon:"comm", label:"Default commission", hint:"Pre-filled when you log a trade.", value:plain(defaultCommission), node:number(`Amount (${baseCurrency || "Currency"})`, defaultCommission, setDefaultCommission, symbol) },
     ];
     const removeAccount = multiBalanceWorkspace && selectedBalance && balanceDrafts.length > 2 ? { key:"remove", type:"node", node:<ConfirmDeleteButton className="tj-ma-remove" title={`Remove ${selectedBalance.name || "account"}`} onClick={() => { const fallback = balanceDrafts.find(item => item.id !== selectedBalance.id); removeBalanceDraft(selectedBalance.id); setSelectedBalanceId(fallback?.id || null); }}>Remove {selectedBalance.name || "this account"}</ConfirmDeleteButton> } : null;
-    const challengeOn = multiBalanceWorkspace ? !!selectedBalance?.challengeEnabled : challengeEnabled && Number(balance) > 0;
-    const challengeLevel = multiBalanceWorkspace ? selectedBalance?.challengeActiveLevel ?? selectedBalanceChallengeState.activeLevel : draftChallenge.state.activeLevel;
-    const challengeCount = multiBalanceWorkspace ? selectedBalance?.challengeLevelCount || 30 : draftChallenge.state.automation?.levelCount || 30;
     const accountTab = <>
       <Group title="Details" items={removeAccount ? [...details, removeAccount] : details}/>
       <Group title="Tools" items={[
@@ -2107,7 +1994,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
 
     </>;
     const saveBlocked = !name.trim() || !baseCurrency || savingSettings;
-    const snapshot = JSON.stringify({ name, workspaceType, balanceDrafts, balance, baseCurrency, beCap, defaultCommission, monthlyGoalPct, yearlyGoalPct, monthlyGoalAmount, yearlyGoalAmount, dailyLossLimitPct, monthlyLossLimitPct, positionSizeEnabled, challengeEnabled, defaultRiskPct, defaultStopLossPips, defaultRiskMethod, positionSizing, financeEnabled, savingsDraft, challengeDraft });
+    const snapshot = JSON.stringify({ name, workspaceType, balanceDrafts, balance, baseCurrency, beCap, defaultCommission, monthlyGoalPct, yearlyGoalPct, monthlyGoalAmount, yearlyGoalAmount, dailyLossLimitPct, monthlyLossLimitPct, positionSizeEnabled, challengeEnabled, defaultRiskPct, defaultStopLossPips, defaultRiskMethod, positionSizing, financeEnabled, savingsDraft });
     if (phoneSnapshot.current === null) phoneSnapshot.current = snapshot;
     return <Modal navKey="account" navVia={navVia} title="Account" className="tj-account-settings-hub-modal tj-account-settings-redesign tj-ma-modal" centered wide onClose={() => { if (!savingSettings) onClose(); }}>
       <MobileAccountSettings initialTab={initialPane === "account" ? "account" : "goals"} onClose={() => { if (!savingSettings) onClose(); }} summaryRef={summary} dirty={snapshot !== phoneSnapshot.current} onSave={saveSettings} saveDisabled={saveBlocked} saveTitle={!baseCurrency ? "Choose an account base currency before saving" : ""} saving={savingSettings}
@@ -2135,8 +2022,8 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       <div className="tj-settings-flat">
       <AccountSettingsSection title="Account" accountName={name} icon={<Banknote size={15}/>} tone="account" isOpen={open.identity} onToggle={() => toggle("identity")}>
         <><div className="tj-account-picker-heading"><div><strong>Accounts</strong><p>Pick an account to edit. Everything below applies to that account only.</p></div><div className="tj-account-mode-toggle" role="group" aria-label="Account type"><button type="button" className={`tj-account-mode-option ${!multiBalanceWorkspace ? "is-active" : ""}`} aria-pressed={!multiBalanceWorkspace} onClick={() => selectWorkspaceType(WORKSPACE_TYPES.STANDARD)}>Single</button><button type="button" className={`tj-account-mode-option ${multiBalanceWorkspace ? "is-active" : ""}`} aria-pressed={multiBalanceWorkspace} onClick={() => selectWorkspaceType(WORKSPACE_TYPES.MULTI_BALANCE)}>Multiple</button></div></div><div className="tj-account-context-grid">{multiBalanceWorkspace ? balanceDrafts.map((item, index) => <button key={item.id} type="button" className={`tj-balance-context-card ${item.id === selectedBalance?.id ? "tj-balance-context-card-active" : ""}`} aria-pressed={item.id === selectedBalance?.id} onClick={() => setSelectedBalanceId(item.id)}><small>{item.id === selectedBalance?.id ? `ACCOUNT ${index + 1} · EDITING` : `ACCOUNT ${index + 1}`}</small><strong>{item.name || `Account ${index + 1}`}</strong><span>{fmtMoney(financeTotals(settingsBalanceAccount, item.id).tradingBalance, baseCurrency)}</span></button>) : <button type="button" className="tj-balance-context-card tj-balance-context-card-active" aria-pressed="true"><small>ACCOUNT 1 · EDITING</small><strong>{name || "Account 1"}</strong><span>{fmtMoney(settingsLiveBalance ?? 0, baseCurrency)}</span></button>}{multiBalanceWorkspace && balanceDrafts.length < 5 && <button type="button" className="tj-balance-context-add" onClick={() => setSelectedBalanceId(addBalanceDraft())}><strong><Plus size={14}/> Add account</strong><small>{balanceDrafts.length} of 5 used</small></button>}</div></>
-        {multiBalanceWorkspace && selectedBalance && <><div className="tj-settings-selected-balance">Editing Account {selectedBalanceIndex + 1}: <b>{selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={selectedBalance.name} onChange={(event) => updateSelectedBalance({ name:event.target.value })}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={selectedBalanceChallengeState.settingsLocked} value={selectedBalance.startingBalance} onChange={(event) => updateSelectedBalance({ startingBalance:event.target.value })}/></Field><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.label} ({currency.symbol})</option>)}</ThemeSelect></Field>{importTradeField}</div>{balanceDrafts.length > 2 && <div className="tj-balance-context-actions"><ConfirmDeleteButton className="tj-btn-danger-outline tj-btn-small" title="Remove selected" onClick={() => { const fallback = balanceDrafts.find((item) => item.id !== selectedBalance.id); removeBalanceDraft(selectedBalance.id); setSelectedBalanceId(fallback?.id || null); }}>Remove selected</ConfirmDeleteButton></div>}</>}
-        {!multiBalanceWorkspace && <><div className="tj-settings-selected-balance">Editing Account 1: <b>{name || "Account 1"}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={name} onChange={(event) => setName(event.target.value)}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={challenge.state.settingsLocked} value={balance} onChange={(event) => setStartingBalance(event.target.value)}/></Field><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.label} ({currency.symbol})</option>)}</ThemeSelect></Field>{importTradeField}</div></>}
+        {multiBalanceWorkspace && selectedBalance && <><div className="tj-settings-selected-balance">Editing Account {selectedBalanceIndex + 1}: <b>{selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={selectedBalance.name} onChange={(event) => updateSelectedBalance({ name:event.target.value })}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={selectedBalanceChallengeState.settingsLocked} value={selectedBalance.startingBalance} onChange={(event) => updateSelectedBalance({ startingBalance:event.target.value })}/></Field></div>{balanceDrafts.length > 2 && <div className="tj-balance-context-actions"><ConfirmDeleteButton className="tj-btn-danger-outline tj-btn-small" title="Remove selected" onClick={() => { const fallback = balanceDrafts.find((item) => item.id !== selectedBalance.id); removeBalanceDraft(selectedBalance.id); setSelectedBalanceId(fallback?.id || null); }}>Remove selected</ConfirmDeleteButton></div>}</>}
+        {!multiBalanceWorkspace && <><div className="tj-settings-selected-balance">Editing Account 1: <b>{name || "Account 1"}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={name} onChange={(event) => setName(event.target.value)}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={challenge.state.settingsLocked} value={balance} onChange={(event) => setStartingBalance(event.target.value)}/></Field></div></>}
       </AccountSettingsSection>
       {singleConversionWarning && <SingleAccountSwitchDialog keptAccountName={balanceDrafts[0]?.name || 'Account 1'} accountNames={balanceDrafts.slice(1).map(item => item.name)} onCancel={() => setSingleConversionWarning(false)} onConfirm={() => selectWorkspaceType(WORKSPACE_TYPES.STANDARD, true)}/>}
       <AccountSettingsSection title="Breakeven / Commission" icon={<BadgeDollarSign size={15}/>} status={`B/E ${fmtMoneyShort(Number(beCap) || 0, baseCurrency)} · Fee ${fmtMoneyShort(Number(defaultCommission) || 0, baseCurrency)}`} isOpen={open.defaults} onToggle={() => toggle("defaults")}>
@@ -2145,6 +2032,9 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       <AccountSettingsSection title="Position Size Calculator" icon={<DollarSign size={15}/>} note={multiBalanceWorkspace ? `Sizing defaults for ${selectedBalance?.name || "the selected balance"}.` : "Optional risk-based lot sizing for new trades."} status={positionSizeEnabled ? "Enabled" : "Off"} isOpen={open.position} onToggle={() => toggle("position")}>
         <label className="tj-settings-switch-row"><button type="button" role="switch" aria-checked={positionSizeEnabled} className={`tj-settings-switch ${positionSizeEnabled ? "tj-settings-switch-on" : ""}`} onClick={() => setPositionSizeEnabled((enabled) => !enabled)}><i /></button><span><strong>Enable Position Size Calculator</strong><small>Show live risk-based lot suggestions in Log Trade.</small></span></label><div className="tj-grid3"><Field label="New-trade calculation"><ThemeSelect className="tj-input" value={defaultRiskMethod} onChange={(event) => setDefaultRiskMethod(event.target.value)}><option value="price">Price</option><option value="pips">Pips</option></ThemeSelect></Field><Field label="Default Risk % Per Trade"><input type="number" min="0" step="0.1" className="tj-input" disabled={!positionSizeEnabled} value={scopedRiskPct} onChange={(event) => multiBalanceWorkspace ? updateSelectedBalance({ riskSettings:{...selectedBalance.riskSettings, defaultRiskPct:event.target.value} }) : setDefaultRiskPct(event.target.value)} /></Field><Field label="Default Stop Loss (Pips)"><input type="number" min="0" className="tj-input" disabled={!positionSizeEnabled} value={scopedStopLossPips} placeholder="Optional" onChange={(event) => multiBalanceWorkspace ? updateSelectedBalance({ riskSettings:{...selectedBalance.riskSettings, defaultStopLossPips:event.target.value} }) : setDefaultStopLossPips(event.target.value)} /></Field></div>
         {brokerSpecs}
+      </AccountSettingsSection>
+      <AccountSettingsSection title="Currency & Import" icon={<DollarSign size={15}/>} status={baseCurrency || "Currency required"}>
+        <div className="tj-grid2"><Field label="Currency"><ThemeSelect required className="tj-input" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option value="" disabled>Select a currency</option>{ACCOUNT_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.label} ({currency.symbol})</option>)}</ThemeSelect></Field>{importTradeField}</div>
       </AccountSettingsSection>
       <AccountSettingsSection title="Goals" icon={<Trophy size={15}/>} description="Only the selected account's pacing and analytics." enabled={goalsSwitchEnabled} onEnabledChange={enabled => toggleSettingsSection("goals",enabled)}>
         <div className="tj-grid4 tj-settings-linked-grid"><LinkedPercentageAmountCards compact label="Monthly Growth Goal" currency={baseCurrency} percentage={scopedMonthlyGoalPct} amount={scopedMonthlyAmount} onPercentageChange={setScopedMonthlyGoalPct} onAmountChange={setScopedMonthlyGoalAmount} /><LinkedPercentageAmountCards compact label="Yearly Growth Goal" currency={baseCurrency} percentage={scopedYearlyGoalPct} amount={scopedYearlyAmount} onPercentageChange={setScopedYearlyGoalPct} onAmountChange={setScopedYearlyGoalAmount} /></div><p className="tj-settings-linked-note">Type either the percentage or the amount; the linked value updates immediately.</p>
@@ -8856,25 +8746,10 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const nextReward = draft?.rewardRatio ?? challenge.state.automation?.rewardRatio;
     const nextAdaptiveRisk = Number(draft?.adaptiveRiskPct ?? challenge.state.automation?.adaptiveRiskPct ?? 1);
     const nextAdaptiveDrawdown = Number(draft?.adaptiveDrawdownPct ?? challenge.state.automation?.adaptiveDrawdownPct ?? 10);
-    if (isMultiBalanceWorkspace(updated)) {
-      const validationWorkspace={...updated,balances:balanceDrafts || updated.balances || [],trades:account.trades || [],financeMovements:account.financeMovements || []};
-      const candidate=validationWorkspace.balances.find(item=>item.id===editedBalanceId);
-      if (candidate?.challengeEnabled) {
-        const issue=challengeModeActivationRule({mode:candidate.challengeMode,reward:candidate.challengeReward,balance:liveChallengeBalance(scopeChallengeAccount(validationWorkspace,candidate)),levelCount:candidate.challengeLevelCount});
-        if (issue) { showError(`${candidate.name}: ${issue.message}`); return false; }
-      }
-    } else if (enabled) {
-      const issue=challengeModeActivationRule({mode:nextMode,reward:nextReward,balance:liveChallengeBalance({...updated,trades:account.trades || [],financeMovements:account.financeMovements || []}),levelCount:nextLevelCount});
-      if (issue) { showError(issue.message); return false; }
-    }
     const rewardChanged = nextReward !== challenge.state.automation?.rewardRatio;
     const adaptiveChanged = nextMode === 'adaptive' && (nextAdaptiveRisk !== Number(challenge.state.automation?.adaptiveRiskPct ?? 1) || nextAdaptiveDrawdown !== Number(challenge.state.automation?.adaptiveDrawdownPct ?? 10));
     const changed = rewardChanged || adaptiveChanged || nextMode !== (challenge.state.automation?.mode ?? null) || nextLevel !== challenge.state.activeLevel || nextLevelCount !== (challenge.state.automation?.levelCount ?? 30);
     if(challenge.state.settingsLocked && (changed || Number(updated.balance)!==Number(account.balance) || updated.challengeEnabled!==account.challengeEnabled)) {showError('This challenge has linked trades. Its starting balance, reward, mode and level settings are locked.');return false;}
-    if (changed && (challenge.loading || (nextMode && !challenge.modesReady))) {
-      showError("Challenge settings are not ready. Check the Challenge SQL migrations and retry.");
-      return false;
-    }
     const settingsPatch = createAccountPatch(updated);
     const res = await updateAccount(updated.id, settingsPatch);
     if (res.error) { showError(res.error); return false; }
