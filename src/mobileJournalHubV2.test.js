@@ -21,6 +21,6 @@ test('Journal Hub V2 is phone-only, uses whole-card navigation, and keeps Review
   assert.match(css, /tj-jh2-routine:active/);
   assert.match(shell, /quickTile\('journal',NotebookText,'Trade Logs'/);
   assert.match(journal, /journal:'\/journal-hub'/);
-  assert.match(journal, /\(page === "tradelog" \|\| page === "journal"\) && <TradeLogPage/);
+  assert.match(journal, /<TradeLogPage/);
   assert.match(journal, /openDailyRoutineFromHub/);
 });

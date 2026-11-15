@@ -47,6 +47,10 @@
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content.tj-settings-hub-content {flex:1;min-height:0;margin:0!important;padding:18px var(--sp-pad) 24px!important;overflow:auto;overscroll-behavior:contain;scrollbar-width:none;background:none!important;}
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content::-webkit-scrollbar {display:none;}
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-hub-content>div:not([hidden]) {display:flex;flex-direction:column;gap:16px;}
+  /* Flat (tab-free) layout used when AccountSettingsLayout is in the side panel. */
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-flat {display:flex!important;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:14px;padding:18px var(--sp-pad) 24px!important;background:none!important;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-flat::-webkit-scrollbar {display:none;}
+  .tj-root .sp-body .tj-account-panel-modal .tj-settings-flat>.tj-settings-section,.tj-root .sp-body .tj-account-panel-modal .tj-settings-flat>.tj-settings-danger-row {flex-shrink:0;}
   .tj-root .sp-body .tj-account-panel-modal .tj-settings-pane-heading {display:none!important;}
   .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-details-row,.tj-reference-utilities-row) {display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;margin:0!important;}
   .tj-root .sp-body .tj-account-panel-modal :is(.tj-reference-accounts-card,.tj-reference-details-card,.tj-reference-position-card,.tj-reference-challenge-card,.tj-settings-section,.tj-reference-finance-toggle,.tj-finance-settings-account) {

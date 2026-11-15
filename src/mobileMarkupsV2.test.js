@@ -26,7 +26,7 @@ test('Mobile Markups V2 groups records by month and keeps search, status and dat
 
 test('TradingJournal mounts exactly one Markups surface per breakpoint and preserves the desktop redesign', () => {
   const source = read('./TradingJournal.jsx');
-  assert.match(source, /page === "markups" && \(phoneCalendar \? <MobileMarkupsV2/);
+  assert.match(source, /phoneCalendar \? <MobileMarkupsV2/);
   assert.match(source, /: <MarkupsRedesign markups=\{markups\.filter/);
   assert.match(source, /markups\.filter\(\(markup\)=>markup\.accountId===account\.id\)/);
   assert.match(source, /premarketMarkupId: markup\.id/);

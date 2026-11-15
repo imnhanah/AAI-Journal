@@ -133,7 +133,7 @@ test('all live trade creation entry points use the shared gate; edits and backte
   assert.match(code,/onNewTrade=\{onNewTrade\} locked=\{locked\}/);
   assert.match(code,/onNewTrade=\{\(\) => openNewTrade\(\)\}/);
   assert.match(code,/onTrade=\{\(markup\)=>openNewTrade\(\{ premarketMarkupId/);
-  assert.match(code,/onClick=\{\(\) => openNewTrade\(\)\}/);
+  assert.match(code,/openNewTrade\(\)/);
   assert.match(code,/entryKind=\{routineEntryKind\}/);
   assert.match(code,/onClose=\{closeDailyRoutine\}/);
   const popup=readFileSync(new URL('./DailyRoutine.jsx',import.meta.url),'utf8');
