@@ -1,3 +1,4 @@
+import {getJournalSafety} from './journalDataSafety.js';
 import {normaliseAdaptiveStepBack} from './challengeRules.js';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {challengeDb} from './challengeDb';
@@ -14,6 +15,7 @@ const normaliseProgress = (progress) => progress ? {
   statuses: progress.statuses || {},
   notes: progress.notes || {},
   automation: progress.automation || null,
+  baseRevision: progress.updatedAt ?? progress.updated_at ?? null,
 } : null;
 
 export default function useChallenge(account, userId, startupProgress = null, startupComplete = false) {
@@ -25,7 +27,12 @@ export default function useChallenge(account, userId, startupProgress = null, st
   const ready=record?.key === key;
   const baseline=ready ? record.state : emptyChallenge();
   const state=useMemo(()=>{const replay=replayChallenge(baseline,account);const life=challengeLifecycle(baseline,account);return {...replay,...life,failed:replay.failed || life.failed};},[baseline,account]);
+  const [readVerified,setReadVerified]=useState(startupComplete===true);
+  const draft=useMemo(()=>userId&&account?.id?getJournalSafety(userId).forWorkspace(account.id).draft('challenge-progress','account',{next:null}):null,[userId,key]);
   const latest=useRef(null);
+  useEffect(()=>{let active=true;void draft?.ready().then(snapshot=>{
+    if(active&&snapshot.dirty&&snapshot.value.next){latest.current={key,next:snapshot.value.next};setRecord({key,state:snapshot.value.next,modesReady:false});setError('Recovered local progress. Review and retry before syncing.');}
+  }).catch(error=>{if(active)setError(error.message);});return()=>{active=false;};},[draft,key]);
   const flight=useRef(null);
   useEffect(()=>{
     const warn=event=>{if(flight.current || latest.current){event.preventDefault();event.returnValue='';}};
@@ -43,22 +50,22 @@ export default function useChallenge(account, userId, startupProgress = null, st
       const probe=await challengeDb.probe('account',account.id);
       if(currentKey.current!==key)return;
       const next=data ? {activeLevel:data.active_level,statuses:data.statuses || {},notes:data.notes || {},automation:data.automation || null} : emptyChallenge();
-      setRecord({key,state:next,modesReady:!probe.error});latest.current=null;
-    } catch(failure) {if(currentKey.current===key)setError(`Could not load challenge: ${failure.message}. Check that the Challenge SQL migrations are applied.`);}
+      setReadVerified(true);setRecord({key,state:latest.current?.key===key?latest.current.next:next,modesReady:!probe.error});
+    } catch(failure) {if(currentKey.current===key){setReadVerified(false);setError(`Could not load challenge: ${failure.message}. Check that the Challenge SQL migrations are applied.`);}}
     finally {if(currentKey.current===key)setLoading(false);}
   },[key,account?.id,userId]);
   useEffect(()=>{
     const next=normaliseProgress(startupProgress);
-    setRecord(seed && key ? {key,state:seed,modesReady:true} : null);
-    latest.current=null;flight.current=null;setSaving(false);
+    if(latest.current?.key!==key){setRecord(seed && key ? {key,state:seed,modesReady:startupComplete} : null);latest.current=null;}
+    setReadVerified(startupComplete===true);
     setLoading(Boolean(key && !seed));
   },[key,reload,seed]);
   // Account Settings can open before the app bootstrap delivers challenge
   // progress. In that case it still needs to load its own record instead of
   // leaving the mode controls permanently in a loading state.
   useEffect(()=>{
-    if(key && !seed) void reload();
-  },[key,seed,reload]);
+    if(key && (!seed||!startupComplete)) void reload();
+  },[key,seed,startupComplete,reload]);
   useEffect(()=>{
     const restored=()=>{void reload();};
     window.addEventListener('aaicorefx:backup-restored',restored);
@@ -70,9 +77,8 @@ export default function useChallenge(account, userId, startupProgress = null, st
   useEffect(()=>{
     const sync=(event)=>{
       if(event.detail?.accountId===account?.id && event.detail?.state){
-        setRecord(current=>current?.key===key ? {...current,state:event.detail.state} : current);
-        latest.current=null;
-        flight.current=null;
+        setRecord(current=>current?.key===key ? {...current,state:latest.current?.key===key?latest.current.next:event.detail.state} : current);
+        setReadVerified(true);
         setError('');
         setLoading(false);
       }
@@ -81,9 +87,12 @@ export default function useChallenge(account, userId, startupProgress = null, st
     return()=>window.removeEventListener('aaicorefx:account-challenge-updated',sync);
   },[account?.id,key]);
   async function persist(next) {
-    if(!ready || loading || flight.current===key) return false;
+    if(!draft)return false;
+    latest.current={key,next};setRecord(current=>current?.key===key?{...current,state:next}:current);draft.edit({next});
+    let attempt;try{attempt=await draft.capture();}catch(error){setError(error.message);return false;}
+    if(!ready || loading || !readVerified || flight.current===key){setError('Progress is retained on this device. Load the saved challenge before retrying.');return false;}
     flight.current=key;
-    setSaving(true);setError('');latest.current={key,next};
+    setSaving(true);setError('');
     try {
       await queueChallengeWrite(key,async()=>{
         const payload={account_id:account.id,user_id:userId,active_level:next.activeLevel,statuses:next.statuses,notes:next.notes,updated_at:new Date().toISOString()};
@@ -91,7 +100,8 @@ export default function useChallenge(account, userId, startupProgress = null, st
         const {error:failure}=await challengeDb.save('account',payload);
         if(failure)throw failure;
       });
-      if(currentKey.current===key){setRecord({...record,state:next});latest.current=null;}
+      await draft.acknowledge(attempt);
+      if(currentKey.current===key){if(!draft.getSnapshot().dirty)latest.current=null;setRecord({...record,state:latest.current?.next||next});}
       return true;
     } catch(failure) {if(currentKey.current===key)setError(`Could not save challenge: ${failure.message}`);return false;}
     finally {if(currentKey.current===key){flight.current=null;setSaving(false);}}
@@ -101,7 +111,7 @@ export default function useChallenge(account, userId, startupProgress = null, st
     if(mode==='streak' && rewardRatio && !canUseLossStreak(rewardRatio)) {setError('Two losses on a level needs a reward of 2.8R or more.');return false;}
     return persist(resetAutomation({...state,automation:{...state.automation,rewardRatio,adaptiveRiskPct:mode==='adaptive'?Number(adaptiveRiskPct)||1:undefined,adaptiveDrawdownPct:mode==='adaptive'?Number(adaptiveDrawdownPct)||10:undefined,adaptiveStepBack:mode==='adaptive'?normaliseAdaptiveStepBack(adaptiveStepBack):undefined}},account.trades || [],mode,level,new Date(),levelCount,liveChallengeBalance(account)));
   };
-  return {state, loading:loading || !ready, saving, error, modesReady:ready && record.modesReady,
+  return {state, loading:loading || (!ready && !error), saving, error, modesReady:ready && record.modesReady,
     reload, retry:()=>latest.current?.key===key ? persist(latest.current.next) : reload(),
     setMode:mode=>reset(mode,state.activeLevel),
     configure:(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct,adaptiveStepBack)=>reset(mode,level,levelCount,rewardRatio,adaptiveRiskPct,adaptiveDrawdownPct,adaptiveStepBack),

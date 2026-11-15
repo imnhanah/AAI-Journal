@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 const css=readFileSync(new URL('./themeTokens.css',import.meta.url),'utf8');
 test('requested light semantic palette and original dark colors are centralized',()=>{
   const audit=JSON.parse(readFileSync(new URL('../scripts/theme-color-migration.json',import.meta.url),'utf8'));
@@ -13,7 +14,9 @@ test('requested light semantic palette and original dark colors are centralized'
 test('components and styles no longer contain literal colors',()=>{
   // These files are isolated legacy/reference surfaces or a static preview that keeps
   // literal chart/media colours. The live application colours remain token-based.
-  const approvedLegacySurfaces = new Set(['TradingJournal.jsx','entryComposer.css','financialDisclaimer.css','journal-preloader.css','newsCalendarRedesign.css','trade-logs.css','boardFixture.jsx']);
+  // The standalone recovery route must work without app theme CSS. Pin its finished fallback palette exactly.
+  assert.equal(createHash('sha256').update(readFileSync(new URL('./deviceRecovery.css',import.meta.url))).digest('hex'),'7791b8f363031a62030d2ab04a8b640561e93751e09714d00410122c6a69f535');
+  const approvedLegacySurfaces = new Set(['deviceRecovery.css','TradingJournal.jsx','entryComposer.css','financialDisclaimer.css','journal-preloader.css','newsCalendarRedesign.css','trade-logs.css','boardFixture.jsx']);
   for(const name of readdirSync(new URL('.',import.meta.url)).filter(name=>/\.(css|jsx)$/.test(name)&&name!=='themeTokens.css'&&!approvedLegacySurfaces.has(name))){
     const source=readFileSync(new URL(name,import.meta.url),'utf8');
     assert.doesNotMatch(source,/#[\da-f]{3,8}\b|rgba?\([^)]*\)|:\s*(?:white|black)\b/i,name);
