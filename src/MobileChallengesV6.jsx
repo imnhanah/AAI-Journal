@@ -115,7 +115,7 @@ export default function MobileChallengesV6({onViewCertificate, account, plan, cu
       <div className="is-gain"><span>Available capital</span><b>{fmt(life.liveBalance)}</b></div>
       <div className="is-amber"><span>{riskLabel}</span><b>{riskValue}</b></div>
       <div className="is-risk"><span>Risk at level start</span><b>{fmt(current.risk)}</b></div>
-      <div className="is-gain"><span>Profit target</span><b>{fmt(current.profit)}</b></div>
+      <div className="is-gain"><span>Profit target</span><b>{fmt(state.currentProfitTarget ?? current.profit)}</b></div>
     </div>
     <h2 className="tj-mc6-plan-title">Compounding plan</h2>
     {ranges.length > 1 && <div className="tj-mc6-chips">{ranges.map((item, index) => <button type="button" key={item.label} aria-pressed={index === rangeIndex} onClick={() => setRangeIndex(index)}><span>{item.label}</span></button>)}</div>}

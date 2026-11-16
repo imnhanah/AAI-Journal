@@ -5,11 +5,11 @@ export const ADAPTIVE_STEP_BACK_RULES = ['one', 'two', 'net'];
 export const normaliseAdaptiveStepBack = value => ADAPTIVE_STEP_BACK_RULES.includes(value) ? value : 'one';
 
 const SHARED = {
-  balance: ['Balance and deposits', 'The challenge pauses if your capital falls below the Level 1 balance. Deposits can fund progress but never count as growth. Withdrawals and transfers can step you back.'],
+  balance: ['Balance and deposits', 'Your available balance must meet the current level’s planned starting balance. If it falls below that minimum, you step back to the highest level it still funds, in every mode. The challenge pauses below the Level 1 balance. Deposits can fund progress but never count as growth.'],
   completion: ['Completing the challenge', 'It completes when a trade passes the last level and the balance has reached the planned final target. Planned balances are the clean path, so your live balance can finish above them.'],
   lock: ['Locked after trades', 'Once a trade is linked, the mode, plan length, reward and setup rules are locked.'],
 };
-const PASS = ['How you pass', 'One trade that reaches the level’s profit target passes it. Small wins do not add up, and an earlier loss is not taken off.'];
+const PASS = ['How you pass', 'One closed trade must meet or exceed the level’s full profit target, and the account balance after that same trade, fees and commissions must meet or exceed the level’s planned ending balance. Both are required on the same trade; otherwise you stay on the level. Small wins do not add up or unlock an earlier attempt.'];
 
 const ADAPTIVE_STEP_BACK_TEXT = {
   one: ['Step-back · One loss', 'A losing trade from Level 2 onward steps the challenge back one level. A Level 1 loss stays at Level 1.'],
@@ -22,9 +22,9 @@ export function challengeRulesFor(mode = 'risk', stepBack) {
     return {
       title: 'Mode 3 · Adaptive Balance rules',
       items: [
-        ['How you pass', 'One trade that reaches the level’s target passes it. Each level risks the percentage you chose and targets your reward multiple.'],
+        PASS,
         ADAPTIVE_STEP_BACK_TEXT[normaliseAdaptiveStepBack(stepBack)],
-        ['Balance and deposits', 'The challenge pauses if your capital falls below its starting balance by your maximum drawdown. Deposits can fund progress but never count as growth. Withdrawals and transfers can step you back.'],
+        ['Balance and deposits', 'Adaptive trades keep your chosen live-balance risk percentage and reward multiple. Your available balance must also meet the current level’s planned starting balance; below it, you step back to the highest level still funded. The challenge pauses at your maximum drawdown. Deposits can fund progress but never count as growth.'],
         SHARED.completion,
         ['Locked after trades', 'The challenge always starts at Level 1. Once a trade is linked, its adaptive settings and plan rules are locked.'],
       ],
