@@ -42,7 +42,9 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
   const sym = currency === 'USD' ? '$' : `${currency} `;
   const money = (value) => `${sym}${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
   const start = Number(balance ?? setup.startingBalance) || 0;
-  const mode = setup.mode;
+  const mode = setup.mode || null;
+  // A new challenge starts with no mode picked; the trader must choose one.
+  const modeChosen = !!mode && !!MODES[mode];
   const adaptive = mode === 'adaptive';
   const levelCount = Number(setup.levelCount) || 30;
   const reward = Number(setup.reward);
@@ -58,19 +60,20 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
 
   const patch = (next) => setSetup((current) => ({ ...current, ...next }));
   const fits = useMemo(() => challengeSetupFits({ balance: start }), [start]);
-  const issue = useMemo(() => challengeModeActivationRule({ mode, reward: adaptive && !(reward > 0) ? null : reward, balance: start, levelCount }), [mode, adaptive, reward, start, levelCount]);
-  const limit = !adaptive && reward > 0 ? challengeFundingLimit({ mode, reward, levelCount, balance: start }) : null;
-  const where = adaptive ? { level: 1, max: Math.floor(levelCount / 2), ok: true } : { level: limit?.fundedLevel ?? 1, max: limit?.maxLevel ?? Math.floor(levelCount / 2), ok: !!limit?.allowed };
-  const fitR = !adaptive ? challengeFitRange({ mode, balance: start, levelCount }) : null;
-  const [low, high] = adaptive ? [1, 5.5] : challengeRewardRange(mode);
+  const issue = useMemo(() => modeChosen ? challengeModeActivationRule({ mode, reward: adaptive && !(reward > 0) ? null : reward, balance: start, levelCount }) : null, [mode, modeChosen, adaptive, reward, start, levelCount]);
+  const limit = modeChosen && !adaptive && reward > 0 ? challengeFundingLimit({ mode, reward, levelCount, balance: start }) : null;
+  const where = !modeChosen ? { level: 1, max: Math.floor(levelCount / 2), ok: true } : adaptive ? { level: 1, max: Math.floor(levelCount / 2), ok: true } : { level: limit?.fundedLevel ?? 1, max: limit?.maxLevel ?? Math.floor(levelCount / 2), ok: !!limit?.allowed };
+  const fitR = modeChosen && !adaptive ? challengeFitRange({ mode, balance: start, levelCount }) : null;
+  const [low, high] = adaptive || !modeChosen ? [1, 5.5] : challengeRewardRange(mode);
   const pos = (value) => Math.max(0, Math.min(100, (value - 1) / 4.5 * 100));
-  const plan = useMemo(() => start > 0 && reward > 0 ? buildChallengePlan(start, mode, levelCount, reward, { adaptiveRiskPct: risk, adaptiveDrawdownPct: draw }) : [], [start, mode, levelCount, reward, risk, draw]);
+  const plan = useMemo(() => modeChosen && start > 0 && reward > 0 ? buildChallengePlan(start, mode, levelCount, reward, { adaptiveRiskPct: risk, adaptiveDrawdownPct: draw }) : [], [start, mode, modeChosen, levelCount, reward, risk, draw]);
   const adaptiveValid = !adaptive || (risk > 0 && risk <= 100 && draw >= 0 && draw < 100);
-  const valid = !issue && adaptiveValid && !!setup.name?.trim() && start > 0 && where.ok;
+  const valid = modeChosen && !issue && adaptiveValid && !!setup.name?.trim() && start > 0 && where.ok;
   const preset = ADAPTIVE_PRESETS.find(([, , r, d]) => risk === r && draw === d)?.[0];
   const straightLosses = adaptive && draw > 0 && risk > 0 && risk < 100 ? Math.ceil(Math.log(1 - draw / 100) / Math.log(1 - risk / 100)) : 0;
 
   const commitR = (raw) => {
+    if (!modeChosen) return;
     const typed = parseFloat(raw);
     if (!Number.isFinite(typed)) { setRDraft(String(setup.reward ?? '')); return; }
     const value = r1(typed);
@@ -95,7 +98,7 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
   const sbText = explain(stepBack);
   const finalTarget = plan.at(-1)?.end;
   const Fixed = ({ children }) => <div className="csw2-in is-dis">{locked && <Lock size={13} />}<span>{children}</span></div>;
-  const modeLabel = `${MODES[mode].kicker.replace('MODE', 'Mode')} · ${reward || '—'}R · ${levelCount} levels`;
+  const modeLabel = modeChosen ? `${MODES[mode].kicker.replace('MODE', 'Mode')} · ${reward || '—'}R · ${levelCount} levels` : `No mode chosen · ${levelCount} levels`;
 
   return <SetupPanel label={isNew ? 'Start a challenge' : 'Edit challenge'} panelKey="challenge" busy={busy} onClose={onCancel}>{(close) =>
     <section className="csw2" role="dialog" aria-modal="true" aria-labelledby="csw2-title">
@@ -115,7 +118,7 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
                 <span className="csw2-dot">{mode === value && <Check size={11} />}</span><small>{item.kicker}</small><b>{item.title}</b>
               </button>)}
             </div>
-            <div className="csw2-detail" aria-live="polite"><span>{MODES[mode].text}</span><em>{rangeText(mode)}</em></div>
+            <div className="csw2-detail" aria-live="polite">{modeChosen ? <><span>{MODES[mode].text}</span><em>{rangeText(mode)}</em></> : <span>Choose a mode to continue. Nothing is picked for you.</span>}</div>
           </section>
           <section>
             <div className="csw2-rrow">
@@ -126,13 +129,13 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
                   <button type="button" aria-label="Increase" onClick={() => commitR(String(r1((reward || 1) + 0.1)))}><Plus size={16} /></button>
                 </div>}
                 <div className="csw2-rtk"><span className="is-al" style={{ left: `${pos(low)}%`, right: `${100 - pos(high)}%` }} />{fitR && <span className="is-ft" style={{ left: `${pos(fitR.rewardMin)}%`, right: `${100 - pos(Math.min(fitR.rewardMax, 5.5))}%` }} />}<span className="is-th" style={{ left: `${pos(reward || 1)}%` }} /></div>
-                <div className="csw2-rlab"><span>1R</span><span>{adaptive ? 'any value from 1R' : `allowed ${rangeText(mode)}`}</span><span>5R+</span></div>
+                <div className="csw2-rlab"><span>1R</span><span>{!modeChosen ? 'choose a mode first' : adaptive ? 'any value from 1R' : `allowed ${rangeText(mode)}`}</span><span>5R+</span></div>
                 <div className="csw2-leg"><span><i className="is-allowed" />Allowed</span>{!adaptive && <span><i className="is-fits" />{fitR ? `Fits (${fitR.rewardMin}–${fitR.rewardMax}R)` : `No R fits ${levelCount} levels`}</span>}</div>
                 {toast && <div className="csw2-toast"><Info size={14} /><span>{toast}</span></div>}
               </div>
               <div className="csw2-fld"><small>Plan length</small>
                 {locked ? <Fixed>{levelCount} levels</Fixed> : <div className="csw2-lseg" role="radiogroup" aria-label="Plan length">{LENGTHS.map((count) => {
-                  const fit = adaptive || !!challengeFitRange({ mode, balance: start, levelCount: count });
+                  const fit = adaptive || !modeChosen || !!challengeFitRange({ mode, balance: start, levelCount: count });
                   return <button type="button" key={count} role="radio" aria-checked={levelCount === count} className={levelCount === count ? 'is-on' : ''} onClick={() => { setToast(''); patch({ levelCount: count }); }}><b>{count}</b><small className={fit ? '' : 'is-no'}><s />{fit ? 'levels' : 'no fit'}</small></button>;
                 })}</div>}
               </div>
@@ -151,7 +154,7 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
           </section>}
           <section>
             <div className="csw2-sh"><span>Plan preview</span><span className="csw2-lkb is-gh">updates as you choose</span></div>
-            {plan.length > 0 && !issue ? <Ladder plan={plan} money={money} where={where} adaptive={adaptive} total={levelCount} /> : <p className="csw2-note">Fix the setup warning to see your ladder.</p>}
+            {plan.length > 0 && !issue ? <Ladder plan={plan} money={money} where={where} adaptive={adaptive} total={levelCount} /> : <p className="csw2-note">{modeChosen ? 'Fix the setup warning to see your ladder.' : 'Choose a mode to see your ladder.'}</p>}
           </section>
         </div>
         <aside className="csw2-mr">
@@ -179,7 +182,7 @@ export default function ChallengeSetupWindow({ setup, setSetup, account, balance
       <footer className="csw2-mf">
         {askDelete ? <div className="csw2-cf"><span><AlertTriangle size={15} />Delete this challenge and its progress?</span><div><button type="button" className="csw2-bt" onClick={() => setAskDelete(false)} disabled={busy}>Keep</button><button type="button" className="csw2-bt is-dng" onClick={onDelete} disabled={busy}>{deleting ? 'Deleting…' : 'Delete'}</button></div></div>
           : <>{!isNew && <button type="button" className="csw2-bt is-dng csw2-tr" aria-label="Delete challenge" title="Delete challenge" onClick={() => setAskDelete(true)} disabled={busy}><Trash2 size={17} /></button>}
-            <span className={`csw2-hl ${valid ? 'is-ok' : 'is-no'}`}>{valid ? <><Check size={15} />Everything checks out.</> : <><AlertTriangle size={15} />Fix the setup warning to continue.</>}</span><span className="csw2-sp" />
+            <span className={`csw2-hl ${valid ? 'is-ok' : 'is-no'}`}>{valid ? <><Check size={15} />Everything checks out.</> : <><AlertTriangle size={15} />{modeChosen ? 'Fix the setup warning to continue.' : 'Choose a mode to continue.'}</>}</span><span className="csw2-sp" />
             <button type="button" className="csw2-bt" onClick={close} disabled={busy}>Cancel</button>
             <button type="button" className="csw2-bt is-pri" disabled={busy || !valid} onClick={() => onSave({ ...setup, adaptiveStepBack: adaptive ? stepBack : undefined })}><Check size={15} />{saving ? 'Saving…' : isNew ? 'Start challenge' : 'Save changes'}</button></>}
       </footer>

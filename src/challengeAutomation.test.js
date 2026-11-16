@@ -117,15 +117,16 @@ test('manual and disabled accounts never move',()=>{
   assert.equal(replay(start(null),[row(1,100)]).activeLevel,1);
   assert.equal(replay(start('risk'),[row(1,100)],{challengeEnabled:false}).activeLevel,1);
 });
-test('gross profits accumulate, ignore costs, and excess advances one level only',()=>{
+test('one trade must reach the profit target; small wins never add up and a loss is not taken off',()=>{
   const state=replay(start('risk'),[row(1,3),row(2,4)]);
-  assert.equal(state.activeLevel,2);assert.equal(state.levelPnl,0);
+  assert.equal(state.activeLevel,1);assert.equal(state.counted,2);
   assert.equal(replay(start('risk'),[row(1,100000)]).activeLevel,2);
+  assert.equal(replay(start('risk'),[row(1,-2),row(2,100000)]).activeLevel,2);
 });
-test('Mode 1 accumulates signed gross P&L until risk threshold',()=>{
-  const state=replay(start('risk',4),[row(1,-4),row(2,-6)]);
-  assert.equal(state.activeLevel,3);assert.equal(state.levelPnl,0);
-  assert.equal(replay(start('risk',4),[row(1,-4),row(2,2),row(3,-6)]).activeLevel,4);
+test('Mode 1 steps back on a single stop-loss trade, not on losses adding up',()=>{
+  assert.equal(replay(start('risk',4),[row(1,-100)]).activeLevel,3);
+  assert.equal(replay(start('risk',4),[row(1,-100),row(2,-100)]).activeLevel,2);
+  assert.equal(replay(start('risk',4),[row(1,-1),row(2,-1)]).activeLevel,4);
 });
 test('Mode 2 steps back on any two losses, including tiny ones',()=>{
   const state=replay(start('streak',4),[row(1,-.01),row(2,-.01)]);

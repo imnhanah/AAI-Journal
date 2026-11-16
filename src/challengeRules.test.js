@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {challengeRulesFor,normaliseAdaptiveStepBack} from './challengeRules.js';
 const text=rules=>rules.items.map(item=>item.join(' ')).join('\n');
-test('Mode 1 rules state the 1.5R-2R range, default and completion rule',()=>{
+test('Mode 1 rules state the one-trade pass, one stop-loss step-back and completion rule',()=>{
   const rules=challengeRulesFor('risk');
-  assert.match(text(rules),/1\.5R to 2R/);assert.match(text(rules),/default is 1\.5R/);
-  assert.match(text(rules),/last level is passed by a trade profit and the balance has reached the planned final target/);
+  assert.equal(rules.items.length,5);
+  assert.match(text(rules),/One trade that reaches the level’s profit target passes it/);
+  assert.match(text(rules),/One trade that hits its stop loss/);
+  assert.match(text(rules),/a trade passes the last level and the balance has reached the planned final target/);
 });
 test('Mode 2 rules say two losses on the same level, not consecutive',()=>{
   const body=text(challengeRulesFor('streak'));
-  assert.match(body,/2\.8R to 5R/);assert.match(body,/default is 2\.8R/);
+  assert.equal(challengeRulesFor('streak').items.length,5);
   assert.match(body,/Two losses on the same level/);assert.doesNotMatch(body,/consecutive/i);
 });
 test('Adaptive rules follow the chosen step-back rule',()=>{

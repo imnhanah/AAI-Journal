@@ -160,7 +160,8 @@ import useBalanceChallenge from './useBalanceChallenge';
 import {ChallengeCompatibleDialog} from './ChallengeModeSettings';
 import { normaliseAdaptiveStepBack } from "./challengeRules";
 import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule, defaultChallengeReward, snapChallengeReward } from "./challengeModel";
-import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney} from './challengeLifecycle';
+import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney, challengeStartingBalance} from './challengeLifecycle';
+import {useNavigationCache as useChallengeProgressCache} from './NavigationSession.jsx';
 import {accountLossGuardrails} from './accountRisk';
 import {psychologyMetrics} from './psychologyMetrics';
 import {replayChallenge, resetAutomation} from './challengeAutomation';
@@ -1191,7 +1192,22 @@ function JournalEntryLayout({ children, initialPanel = 0, activePanel, onPanelCh
   </div>;
 }
 
-export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, panelStep, onPanelStepChange, onModeChange, onRequestCloseChange, onDiscardCheckChange, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, backtest = false, testType = "backtest", lockedInstrument = null, saving: externalSaving = false, embedded = false, phoneDialogActive = true }) {
+// The level a balance's challenge card shows is the replay of its saved progress
+// over its trades. Trade sizing must read that same level, not re-derive one
+// from the live balance, or the two screens disagree.
+export function savedBalanceChallengeLevel(progress, scoped) {
+  if (!progress?.automation?.startedAt || !scoped) return null;
+  const automation = { ...progress.automation, rewardRatio: progress.automation.rewardRatio ?? scoped.challengeReward };
+  const baseline = { activeLevel: progress.activeLevel ?? progress.active_level ?? 1, statuses: progress.statuses || {}, notes: progress.notes || {}, automation };
+  const start = challengeStartingBalance(baseline, scoped);
+  if (!(start > 0)) return null;
+  const mode = automation.mode || scoped.challengeMode || 'risk';
+  const plan = buildChallengePlan(start, mode, automation.levelCount || scoped.challengeLevelCount || 30, automation.rewardRatio, automation);
+  if (!plan.length) return null;
+  const replay = replayChallenge(baseline, scoped);
+  return { level: Math.min(Math.max(Number(replay.activeLevel) || 1, 1), plan.length), plan, mode };
+}
+export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, panelStep, onPanelStepChange, onModeChange, onRequestCloseChange, onDiscardCheckChange, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, challengeStateFor = null, backtest = false, testType = "backtest", lockedInstrument = null, saving: externalSaving = false, embedded = false, phoneDialogActive = true }) {
   const confirm=useConfirmation();
   const {phone,summary}=usePhoneTradeDialog(onClose,phoneDialogActive);
   const testLabel = testType === "forward" ? "Forward Test" : "Backtest";
@@ -1243,14 +1259,16 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
     const levels = multiBalance ? (challengeSource.challengeLevelCount || 30) : (challengeState?.automation?.levelCount || challengeSource.challengeLevelCount || 30);
     const reward = multiBalance ? (challengeSource.challengeReward ?? null) : (challengeState?.automation?.rewardRatio ?? challengeSource.challengeReward ?? null);
     const startingBalance = Number(challengeState?.automation?.startingBalance ?? challengeSource.challengeStartingBalance ?? challengeSource.balance);
-    const plan = buildChallengePlan(startingBalance, mode, levels, reward, challengeState?.automation || {});
+    let plan = buildChallengePlan(startingBalance, mode, levels, reward, challengeState?.automation || {});
     if (!plan.length) return null;
-    const level = fundedChallengeLevel(plan, liveChallengeBalance(challengeSource));
+    let level = fundedChallengeLevel(plan, liveChallengeBalance(challengeSource));
+    const saved = multiBalance ? savedBalanceChallengeLevel(challengeStateFor?.(challengeSource.id), challengeSource) : null;
+    if (saved) { plan = saved.plan; level = saved.level; }
     const row = plan[level - 1];
     if (!row) return null;
     const live=liveChallengeBalance(challengeSource);
     return mode==='adaptive' ? { ...row, mode, risk:Math.round(Number(live||0)*row.riskPct)/100 } : { ...row, mode };
-  }, [account, backtest, balanceTargets, challengeSource, challengeState?.automation?.levelCount, challengeState?.automation?.mode, challengeState?.automation?.rewardRatio, challengeState?.automation?.startingBalance, editing, multiBalance, selectedBalanceIdsForTrade.join('|')]);
+  }, [account, backtest, balanceTargets, challengeSource, challengeState?.automation?.levelCount, challengeState?.automation?.mode, challengeState?.automation?.rewardRatio, challengeState?.automation?.startingBalance, challengeStateFor, editing, multiBalance, selectedBalanceIdsForTrade.join('|')]);
   const challengePresetName = challengeRisk ? `Challenge · Level ${challengeRisk.level}` : '';
   useEffect(() => {
     if (!challengeRisk) return;
@@ -1292,9 +1310,11 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
       const scoped = scopeChallengeAccount(account, balance);
       if (!scoped.challengeEnabled) return [];
       const mode = scoped.challengeMode || "risk";
-      const plan = buildChallengePlan(Number(scoped.challengeStartingBalance ?? scoped.balance), mode, scoped.challengeLevelCount || 30, scoped.challengeReward ?? null, scoped.challengeAutomation || {});
+      let plan = buildChallengePlan(Number(scoped.challengeStartingBalance ?? scoped.balance), mode, scoped.challengeLevelCount || 30, scoped.challengeReward ?? null, scoped.challengeAutomation || {});
       if (!plan.length) return [];
-      const level = fundedChallengeLevel(plan, liveChallengeBalance(scoped));
+      let level = fundedChallengeLevel(plan, liveChallengeBalance(scoped));
+      const saved = savedBalanceChallengeLevel(challengeStateFor?.(balance.id), scoped);
+      if (saved) { plan = saved.plan; level = saved.level; }
       const plannedRow = plan[level - 1];
       const row = mode==='adaptive' && plannedRow ? {...plannedRow,risk:Math.round(Number(liveChallengeBalance(scoped)||0)*plannedRow.riskPct)/100} : plannedRow;
       if (!row) return [];
@@ -1311,7 +1331,7 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
       const pips = sizing.ok ? (sizing.spec?.pipSize ? sizing.distance / sizing.spec.pipSize : sizing.ticks) : 0;
       return [{ balance, row, mode, currency, pips, lots:sizing.volume || 0, supported:sizing.ok, sizing }];
     });
-  }, [account, backtest, balanceTargets, editing, form.asset, form.balanceResults, form.calculationMethod, form.entryPrice, form.manualConversionRates, form.stopLossPips, form.stopLossPrice, multiBalance]);
+  }, [account, backtest, balanceTargets, editing, form.asset, form.balanceResults, form.calculationMethod, form.entryPrice, form.manualConversionRates, form.stopLossPips, form.stopLossPrice, multiBalance, challengeStateFor]);
   const completedRules = activeRules.filter((rule) => form.ruleEvaluations.some((entry) => entry.ruleId === rule.id && entry.checked)).length;
   const ruleRating = activeRules.length ? (completedRules / activeRules.length) * 2 : 0;
   // Multi-account trades are completed per selected account. The shared
@@ -7855,6 +7875,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const dashboardStats = useMemo(() => (dashboardAccount ? computeStats(dashboardAccount.trades, dashboardAccount.breakevenCap) : null), [dashboardAccount]);
   const challengeAccount = account;
   const challenge = useChallenge(challengeAccount, user.id, challengeProgress?.account?.[account?.id], challengeProgressReady);
+  const challengeProgressCache = useChallengeProgressCache('challenge-progress');
+  const challengeStateFor = useCallback((balanceId) => challengeProgressCache.read(`${localJournal.isLocalJournal() ? 'local' : 'cloud'}:${user.id}:${balanceId}`) ?? challengeProgress?.balance?.[balanceId] ?? null, [challengeProgressCache, challengeProgress, user.id]);
   const routineBalance = dashboardBalances.find(item => item.id === dashboardBalanceId) || dashboardBalances[0];
   const routineChallengeBalance = useMemo(() => routineBalance ? {...routineBalance, trades:account.trades, financeMovements:account.financeMovements, balances:account.balances} : null, [routineBalance, account]);
   const routineChallenge = useBalanceChallenge(routineChallengeBalance, user.id, challengeProgress?.balance?.[routineBalance?.id], challengeProgressReady);
@@ -8059,9 +8081,11 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       const commission = selectedResults.reduce((sum, result) => sum + (Number(result.commission) || 0), 0);
       const swap = selectedResults.reduce((sum, result) => sum + (Number(result.swap) || 0), 0);
       const pnl = selectedResults.reduce((sum, result) => sum + Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))), 0);
-      const parentSave = await updateTrade(persistedTrade.id, { ...persistedTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
+      // Totals only: screenshots were already written when the trade was created, so leave them out of this update.
+      const { screenshots:_alreadySavedMedia, ...totalsOnlyTrade } = persistedTrade;
+      const parentSave = await updateTrade(persistedTrade.id, { ...totalsOnlyTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
       if (parentSave.error) { showWarning(`Trade saved, but its summary totals could not be synchronized: ${parentSave.error}`); return; }
-      persistedTrade = parentSave.error ? { ...persistedTrade, grossPnl, commission, swap, pnl } : (parentSave.data || { ...persistedTrade, grossPnl, commission, swap, pnl });
+      persistedTrade = parentSave.error ? { ...persistedTrade, grossPnl, commission, swap, pnl } : { ...persistedTrade, ...(parentSave.data || {}), screenshots:parentSave.data?.screenshots ?? persistedTrade.screenshots, grossPnl, commission, swap, pnl };
       setAccounts((accs) => accs.map((item) => item.id !== account.id ? item : { ...item, trades: item.trades.map((itemTrade) => itemTrade.id === persistedTrade.id && (!itemTrade._pendingSaveToken || itemTrade._pendingSaveToken===optimisticTrade._pendingSaveToken) ? { ...persistedTrade, balanceResults:selectedResults } : itemTrade) }));
     }
     if(stagedTrade.receipt.mode==='cloud'&&!cloudMediaComplete(persistedTrade.screenshots)){
@@ -8663,7 +8687,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     if (!account?.id) return false;
     const balance=balanceId ? account.balances.find(item=>item.id===balanceId) : null;
     const scoped=balance ? scopeChallengeAccount(account,balance) : account;
-    const nextMode=['risk','streak','adaptive'].includes(patch.mode) ? patch.mode : 'risk';
+    if(!['risk','streak','adaptive'].includes(patch.mode)){showError('Choose a challenge mode before saving.');return false;}
+    const nextMode=patch.mode;
     const rawReward=patch.reward === '' || patch.reward == null ? null : Number(patch.reward);
     const nextReward=rawReward===null ? (nextMode==='adaptive' ? null : defaultChallengeReward(nextMode)) : (Number.isFinite(rawReward) && rawReward>0 ? snapChallengeReward(nextMode,rawReward) : rawReward);
     const nextStepBack=nextMode==='adaptive' ? normaliseAdaptiveStepBack(patch.adaptiveStepBack ?? state.automation?.adaptiveStepBack) : undefined;
@@ -8681,7 +8706,10 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const goals={monthlyGoalPct:Number(patch.monthlyGoalPct ?? scoped.monthlyGoalPct ?? 0),yearlyGoalPct:Number(patch.yearlyGoalPct ?? scoped.yearlyGoalPct ?? 0)};
     const guardrails={dailyLossLimitPct:Number(patch.dailyLossLimitPct ?? scoped.dailyLossLimitPct ?? 0),monthlyLossLimitPct:Number(patch.monthlyLossLimitPct ?? scoped.monthlyLossLimitPct ?? 0)};
     if(Object.values(goals).some(value=>!Number.isFinite(value)||value<0) || Object.values(guardrails).some(value=>!Number.isFinite(value)||value<0||value>100)){showError('Goals must be non-negative. Loss limits must be between 0 and 100%.');return false;}
-        const protectedChanged=(state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='adaptive'?0:defaultChallengeReward(nextMode)))!==Number(nextReward) || (nextMode==='adaptive' && normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack)!==nextStepBack) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
+        // A challenge that never received a start checkpoint must be started by saving it,
+        // otherwise it is saved empty and ignores every trade.
+        const neverStarted=!state.automation?.startedAt;
+        const protectedChanged=neverStarted || (state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='adaptive'?0:defaultChallengeReward(nextMode)))!==Number(nextReward) || (nextMode==='adaptive' && normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack)!==nextStepBack) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
     // Completing a challenge closes that run. Starting Adaptive afterwards is
     // intentionally a fresh run at Level 1, so its historical linked trades
     // remain in the journal but cannot lock the new setup or reopen the old
@@ -9194,7 +9222,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     position={entryPanelPosition}
     behavior={entryPanelBehavior}
     userId={user.id}
-    tradeProps={{ formSession:tradeEditor.version, editing:editingTrade, draft:newTradeDraft, onDraftChange:setNewTradeDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.trade = handler; }, panelStep:tradePanelStep, onPanelStepChange:setTradePanelStep, typeTags, mistakeTags:allMistakeTags(mistakeTags), confluenceSessions, instruments:knownInstruments, markups:markups.filter((markup)=>markup.accountId===account.id), rules:account.rules, defaultCommission:account.defaultCommission, account:tradeFormAccount, riskPresets, challengeState:challenge.state, onClose:() => { setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0); }, onSave:saveTrade }}
+    tradeProps={{ formSession:tradeEditor.version, editing:editingTrade, draft:newTradeDraft, onDraftChange:setNewTradeDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.trade = handler; }, panelStep:tradePanelStep, onPanelStepChange:setTradePanelStep, typeTags, mistakeTags:allMistakeTags(mistakeTags), confluenceSessions, instruments:knownInstruments, markups:markups.filter((markup)=>markup.accountId===account.id), rules:account.rules, defaultCommission:account.defaultCommission, account:tradeFormAccount, riskPresets, challengeState:challenge.state, challengeStateFor, onClose:() => { setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0); }, onSave:saveTrade }}
     markupProps={{ formSession:markupEditor.version, editing:editingMarkup, draft:newMarkupDraft, onDraftChange:setNewMarkupDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.markup = handler; }, instruments:knownInstruments, onClose:() => { setModal(null); setMarkupEditor(clearEntryEditor); }, onSave:handleSaveMarkup }}
   />;
 
