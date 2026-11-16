@@ -1,5 +1,5 @@
 import { calculateImageChecksum, createSharedImageStorage } from './sharedImageStorage.js';
-import { caseStudyEvidenceCloudPath, caseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl, uploadCaseStudyEvidenceImage } from './caseStudyEvidenceCloud.js';
+import { caseStudyEvidenceCloudPath, caseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl, resolveCaseStudyEvidenceDisplayUrl, uploadCaseStudyEvidenceImage } from './caseStudyEvidenceCloud.js';
 
 // Deliberately distinct from the Case Study tj-image: reference. It identifies
 // a generic private-media asset, not a legacy Case Study local reference.
@@ -45,7 +45,7 @@ export const shouldLoadBacktestMedia = trade => {
 
 export const backtestMediaVersion = trade => [trade?.id || '', trade?.updatedAt || '', Number(trade?.screenshotCount) || 0].join(':');
 
-export function createBacktestSharedMediaAdapter({ storage = createSharedImageStorage(), upload = uploadCaseStudyEvidenceImage, resolveCloud = resolveCaseStudyEvidenceCloudUrl } = {}) {
+export function createBacktestSharedMediaAdapter({ storage = createSharedImageStorage(), upload = uploadCaseStudyEvidenceImage, resolveCloud = resolveCaseStudyEvidenceDisplayUrl } = {}) {
   const assetFor = async (userId, id) => storage.getImageMetadata(id, userId);
   return {
     storage,
@@ -60,12 +60,14 @@ export function createBacktestSharedMediaAdapter({ storage = createSharedImageSt
         let asset = reusable.get(checksum);
         if (!asset) { asset = await storage.saveImage({ userId, membership, file: blob, fileName: item?.fileName || 'backtest-screenshot', sourceModule: BACKTEST_SHARED_MEDIA_MODULE, sourceRecordId }); reusable.set(checksum, asset); }
         const base = typeof item === 'string' ? {} : cleanDisplayFields(item);
-        return { ...base, src: backtestSharedMediaReference(asset.id), cloudRef: base.cloudRef || '' };
+        for(const key of ['url','dataUrl','source','data','preview','image'])if(base[key]===source)base[key]=backtestSharedMediaReference(asset.id);
+        return { ...base, src: backtestSharedMediaReference(asset.id), cloudRef: asset.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : '', localOnly: !asset.cloudPath };
       });
     },
     async synchronizeScreenshots({ userId, membership, getMembership, screenshots } = {}) {
       const collect = new Set(); await mapMedia(screenshots || {}, item => { const id = backtestSharedMediaId(sourceOf(item)); if (id) collect.add(id); return item; });
-      for (const id of collect) await storage.retryFailedUpload(id, { userId, membership });
+      const latestAccess=getMembership ? await getMembership() : membership;
+      for (const id of collect) await storage.retryFailedUpload(id, { userId, membership:latestAccess });
       await storage.processUploadQueue({ userId, membership, getMembership, sourceModule: BACKTEST_SHARED_MEDIA_MODULE, uploader: async ({ asset, blob }) => {
         const result = await upload({ userId, evidenceId: asset.id, blob, cloudRef: asset.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : '' });
         return result?.verified ? { verified: true, cloudPath: caseStudyEvidenceCloudPath(result.cloudRef), checksum: result.checksum } : result;
@@ -73,7 +75,7 @@ export function createBacktestSharedMediaAdapter({ storage = createSharedImageSt
       return mapMedia(screenshots || {}, async item => {
         const id = backtestSharedMediaId(sourceOf(item)); if (!id) return cleanDisplayFields(item);
         const asset = await assetFor(userId, id); const base = typeof item === 'string' ? {} : cleanDisplayFields(item);
-        return { ...base, src: backtestSharedMediaReference(id), cloudRef: asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : (base.cloudRef || '') };
+        return { ...base, src: backtestSharedMediaReference(id), cloudRef: asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : (base.cloudRef || ''), localOnly: !(asset?.cloudPath || base.cloudRef) };
       });
     },
     async resolveScreenshots({ userId, screenshots } = {}) {
@@ -84,6 +86,7 @@ export function createBacktestSharedMediaAdapter({ storage = createSharedImageSt
         const localUrl = await storage.getLocalImageUrl(id, userId);
         if (localUrl) return { ...base, src: source, displaySrc: localUrl };
         const asset = await assetFor(userId, id);
+        if(!base.cloudRef&&!asset?.cloudPath&&(base.localOnly||asset?.storageState==='local-only'))return {...base,src:source,displayError:'local-only'};
         // The private object path is immutable and owner-scoped. A receiving
         // browser may not yet have local metadata or a published cloudRef.
         const cloudRef = base.cloudRef || (asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : caseStudyEvidenceCloudReference(`${userId}/${id}`));

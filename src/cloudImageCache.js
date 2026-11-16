@@ -1,0 +1,16 @@
+import {calculateImageChecksum} from './sharedImageStorage.js';
+// Disposable downloaded copies only. Never opens or deletes original-image/draft stores.
+export const CLOUD_IMAGE_CACHE_DATABASE='tj-cloud-image-cache';
+export function createCloudImageCache({namespace='default',indexedDb=globalThis.indexedDB,now=Date.now,maxEntries=96,maxBytes=32*1024*1024,ttlMs=7*86400000}={}) {
+  const open=()=>new Promise((resolve,reject)=>{if(!indexedDb)return reject(Error('Cache unavailable'));const r=indexedDb.open(CLOUD_IMAGE_CACHE_DATABASE,1);r.onupgradeneeded=()=>{r.result.createObjectStore('downloads',{keyPath:'key'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  const request=r=>new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  const run=async(mode,work)=>{const db=await open();try{const tx=db.transaction('downloads',mode),done=new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Cache interrupted'));});let result;try{result=await work(tx.objectStore('downloads'));}catch(error){try{tx.abort();}catch{}await done.catch(()=>{});throw error;}await done;return result;}finally{db.close();}};
+  const key=(owner,path,version)=>JSON.stringify([namespace,owner,path,version]);
+  const valid=(owner,path)=>!!owner&&path.startsWith(owner+'/');
+  return {
+    async read(owner,path,version='immutable-v1') {if(!valid(owner,path))return null;const result=await run('readwrite',async s=>{const k=key(owner,path,version),r=await request(s.get(k));if(!r)return null;if(r.owner!==owner||r.path!==path||r.namespace!==namespace||r.version!==version){s.delete(k);return null;}if(r.expiresAt<=now()){s.delete(k);return null;}const blob=new Blob([r.bytes],{type:r.type});r.lastUsed=now();s.put(r);return {blob,checksum:r.checksum};});if(!result)return null;if(result.checksum!==await calculateImageChecksum(result.blob)){await this.invalidate(owner,path);return null;}return result.blob;},
+    async write(owner,path,blob,{version='immutable-v1',isCurrent=()=>true}={}) {if(!valid(owner,path)||!blob?.size||blob.size>maxBytes||!isCurrent())return false;const [bytes,checksum]=await Promise.all([blob.arrayBuffer(),calculateImageChecksum(blob)]);if(!isCurrent())return false;return run('readwrite',async s=>{const rows=await request(s.getAll());if(!isCurrent())return false;const k=key(owner,path,version),at=now();let count=1,total=bytes.byteLength;const survivors=[];for(const r of rows){if(r.key===k||r.expiresAt<=at){s.delete(r.key);continue;}survivors.push(r);total+=r.byteSize;count++;}survivors.sort((a,b)=>a.lastUsed-b.lastUsed);while(count>maxEntries||total>maxBytes){const r=survivors.shift();if(!r)break;s.delete(r.key);total-=r.byteSize;count--;}s.put({key:k,namespace,owner,path,version,checksum,bytes,type:blob.type,byteSize:bytes.byteLength,lastUsed:at,expiresAt:at+ttlMs});return true;});},
+    async invalidate(owner,path) {if(!valid(owner,path))return;await run('readwrite',async s=>{for(const r of await request(s.getAll()))if(r.namespace===namespace&&r.owner===owner&&r.path===path)s.delete(r.key);});},
+    async clearOwner(owner) {if(!owner)return;await run('readwrite',async s=>{for(const r of await request(s.getAll()))if(r.namespace===namespace&&r.owner===owner)s.delete(r.key);});},
+  };
+}

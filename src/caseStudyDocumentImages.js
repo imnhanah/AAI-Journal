@@ -1,7 +1,8 @@
+import {IMAGE_MAX_BYTES,IMAGE_LIMIT_MESSAGE} from './imagePolicy.js';
 const DATABASE = 'tj-case-study-document-images';
 const STORE = 'images';
 export const CASE_STUDY_DOCUMENT_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-export const CASE_STUDY_DOCUMENT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+export const CASE_STUDY_DOCUMENT_IMAGE_MAX_BYTES = IMAGE_MAX_BYTES;
 const prefix = 'tj-case-study-image:';
 
 const id = () => globalThis.crypto?.randomUUID?.() || `document-image-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -19,7 +20,7 @@ export const isDocumentImageReference = value => typeof value === 'string' && va
 export const validateCaseStudyDocumentImage = file => {
   if (!file) return 'Choose an image first.';
   if (!CASE_STUDY_DOCUMENT_IMAGE_TYPES.includes(file.type)) return 'Use a PNG, JPEG, or WebP image.';
-  if (file.size > CASE_STUDY_DOCUMENT_IMAGE_MAX_BYTES) return 'Images must be 3 MB or smaller.';
+  if (file.size > CASE_STUDY_DOCUMENT_IMAGE_MAX_BYTES) return IMAGE_LIMIT_MESSAGE;
   return null;
 };
 

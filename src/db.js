@@ -21,9 +21,9 @@ const mediaForSave = async (table, id, x, creating = false) => {
   if (!plan.write) return { write:false, local };
   // Trade and review media is local-first shared media. Markup media remains
   // on its existing revisioned path until its separate integration phase.
-  if (table === 'trades' || table === 'trade_reviews') {
+  if (table === 'trades' || table === 'trade_reviews' || table === 'premarket_markups') {
     const sourceRecordId = `${table}:${id}`;
-    const prepared = await tradeJournalSharedMedia.prepareScreenshots({ userId:x.userId, membership:x.mediaMembership, screenshots:incoming, sourceRecordId, existingScreenshots:previous || {} });
+    const prepared = await tradeJournalSharedMedia.prepareScreenshots({ userId:x.userId, membership:x.mediaMembership, screenshots:await materializeScreenshots(incoming), sourceRecordId, existingScreenshots:await materializeScreenshots(previous || {}) });
     const synchronized = await tradeJournalSharedMedia.synchronizeScreenshots({ userId:x.userId, membership:x.mediaMembership, getMembership:x.mediaGetMembership, screenshots:prepared });
     return { write:true, value:await tradeJournalSharedMedia.serializeScreenshots(synchronized), local:synchronized };
   }

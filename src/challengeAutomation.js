@@ -136,7 +136,9 @@ export function replayChallenge(baseline, account) {
     const gross=Math.round(amount*100);
     cents+=gross;
     const adaptiveTarget = Math.round(balanceBeforeTrade * (row.profitPct || 0) / 100);
-    const pass=cents >= (isAdaptiveBalanceMode(config.mode) ? adaptiveTarget : Math.round(row.profit*100));
+    // One trade must reach the level's profit target. Smaller wins never add
+    // up, and an earlier loss on the level is not taken off a later win.
+    const pass=gross >= (isAdaptiveBalanceMode(config.mode) ? adaptiveTarget : Math.round(row.profit*100));
     // Mode 2 counts losses within the current level. A breakeven is neutral:
     // it neither adds a loss nor clears a previous one. Only passing the
     // level (or a resulting step-back below) starts a fresh count. Adaptive
@@ -153,7 +155,7 @@ export function replayChallenge(baseline, account) {
     // no lower level, so Two losses and Net loss simply restart the count there.
     const adaptiveRiskCents = Math.round(balanceBeforeTrade * (row.riskPct || 0) / 100);
     const adaptiveBack = adaptiveRule === 'two' ? state.lossStreak >= 2 : adaptiveRule === 'net' ? cents <= -adaptiveRiskCents : amount < 0;
-    const back=isAdaptiveBalanceMode(config.mode) ? adaptiveBack && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(streakReward) ? state.lossStreak >= 2 : cents <= -Math.round(row.risk*100);
+    const back=isAdaptiveBalanceMode(config.mode) ? adaptiveBack && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(streakReward) ? state.lossStreak >= 2 : gross <= -Math.round(row.risk*100);
     if (isAdaptiveBalanceMode(config.mode) && !pass && adaptiveBack && state.activeLevel === 1 && adaptiveRule !== 'one') { cents=0; state.lossStreak=0; }
     if (pass || back) {
       const previous=state.activeLevel;

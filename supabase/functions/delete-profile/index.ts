@@ -37,6 +37,14 @@ Deno.serve(async (request) => {
   const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } } });
   const { data: { user }, error: userError } = await userClient.auth.getUser();
   if (userError || !user) return reply({ error: "Sign in again before deleting your profile." }, 401);
+  const eligibilityUnavailable = () => reply({ error: 'Could not verify account deletion eligibility.' }, 503);
+  try {
+    const { data: isAdmin, error } = await userClient.rpc('tj_is_membership_admin');
+    if (error || typeof isAdmin !== 'boolean') return eligibilityUnavailable();
+    if (isAdmin) return reply({ error: 'Remove this account’s administrator access before deleting it.' }, 409);
+  } catch {
+    return eligibilityUnavailable();
+  }
   // Non-destructive readiness probe used before enabling the confirmation UI.
   if (body.action === 'check') return reply({ready:true});
   if (body.confirmation !== "DELETE") return reply({ error: "Confirmation is required." }, 400);

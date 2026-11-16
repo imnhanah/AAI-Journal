@@ -1,3 +1,4 @@
+import {IMAGE_MAX_BYTES,IMAGE_LIMIT_MESSAGE} from './imagePolicy.js';
 import { imageReference } from './journalDelta.js';
 
 export const THIN_COLUMNS = {
@@ -34,10 +35,10 @@ export function planMediaMutation({table, id, incoming, previous, edited = false
   return { write:true };
 }
 
-export const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+export const MAX_SCREENSHOT_BYTES = IMAGE_MAX_BYTES;
 export function validateImageFile(file) {
   if (!file?.type?.startsWith('image/')) return 'Choose an image file.';
-  if (file.size > MAX_SCREENSHOT_BYTES) return 'Image is larger than 10 MB. Choose a smaller image; the original has not been changed.';
+  if (file.size > MAX_SCREENSHOT_BYTES) return IMAGE_LIMIT_MESSAGE;
   return '';
 }
 export function shouldHandleImagePaste(event, root) {

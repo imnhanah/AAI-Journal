@@ -24,6 +24,7 @@ historical names; the numbers below are the supported version order.
 | 013 | `adaptive_balance_mode_migration.sql` | 004 | Allows `adaptive` as the Mode 3 value for workspace-balance challenges. |
 | 014 | `profile_case_study_library_migration.sql` | 001, 010 preferred | Profile-owned Case Study Library, RLS, and safe legacy-source preservation. |
 | 016 | `trade_review_scores_migration.sql` | 001, 012 | Optional 1–5 execution, rule-adherence, and psychology scores for trade reviews. |
+| 017 | `membership_authorization_foundation.sql` | Supabase Auth schema | Sparse, backend-controlled Owner/Free entitlement lookup. Does not assign an Owner or change Storage upload access. |
 
 ## Pending initial installation — requires separate approval
 
@@ -38,6 +39,12 @@ after 015: it grants direct authenticated writes that bypass the revision guard.
 
 Version 015 is not part of any applied production sequence until its backup,
 staging, and production-verification procedures are explicitly approved.
+
+`membership_authorization_foundation.sql` is an unapplied authorization
+foundation until reviewed and run in the target Supabase environment. The
+separate `case_study_evidence_owner_upload_activation.sql` is a Phase 3-only
+policy activation and must not be applied until the Free local-only image path
+has been implemented and verified.
 
 ## Replaced, bundled, and non-install files
 
@@ -76,3 +83,9 @@ an empty project, not a no-op deployment tool. Instead:
 The manifest does not create a migration-history table and does not apply SQL
 to a project. Supabase CLI migrations may be introduced later, but should be
 generated from this reviewed order rather than inferred from file names.
+
+## November 14 membership conflict correction — separate existing-install upgrade
+
+`membership_administration_conflict_correction.sql` requires an installed, reviewed matching administration function. It changes only the stale-edit business-conflict error to PT409 and preserves existing function privileges. It is not an enforcement migration. It has been verified in isolated synthetic staging; production execution requires separate source/permission review and approval. Fresh installations use the corrected `membership_administration.sql`. Do not rerun that schema/table installer as an upgrade.
+
+For future promotion installation use the current `membership_journal_promotion.sql` with five PT409 guards. The temporary staging test endpoint has been removed after successful verification. Archived package files with 40001 guards are historical evidence, not current install sources.

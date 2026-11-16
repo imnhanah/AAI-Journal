@@ -1,3 +1,4 @@
+import {LOCAL_IMAGE_WARNING} from './imagePolicy.js';
 import { Component, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {ConfirmationContext, useAlert, useConfirmation, usePrompt} from './ConfirmationDialog.jsx';
 import {useNavStep} from './useBackNavigation.js';
@@ -30,9 +31,9 @@ import { caseStudyReconciliationCounts, createCaseStudyReconciliationProposal } 
 
 const now = () => new Date().toISOString();
 const CaseStudyImageOwnerContext = createContext('');
-const useCaseStudyEvidenceImage = item => {
+const useCaseStudyEvidenceImage = (item, options={}) => {
   const ownerUserId = useContext(CaseStudyImageOwnerContext);
-  return useEvidenceImageUrl(evidenceImageReference(item), { userId: ownerUserId, cloudRef: item?.cloudRef || '' });
+  return useEvidenceImageUrl(evidenceImageReference(item), { userId: ownerUserId, cloudRef: item?.cloudRef || '',localOnly:item?.localOnly===true,...options });
 };
 const uid = (prefix) => globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const NOTEBOOKS = [
@@ -262,8 +263,8 @@ function Cs2StudyCard({ view, study, notebook, evidence, menuOpen, menuRootRef, 
 
 // Evidence tab (stage 2): searchable card grid with a details aside for the selected item.
 function Cs2EvidenceThumb({ item }) {
-  const image = useCaseStudyEvidenceImage(item);
-  return image.url ? <img src={image.url} alt=""/> : <ImageIcon size={26} aria-hidden="true"/>;
+  const image = useCaseStudyEvidenceImage(item,{defer:true});
+  return image.url ? <img ref={image.observeRef} src={image.url} alt=""/> : <ImageIcon ref={image.observeRef} size={26} aria-hidden="true"/>;
 }
 function Cs2Field({ label, value, multiline = false, onCommit }) {
   const [draft, setDraft] = useState(value || '');
@@ -962,7 +963,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     return () => { imageSyncOwner.current = ''; };
   }, [sessionOwner]);
   const [imageMembership,setImageMembership]=useState({status:'loading',membership:null});
-  useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner]);
+  useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner,allowCloudImages]);
   const syncSharedCaseStudyImages=async currentWorkspace=>{
     if (!sessionOwner || !allowCloudImages) return {processed:0,failed:0,workspace:currentWorkspace};
     const result=await caseStudySharedImageIntegration.synchronizeWorkspace({
@@ -973,7 +974,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     });
     if (imageSyncOwner.current !== sessionOwner) return result;
     const latest = workspaceRef.current;
-    const updated = applyVerifiedCaseStudyImageReferences(latest, result.workspace.evidence);
+    const updated = applyVerifiedCaseStudyImageReferences(latest, result.workspace.evidence,result.verifiedAssets);
     const referencesSaved = updated === latest || await save(updated, true);
     return { ...result, referencesSaved };
   };
@@ -1024,9 +1025,9 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   // replacing records from the cloud. Free and unresolved accounts remain
   // local-only.
   useEffect(()=>{
-    if (!allowCloudImages || !sessionOwner || imageMembership?.status !== 'ready' || imageMembership?.membership !== 'owner') return;
+    if (!allowCloudImages || !sessionOwner || imageMembership?.imageAccessStatus !== 'ready' || !imageMembership?.imageUploadsAllowed) return;
     void syncSharedCaseStudyImages(workspaceRef.current);
-  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.cloudWritesAllowed]);
+  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.imageUploadsAllowed]);
   useEffect(() => {
     if (screen === 'editor' && selectedId) writeCaseStudyNavigation(sessionOwner,{studyId:selectedId,...editorNavigation});
     else clearCaseStudyNavigation(sessionOwner);
@@ -1186,7 +1187,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
       return {
       id,
       title:(files.length > 1 ? (file?.name || `Evidence ${index+1}`).replace(/\.[^.]+$/,'') : fields.title.trim()) || `Evidence ${index+1}`,
-      source:fields.source?.trim() || '', url:stored?.reference || fields.url?.trim() || '', notes:fields.notes?.trim() || '',
+      source:fields.source?.trim() || '', url:stored?.reference || fields.url?.trim() || '',localOnly:stored?.localOnly === true, notes:fields.notes?.trim() || '',
       tags:Array.isArray(fields.tags) ? fields.tags : [], kind:fields.kind || 'Chart', createdAt:now()
     };}));
     const next=addEvidenceRecords(currentWorkspace,records,{studyId:linkToSelectedStudy ? selectedId : null});
@@ -1202,6 +1203,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
       throw new Error('Evidence could not be saved locally. Your selected files and details are still available to retry.');
     }
     const imageSync=await syncSharedCaseStudyImages(workspaceRef.current);
+    if (records.some(item=>item.localOnly)) notify(LOCAL_IMAGE_WARNING);
     if (imageSync.failed) notify('Evidence saved locally. Its private cloud copy will retry when available.');
     setEvidenceDialog(false);
     return records;
@@ -1209,7 +1211,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   const storeDocumentImage=async file=>{
     const stored=await caseStudySharedImageIntegration.saveDocumentImage({userId:sessionOwner,membership:allowCloudImages ? imageMembership : null,file,sourceRecordId:selectedId || ''});
     void syncSharedCaseStudyImages(workspaceRef.current);
-    return stored.reference;
+    if(stored.localOnly)notify(LOCAL_IMAGE_WARNING);
+    return {src:stored.reference,localOnly:stored.localOnly};
   };
   const saveDocumentImageToEvidence=async ({imageRef,title,source='',tags=[]})=>{
     if (!isDocumentImageReference(imageRef) && !isCaseStudySharedImageReference(imageRef)) throw new Error('This document image cannot be shared safely.');
@@ -1410,7 +1413,7 @@ function StudyCardActions({favorite,onToggle,onMenu,menuOpen,menuRootRef,study,o
   return <div ref={menuRootRef} className="case-study-card__actions"><button type="button" className={`case-study-card__favorite${favorite?' is-favorite':''}`} aria-label={favorite?'Remove from favorites':'Add to favorites'} aria-pressed={favorite} onClick={onToggle}><Star size={17} fill={favorite?'currentColor':'none'}/></button><button type="button" aria-label="Study menu" aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={menuId} onClick={event=>{event.stopPropagation();onMenu();}}><MoreHorizontal size={17}/></button>{menuOpen&&<div id={menuId} className="case-card-menu" role="menu" onClick={event=>event.stopPropagation()}><button type="button" role="menuitem" className={favorite?'is-favorite':''} aria-pressed={favorite} onClick={event=>{onToggle(event);onMenu();}}><Star size={15} fill={favorite?'currentColor':'none'}/>{favorite?'Remove favorite':'Favorite'}</button><button type="button" role="menuitem" onClick={runAction(()=>onPatch({pinned:!study.pinned}))}><Pin size={15}/>{study.pinned?'Unpin':'Pin playbook'}</button><button type="button" role="menuitem" onClick={runAction(onDuplicate)}><Copy size={15}/>Duplicate</button>{study.archived?<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:false}))}><Archive size={15}/>Restore to Library</button>:<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:true}))}><Archive size={15}/>Archive</button>}<button type="button" role="menuitem" className="is-danger" onClick={runAction(onDelete)}><Trash2 size={15}/>Delete</button></div>}</div>;
 }
 function LibraryShelf({title,subtitle,studies,total=studies.length,emptyMessage,notebooks,evidence = [],onOpen,onViewAll,compact=false}) { return <section className={`case-shelf ${compact?'case-shelf--compact':''}`}><div className="case-shelf__heading"><div><h2>{title}</h2><p>{subtitle}</p></div>{total > studies.length&&<button className="case-button case-button--quiet" onClick={onViewAll}>View all</button>}</div><div className={`case-shelf__items ${!studies.length?'is-empty':''}`}>{studies.length ? studies.map(study=>{const notebook=notebooks.find(item=>item.id===study.notebookId);return <button key={study.id} onClick={()=>onOpen(study.id)}><div className="case-shelf__preview" aria-hidden="true"><StudyCover study={study} evidence={evidence} notebook={notebook} compact/></div><div className="case-shelf__copy"><strong>{studyTitle(study)}</strong><small>{notebook?.name || 'Notebook'} · Updated {dateLabel(study.updatedAt)}</small></div><span><i className={`case-status case-status--${study.status.toLowerCase().replaceAll(' ','-')}`}>{study.status}</i>{study.pinned&&<Pin size={13} aria-label="Pinned"/>}</span></button>;}) : <p className="case-shelf__empty"><BookOpen size={17}/>{emptyMessage}</p>}</div></section>; }
-function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const image=useCaseStudyEvidenceImage(cover); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[cover?.url,cover?.cloudRef,image.url]); if(!cover || !image.url || failed) return <><BookOpen size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>{reportCaseStudyImageDecodeFailure();setFailed(true);}}/>; }
+function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const image=useCaseStudyEvidenceImage(cover,{defer:true}); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[cover?.url,cover?.cloudRef,image.url]); if(!cover || !image.url || failed) return <><BookOpen ref={image.observeRef} size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>{reportCaseStudyImageDecodeFailure();setFailed(true);}}/>; }
 function EvidenceImage({item,alt='',className=''}) { const image=useCaseStudyEvidenceImage(item); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
 function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch,onRemove,onBack}) {
   const [query,setQuery]=useState(''),[kind,setKind]=useState('All'),[sort,setSort]=useState('recent'),[view,setView]=useState('grid'),[selectedId,setSelectedId]=useState(evidence[0]?.id||null),[uploadOpen,setUploadOpen]=useState(false);
@@ -1477,7 +1480,7 @@ function EvidenceDialog({onClose,onSave}) {
       setSaving(false);
     }
   };
-  return <div className="case-dialog-backdrop"><form className="case-form-dialog case-evidence-upload" onSubmit={submit} onPaste={event=>{const images=[...(event.clipboardData?.files||[])].filter(file=>file.type.startsWith('image/'));if(images.length){event.preventDefault();addFiles(images);}}}><button type="button" className="case-close" onClick={onClose}><X size={18}/></button><p className="case-eyebrow">Shared evidence</p><h2>Upload evidence</h2><label>Title <small>Optional for multiple uploads</small><input autoFocus value={fields.title} onChange={event=>patch('title',event.target.value)} placeholder="e.g. London sweep, 15m"/></label><input ref={fileInput} hidden type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={event=>addFiles(event.target.files||[])}/><button type="button" className="case-evidence-dropzone" onClick={()=>fileInput.current?.click()} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();addFiles(event.dataTransfer.files||[]);}}><ImageIcon size={23}/><strong>Drop images here or choose files</strong><span>Paste from clipboard also works · PNG, JPEG, or WebP · 3 MB each</span></button>{files.length>0&&<ul className="case-evidence-upload-list">{files.map(({id,file,preview})=><li key={id}><img src={preview} alt="Selected evidence preview"/><span><strong>{file.name}</strong><small>{Math.ceil(file.size/1024)} KB</small></span><button type="button" onClick={()=>removeFile(id)}>Remove</button></li>)}</ul>}<label>Or image URL<input value={fields.url} onChange={event=>patch('url',event.target.value)} placeholder="https://…png"/></label><label>Source<input value={fields.source} onChange={event=>patch('source',event.target.value)} placeholder="Optional source"/></label><label>Tags<input value={fields.tags} onChange={event=>patch('tags',event.target.value)} placeholder="EUR/USD, M15"/></label><label>Research notes<textarea value={fields.notes} onChange={event=>patch('notes',event.target.value)} placeholder="What does this evidence support or challenge?"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving evidence…':files.length>1?`Save ${files.length} images`:'Save evidence'}</button></footer></form></div>;
+  return <div className="case-dialog-backdrop"><form className="case-form-dialog case-evidence-upload" onSubmit={submit} onPaste={event=>{const images=[...(event.clipboardData?.files||[])].filter(file=>file.type.startsWith('image/'));if(images.length){event.preventDefault();addFiles(images);}}}><button type="button" className="case-close" onClick={onClose}><X size={18}/></button><p className="case-eyebrow">Shared evidence</p><h2>Upload evidence</h2><label>Title <small>Optional for multiple uploads</small><input autoFocus value={fields.title} onChange={event=>patch('title',event.target.value)} placeholder="e.g. London sweep, 15m"/></label><input ref={fileInput} hidden type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={event=>addFiles(event.target.files||[])}/><button type="button" className="case-evidence-dropzone" onClick={()=>fileInput.current?.click()} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();addFiles(event.dataTransfer.files||[]);}}><ImageIcon size={23}/><strong>Drop images here or choose files</strong><span>Paste from clipboard also works · PNG, JPEG, or WebP · 3 MiB each</span></button>{files.length>0&&<ul className="case-evidence-upload-list">{files.map(({id,file,preview})=><li key={id}><img src={preview} alt="Selected evidence preview"/><span><strong>{file.name}</strong><small>{Math.ceil(file.size/1024)} KB</small></span><button type="button" onClick={()=>removeFile(id)}>Remove</button></li>)}</ul>}<label>Or image URL<input value={fields.url} onChange={event=>patch('url',event.target.value)} placeholder="https://…png"/></label><label>Source<input value={fields.source} onChange={event=>patch('source',event.target.value)} placeholder="Optional source"/></label><label>Tags<input value={fields.tags} onChange={event=>patch('tags',event.target.value)} placeholder="EUR/USD, M15"/></label><label>Research notes<textarea value={fields.notes} onChange={event=>patch('notes',event.target.value)} placeholder="What does this evidence support or challenge?"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving evidence…':files.length>1?`Save ${files.length} images`:'Save evidence'}</button></footer></form></div>;
 }
 const templateEditorRows=template=>{
   const source=templateSections(template);

@@ -51,9 +51,9 @@ function EvidenceThumb({ evidence, sessionOwner, className = '' }) {
   // Shared assets resolve from this browser first, with a verified cloud copy
   // as the authenticated cross-device fallback.
   const ref = evidenceImageReference(evidence);
-  const { url } = useEvidenceImageUrl(ref, { userId: sessionOwner, cloudRef: evidence?.cloudRef || '' });
-  if (!url) return <div className={`mcs-nocov ${className}`}><ImageIcon size={20} /></div>;
-  return <img src={url} alt="" className={className} onError={reportCaseStudyImageDecodeFailure} />;
+  const { url,observeRef } = useEvidenceImageUrl(ref, { userId: sessionOwner, cloudRef: evidence?.cloudRef || '',localOnly:evidence?.localOnly===true,defer:true });
+  if (!url) return <div ref={observeRef} className={`mcs-nocov ${className}`}><ImageIcon size={20} /></div>;
+  return <img ref={observeRef} src={url} alt="" className={className} onError={reportCaseStudyImageDecodeFailure} />;
 }
 
 function StudyCover({ study, workspace, sessionOwner, className = '' }) {

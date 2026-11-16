@@ -123,6 +123,7 @@ begin
     if found then
       outcome := 'saved';
       return next;
+      return;
     end if;
 
     select row.library, row.revision, row.updated_at

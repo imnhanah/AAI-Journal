@@ -31,6 +31,7 @@ export async function loadJournalImage(source) {
     if (privateCache.token().owner !== userId) throw new Error('Session changed before loading screenshot.');
     const [resolved] = await tradeJournalSharedMedia.resolveScreenshots({ userId, screenshots:[typeof source === 'string' ? {src:source} : source] });
     if (resolved?.displaySrc) return resolved.displaySrc;
+    if(resolved?.displayError==='local-only')throw new Error('This image is stored only on the original browser. Restore a verified device backup to view it here.');
     throw new Error(resolved?.displayError === 'missing-cloud-reference' ? 'This image is not available on this device yet.' : 'Could not load screenshot. Check your connection and retry.');
   }
   const ref = imageReference(sourceValue);

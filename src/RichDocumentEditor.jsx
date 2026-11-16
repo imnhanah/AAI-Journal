@@ -22,7 +22,7 @@ function ResearchImageView({node,selected,updateAttributes,editor,getPos,extensi
   const [resolved,setResolved]=useState(node.attrs.src);
   const [missing,setMissing]=useState(false);
   const isShared=isCaseStudySharedImageReference(node.attrs.src);
-  const sharedImage=useEvidenceImageUrl(isShared ? node.attrs.src : '', {userId:extension.options.imageOwnerUserId||''});
+  const sharedImage=useEvidenceImageUrl(isShared ? node.attrs.src : '', {userId:extension.options.imageOwnerUserId||'',localOnly:node.attrs.localOnly===true,cloudRef:node.attrs.cloudRef||''});
   useEffect(()=>{
     let url=''; let active=true; setMissing(false); setResolved(node.attrs.src);
     if (isShared) return () => { active=false; };
@@ -51,16 +51,17 @@ function ResearchImageView({node,selected,updateAttributes,editor,getPos,extensi
 }
 
 const ResearchImage=Image.extend({
-  addAttributes() { return { ...this.parent?.(), width:{default:100}, align:{default:'center'}, caption:{default:''} }; },
+  addAttributes() { return { ...this.parent?.(), width:{default:100}, align:{default:'center'}, caption:{default:''},localOnly:{default:false},cloudRef:{default:''} }; },
   addNodeView() { return ReactNodeViewRenderer(ResearchImageView); }
 });
 
 export async function insertImageInView(view,file,coordinates,{saveImage}={}) {
-  const src=saveImage ? await saveImage(file) : await saveCaseStudyDocumentImage(file);
+  const stored=saveImage ? await saveImage(file) : await saveCaseStudyDocumentImage(file);
+  const src=typeof stored==='string'?stored:stored.src;
   let transaction=view.state.tr;
   const location=coordinates&&view.posAtCoords(coordinates);
   if(location) transaction=transaction.setSelection(TextSelection.create(view.state.doc,location.pos));
-  transaction=transaction.replaceSelectionWith(view.state.schema.nodes.image.create({src,alt:file.name||'Research image',width:100,align:'center',caption:''})).scrollIntoView();
+  transaction=transaction.replaceSelectionWith(view.state.schema.nodes.image.create({src,localOnly:typeof stored==='object'&&stored.localOnly===true,alt:file.name||'Research image',width:100,align:'center',caption:''})).scrollIntoView();
   view.dispatch(transaction);
 }
 

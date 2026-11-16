@@ -4,7 +4,7 @@ import { MEMBERSHIP } from './membership.js';
 import { calculateImageChecksum, createSharedImageStorage, IMAGE_STORAGE_STATES } from './sharedImageStorage.js';
 import { TRADE_JOURNAL_MEDIA_PREFIX, createTradeJournalSharedMediaAdapter } from './tradeJournalSharedMedia.js';
 
-const owner = { status: 'ready', membership: MEMBERSHIP.OWNER };
+const owner = { status: 'ready', membership:MEMBERSHIP.OWNER,imageAccessStatus:'ready',imageUploadsAllowed:true };
 const free = { status: 'ready', membership: MEMBERSHIP.FREE };
 const dataUrl = 'data:image/png;base64,iVBORw0KGgo=';
 

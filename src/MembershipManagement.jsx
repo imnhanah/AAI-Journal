@@ -1,3 +1,4 @@
+import ImageAccessManagement from './ImageAccessManagement.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronRight, Crown, Pencil, Search, ShieldCheck, X } from 'lucide-react';
 import { changeMembership, listMembershipAccounts } from './membershipAdmin.js';
@@ -167,6 +168,7 @@ export default function MembershipManagement({ userId, onAccessLost }) {
         })}
       </ul>
     </>}
+    {page && <ImageAccessManagement accounts={shown} onAccessLost={onAccessLost}/>}
     {editing && phone && <Popup title="Edit membership" hint={reviewing ? 'Check the change before it is saved.' : undefined} onClose={closeEditor} footer={null}>{editor}</Popup>}
     {page && partial && <nav className="jm-pages" aria-label="Account pages">
       <button type="button" className="jm-btn" disabled={busy || request.cursors.length === 1} onClick={() => navigate(request.cursors.slice(0, -1))}>Previous</button>

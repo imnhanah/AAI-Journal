@@ -1,3 +1,5 @@
+import {useProfileImage} from './useProfileImage.js';
+import {LOCAL_IMAGE_WARNING} from './imagePolicy.js';
 import {restorePortableDraftRecovery,withDurableDeviceRecovery,preservePortableDurableRecovery,verifyDeviceRecovery} from './deviceRecovery.js';
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from "react";
@@ -160,7 +162,8 @@ import useBalanceChallenge from './useBalanceChallenge';
 import {ChallengeCompatibleDialog} from './ChallengeModeSettings';
 import { normaliseAdaptiveStepBack } from "./challengeRules";
 import { buildChallengePlan, isChallengeEnabled, canUseLossStreak, challengeModeActivationRule, challengeDepositFundingRule, defaultChallengeReward, snapChallengeReward } from "./challengeModel";
-import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney} from './challengeLifecycle';
+import {scopeChallengeAccount, linkedChallengeTrades, challengeLifecycle, liveChallengeBalance, fundedChallengeLevel, challengeMoney, challengeStartingBalance} from './challengeLifecycle';
+import {useNavigationCache as useChallengeProgressCache} from './NavigationSession.jsx';
 import {accountLossGuardrails} from './accountRisk';
 import {psychologyMetrics} from './psychologyMetrics';
 import {replayChallenge, resetAutomation} from './challengeAutomation';
@@ -1080,6 +1083,7 @@ function readImageData(file) {
 function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, emptyLabel = null, previewSource = null }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [localImageNotice,setLocalImageNotice] = useState('');
   const fileRef = useRef(null);
   const pasteTargetRef = useRef(null);
 
@@ -1093,6 +1097,7 @@ function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, 
       if (error) { setUploadError(error); continue; }
       try {
         const dataUrl = await readImageData(f);
+        setLocalImageNotice(LOCAL_IMAGE_WARNING);
         onChange((prev) => (prev.length >= max ? prev : [...prev, captions ? { src: dataUrl, caption: "" } : dataUrl]));
       } catch (e) { setUploadError('This image could not be read. The existing images have not been changed.'); }
     }
@@ -1151,7 +1156,7 @@ function ScreenshotUploader({ screenshots, onChange, max = 2, captions = false, 
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
           onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </div>
-      {uploadError && <small role="alert" style={{color:'var(--tj-red)'}}>{uploadError}</small>}
+      {localImageNotice && <p role="status" className="tj-settings-hint">{localImageNotice}</p>}{uploadError && <small role="alert" style={{color:'var(--tj-red)'}}>{uploadError}</small>}
     </div>
   );
 }
@@ -1191,7 +1196,22 @@ function JournalEntryLayout({ children, initialPanel = 0, activePanel, onPanelCh
   </div>;
 }
 
-export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, panelStep, onPanelStepChange, onModeChange, onRequestCloseChange, onDiscardCheckChange, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, backtest = false, testType = "backtest", lockedInstrument = null, saving: externalSaving = false, embedded = false, phoneDialogActive = true }) {
+// The level a balance's challenge card shows is the replay of its saved progress
+// over its trades. Trade sizing must read that same level, not re-derive one
+// from the live balance, or the two screens disagree.
+export function savedBalanceChallengeLevel(progress, scoped) {
+  if (!progress?.automation?.startedAt || !scoped) return null;
+  const automation = { ...progress.automation, rewardRatio: progress.automation.rewardRatio ?? scoped.challengeReward };
+  const baseline = { activeLevel: progress.activeLevel ?? progress.active_level ?? 1, statuses: progress.statuses || {}, notes: progress.notes || {}, automation };
+  const start = challengeStartingBalance(baseline, scoped);
+  if (!(start > 0)) return null;
+  const mode = automation.mode || scoped.challengeMode || 'risk';
+  const plan = buildChallengePlan(start, mode, automation.levelCount || scoped.challengeLevelCount || 30, automation.rewardRatio, automation);
+  if (!plan.length) return null;
+  const replay = replayChallenge(baseline, scoped);
+  return { level: Math.min(Math.max(Number(replay.activeLevel) || 1, 1), plan.length), plan, mode };
+}
+export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, panelStep, onPanelStepChange, onModeChange, onRequestCloseChange, onDiscardCheckChange, typeTags, mistakeTags, confluenceSessions, markups, rules, instruments = [], defaultCommission, account, riskPresets = [], challengeState = null, challengeStateFor = null, backtest = false, testType = "backtest", lockedInstrument = null, saving: externalSaving = false, embedded = false, phoneDialogActive = true }) {
   const confirm=useConfirmation();
   const {phone,summary}=usePhoneTradeDialog(onClose,phoneDialogActive);
   const testLabel = testType === "forward" ? "Forward Test" : "Backtest";
@@ -1243,14 +1263,16 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
     const levels = multiBalance ? (challengeSource.challengeLevelCount || 30) : (challengeState?.automation?.levelCount || challengeSource.challengeLevelCount || 30);
     const reward = multiBalance ? (challengeSource.challengeReward ?? null) : (challengeState?.automation?.rewardRatio ?? challengeSource.challengeReward ?? null);
     const startingBalance = Number(challengeState?.automation?.startingBalance ?? challengeSource.challengeStartingBalance ?? challengeSource.balance);
-    const plan = buildChallengePlan(startingBalance, mode, levels, reward, challengeState?.automation || {});
+    let plan = buildChallengePlan(startingBalance, mode, levels, reward, challengeState?.automation || {});
     if (!plan.length) return null;
-    const level = fundedChallengeLevel(plan, liveChallengeBalance(challengeSource));
+    let level = fundedChallengeLevel(plan, liveChallengeBalance(challengeSource));
+    const saved = multiBalance ? savedBalanceChallengeLevel(challengeStateFor?.(challengeSource.id), challengeSource) : null;
+    if (saved) { plan = saved.plan; level = saved.level; }
     const row = plan[level - 1];
     if (!row) return null;
     const live=liveChallengeBalance(challengeSource);
     return mode==='adaptive' ? { ...row, mode, risk:Math.round(Number(live||0)*row.riskPct)/100 } : { ...row, mode };
-  }, [account, backtest, balanceTargets, challengeSource, challengeState?.automation?.levelCount, challengeState?.automation?.mode, challengeState?.automation?.rewardRatio, challengeState?.automation?.startingBalance, editing, multiBalance, selectedBalanceIdsForTrade.join('|')]);
+  }, [account, backtest, balanceTargets, challengeSource, challengeState?.automation?.levelCount, challengeState?.automation?.mode, challengeState?.automation?.rewardRatio, challengeState?.automation?.startingBalance, challengeStateFor, editing, multiBalance, selectedBalanceIdsForTrade.join('|')]);
   const challengePresetName = challengeRisk ? `Challenge · Level ${challengeRisk.level}` : '';
   useEffect(() => {
     if (!challengeRisk) return;
@@ -1292,9 +1314,11 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
       const scoped = scopeChallengeAccount(account, balance);
       if (!scoped.challengeEnabled) return [];
       const mode = scoped.challengeMode || "risk";
-      const plan = buildChallengePlan(Number(scoped.challengeStartingBalance ?? scoped.balance), mode, scoped.challengeLevelCount || 30, scoped.challengeReward ?? null, scoped.challengeAutomation || {});
+      let plan = buildChallengePlan(Number(scoped.challengeStartingBalance ?? scoped.balance), mode, scoped.challengeLevelCount || 30, scoped.challengeReward ?? null, scoped.challengeAutomation || {});
       if (!plan.length) return [];
-      const level = fundedChallengeLevel(plan, liveChallengeBalance(scoped));
+      let level = fundedChallengeLevel(plan, liveChallengeBalance(scoped));
+      const saved = savedBalanceChallengeLevel(challengeStateFor?.(balance.id), scoped);
+      if (saved) { plan = saved.plan; level = saved.level; }
       const plannedRow = plan[level - 1];
       const row = mode==='adaptive' && plannedRow ? {...plannedRow,risk:Math.round(Number(liveChallengeBalance(scoped)||0)*plannedRow.riskPct)/100} : plannedRow;
       if (!row) return [];
@@ -1311,7 +1335,7 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
       const pips = sizing.ok ? (sizing.spec?.pipSize ? sizing.distance / sizing.spec.pipSize : sizing.ticks) : 0;
       return [{ balance, row, mode, currency, pips, lots:sizing.volume || 0, supported:sizing.ok, sizing }];
     });
-  }, [account, backtest, balanceTargets, editing, form.asset, form.balanceResults, form.calculationMethod, form.entryPrice, form.manualConversionRates, form.stopLossPips, form.stopLossPrice, multiBalance]);
+  }, [account, backtest, balanceTargets, editing, form.asset, form.balanceResults, form.calculationMethod, form.entryPrice, form.manualConversionRates, form.stopLossPips, form.stopLossPrice, multiBalance, challengeStateFor]);
   const completedRules = activeRules.filter((rule) => form.ruleEvaluations.some((entry) => entry.ruleId === rule.id && entry.checked)).length;
   const ruleRating = activeRules.length ? (completedRules / activeRules.length) * 2 : 0;
   // Multi-account trades are completed per selected account. The shared
@@ -2113,6 +2137,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
   const [displayName, setDisplayName] = useState(fallbackDisplayName);
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [profileImage, setProfileImage] = useState(existingPhoto);
+  const displayedProfileImage = useProfileImage(profileImage,user.id,user.user_metadata?.avatar_cloud_ref,user.user_metadata?.avatar_local_only);
   const [theme, setTheme] = useState(themePreference || user.user_metadata?.theme_preference || themeValue || account.theme || "dark");
   const [palettes, setPalettes] = useState(paletteValue || user.user_metadata?.theme_palettes || { light: 'default', dark: 'default' });
   const [previewMode, setPreviewMode] = useState('live');
@@ -2173,7 +2198,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
     if (!file) return;
     const validation = validateImageFile(file);
     if (validation) { setProfilePhotoMessage(validation); return; }
-    try { setProfileImage(await readImageData(file)); setProfilePhotoMessage('Original image quality will be kept.'); } catch (error) { setProfilePhotoMessage('Photo could not be read. Your current avatar is unchanged.'); }
+    try { setProfileImage(await readImageData(file)); setProfilePhotoMessage(`Original image quality will be kept. ${LOCAL_IMAGE_WARNING}`); } catch (error) { setProfilePhotoMessage('Photo could not be read. Your current avatar is unchanged.'); }
   };
   const save = () => {
     if (!displayName.trim() || saving) return;
@@ -2216,7 +2241,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
     return <Modal entryPanel entryPanelOpen={profilePanelOpen} entryPanelPosition={panelPosition} entryPanelBehavior={panelBehavior} entryPanelUserId={`${user.id}:profile`} entryPanelWidth={600} title="Profile" className="tj-profile-panel-modal" onClose={closePanel}>
       <DesktopProfilePanel
         identity={{name:displayName, onName:setDisplayName, editing:editingDisplayName, onEdit:() => setEditingDisplayName(open => !open), email:user.email || '', verified:!!user.email_confirmed_at, memberSince:user.created_at ? formatDate(user.created_at) : '—', lastSignIn:user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '—'}}
-        photo={{image:profileImage, initials, message:profilePhotoMessage, onUpload:uploadProfile}}
+        photo={{image:displayedProfileImage, initials, message:profilePhotoMessage, onUpload:uploadProfile}}
         appearance={{theme, mode:appearanceMode, palettes, onTheme:value => {setTheme(value);preview(value);}, onPreview:id => preview(theme, id ? {...palettes, [appearanceMode]:id} : palettes), onPalette:(mode, id) => {const next = {...palettes, [mode]:id};setPalettes(next);preview(theme, next);}}}
         region={{timezone, onTimezone:setTimezone, dateFormat, onDateFormat:setDateFormat, timeFormat, onTimeFormat:setTimeFormat, weekStart:displayDraft.weekStart, onWeekStart:weekStart => setDisplayDraft(draft => ({...draft, weekStart}))}}
         panels={{position:panelPosition, onPosition:setPanelPosition, behavior:panelBehavior, onBehavior:setPanelBehavior}}
@@ -2254,7 +2279,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
         saving={saving}
         dirty={!unchanged || JSON.stringify(displayDraft) !== JSON.stringify(originalDisplayDraft.current)}
         identity={{name:displayName, onName:setDisplayName, email:user.email || '', verified:!!user.email_confirmed_at, memberSince:user.created_at ? formatDate(user.created_at) : '—', lastSignIn:user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '—'}}
-        photo={{image:profileImage, initials, message:profilePhotoMessage, onUpload:uploadProfile, onRemove:() => {setProfileImage('');setProfilePhotoMessage('');}}}
+        photo={{image:displayedProfileImage, initials, message:profilePhotoMessage, onUpload:uploadProfile, onRemove:() => {setProfileImage('');setProfilePhotoMessage('');}}}
         appearance={{theme, mode:appearanceMode, palettes, onTheme:value => {setTheme(value);preview(value);}, onPreview:id => preview(theme, id ? {...palettes, [appearanceMode]:id} : palettes), onPalette:(mode, id) => {const next = {...palettes, [mode]:id};setPalettes(next);preview(theme, next);}}}
         region={{timezone, onTimezone:setTimezone, dateFormat, onDateFormat:setDateFormat, timeFormat, onTimeFormat:setTimeFormat, weekStart:displayDraft.weekStart, onWeekStart:weekStart => setDisplayDraft(draft => ({...draft, weekStart}))}}
         privacy={{session:sessionTimeoutMinutes, onSession:setSessionTimeoutMinutes, enabled:privacyScreenEnabled, onToggle:() => setPrivacyScreenEnabled(enabled => !enabled), timeout:privacyScreenTimeoutMinutes, onTimeout:setPrivacyScreenTimeoutMinutes}}
@@ -2272,7 +2297,7 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
       <ProfilePreferencesLayout onClose={close} onDelete={openDelete}> 
       <div className="tj-personal-profile-card">
         {profilePhotoMessage && <small role="status">{profilePhotoMessage}</small>}
-        <div className="tj-profile-reference-head"><div className="tj-profile-avatar-tools"><button type="button" className="tj-personal-profile-avatar" onClick={() => photoRef.current?.click()} aria-label="Change profile photo">{profileImage ? <img src={profileImage} alt="Profile" /> : <span>{initials}</span>}</button><button type="button" className="tj-profile-avatar-tool" onClick={() => photoRef.current?.click()} title="Upload photo" aria-label="Upload photo"><ImagePlus size={14}/></button><input ref={photoRef} type="file" accept="image/*" style={{display:"none"}} onChange={(event) => { uploadProfile(event.target.files); event.target.value = ""; }} /></div><div className="tj-profile-reference-identity"><div>{editingDisplayName ? <input className="tj-profile-name-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && setEditingDisplayName(false)} autoFocus aria-label="Display name" /> : <strong>{displayName.trim() || "Your name"}</strong>}{!editingDisplayName && user.email_confirmed_at && <em>Verified</em>}</div><span>{user.email || "No email address"}</span></div><div className="tj-profile-reference-stats"><div><small>MEMBER SINCE</small><strong>{user.created_at ? formatDate(user.created_at) : "—"}</strong></div><div><small>LAST SIGN IN</small><strong>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : "—"}</strong></div></div><button type="button" className="tj-profile-reference-edit" onClick={() => setEditingDisplayName((open) => !open)}><Pencil size={14}/>{editingDisplayName ? "Done" : "Edit"}</button></div>
+        <div className="tj-profile-reference-head"><div className="tj-profile-avatar-tools"><button type="button" className="tj-personal-profile-avatar" onClick={() => photoRef.current?.click()} aria-label="Change profile photo">{profileImage ? <img src={displayedProfileImage} alt="Profile" /> : <span>{initials}</span>}</button><button type="button" className="tj-profile-avatar-tool" onClick={() => photoRef.current?.click()} title="Upload photo" aria-label="Upload photo"><ImagePlus size={14}/></button><input ref={photoRef} type="file" accept="image/*" style={{display:"none"}} onChange={(event) => { uploadProfile(event.target.files); event.target.value = ""; }} /></div><div className="tj-profile-reference-identity"><div>{editingDisplayName ? <input className="tj-profile-name-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && setEditingDisplayName(false)} autoFocus aria-label="Display name" /> : <strong>{displayName.trim() || "Your name"}</strong>}{!editingDisplayName && user.email_confirmed_at && <em>Verified</em>}</div><span>{user.email || "No email address"}</span></div><div className="tj-profile-reference-stats"><div><small>MEMBER SINCE</small><strong>{user.created_at ? formatDate(user.created_at) : "—"}</strong></div><div><small>LAST SIGN IN</small><strong>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : "—"}</strong></div></div><button type="button" className="tj-profile-reference-edit" onClick={() => setEditingDisplayName((open) => !open)}><Pencil size={14}/>{editingDisplayName ? "Done" : "Edit"}</button></div>
       </div>
       <section className="tj-personal-appearance-card tj-profile-appearance-redesign">
         <div className="tj-profile-card-heading"><div><strong>Appearance</strong><span>Pick a palette. Hover a card to preview it, click to keep it.</span></div><em>9 palettes</em></div>
@@ -6746,7 +6771,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const displayName = profileDetails.displayName;
   const panelPrefs = useMemo(() => ({ position: entryPanelPosition, behavior: entryPanelBehavior, userId: user?.id || null }), [entryPanelPosition, entryPanelBehavior, user?.id]);
   const loginQuote = useMemo(() => getLoginQuote(user), [user.id, user.last_sign_in_at]);
-  const personalProfileImage = profileDetails.avatarUrl;
+  const personalProfileImage = useProfileImage(profileDetails.avatarUrl,user.id,user.user_metadata?.avatar_cloud_ref,user.user_metadata?.avatar_local_only);
   const personalInitials = displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "T";
   const [profileTheme, setProfileTheme, profileThemePreference] = useSiteTheme(user.user_metadata?.theme_preference || user.user_metadata?.theme);
   const [profilePalettes, setProfilePalettes, mountThemeRoot] = useProfilePalettes(user.user_metadata?.theme_palettes, profileTheme);
@@ -7855,6 +7880,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const dashboardStats = useMemo(() => (dashboardAccount ? computeStats(dashboardAccount.trades, dashboardAccount.breakevenCap) : null), [dashboardAccount]);
   const challengeAccount = account;
   const challenge = useChallenge(challengeAccount, user.id, challengeProgress?.account?.[account?.id], challengeProgressReady);
+  const challengeProgressCache = useChallengeProgressCache('challenge-progress');
+  const challengeStateFor = useCallback((balanceId) => challengeProgressCache.read(`${localJournal.isLocalJournal() ? 'local' : 'cloud'}:${user.id}:${balanceId}`) ?? challengeProgress?.balance?.[balanceId] ?? null, [challengeProgressCache, challengeProgress, user.id]);
   const routineBalance = dashboardBalances.find(item => item.id === dashboardBalanceId) || dashboardBalances[0];
   const routineChallengeBalance = useMemo(() => routineBalance ? {...routineBalance, trades:account.trades, financeMovements:account.financeMovements, balances:account.balances} : null, [routineBalance, account]);
   const routineChallenge = useBalanceChallenge(routineChallengeBalance, user.id, challengeProgress?.balance?.[routineBalance?.id], challengeProgressReady);
@@ -8059,9 +8086,11 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       const commission = selectedResults.reduce((sum, result) => sum + (Number(result.commission) || 0), 0);
       const swap = selectedResults.reduce((sum, result) => sum + (Number(result.swap) || 0), 0);
       const pnl = selectedResults.reduce((sum, result) => sum + Number(result.netPnl ?? ((Number(result.grossPnl) || 0) - (Number(result.commission) || 0) - (Number(result.swap) || 0))), 0);
-      const parentSave = await updateTrade(persistedTrade.id, { ...persistedTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
+      // Totals only: screenshots were already written when the trade was created, so leave them out of this update.
+      const { screenshots:_alreadySavedMedia, ...totalsOnlyTrade } = persistedTrade;
+      const parentSave = await updateTrade(persistedTrade.id, { ...totalsOnlyTrade, userId:user.id, accountId:account.id, grossPnl, commission, swap, pnl });
       if (parentSave.error) { showWarning(`Trade saved, but its summary totals could not be synchronized: ${parentSave.error}`); return; }
-      persistedTrade = parentSave.error ? { ...persistedTrade, grossPnl, commission, swap, pnl } : (parentSave.data || { ...persistedTrade, grossPnl, commission, swap, pnl });
+      persistedTrade = parentSave.error ? { ...persistedTrade, grossPnl, commission, swap, pnl } : { ...persistedTrade, ...(parentSave.data || {}), screenshots:parentSave.data?.screenshots ?? persistedTrade.screenshots, grossPnl, commission, swap, pnl };
       setAccounts((accs) => accs.map((item) => item.id !== account.id ? item : { ...item, trades: item.trades.map((itemTrade) => itemTrade.id === persistedTrade.id && (!itemTrade._pendingSaveToken || itemTrade._pendingSaveToken===optimisticTrade._pendingSaveToken) ? { ...persistedTrade, balanceResults:selectedResults } : itemTrade) }));
     }
     if(stagedTrade.receipt.mode==='cloud'&&!cloudMediaComplete(persistedTrade.screenshots)){
@@ -8579,7 +8608,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   const handleSaveMarkup = async (markup) => {
     if (!account?.id) return false;
     const exists = markups.some((item) => item.id === markup.id);
-    const res = exists ? await updateMarkup(markup.id, markup) : await createMarkup(user.id, account.id, markup);
+    const mediaMarkup = {...markup,userId:user.id,mediaMembership:membership,mediaGetMembership:()=>resolveJournalMembership({authenticated:true})};
+    const res = exists ? await updateMarkup(markup.id, mediaMarkup) : await createMarkup(user.id, account.id, mediaMarkup);
     if (res.error) { showError(res.error); return false; }
     setMarkups((items) => exists ? items.map((item) => item.id === markup.id ? res.data : item) : [res.data, ...items]);
     await persistCustomInstrument(markup.instrument);
@@ -8663,7 +8693,8 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     if (!account?.id) return false;
     const balance=balanceId ? account.balances.find(item=>item.id===balanceId) : null;
     const scoped=balance ? scopeChallengeAccount(account,balance) : account;
-    const nextMode=['risk','streak','adaptive'].includes(patch.mode) ? patch.mode : 'risk';
+    if(!['risk','streak','adaptive'].includes(patch.mode)){showError('Choose a challenge mode before saving.');return false;}
+    const nextMode=patch.mode;
     const rawReward=patch.reward === '' || patch.reward == null ? null : Number(patch.reward);
     const nextReward=rawReward===null ? (nextMode==='adaptive' ? null : defaultChallengeReward(nextMode)) : (Number.isFinite(rawReward) && rawReward>0 ? snapChallengeReward(nextMode,rawReward) : rawReward);
     const nextStepBack=nextMode==='adaptive' ? normaliseAdaptiveStepBack(patch.adaptiveStepBack ?? state.automation?.adaptiveStepBack) : undefined;
@@ -8681,7 +8712,10 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const goals={monthlyGoalPct:Number(patch.monthlyGoalPct ?? scoped.monthlyGoalPct ?? 0),yearlyGoalPct:Number(patch.yearlyGoalPct ?? scoped.yearlyGoalPct ?? 0)};
     const guardrails={dailyLossLimitPct:Number(patch.dailyLossLimitPct ?? scoped.dailyLossLimitPct ?? 0),monthlyLossLimitPct:Number(patch.monthlyLossLimitPct ?? scoped.monthlyLossLimitPct ?? 0)};
     if(Object.values(goals).some(value=>!Number.isFinite(value)||value<0) || Object.values(guardrails).some(value=>!Number.isFinite(value)||value<0||value>100)){showError('Goals must be non-negative. Loss limits must be between 0 and 100%.');return false;}
-        const protectedChanged=(state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='adaptive'?0:defaultChallengeReward(nextMode)))!==Number(nextReward) || (nextMode==='adaptive' && normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack)!==nextStepBack) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
+        // A challenge that never received a start checkpoint must be started by saving it,
+        // otherwise it is saved empty and ignores every trade.
+        const neverStarted=!state.automation?.startedAt;
+        const protectedChanged=neverStarted || (state.automation?.mode || scoped.challengeMode || 'risk')!==nextMode || Number(state.automation?.levelCount || scoped.challengeLevelCount || 30)!==nextCount || Number(state.automation?.rewardRatio ?? scoped.challengeReward ?? (nextMode==='adaptive'?0:defaultChallengeReward(nextMode)))!==Number(nextReward) || (nextMode==='adaptive' && normaliseAdaptiveStepBack(state.automation?.adaptiveStepBack)!==nextStepBack) || (nextMode==='adaptive' && (Number(state.automation?.adaptiveRiskPct ?? 1)!==adaptiveRiskPct || Number(state.automation?.adaptiveDrawdownPct ?? 10)!==adaptiveDrawdownPct));
     // Completing a challenge closes that run. Starting Adaptive afterwards is
     // intentionally a fresh run at Level 1, so its historical linked trades
     // remain in the journal but cannot lock the new setup or reopen the old
@@ -9074,7 +9108,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     const next = previous === "dark" ? "light" : "dark";
     setProfileTheme(next);
     window.localStorage.setItem(`tj:profile-theme:${user.id}`, next);
-    const result = await updateProfile({ fullName: profileDetails.fullName || displayName, displayName, avatarUrl: personalProfileImage, sessionTimeoutMinutes, privacyScreenEnabled: privacySettings.enabled, privacyScreenTimeoutMinutes: privacySettings.timeoutMinutes, theme: next, themePreference: next, themePalettes: profilePalettes, timezone: profileDetails.timezone, dateFormat: profileDetails.dateFormat, timeFormat: profileDetails.timeFormat });
+    const result = await updateProfile({ fullName: profileDetails.fullName || displayName, displayName, avatarUrl: profileDetails.avatarUrl, sessionTimeoutMinutes, privacyScreenEnabled: privacySettings.enabled, privacyScreenTimeoutMinutes: privacySettings.timeoutMinutes, theme: next, themePreference: next, themePalettes: profilePalettes, timezone: profileDetails.timezone, dateFormat: profileDetails.dateFormat, timeFormat: profileDetails.timeFormat });
     if (result.error) {
       setProfileTheme(previous);
       window.localStorage.setItem(`tj:profile-theme:${user.id}`, previous);
@@ -9194,7 +9228,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     position={entryPanelPosition}
     behavior={entryPanelBehavior}
     userId={user.id}
-    tradeProps={{ formSession:tradeEditor.version, editing:editingTrade, draft:newTradeDraft, onDraftChange:setNewTradeDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.trade = handler; }, panelStep:tradePanelStep, onPanelStepChange:setTradePanelStep, typeTags, mistakeTags:allMistakeTags(mistakeTags), confluenceSessions, instruments:knownInstruments, markups:markups.filter((markup)=>markup.accountId===account.id), rules:account.rules, defaultCommission:account.defaultCommission, account:tradeFormAccount, riskPresets, challengeState:challenge.state, onClose:() => { setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0); }, onSave:saveTrade }}
+    tradeProps={{ formSession:tradeEditor.version, editing:editingTrade, draft:newTradeDraft, onDraftChange:setNewTradeDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.trade = handler; }, panelStep:tradePanelStep, onPanelStepChange:setTradePanelStep, typeTags, mistakeTags:allMistakeTags(mistakeTags), confluenceSessions, instruments:knownInstruments, markups:markups.filter((markup)=>markup.accountId===account.id), rules:account.rules, defaultCommission:account.defaultCommission, account:tradeFormAccount, riskPresets, challengeState:challenge.state, challengeStateFor, onClose:() => { setModal(null); setTradeEditor(clearEntryEditor); setTradePanelStep(0); }, onSave:saveTrade }}
     markupProps={{ formSession:markupEditor.version, editing:editingMarkup, draft:newMarkupDraft, onDraftChange:setNewMarkupDraft, onDiscardCheckChange:(handler) => { entryDiscardChecks.current.markup = handler; }, instruments:knownInstruments, onClose:() => { setModal(null); setMarkupEditor(clearEntryEditor); }, onSave:handleSaveMarkup }}
   />;
 
@@ -9278,7 +9312,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           {page === "management" && <ManagementPage membershipAdmin={membershipAdmin} revokeMembershipAdmin={revokeMembershipAdmin} onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onExportCloudRecovery={exportCloudRecovery} promotionPanel={membershipPreviewEnabled && cloudSyncEntitled ? <JournalPromotion userId={user.id}/> : null} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
           {page === "markups" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : phoneCalendar ? <MobileMarkupsV2 markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} currency={account.baseCurrency} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} /> : <MarkupsRedesign markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} />)}
           {page === "reviews" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <ReviewLibraryPage draftContext={journalSafety.forWorkspace(account.id)} onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />)}
-          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies draftContext={journalSafety.forWorkspace("profile")} profileRevision={profileCaseStudyRevision} onSavePatch={handleSaveMobileCaseStudyPatch} sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
+          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies draftContext={journalSafety.forWorkspace("profile")} profileRevision={profileCaseStudyRevision} onSavePatch={handleSaveMobileCaseStudyPatch} sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={membership?.imageUploadsAllowed === true} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
           </div>
           </MobilePageStage>
           </BacktestViewSession>
@@ -12276,10 +12310,9 @@ export default function AppRoot() {
     };
     void refresh();
     const resume = () => { if (document.visibilityState === 'visible') void refresh(); };
-    if (membershipPreviewEnabled) {
-      window.addEventListener('focus', refresh);
-      document.addEventListener('visibilitychange', resume);
-    }
+    // Image grants can change independently while whole-journal preview stays off.
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', resume);
     return () => {
       cancelled = true;
       window.removeEventListener('focus', refresh);

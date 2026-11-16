@@ -6,6 +6,7 @@ const databases = {
   'aaicorefx-local-journal':['journals'], 'aaicorefx-local-journal-snapshots':['snapshots'],
   'tj-journal-images':['snapshots'], 'tj-cloud-cache':['records'],
   'tj-image-assets':['assets','binaries','queue','leases'],
+  'tj-cloud-image-cache':['downloads'],
   'tj-case-study-document-images':['images'], 'tj-case-study-evidence-images':['images'],
 };
 const imageFields = new Set(['src','url','dataUrl','source','data','image','preview','documentImageRef','profileImage','displaySrc']);
@@ -68,6 +69,7 @@ async function collect(userId,indexedDb,storage,assertOwner,email,projectId){
      else if(name==='aaicorefx-local-journal-snapshots')include=c.value.userId===userId;
      else if(name==='tj-cloud-cache')include=ownedKey(c.key,userId);
      else if(name==='tj-image-assets')include=c.value.ownerUserId===userId;
+     else if(name==='tj-cloud-image-cache')include=c.value.owner===userId&&c.value.namespace?.replace(/^https?:\/\//,'').replace(/\/$/,'')===projectId;
      else if(name===RECOVERY_COPIES_DATABASE)include=c.value.ownerUserId===userId&&c.value.projectId===projectId;
      else include=true; // Unscoped legacy rows are selected by owned references below.
      if(include)rows.push({key:c.key,value:c.value});c.continue();}};tx.oncomplete=()=>resolve(rows);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Read cancelled.'));});
@@ -106,6 +108,7 @@ export async function verifyDeviceRecovery(bundle,expectedOwner,{expectedProject
   if(['aaicorefx-local-journal','tj-journal-images'].includes(row.database)&&row.key!==bundle.recoveryOwnerId)throw new Error('Archive contains another account’s device data.');
   if(row.database==='aaicorefx-local-journal-snapshots'&&row.value?.userId!==bundle.recoveryOwnerId)throw new Error('Snapshot owner does not match.');
   if(row.database==='tj-image-assets'&&row.value?.ownerUserId!==bundle.recoveryOwnerId)throw new Error('Image owner does not match.');
+  if(row.database==='tj-cloud-image-cache'&&(row.value?.owner!==bundle.recoveryOwnerId||row.value?.namespace?.replace(/^https?:\/\//,'').replace(/\/$/,'')!==(expectedProjectId||bundle.projectId)||!row.value?.path?.startsWith(bundle.recoveryOwnerId+'/')))throw new Error('Downloaded image owner or project does not match.');
   if(row.database==='tj-cloud-cache'&&!ownedKey(row.key,bundle.recoveryOwnerId))throw new Error('Cached record owner does not match.');
   if(row.database===DURABLE_RECOVERY_DATABASE)verifyDurableRecoveryRow(row,bundle.recoveryOwnerId,expectedProjectId||bundle.projectId);
   if(row.database===RECOVERY_COPIES_DATABASE){
@@ -142,7 +145,7 @@ export async function portableDeviceRecovery(bundle,copyId,{expectedOwner}={}){
  await verifyDeviceRecovery(bundle,expectedOwner);const copy=deviceRecoveryCopies(bundle).find(c=>c.id===copyId);if(!copy)throw new Error('Choose one source copy; copies are never merged automatically.');
  const images=new Map();for(const row of bundle.records){
   const binary=binaryDataUrl(row.value?.blob)||binaryDataUrl(row.value?.bytes,row.value?.type)||binaryDataUrl(row.value)||(typeof row.value==='string'&&row.value.startsWith('data:image/')?row.value:null);
-  if(binary){images.set(String(row.key),binary);if(row.database==='tj-image-assets')for(const prefix of['tj-image:','tj-case-study-media:','tj-trade-media:','tj-shared-media:'])images.set(prefix+row.key,binary);}
+  if(binary){if(row.database==='tj-cloud-image-cache'){images.set('tj-case-study-storage:'+row.value.path,binary);const id=row.value.path.slice(bundle.recoveryOwnerId.length+1);if(!id.includes('/'))for(const prefix of['tj-case-study-media:','tj-trade-media:','tj-shared-media:'])images.set(prefix+id,binary);}images.set(String(row.key),binary);if(row.database==='tj-image-assets')for(const prefix of['tj-image:','tj-case-study-media:','tj-trade-media:','tj-shared-media:'])images.set(prefix+row.key,binary);}
  }
  for(const row of bundle.records.filter(r=>r.database==='tj-image-assets'&&r.store==='assets')){
   const image=images.get('tj-case-study-media:'+row.value.id);if(image&&row.value.cloudPath?.startsWith(bundle.recoveryOwnerId+'/'))images.set('tj-case-study-storage:'+row.value.cloudPath,image);
@@ -254,4 +257,14 @@ export async function restorePortableDraftRecovery(backup,userId,options={}) {
  const receipt=await preservePortableDurableRecovery(backup,userId,options);
  if(!receipt.copies)throw new Error('No draft recovery evidence was saved. Keep the original file.');
  return receipt;
+}
+
+// Standalone rollback bridge: raw evidence remains separate and unchanged.
+// The old client imports only the selected materialized journal, never queues.
+export async function portableForOlderRelease(bundle,copyId,options={}) {
+ const portable=await portableDeviceRecovery(bundle,copyId,options);
+ if(copyId==='durable-pending')throw new Error('Drafts remain in the verified raw archive and isolated recovery copies; do not import them as an empty journal.');
+ if(portable.unavailableImages||portable.recoveryWarnings?.length)throw new Error('Resolve recovery warnings before creating an older-client copy.');
+ const {durableRecoveryArchive,...legacy}=portable;
+ return {...legacy,rollbackRecoveryEvidence:{rawArchiveSha256:bundle.payloadSha256,pendingWritesReplayed:false,draftsRemainInRawArchive:!!durableRecoveryArchive}};
 }

@@ -5,7 +5,7 @@ import { MEMBERSHIP } from './membership.js';
 import { IMAGE_STORAGE_STATES, createSharedImageStorage } from './sharedImageStorage.js';
 import { BACKTEST_SHARED_MEDIA_PREFIX, backtestMediaVersion, createBacktestSharedMediaAdapter, shouldLoadBacktestMedia } from './backtestSharedMedia.js';
 
-const owner={status:'ready',membership:MEMBERSHIP.OWNER};
+const owner={status:'ready',membership:MEMBERSHIP.OWNER,imageAccessStatus:'ready',imageUploadsAllowed:true};
 const free={status:'ready',membership:MEMBERSHIP.FREE};
 const png=()=>new Blob([new Uint8Array([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])],{type:'image/png'});
 const dataUrl='data:image/png;base64,iVBORw0KGgo=';

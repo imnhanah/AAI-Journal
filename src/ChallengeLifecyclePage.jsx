@@ -59,7 +59,7 @@ export default function ChallengeLifecyclePage({account,challenge,userId,loginQu
   const openStart=target=>{
     const fit=challengeSetupFits({balance:target.balance})[0];
     setStarting(target);
-    setStartDraft({name:target.name,startingBalance:target.balance,mode:fit?.mode || 'adaptive',levelCount:fit?.levelCount || 30,reward:fit?(fit.mode==='adaptive'?3:fit.reward):3,adaptiveRiskPct:10,adaptiveDrawdownPct:50,adaptiveStepBack:'one'});
+    setStartDraft({name:target.name,startingBalance:target.balance,mode:null,levelCount:fit?.levelCount || 30,reward:'',adaptiveRiskPct:10,adaptiveDrawdownPct:50,adaptiveStepBack:'one'});
   };
   const closeStart=()=>{if(!startBusy){setStarting(null);setStartDraft(null);}};
   const saveStart=async data=>{setStartBusy(true);try{if(await onSaveSetup(starting.id,emptyChallenge(),{...data,startingBalance:Number(data.startingBalance),levelCount:Number(data.levelCount)})){setStarting(null);setStartDraft(null);}}finally{setStartBusy(false);}};

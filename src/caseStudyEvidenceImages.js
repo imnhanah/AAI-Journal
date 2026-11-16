@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useCallback, useRef } from 'react';
 import { validateEvidenceImage } from './caseStudyWorkspace.js';
 import { isDocumentImageReference, readCaseStudyDocumentImage } from './caseStudyDocumentImages.js';
 import { isCaseStudyEvidenceCloudReference, peekCaseStudyEvidenceCloudBlob, resolveCaseStudyEvidenceCloudBlob } from './caseStudyEvidenceCloud.js';
@@ -49,14 +49,18 @@ export async function readEvidenceImageReference(ref) {
   finally { database.close(); }
 }
 
-export function useEvidenceImageUrl(value, { userId='', cloudRef='' } = {}) {
+export function useEvidenceImageUrl(value, { userId='', cloudRef='', localOnly=false, defer=false } = {}) {
   const [attempt,setAttempt]=useState(0);
+  const [visible,setVisible]=useState(!defer);
+  const observer=useRef(null);
+  const observeRef=useCallback(node=>{observer.current?.disconnect();if(!node)return;if(!defer||typeof IntersectionObserver==='undefined'){setVisible(true);return;}observer.current=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){setVisible(true);observer.current?.disconnect();}},{rootMargin:'100px'});observer.current.observe(node);},[defer]);
+  useLayoutEffect(()=>()=>observer.current?.disconnect(),[]);
   const [state,setState]=useState(null);
   const stored=isStoredEvidenceImageReference(value);
-  const requestKey=JSON.stringify([value,userId,cloudRef,attempt]);
+  const requestKey=JSON.stringify([value,userId,cloudRef,attempt,visible,localOnly]);
   const retry=()=>setAttempt(current=>current+1);
   useLayoutEffect(()=>{
-    if (!stored) return undefined;
+    if (!stored || !visible) return undefined;
     let active=true; let objectUrl='';
     const showBlob = blob => {
       if (!active) return;
@@ -94,6 +98,7 @@ export function useEvidenceImageUrl(value, { userId='', cloudRef='' } = {}) {
         // Assets use a stable, owner-scoped object path. A second browser may
         // receive a rich-document `tj-image:` reference before it has local
         // metadata, so it can still request its private cloud copy safely.
+        if((localOnly||metadata?.storageState==='local-only')&&!cloudRef&&!metadata?.cloudPath){showBlob(null);return;}
         const reference=sharedImageCloudReference({cloudRef,metadata,userId,assetId});
         if (!reference) { debugImageDiagnostic('cloud-reference-missing','missing-cloud-reference'); showBlob(null); return; }
         await showCloudImage(reference);
@@ -111,8 +116,8 @@ export function useEvidenceImageUrl(value, { userId='', cloudRef='' } = {}) {
     const read=isDocumentImageReference(value) ? readCaseStudyDocumentImage : readEvidenceImageReference;
     read(value).then(showBlob).catch(()=>showBlob(null));
     return cleanup;
-  },[value,userId,cloudRef,stored,requestKey]);
-  if (!stored) return {url:value||'',loading:false,missing:false,retry};
-  if (state?.requestKey === requestKey) return {...state,retry};
-  return {url:'',loading:true,missing:false,retry};
+  },[value,userId,cloudRef,stored,requestKey,visible,localOnly]);
+  if (!stored) return {url:value||'',loading:false,missing:false,retry,observeRef};
+  if (state?.requestKey === requestKey) return {...state,retry,observeRef};
+  return {url:'',loading:true,missing:false,retry,observeRef};
 }

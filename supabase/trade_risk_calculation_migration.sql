@@ -1,4 +1,5 @@
 -- Planned and realized R calculations for trades. Existing trade rows remain unchanged.
+begin;
 alter table public.trades add column if not exists risk_method text;
 alter table public.trades add column if not exists risk_preset text;
 alter table public.trades add column if not exists stop_loss_pips numeric;
@@ -45,3 +46,5 @@ end;
 $$;
 revoke all on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) from public, anon;
 grant execute on function public.tj_bootstrap_metadata(jsonb,uuid,text,text) to authenticated;
+notify pgrst, 'reload schema';
+commit;

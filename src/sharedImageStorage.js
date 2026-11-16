@@ -1,10 +1,10 @@
-import { MEMBERSHIP } from './membership.js';
+import { IMAGE_MAX_BYTES, IMAGE_LIMIT_MESSAGE } from './imagePolicy.js';
 
 export const IMAGE_ASSET_DATABASE = 'tj-image-assets';
 // Version 2 only adds the lease store. Existing records are untouched.
 export const IMAGE_ASSET_VERSION = 2;
 export const IMAGE_ASSET_STORES = Object.freeze({ ASSETS: 'assets', BINARIES: 'binaries', QUEUE: 'queue', LEASES: 'leases' });
-export const MAX_NEW_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_NEW_IMAGE_BYTES = IMAGE_MAX_BYTES;
 export const ACCEPTED_IMAGE_TYPES = Object.freeze(['image/png', 'image/jpeg', 'image/webp']);
 export const IMAGE_STORAGE_STATES = Object.freeze({ LOCAL_ONLY: 'local-only', PENDING_UPLOAD: 'pending-upload', SYNCING: 'syncing', CLOUD_VERIFIED: 'cloud-verified', SYNC_FAILED: 'sync-failed', SOFT_DELETED: 'soft-deleted', PURGED: 'purged' });
 
@@ -28,7 +28,7 @@ export async function detectImageMimeType(file) {
 
 export async function validateNewImage(file) {
   if (!file?.size) return { error: 'Choose an image first.' };
-  if (file.size > MAX_NEW_IMAGE_BYTES) return { error: 'Images must be 5 MB or smaller.' };
+  if (file.size > MAX_NEW_IMAGE_BYTES) return { error: IMAGE_LIMIT_MESSAGE };
   const detectedType = await detectImageMimeType(file);
   if (!ACCEPTED_IMAGE_TYPES.includes(detectedType)) return { error: 'Use a PNG, JPEG, or WebP image.' };
   if (file.type && file.type !== detectedType) return { error: 'The image file type does not match its contents.' };
@@ -48,7 +48,7 @@ export async function calculateImageChecksum(blob) {
   return `fallback-${(hash >>> 0).toString(16)}`;
 }
 
-export const canQueueCloudUpload = membership => membership?.status === 'ready' && membership?.membership === MEMBERSHIP.OWNER && membership.cloudWritesAllowed !== false;
+export const canQueueCloudUpload = membership => membership?.imageAccessStatus === 'ready' && membership.imageUploadsAllowed === true;
 const isUploadPending = state => state === IMAGE_STORAGE_STATES.PENDING_UPLOAD || state === IMAGE_STORAGE_STATES.SYNC_FAILED;
 export const isHistoricalImageReference = value => typeof value === 'string' && (value.startsWith('data:image/') || value.startsWith('tj-image:') || value.startsWith('tj-case-study-media:') || value.startsWith('tj-shared-media:') || value.startsWith('tj-trade-media:') || value.startsWith('tj-case-study-evidence:') || value.startsWith('tj-case-study-image:') || value.startsWith('tj-case-study-storage:') || /^https?:\/\//.test(value));
 
@@ -168,7 +168,9 @@ export function createSharedImageStorage({ persistence = createIndexedDbImagePer
             || !owned(currentEntry, userId) || !isUploadPending(currentEntry.status)) continue;
           const binary = await persistence.getBinary(entry.assetId);
           if (!owned(binary, userId)) { await persistence.updateAssetQueue(fresh, currentEntry, true); continue; }
-          if (!canQueueCloudUpload(await currentMembership())) {
+          const access = await currentMembership();
+          if(access?.imageAccessStatus==='unavailable')throw new Error('Image permission could not be confirmed. The original is retained; retry when online.');
+          if (!canQueueCloudUpload(access)) {
             await persistence.updateAssetQueue({ ...fresh, storageState: IMAGE_STORAGE_STATES.LOCAL_ONLY, updatedAt: clock() }, currentEntry, true);
             continue;
           }
@@ -176,7 +178,9 @@ export function createSharedImageStorage({ persistence = createIndexedDbImagePer
           const syncingAsset = { ...fresh, storageState: IMAGE_STORAGE_STATES.SYNCING, updatedAt: at };
           syncingQueue = queueFor(fresh, at, IMAGE_STORAGE_STATES.SYNCING, { ...currentEntry, attempts: currentEntry.attempts + 1 });
           await persistence.updateAssetQueue(syncingAsset, syncingQueue);
-          if (!canQueueCloudUpload(await currentMembership())) {
+          const finalAccess = await currentMembership();
+          if(finalAccess?.imageAccessStatus==='unavailable')throw new Error('Image permission could not be confirmed. The original is retained; retry when online.');
+          if (!canQueueCloudUpload(finalAccess)) {
             await persistence.updateAssetQueue({ ...fresh, storageState: IMAGE_STORAGE_STATES.LOCAL_ONLY, updatedAt: clock() }, syncingQueue, true);
             continue;
           }

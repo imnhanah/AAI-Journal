@@ -26,9 +26,9 @@ test('Challenge v2 keeps every challenge mounted and reports its level for the s
 
 test('every challenge mode explains why live balance can exceed the planned final balance', () => {
   for (const mode of ['risk', 'streak', 'adaptive']) {
-    const planned = challengeRulesFor(mode).items.find(([label]) => label === 'Planned and live balance');
+    const planned = challengeRulesFor(mode).items.find(([label]) => label === 'Completing the challenge');
     assert.ok(planned, mode);
-    assert.match(planned[1], /live balance can finish above the plan/);
+    assert.match(planned[1], /live balance can finish above them/);
   }
 });
 

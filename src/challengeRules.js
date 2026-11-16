@@ -5,12 +5,11 @@ export const ADAPTIVE_STEP_BACK_RULES = ['one', 'two', 'net'];
 export const normaliseAdaptiveStepBack = value => ADAPTIVE_STEP_BACK_RULES.includes(value) ? value : 'one';
 
 const SHARED = {
-  floor: ['Balance floor', 'The challenge is paused if live trading capital falls below the original Level 1 balance.'],
-  funding: ['Funding and deposits', 'Deposits count toward your total deposited and can fund forward progress. They never count as growth. Withdrawals and transfers can move the challenge back.'],
-  completion: ['Completing the challenge', 'The challenge is complete when the last level is passed by a trade profit and the balance has reached the planned final target. Reaching the target early does not complete it. If the last level is passed while the balance is still below the target, the final level stays active until the balance catches up.'],
-  planned: ['Planned and live balance', 'The planned balances are the clean-path targets. After a step-back, re-passing levels adds to realised equity again, so live balance can finish above the plan.'],
-  lock: ['Lock process', 'Once a trade is linked to this challenge, its mode, plan length, reward and setup rules are locked.'],
+  balance: ['Balance and deposits', 'The challenge pauses if your capital falls below the Level 1 balance. Deposits can fund progress but never count as growth. Withdrawals and transfers can step you back.'],
+  completion: ['Completing the challenge', 'It completes when a trade passes the last level and the balance has reached the planned final target. Planned balances are the clean path, so your live balance can finish above them.'],
+  lock: ['Locked after trades', 'Once a trade is linked, the mode, plan length, reward and setup rules are locked.'],
 };
+const PASS = ['How you pass', 'One trade that reaches the level’s profit target passes it. Small wins do not add up, and an earlier loss is not taken off.'];
 
 const ADAPTIVE_STEP_BACK_TEXT = {
   one: ['Step-back · One loss', 'A losing trade from Level 2 onward steps the challenge back one level. A Level 1 loss stays at Level 1.'],
@@ -23,14 +22,11 @@ export function challengeRulesFor(mode = 'risk', stepBack) {
     return {
       title: 'Mode 3 · Adaptive Balance rules',
       items: [
-        ['Progress', 'Each level risks the selected percentage of its starting balance and targets the selected reward multiple.'],
-        ['Reward', 'Any reward from 1R upward. You choose it at setup.'],
+        ['How you pass', 'One trade that reaches the level’s target passes it. Each level risks the percentage you chose and targets your reward multiple.'],
         ADAPTIVE_STEP_BACK_TEXT[normaliseAdaptiveStepBack(stepBack)],
-        ['Balance floor', 'The challenge is paused when live trading capital falls below its starting balance by the selected maximum drawdown.'],
-        SHARED.funding,
+        ['Balance and deposits', 'The challenge pauses if your capital falls below its starting balance by your maximum drawdown. Deposits can fund progress but never count as growth. Withdrawals and transfers can step you back.'],
         SHARED.completion,
-        SHARED.planned,
-        ['Lock process', 'The challenge always starts at Level 1. Once a trade is linked, its adaptive settings and plan rules are locked.'],
+        ['Locked after trades', 'The challenge always starts at Level 1. Once a trade is linked, its adaptive settings and plan rules are locked.'],
       ],
     };
   }
@@ -38,20 +34,18 @@ export function challengeRulesFor(mode = 'risk', stepBack) {
     return {
       title: 'Mode 2 · Two-Loss Streak rules',
       items: [
-        ['Progress', 'Closed challenge trades add toward this level’s profit target.'],
-        ['Reward', 'Any reward from 2.8R to 5R. The default is 2.8R.'],
-        ['Two-loss rule', 'Two losses on the same level trigger a step-back. A win that does not pass the level, or a breakeven, does not clear the count. Only passing the level does.'],
-        SHARED.floor, SHARED.funding, SHARED.completion, SHARED.planned, SHARED.lock,
+        PASS,
+        ['How you step back', 'Two losses on the same level step you back one level. A win that does not pass the level, or a breakeven, does not clear the count. A Level 1 loss stays on Level 1.'],
+        SHARED.balance, SHARED.completion, SHARED.lock,
       ],
     };
   }
   return {
     title: 'Mode 1 · Risk Limit rules',
     items: [
-      ['Progress', 'Closed challenge trades add toward this level’s profit target.'],
-      ['Reward', 'Any reward from 1.5R to 2R. The default is 1.5R.'],
-      ['Step-back', 'Wins and losses on the level are added together. When the net loss reaches the level’s planned risk amount, the challenge steps back one level.'],
-      SHARED.floor, SHARED.funding, SHARED.completion, SHARED.planned, SHARED.lock,
+      PASS,
+      ['How you step back', 'One trade that hits its stop loss, losing the level’s planned risk, steps you back one level. A Level 1 loss stays on Level 1.'],
+      SHARED.balance, SHARED.completion, SHARED.lock,
     ],
   };
 }
