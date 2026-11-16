@@ -35,4 +35,5 @@ test('deletion calls carry the countdown protocol marker and map the server refu
   assert.match(auth, /body:\{action:'check', protocol:DELETION_PROTOCOL\}/);
   assert.match(auth, /confirmation: "DELETE", protocol: DELETION_PROTOCOL/);
   assert.match(auth, /client_update_required/);
+  assert.match(auth, /return \{ready:false, error:UPDATE_NEEDED\}/);
 });

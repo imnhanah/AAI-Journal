@@ -209,6 +209,8 @@ export async function checkProfileDeletionReady() {
   try {
     const {data, error} = await supabase.functions.invoke('delete-profile', {body:{action:'check', protocol:DELETION_PROTOCOL}, timeout:10000});
     // Only the cancellable 14-day countdown service counts as ready. An older permanent-delete service must never be treated as ready.
+    if (error) { let body = null; try { body = await error.context?.clone?.().json?.(); } catch { /* keep generic */ } if (body?.error === 'client_update_required') return {ready:false, error:UPDATE_NEEDED}; }
+    if (data?.error === 'client_update_required') return {ready:false, error:UPDATE_NEEDED};
     if (error || data?.ready !== true || data?.deletion_mode !== 'countdown' || data?.countdown_days !== 14) return {ready:false, error:'Profile deletion is unavailable. The protected delete-profile function must be deployed and verified.'};
     return {ready:true, countdownDays:14};
   } catch { return {ready:false, error:'Could not verify profile deletion. Check your connection and the server deployment.'}; }
