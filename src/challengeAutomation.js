@@ -4,6 +4,20 @@ import {linkedChallengeTrades, closedChallengeTrade, cashImpact, fundedChallenge
 const RUNNING_TRADE_MARKER = '[aaicorefx-running-trade]';
 const isClosedTrade = closedChallengeTrade;
 export const validMode = mode => mode === 'risk' || mode === 'streak' || mode === 'adaptive' ? mode : null;
+// A pass belongs to one closed trade. No accumulated profit or remembered
+// earlier attempt can satisfy either half of this shared three-mode gate.
+export function challengeTradePasses({grossPnl, profitTarget, netBalance, balanceTarget}) {
+  const values=[grossPnl,profitTarget,netBalance,balanceTarget];
+  if(values.some(value=>value==null || value==='' || !Number.isFinite(Number(value)))) return false;
+  const [profit,requiredProfit,balance,requiredBalance]=values.map(value=>Math.round(Number(value)*100));
+  return requiredProfit>0 && requiredBalance>0 && profit>=requiredProfit && balance>=requiredBalance;
+}
+export function challengeProfitTarget(row,mode,balanceBeforeTrade) {
+  return isAdaptiveBalanceMode(mode)
+    ? Math.round(Number(balanceBeforeTrade)*Number(row.profitPct || 0))/100
+    : row.profit;
+}
+
 export function localCheckpoint(now = new Date()) {
   const pad = n => String(n).padStart(2,'0');
   return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -56,12 +70,33 @@ export function replayChallenge(baseline, account) {
   const cashRows = (account.financeMovements || []).map(item=>({...item,eventAt:Date.parse(item.createdAt || `${item.date}T23:59:59`)}));
   let live = Math.round((hasCapturedBalance ? startingBalance : Number(account.balance ?? account.challengeStartingBalance) + (account.trades || []).filter(t=>isClosedTrade(t)&&!rows.some(row=>row.id===t.id)).reduce((sum,t)=>sum+Number(t.pnl||0),0) + cashRows.filter(item=>item.eventAt<startTime).reduce((sum,item)=>sum+cashImpact(item),0))*100);
   state.failed = hasFailedAtBalance(live);
+  let cents=0;
   const markFundingJump = (from, to, reason) => {
     for (let level=from; level<to; level++) {
       if (state.statuses[level] === 'Pass') continue;
       state.statuses[level]='Jumped';
       state.fundingJumps[level]=reason;
     }
+  };
+  // The planned starting balance is a hard level minimum in every mode.
+  // This only caps progress downward; spare capital never earns a trade pass.
+  const enforceBalanceMinimum = balanceInCents => {
+    const previous=state.activeLevel;
+    const required=previous>totalLevels ? plan[totalLevels-1].end : plan[previous-1]?.start;
+    if(!Number.isFinite(required) || balanceInCents>=Math.round(required*100)) return;
+    const fundedLevel=fundedChallengeLevel(plan,balanceInCents/100);
+    for(const key of Object.keys(state.statuses)) if(Number(key)>=fundedLevel) delete state.statuses[key];
+    for(const key of Object.keys(state.fundingJumps)) if(Number(key)>=fundedLevel) delete state.fundingJumps[key];
+    if(previous<=totalLevels && previous!==fundedLevel) {
+      state.statuses[previous]='Step back';
+      const reason='Stepped back because available capital is below this level’s planned starting balance.';
+      if(!String(state.notes[previous] || '').includes(reason)) state.notes[previous]=[state.notes[previous],reason].filter(Boolean).join('\n');
+    }
+    state.activeLevel=fundedLevel;
+    state.statuses[fundedLevel]='In progress';
+    state.stepBacks+=Math.max(0,Math.min(previous,totalLevels)-fundedLevel);
+    cents=0;
+    state.lossStreak=0;
   };
   const openingFunding = live / 100;
   const openingLevel = fundedChallengeLevel(plan,openingFunding);
@@ -70,8 +105,8 @@ export function replayChallenge(baseline, account) {
     state.activeLevel=openingLevel;
     state.statuses[openingLevel]='In progress';
   }
+  enforceBalanceMinimum(live);
   const events = [...rows.map(trade=>({kind:'trade',eventAt:loggedAt(trade),trade})),...cashRows.filter(item=>item.eventAt>=startTime).map(item=>({kind:'cash',eventAt:item.eventAt,item}))].sort((a,b)=>a.eventAt-b.eventAt || (a.kind==='trade'?-1:1));
-  let cents=0;
   for (const event of events) {
     if (event.kind === 'cash') {
       const impact = cashImpact(event.item);
@@ -120,25 +155,23 @@ export function replayChallenge(baseline, account) {
           state.failed=false;
         }
       } else if (hasFailedAtBalance(live)) state.failed=true;
+      enforceBalanceMinimum(live);
       continue;
     }
     const trade=event.trade;
-    // Adaptive Balance sizes the next trade from the actual capital available
-    // immediately before it opens. Its static ladder is a projection only;
-    // it must not become a hidden target after a win, loss, or step-back.
+    // Preserve each mode’s profit/risk sizing. All modes additionally require
+    // this same close’s real net balance to fund the planned ending balance.
     const balanceBeforeTrade = live;
     live += Math.round(Number(trade.pnl || 0)*100);
-    if (state.activeLevel > totalLevels) continue;
+    if (state.activeLevel > totalLevels) { enforceBalanceMinimum(live); continue; }
     state.counted++;
     if (state.failed || hasFailedAtBalance(live)) { state.failed=true; continue; }
     const row=plan[state.activeLevel-1];
     const amount=Number(trade.grossPnl);
     const gross=Math.round(amount*100);
     cents+=gross;
-    const adaptiveTarget = Math.round(balanceBeforeTrade * (row.profitPct || 0) / 100);
-    // One trade must reach the level's profit target. Smaller wins never add
-    // up, and an earlier loss on the level is not taken off a later win.
-    const pass=gross >= (isAdaptiveBalanceMode(config.mode) ? adaptiveTarget : Math.round(row.profit*100));
+    const profitTarget=challengeProfitTarget(row,config.mode,balanceBeforeTrade/100);
+    const pass=challengeTradePasses({grossPnl:amount,profitTarget,netBalance:live/100,balanceTarget:row.end});
     // Mode 2 counts losses within the current level. A breakeven is neutral:
     // it neither adds a loss nor clears a previous one. Only passing the
     // level (or a resulting step-back below) starts a fresh count. Adaptive
@@ -166,56 +199,20 @@ export function replayChallenge(baseline, account) {
       if (state.activeLevel <= totalLevels) {state.statuses[state.activeLevel]='In progress';delete state.fundingJumps[state.activeLevel];}
       cents=0; state.lossStreak=0;
     }
+    enforceBalanceMinimum(live);
   }
   state.levelPnl=cents/100;
   state.liveBalance=liveChallengeBalance(account);
-  // The checkpoint decides which activity belongs to this challenge. Funding
-  // events above already handle upward jumps in chronological order. At this
-  // point a reduced live balance may only move the trader down the ladder.
-  // A loss must never be able to undo a just-recorded step-back by promoting
-  // the active level again merely because its remaining balance still funds a
-  // higher rung.
-  // Trading losses are evaluated by the selected mode above.  In particular,
-  // a single Mode 2 loss must remain on the current level.  Only cash being
-  // removed from the trading account can trigger this affordability fallback.
-  const balanceReduced = events.some(event => event.kind === 'cash' && cashImpact(event.item) < 0);
-  const fundedLevel = fundedChallengeLevel(plan,state.liveBalance);
-  const previous = state.activeLevel;
-  // A completed challenge uses the sentinel level just beyond the final rung.
-  // Do not pull it back to the final rung merely because the historical replay
-  // contains an earlier loss; completion was earned by the final-level trade.
-  if (previous <= totalLevels && balanceReduced && fundedLevel < previous) {
-    for (const key of Object.keys(state.statuses)) {
-      if (Number(key) >= fundedLevel) delete state.statuses[key];
-    }
-    for (const key of Object.keys(state.fundingJumps)) {
-      if (Number(key) >= fundedLevel) delete state.fundingJumps[key];
-    }
-    if (previous <= totalLevels) {
-      state.statuses[previous]='Step back';
-      const reason='Stepped back because live balance fell below this level.';
-      if (!String(state.notes[previous] || '').includes(reason)) state.notes[previous]=[state.notes[previous],reason].filter(Boolean).join('\n');
-    }
-    state.activeLevel=fundedLevel;
-    state.statuses[fundedLevel]='In progress';
-    state.stepBacks += Math.max(0,Math.min(previous,totalLevels)-fundedLevel);
-    cents=0;
-    state.levelPnl=0;
-    state.lossStreak=0;
-  }
-  // Available capital never completes a challenge by itself. The last rung
-  // must receive its normal trade-earned pass.
-  // Passing every rung is necessary, but it is not sufficient: the real
-  // account equity must also have reached the final planned target. Costs or
-  // earlier losses can otherwise make the ladder look complete while the
-  // account itself is still below the promised finish. Keep the final rung
-  // active so subsequent trade profit can close that gap legitimately.
-  const finalTarget = plan[totalLevels - 1]?.end;
-  if (state.activeLevel > totalLevels && Number.isFinite(finalTarget) && state.liveBalance < finalTarget) {
-    state.activeLevel = totalLevels;
-    state.statuses[totalLevels] = 'In progress';
-    state.levelPnl = 0;
-  }
+  // Reconcile saved checkpoints and edited/deleted history against current
+  // capital too. This updates the derived level/status shown by every hook,
+  // without rewriting trades or persisting a replacement progress record.
+  enforceBalanceMinimum(Math.round(state.liveBalance*100));
+  state.levelPnl=cents/100;
+  const current=plan[Math.min(Math.max(state.activeLevel,1),totalLevels)-1];
+  state.currentProfitTarget=state.activeLevel<=totalLevels
+    ? challengeProfitTarget(current,config.mode,state.liveBalance)
+    : null;
+  state.currentBalanceTarget=current.end;
   if (hasFailedAtBalance(Math.round(state.liveBalance * 100))) state.failed=true;
   return state;
 }

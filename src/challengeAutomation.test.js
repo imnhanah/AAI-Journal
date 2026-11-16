@@ -5,17 +5,24 @@ import {emptyChallenge,CHALLENGE_PLAN,buildChallengePlan,changeChallengeStatus} 
 import {fundedChallengeLevel} from './challengeLifecycle.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
-// These tests isolate gross-based progression; lifecycle tests cover net balance.
-const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:0,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
+// Mode-specific loss tests use flat net deliberately; the balance-gate suite
+// covers real losses and costs. Winning fixtures must also fund their pass.
+const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:Math.max(0,grossPnl),createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
 const start=(mode,level=1,old=[])=>resetAutomation(emptyChallenge(),old,mode,level,now);
-const replay=(base,trades,patch={})=>replayChallenge(base,{...account,trades,...patch});
+const replay=(base,trades,patch={})=>{
+  const plan=buildChallengePlan(20,base.automation?.mode || 'risk',30,base.automation?.rewardRatio);
+  const balance=base.automation?.startingBalance ?? plan[Math.min(base.activeLevel,30)-1].start;
+  return replayChallenge(base,{...account,balance,trades,...patch});
+};
 test('withdrawals and trading transfers fall back to the funded level without changing trade profit',()=>{
   for (const type of ['withdrawal','transfer']) {
     const trades=[row(1,2,{pnl:2})];
-    const movement={type,source:'trading',amount:1,createdAt:new Date(2026,8,14,12).toISOString()};
+    const movement={type,source:'trading',amount:20,createdAt:new Date(2026,8,14,12).toISOString()};
     const state=replay(start('risk',4),trades,{financeMovements:[movement]});
-    assert.equal(state.activeLevel,fundedChallengeLevel(CHALLENGE_PLAN,21));
-    assert.equal(state.liveBalance,21);
+    const plan=buildChallengePlan(20,'risk');
+    const remaining=plan[3].start+2-20;
+    assert.equal(state.activeLevel,fundedChallengeLevel(plan,remaining));
+    assert.equal(state.liveBalance,remaining);
     assert.equal(state.levelPnl,0);
     assert.equal(trades[0].pnl,2);
     assert.equal(state.statuses[4],'Step back');
@@ -61,18 +68,18 @@ test('Adaptive Balance fails exactly at its configured drawdown floor',()=>{
   assert.equal(state.liveBalance,50);
   assert.equal(state.failed,true);
 });
-test('Mode 2 keeps its funded level after one loss until the second consecutive loss',()=>{
+test('Mode 2 falls back after one loss when net capital no longer funds the current level',()=>{
   const loss=row(1,-1,{pnl:-9});
   const baseline=resetAutomation(emptyChallenge(),[],'streak',1,now,30,55.99);
   const state=replayChallenge(baseline,{...account,balance:55.99,trades:[loss]});
-  // The opening balance funds level 3. A single loss is recorded as a
-  // streak but must not trigger a funding-based step-back.
+  // The balance minimum applies before the normal two-loss rule when
+  // actual capital can no longer support the current rung.
   assert.equal(state.liveBalance,46.99);
-  assert.equal(state.activeLevel,3);
+  assert.equal(state.activeLevel,2);
   assert.equal(state.statuses[1],'Jumped');
-  assert.equal(state.statuses[2],'Jumped');
-  assert.equal(state.statuses[3],'In progress');
-  assert.equal(state.lossStreak,1);
+  assert.equal(state.statuses[2],'In progress');
+  assert.equal(state.statuses[3],'Step back');
+  assert.equal(state.lossStreak,0);
 });
 test('a risk-limit step-back is never re-promoted by the remaining funded balance',()=>{
   const baseline=resetAutomation(emptyChallenge(),[],'risk',1,now,30,100);
@@ -165,8 +172,8 @@ test('manual checkpoint freezes prior progress and resets counters',()=>{
   assert.equal(result.counted,1);
 });
 test('mode changes start fresh and preserve manually selected level',()=>{
-  const base=resetAutomation({...emptyChallenge(),activeLevel:5},[row(1,200)],'risk',5,now);
-  assert.equal(replay(base,[row(1,200),row(2,18)]).activeLevel,5);
+  const base=resetAutomation({...emptyChallenge(),activeLevel:5},[row(1,200,{pnl:0})],'risk',5,now);
+  assert.equal(replay(base,[row(1,200,{pnl:0}),row(2,18)]).activeLevel,5);
 });
 test('pre-checkpoint and foreign-account trades do not count; close timing is optional',()=>{
   const result=replay(start('risk'),[row(2,100,{createdAt:new Date(2026,8,14,9,59).toISOString()}),row(3,100,{accountId:'b'})]);
@@ -213,11 +220,11 @@ test('the final level completes only after every target is earned through tradin
 });
 test('the final level remains active until real equity reaches the final target',()=>{
   const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
-  const baseline=resetAutomation(initial,[],'risk',10,now,10,20);
   const plan=buildChallengePlan(20,'risk',10,1.5);
+  const baseline=resetAutomation(initial,[],'risk',10,now,10,plan[9].start);
   // Gross P&L can clear the last rung while net equity remains below the
   // challenge target (for example after costs or earlier setbacks).
-  const state=replayChallenge(baseline,{...account,balance:20,trades:[
+  const state=replayChallenge(baseline,{...account,balance:plan[9].start,trades:[
     row(1,plan[9].profit,{pnl:0})
   ]});
   assert.ok(state.liveBalance < plan.at(-1).end);
@@ -263,7 +270,7 @@ test('chronological replay is stable regardless of input order',()=>{
   assert.deepEqual(replay(start('streak',4),trades),replay(start('streak',4),[...trades].reverse()));
 });
 test('reset excludes all existing trades, including those without close timing',()=>{
-  const old=row(1,100,{closeDate:'',closeTime:''});
+  const old=row(1,100,{pnl:0,closeDate:'',closeTime:''});
   const base=start('risk',1,[old]);
   assert.deepEqual(base.automation.excludedIds,[1]);
   assert.equal(replay(base,[old,row(2,6.75,{closeDate:'',closeTime:''})]).activeLevel,2);

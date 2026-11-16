@@ -7,9 +7,17 @@ const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
 const row=(id,grossPnl)=>({id,grossPnl,pnl:0,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`});
 const adaptive=(rule,level=1)=>{
   const base={...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:10,adaptiveDrawdownPct:50,adaptiveStepBack:rule}};
-  return resetAutomation(base,[],'adaptive',level,now,10,100);
+  return {...resetAutomation(base,[],'adaptive',1,now,10,100),testStartLevel:level};
 };
-const run=(base,trades)=>replayChallenge(base,{...account,balance:100,trades});
+const run=(base,trades)=>{
+  // Earn the desired Adaptive rung with actual funded closes; a manually
+  // selected Level 3 at only its Level 1 balance is no longer valid.
+  const earned=base.automation?.mode==='adaptive' && base.testStartLevel===3 ? [
+    {...row(0,30),id:'earned-1',pnl:30,createdAt:'2026-09-14T10:01:00Z'},
+    {...row(0,39),id:'earned-2',pnl:39,createdAt:'2026-09-14T10:02:00Z'},
+  ] : [];
+  return replayChallenge(base,{...account,balance:100,trades:[...earned,...trades]});
+};
 test('defaults are 1.5R for Mode 1 and 2.8R for Mode 2',()=>{
   assert.equal(defaultChallengeReward('risk'),1.5);
   assert.equal(defaultChallengeReward('streak'),2.8);
