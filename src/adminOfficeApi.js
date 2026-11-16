@@ -1,7 +1,8 @@
 // Administration Office data layer. The screens only talk to `officeApi`.
 // Names and shapes follow the build contract (v2.2) and Codex's staging handoff.
 // On the STAGING project (tenktwvkxjqsnamlfhcp) this talks to the `admin-office` Edge function.
-// Anywhere else it uses a local mock, chosen once by the project address, so a failed live call is never replaced by a fake success.
+// A production build talks live only to the project named in VITE_ADMIN_OFFICE_LIVE_HOST (set deliberately at deploy time).
+// The local mock exists for the dev server only. Any other host in a built app gets an "unavailable" client, so a live call never turns into a fake success.
 // Turn it on in dev with ?adminoffice=1 (dev server only; ?adminoffice=mock forces the mock) or VITE_ADMIN_OFFICE_UI=true.
 
 export const adminOfficeUiEnabled = (() => {
@@ -232,11 +233,15 @@ const ACTION_LABELS = {
 const prettify = text => { const clean = String(text || '').replace(/^admin_/, '').replace(/_/g, ' ').trim(); return clean ? clean[0].toUpperCase() + clean.slice(1) : 'Action'; };
 const audienceLabel = (audience, total) => !audience ? 'members' : audience.mode === 'all' ? 'all users' : audience.mode === 'group' ? (audience.groups || []).map(g => (g === 'premium' ? 'Premium' : 'Free')).join(' + ') : `${total ?? (audience.user_ids || []).length} selected`;
 
+const hostOf = value => { try { return new URL(String(value || '')).host; } catch { return ''; } };
+const LIVE_HOST = String(import.meta.env?.VITE_ADMIN_OFFICE_LIVE_HOST || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+const liveHosts = () => [STAGING_HOST, LIVE_HOST].filter(Boolean);
+
 const createLiveApi = () => {
   let clientPromise;
   const client = () => clientPromise || (clientPromise = import('./supabaseClient.js').then(module => {
     const supabase = module.supabase;
-    if (String(supabase?.supabaseUrl || '').replace(/\/$/, '') !== `https://${STAGING_HOST}`) throw fail('office_unavailable');
+    if (!liveHosts().includes(hostOf(supabase?.supabaseUrl))) throw fail('office_unavailable');
     return supabase;
   }));
   const call = async (operation, fields = {}) => {
@@ -284,7 +289,11 @@ const createLiveApi = () => {
   };
 };
 
-let stagingApp = false;
-try { stagingApp = new URL(import.meta.env?.VITE_SUPABASE_URL || '').host === STAGING_HOST && new URLSearchParams(window.location.search).get('adminoffice') !== 'mock'; } catch { stagingApp = false; }
-export const officeIsLive = stagingApp;
-export const officeApi = stagingApp ? createLiveApi() : mock;
+// Live when this app's project is the staging project or the one named at deploy time. The mock is dev-server only.
+const appHost = hostOf(import.meta.env?.VITE_SUPABASE_URL);
+const forceMock = !!import.meta.env?.DEV && new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search).get('adminoffice') === 'mock';
+const liveApp = !forceMock && !!appHost && liveHosts().includes(appHost);
+const unavailable = () => Promise.reject(fail('office_unavailable'));
+const unavailableApi = new Proxy({}, { get: () => unavailable });
+export const officeIsLive = liveApp;
+export const officeApi = liveApp ? createLiveApi() : (import.meta.env?.DEV ? mock : unavailableApi);
