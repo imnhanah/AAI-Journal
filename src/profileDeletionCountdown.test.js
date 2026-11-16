@@ -28,3 +28,11 @@ test('dialog describes the cancellable countdown, not immediate erasure', () => 
   assert.match(dialog, /14 days/);
   assert.doesNotMatch(dialog, /permanently deletes|cannot be undone/);
 });
+
+test('deletion calls carry the countdown protocol marker and map the server refusal to a refresh message', () => {
+  const auth = readFileSync(new URL('./auth.js', import.meta.url), 'utf8');
+  assert.match(auth, /DELETION_PROTOCOL = 'countdown-v1'/);
+  assert.match(auth, /body:\{action:'check', protocol:DELETION_PROTOCOL\}/);
+  assert.match(auth, /confirmation: "DELETE", protocol: DELETION_PROTOCOL/);
+  assert.match(auth, /client_update_required/);
+});
