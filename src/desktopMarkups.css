@@ -77,7 +77,7 @@
   .mk2-item-copy b {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .mk2-item small {display:block;margin-top:1px;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap;}
   .mk2-detail {display:flex;flex-direction:column;gap:16px;min-width:0;}
-  .mk2-head {display:flex;align-items:flex-start;justify-content:space-between;gap:20px;overflow:hidden;padding:22px 24px;background:radial-gradient(90% 140% at 0% 0%,var(--mk2-soft),transparent 65%),var(--surface);}
+  .mk2-head {display:flex;align-items:flex-start;justify-content:space-between;gap:20px;overflow:visible;z-index:1;padding:22px 24px;background:radial-gradient(90% 140% at 0% 0%,var(--mk2-soft),transparent 65%),var(--surface);}
   .mk2-head-copy {min-width:0;}
   .mk2-head h2 {display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:26px;letter-spacing:-.02em;}
   .mk2-head p {margin-top:6px!important;color:var(--muted);}

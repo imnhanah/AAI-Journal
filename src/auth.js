@@ -204,16 +204,19 @@ export async function updatePassword(newPassword) {
 export async function checkProfileDeletionReady() {
   try {
     const {data, error} = await supabase.functions.invoke('delete-profile', {body:{action:'check'}, timeout:10000});
-    if (error || data?.ready !== true) return {ready:false, error:'Profile deletion is unavailable. The protected delete-profile function must be deployed and verified.'};
-    return {ready:true};
+    // Only the cancellable 14-day countdown service counts as ready. An older permanent-delete service must never be treated as ready.
+    if (error || data?.ready !== true || data?.deletion_mode !== 'countdown' || data?.countdown_days !== 14) return {ready:false, error:'Profile deletion is unavailable. The protected delete-profile function must be deployed and verified.'};
+    return {ready:true, countdownDays:14};
   } catch { return {ready:false, error:'Could not verify profile deletion. Check your connection and the server deployment.'}; }
 }
-export async function deleteProfilePermanently() {
+// Schedules the cancellable 14-day deletion countdown. Nothing is erased here, and it never reports `deleted`.
+export async function requestProfileDeletion() {
   try {
     const { data, error } = await supabase.functions.invoke("delete-profile", { body: { confirmation: "DELETE" } });
     if (error) return { error: friendlyAuthError(error) };
     if (data?.error) return { error: data.error };
-    return { deleted: true };
+    if (data?.scheduled !== true || data?.deleted !== false || typeof data?.deletion_at !== 'string' || !Number.isFinite(Date.parse(data.deletion_at))) return { error: 'Scheduling could not be confirmed.' };
+    return { scheduled: true, deletionAt: data.deletion_at };
   } catch (e) {
     return { error: friendlyAuthError(e) };
   }

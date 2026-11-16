@@ -106,7 +106,7 @@ export default function DesktopProfilePanel({ identity, photo, appearance, regio
               : <button type="button" className="pf2-btn is-dng" onClick={() => setSignOutAllConfirm(true)}><LogOut size={15}/>Sign out of all devices</button>}
           </div>
         </Card>
-        <section className="sp-card pf2-danger"><div className="pf2-row"><div><b>Delete profile</b><p>Permanently deletes your profile and all your journal data.</p></div><button type="button" className="pf2-btn is-dng" onClick={onDelete}><Trash2 size={15}/>Delete profile</button></div></section>
+        <section className="sp-card pf2-danger"><div className="pf2-row"><div><b>Delete profile</b><p>Starts a 14-day deletion countdown. Your account becomes read-only and you can still export your records.</p></div><button type="button" className="pf2-btn is-dng" onClick={onDelete}><Trash2 size={15}/>Delete profile</button></div></section>
       </div>
     </div>
     <footer className="sp-foot">

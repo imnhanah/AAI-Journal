@@ -1,0 +1,413 @@
+[
+  {
+    "label": "review dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 360
+  },
+  {
+    "label": "review dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 390
+  },
+  {
+    "label": "review dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 430
+  },
+  {
+    "label": "finance dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "label": "finance dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "label": "finance dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "label": "backtest dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "backtest dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "backtest dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest run dark360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.bt-grid.bt-two > section.bt-breakdown > div.bt-outcome-summary > div.bt-donut"
+      }
+    ],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest run dark390",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.bt-grid.bt-two > section.bt-breakdown > div.bt-outcome-summary > div.bt-donut"
+      }
+    ],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest run dark430",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.bt-grid.bt-two > section.bt-breakdown > div.bt-outcome-summary > div.bt-donut"
+      }
+    ],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest log dark360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-green"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-green"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-green"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-green"
+      },
+      {
+        "amount": 5,
+        "kind": "content-overflow",
+        "selector": "div.tj-reference-trade-detail-inner.tj-backtest-detail > div.tj-reference-trade-detail-summary > div:nth-child(1) > strong.tj-red"
+      }
+    ],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest log dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest log dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "review light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 360
+  },
+  {
+    "label": "review light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 390
+  },
+  {
+    "label": "review light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 430
+  },
+  {
+    "label": "finance light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "label": "finance light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "label": "finance light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "label": "backtest light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "backtest light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "backtest light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest run light360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 9,
+        "kind": "content-overflow",
+        "selector": "div.bt-grid.bt-two > section.bt-breakdown > div.bt-outcome-summary > div.bt-donut"
+      }
+    ],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest run light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest run light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest run light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest run light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest run light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest log light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest log light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest log light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest run dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest run dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest run dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Backtest log dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "label": "Backtest log dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "label": "Backtest log dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "label": "Finance movement sheet light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "label": "Finance movement sheet light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "label": "Finance movement sheet light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  }
+]

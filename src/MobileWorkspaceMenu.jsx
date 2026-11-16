@@ -28,6 +28,7 @@ function EditSheet({workspace, accounts, onClose, onRename, onDelete}) {
 export default function MobileWorkspaceMenu({accounts, activeId, figures, onSelect, onClose, onRename, onDelete, onCreate}) {
   const [manage, setManage] = useState(false), [editingId, setEditingId] = useState(null);
   useNavStep('workspace-menu', true, onClose);
+  useEffect(() => { document.documentElement.classList.add('tj-sheet-open'); return () => document.documentElement.classList.remove('tj-sheet-open'); }, []);
   const panel = useRef(null), close = useRef(onClose);
   close.current = onClose;
   useEffect(() => {

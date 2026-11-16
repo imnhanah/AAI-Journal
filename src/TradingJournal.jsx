@@ -48,6 +48,8 @@ import MobilePsychologyLab from './MobilePsychologyLab.jsx';
 import DesktopPsychologyV2 from './DesktopPsychology.jsx';
 import DesktopJournalSetup from './DesktopJournalSetup.jsx';
 import MembershipManagement from './MembershipManagement.jsx';
+import { AdminOfficeLauncher } from './AdminOffice.jsx';
+import { adminOfficeUiEnabled } from './adminOfficeApi.js';
 import JournalPromotion from './JournalPromotion.jsx';
 import { membershipAdminUiEnabled, readMembershipAdmin } from './membershipAdmin.js';
 import CertificateArchive from './CertificateArchive.jsx';
@@ -95,6 +97,12 @@ import './accountSettingsRedesign.css';
 import SettingsDangerZone from './SettingsDangerZone';
 import SingleAccountSwitchDialog from './SingleAccountSwitchDialog';
 import ProfileDeleteDialog from './ProfileDeleteDialog';
+import MemberAccessNotice, { useMemberAccess } from './MemberAccessNotice.jsx';
+import { accountSlots, accountsFull, applyMemberAccess, featureOff, memberAccessUiEnabled, writesAreExplicitlyPaused } from './memberAccess.js';
+import FeatureReadOnly from './FeatureReadOnly.jsx';
+import { setCloudWritesPaused } from './db.js';
+import { AccountCapacityContext } from './capacityContext.js';
+import MemberBell from './MemberBell.jsx';
 import MobileProfileSettings from './MobileProfileSettings';
 import MobileDailyRoutine from './MobileDailyRoutine';
 import MobileWorkspaceMenu from './MobileWorkspaceMenu';
@@ -171,7 +179,7 @@ import { FinancialDisclaimerGate } from './FinancialDisclaimer.jsx';
 import { acceptFinancialDisclaimer, getFinancialDisclaimerStatus } from './financialDisclaimer.js';
 import { supabase } from "./supabaseClient";
 import { readCloudSyncAccess } from './storageAccess';
-import { onAuthStateChange, getSession, signOut, signOutAll, updatePassword, updateProfile, deleteProfilePermanently, checkProfileDeletionReady, checkSession } from "./auth";
+import { onAuthStateChange, getSession, signOut, signOutAll, updatePassword, updateProfile, requestProfileDeletion, checkProfileDeletionReady, checkSession } from "./auth";
 import { membershipPreviewEnabled, resolveJournalMembership } from './membership.js';
 import { getCalendarWindow } from "./forexFactory";
 import { newsWeekKey, archivedNewsEvents, readNewsArchive } from "./newsArchive";
@@ -1765,6 +1773,8 @@ function AccountSettingsSection({ title, children, status, statusClass, icon, to
 }
 
 function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onImport: importIntoAccount, challenge, userId, canUseMultiBalance = true, initialPane = "account", navVia = 'page', tradePanelPosition = 'right', tradePanelBehavior = 'push' }) {
+  const accountRoom = useContext(AccountCapacityContext);
+  const savedBalanceCount = useRef(activeBalances(account).length).current;
   const {phone,summary}=usePhoneTradeDialog(onClose, true, {keepBottomBar:true});
   const phoneSnapshot = useRef(null);
   const [name, setName] = useState(account.name);
@@ -2059,7 +2069,7 @@ function AccountSettingsModal({ account, onClose, onSave, onDelete, onReset, onI
       }
       <div className="tj-settings-flat">
       <AccountSettingsSection title="Account" accountName={name} icon={<Banknote size={15}/>} tone="account" isOpen={open.identity} onToggle={() => toggle("identity")}>
-        <><div className="tj-account-picker-heading"><div><strong>Accounts</strong><p>Pick an account to edit. Everything below applies to that account only.</p></div></div><div className="tj-account-context-grid">{multiBalanceWorkspace ? balanceDrafts.map((item, index) => <button key={item.id} type="button" className={`tj-balance-context-card ${item.id === selectedBalance?.id ? "tj-balance-context-card-active" : ""}`} aria-pressed={item.id === selectedBalance?.id} onClick={() => setSelectedBalanceId(item.id)}><small>{item.id === selectedBalance?.id ? `ACCOUNT ${index + 1} · EDITING` : `ACCOUNT ${index + 1}`}</small><strong>{item.name || `Account ${index + 1}`}</strong><span>{fmtMoney(financeTotals(settingsBalanceAccount, item.id).tradingBalance, baseCurrency)}</span></button>) : <button type="button" className="tj-balance-context-card tj-balance-context-card-active" aria-pressed="true"><small>ACCOUNT 1 · EDITING</small><strong>{name || "Account 1"}</strong><span>{fmtMoney(settingsLiveBalance ?? 0, baseCurrency)}</span></button>}{multiBalanceWorkspace && balanceDrafts.length < 5 && <button type="button" className="tj-balance-context-add" onClick={() => setSelectedBalanceId(addBalanceDraft())}><strong><Plus size={14}/> Add account</strong><small>{balanceDrafts.length} of 5 used</small></button>}</div></>
+        <><div className="tj-account-picker-heading"><div><strong>Accounts</strong><p>Pick an account to edit. Everything below applies to that account only.</p></div></div><div className="tj-account-context-grid">{multiBalanceWorkspace ? balanceDrafts.map((item, index) => <button key={item.id} type="button" className={`tj-balance-context-card ${item.id === selectedBalance?.id ? "tj-balance-context-card-active" : ""}`} aria-pressed={item.id === selectedBalance?.id} onClick={() => setSelectedBalanceId(item.id)}><small>{item.id === selectedBalance?.id ? `ACCOUNT ${index + 1} · EDITING` : `ACCOUNT ${index + 1}`}</small><strong>{item.name || `Account ${index + 1}`}</strong><span>{fmtMoney(financeTotals(settingsBalanceAccount, item.id).tradingBalance, baseCurrency)}</span></button>) : <button type="button" className="tj-balance-context-card tj-balance-context-card-active" aria-pressed="true"><small>ACCOUNT 1 · EDITING</small><strong>{name || "Account 1"}</strong><span>{fmtMoney(settingsLiveBalance ?? 0, baseCurrency)}</span></button>}{multiBalanceWorkspace && (memberAccessUiEnabled ? balanceDrafts.length - savedBalanceCount < accountRoom : balanceDrafts.length < 5) && <button type="button" className="tj-balance-context-add" onClick={() => setSelectedBalanceId(addBalanceDraft())}><strong><Plus size={14}/> Add account</strong><small>{balanceDrafts.length} of 5 used</small></button>}</div></>
         {multiBalanceWorkspace && selectedBalance && <><div className="tj-settings-selected-balance">Editing Account {selectedBalanceIndex + 1}: <b>{selectedBalance.name || `Account ${selectedBalanceIndex + 1}`}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={selectedBalance.name} onChange={(event) => updateSelectedBalance({ name:event.target.value })}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={selectedBalanceChallengeState.settingsLocked} value={selectedBalance.startingBalance} onChange={(event) => updateSelectedBalance({ startingBalance:event.target.value })}/></Field></div>{balanceDrafts.length > 2 && <div className="tj-balance-context-actions"><ConfirmDeleteButton className="tj-btn-danger-outline tj-btn-small" title="Remove selected" onClick={() => { const fallback = balanceDrafts.find((item) => item.id !== selectedBalance.id); removeBalanceDraft(selectedBalance.id); setSelectedBalanceId(fallback?.id || null); }}>Remove selected</ConfirmDeleteButton></div>}</>}
         {!multiBalanceWorkspace && <><div className="tj-settings-selected-balance">Editing Account 1: <b>{name || "Account 1"}</b></div><div className="tj-grid4 tj-account-details-grid"><Field label="Account Name"><input className="tj-input" value={name} onChange={(event) => setName(event.target.value)}/></Field><Field label="Starting balance"><input className="tj-input" type="number" min="0" step="0.01" disabled={challenge.state.settingsLocked} value={balance} onChange={(event) => setStartingBalance(event.target.value)}/></Field></div></>}
       </AccountSettingsSection>
@@ -2215,8 +2225,8 @@ function ProfileSettingsModal({ navVia = 'page', onLogout, user, account, themeV
   const deleteProfile = async () => {
     if (deleteConfirmation !== fallbackDisplayName || deleting || !deletionReady) return;
     setDeleting(true); setDeleteError("");
-    try { const result = await onDeleteProfile(); if (result?.error) setDeleteError(result.error); }
-    catch { setDeleteError('Profile could not be deleted. Please try again.'); }
+    try { const result = await onDeleteProfile(); if (result?.error) setDeleteError(result.error); else { setDeleteOpen(false); setDeleteConfirmation(''); } }
+    catch { setDeleteError('Scheduling could not be confirmed. Please check your connection and try again.'); }
     finally { setDeleting(false); }
   };
   const openDelete = () => {setDeleteOpen(true);setPasswordOpen(false);setNewPassword('');setConfirmPassword('');setPasswordStatus(null);setDeleteConfirmation('');setDeleteError('');};
@@ -2633,7 +2643,7 @@ function ManagementPage({ onPhoneTitle, rulesRequest, userId, account, membershi
   useStepMotion(phoneListOpen ? 1 : 0);
   useEffect(() => { onPhoneTitle?.(phoneListOpen ? activeLabel : ''); return () => onPhoneTitle?.(''); }, [phoneListOpen, activeLabel]);
   const membershipPanel = membershipAdmin && activeSection === 'memberships'
-    ? <MembershipManagement userId={userId} onAccessLost={revokeMembershipAdmin}/>
+    ? (adminOfficeUiEnabled ? <AdminOfficeLauncher/> : <MembershipManagement userId={userId} onAccessLost={revokeMembershipAdmin}/>)
     : null;
   if (SETUP_V2 && !phone) return <DesktopJournalSetup membershipAdmin={membershipAdmin} membershipPanel={membershipPanel} section={activeSection} onSection={chooseList} userId={userId} account={account} certificates={certificates} typeTags={typeTags} mistakeTags={mistakeTags} mistakeDefaults={DEFAULT_MISTAKE_TAGS} confluenceSessions={confluenceSessions} instruments={instruments} riskPresets={riskPresets} onRiskPresets={onRiskPresets} onTypeTags={onTypeTags} onMistakes={onMistakes} onConfluence={onConfluence} onInstruments={onInstruments} onAddRule={onAddRule} onUpdateRule={onUpdateRule} onRemoveRule={onRemoveRule} onExportBackup={onExportBackup} onExportCloudRecovery={onExportCloudRecovery} promotionPanel={promotionPanel} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly} routine={routine} onUpdateRoutine={onUpdateRoutine}/>;
   return <Card className={`tj-management-reference ${phoneShowsIndex?'tj-management-phone-index':'tj-management-phone-list'} ${activeSection === "daily-routine" ? "tj-management-routine-view" : ""}`}><div ref={managementRef} className="tj-management-phone-back-wrap"/><header><small>JOURNAL SETUP</small><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></header>{phone&&phoneShowsIndex&&<MobileSetupHome routine={routine} onUpdateRoutine={onUpdateRoutine} lists={lists} onChoose={chooseList}/>}<div className="tj-management-layout">
@@ -5028,7 +5038,11 @@ export function BacktestCenterPage({ trades = [], onAddTrade, onEditTrade, onDel
 }
 
 const FINANCE_V2 = true;
-function FinancePage({ account, onRecord, onDelete, onSaveSavings, onCheckDeposit }) {
+function FinancePage({ account, onRecord: onRecordRaw, onDelete: onDeleteRaw, onSaveSavings: onSaveSavingsRaw, onCheckDeposit, readOnly = false }) {
+  // A feature switched off by an administrator leaves records readable; every change path does nothing.
+  const onRecord = readOnly ? async () => false : onRecordRaw;
+  const onDelete = readOnly ? async () => {} : onDeleteRaw;
+  const onSaveSavings = readOnly ? async () => false : onSaveSavingsRaw;
   const confirm = useConfirmation();
   const [savingsOpen, setSavingsOpen] = useState(false);
   const [savingsBusy, setSavingsBusy] = useState(false);
@@ -5079,8 +5093,8 @@ function FinancePage({ account, onRecord, onDelete, onSaveSavings, onCheckDeposi
   const movementLabel = (movement) => movement.type === "deposit" ? "Funds added" : movement.type === "transfer" ? `Transfer to ${allSavingsAccounts.find((item) => item.id === movement.savingsAccountId)?.name || "savings"}` : `Funds withdrawn from ${movement.source === "savings" ? (allSavingsAccounts.find((item) => item.id === movement.savingsAccountId)?.name || "savings") : "trading"}`;
   const visibleMovements = showOlder ? cashMovements : cashMovements.slice(0, 6);
   const savingsWindow = savingsOpen ? <SavingsSetupWindow plans={account.savingsAccounts || []} balances={multiBalance ? balances.filter(item => item.isActive !== false) : []} currency={selectedBalance?.baseCurrency || account.baseCurrency} saving={savingsBusy} startNew={!(account.savingsAccounts || []).length} onClose={() => { if (!savingsBusy) setSavingsOpen(false); }} onSave={async list => { setSavingsBusy(true); try { if (await onSaveSavings(list)) setSavingsOpen(false); } finally { setSavingsBusy(false); } }}/> : null;
-  const manageSavings = () => setSavingsOpen(true);
-  if (phone) return <><MobileFinance onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
+  const manageSavings = () => { if (!readOnly) setSavingsOpen(true); };
+  if (phone) return <><MobileFinance readOnly={readOnly} onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
     balances={balances} balanceId={selectedBalance?.id || ''} onBalance={setBalanceId}
     totals={totals} baseline={profitCycle.baseline} currency={selectedBalance?.baseCurrency || account.baseCurrency}
     savings={savingsAccounts.map(saving => ({...saving,ownerName:balanceName(savingsOwner(account,saving)),saved:financeSavingsBalance(account,saving.id),allocation:savingsAllocation(account,saving)}))}
@@ -5104,7 +5118,7 @@ function FinancePage({ account, onRecord, onDelete, onSaveSavings, onCheckDeposi
         .sort((left, right) => `${left.date || ""} ${left.time}`.localeCompare(`${right.date || ""} ${right.time}`))
         .forEach((event) => { running += event.value; if (event.id != null) balanceAfter[event.id] = +running.toFixed(2); });
     }
-    return <><DesktopFinanceV2 onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
+    return <><DesktopFinanceV2 readOnly={readOnly} onManageSavings={manageSavings} onCheckDeposit={onCheckDeposit}
       balances={balances} balanceId={selectedBalance?.id || ''} onBalance={setBalanceId}
       totals={totals} baseline={profitCycle.baseline} currency={selectedBalance?.baseCurrency || account.baseCurrency}
       savings={savingsAccounts.map(saving => ({...saving,ownerName:balanceName(savingsOwner(account,saving)),saved:financeSavingsBalance(account,saving.id),allocation:savingsAllocation(account,saving)}))}
@@ -6621,7 +6635,7 @@ function NoWorkspaceState({ onAdd, importLink }) {
   );
 }
 
-export function TradingJournalApp({ user, membership, onLogout }) {
+export function TradingJournalApp({ user, membership, memberAccess, onRefreshMemberAccess, onMarkDeleting, onLogout }) {
   const confirm = useConfirmation();
   const [membershipAdmin, setMembershipAdmin] = useState(false);
   const revokeMembershipAdmin = useCallback(() => setMembershipAdmin(false), []);
@@ -7940,6 +7954,12 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     return true;
   };
 
+  const membershipGate = useCallback(value => applyMemberAccess(value, memberAccess), [memberAccess]);
+  const atAccountLimit = accountsFull(memberAccess, (accounts || []).filter(item => !item.isPlaceholder).reduce((total, item) => total + Math.max(1, activeBalances(item).length), 0));
+  const accountRoom = accountSlots(memberAccess, (accounts || []).filter(item => !item.isPlaceholder).reduce((total, item) => total + Math.max(1, activeBalances(item).length), 0));
+  const writesPaused = writesAreExplicitlyPaused(memberAccess);
+  useEffect(() => { setCloudWritesPaused(writesPaused); return () => setCloudWritesPaused(false); }, [writesPaused]);
+  useEffect(() => { document.documentElement.classList.toggle('tj-accounts-full', atAccountLimit); return () => document.documentElement.classList.remove('tj-accounts-full'); }, [atAccountLimit]);
   if (loaded && loadError && !account) {
     return (
       <div className={`tj-root tj-loading ${profileTheme === "light" ? "tj-theme-light" : "tj-theme-dark"}`}>
@@ -8830,6 +8850,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   };
 
   const handleCreateAccount = async (fields, importedPlan = { trades: [], cashMovements: [] }, onProgress) => {
+    if (atAccountLimit) return false;
     const res = await createAccount(user.id, fields);
     if (res.error) { showError(res.error); return false; }
     const requestedBalances = fields.balances?.length ? fields.balances : [{ name:"Primary account", startingBalance:fields.balance, baseCurrency:fields.baseCurrency }];
@@ -9110,10 +9131,13 @@ export function TradingJournalApp({ user, membership, onLogout }) {
     }
   };
   const handleDeleteProfile = async () => {
-    const result = await deleteProfilePermanently();
+    const result = await requestProfileDeletion();
     if (result.error) return result;
-    try { window.localStorage.clear(); window.sessionStorage.clear(); } catch {}
-    await onLogout();
+    // Scheduling a countdown erases nothing: keep every local journal, draft, image and queued operation, and stay signed in.
+    const when = new Date(result.deletionAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    showInfo(`Deletion countdown started (ends ${when}). Your account is now read-only and you can still export your records.`);
+    onMarkDeleting?.(result.deletionAt);
+    onRefreshMemberAccess?.(true);
     return result;
   };
 
@@ -9227,11 +9251,12 @@ export function TradingJournalApp({ user, membership, onLogout }) {
   />;
 
   return (
-    <NewsAlertsProvider activePage={page} onViewEvent={() => setPage("news")} userId={user.id}><ImageViewerContext.Provider value={setImageViewerSrc}><PanelPrefsContext.Provider value={panelPrefs}>
+    <AccountCapacityContext.Provider value={accountRoom}><NewsAlertsProvider activePage={page} onViewEvent={() => setPage("news")} userId={user.id}><ImageViewerContext.Provider value={setImageViewerSrc}><PanelPrefsContext.Provider value={panelPrefs}>
     <div ref={mountJournalRoot} className={`tj-root journal-dashboard-arrive ${(typeof document !== "undefined" && document.querySelector(".tj-ma-modal") ? maHidden : headerHidden) ? "tj-chrome-hidden" : ""} ${SHELL_V2 ? "tj-shell-v2" : ""} tj-entry-panel-position-${entryPanelPosition} ${profileTheme === "light" ? "tj-theme-light" : "tj-theme-dark"}`}>
       <style>{CSS}</style>
     {loadError && <div role="alert" style={{position:"fixed",bottom:16,right:16,zIndex:200,maxWidth:440,padding:16,border:"1px solid var(--tj-border)",borderRadius:12,background:"var(--tj-panel)",color:"var(--tj-text)"}}><strong>Cloud sync needs attention</strong><p style={{fontSize:12}}>{loadError}</p><button type="button" className="tj-btn-secondary" onClick={loadFromServer}>Retry sync</button><button type="button" className="tj-btn-secondary" onClick={() => setLoadError("")}>Dismiss</button></div>}
       
+      <MemberAccessNotice access={memberAccess} onRetry={onRefreshMemberAccess}/>
       {toast && <div key={`${toast.type}:${toast.text}`} className={`tj-toast tj-toast-${toast.type}`} role={toast.type==='error'?'alert':'status'} aria-live={toast.type==='error'?'assertive':'polite'}><span>{toast.type==='success'?<CheckCircle2 size={16}/>:toast.type==='challenge'||toast.type==='warning'?<AlertTriangle size={16}/>:toast.type==='error'?<X size={16}/>:<CircleCheck size={16}/>}</span><div>{toast.kicker&&<small>{toast.kicker}</small>}<p>{toast.text}</p></div>{toast.type==='challenge'&&toast.recommendation&&<button type="button" className="tj-toast-challenge-action" onClick={()=>{setToast(null);setChallengeSetupPrompt({recommendation:toast.recommendation,context:toast.context});}}>View compatible setup</button>}<button type="button" aria-label="Dismiss notification" onClick={()=>setToast(null)}><X size={15}/></button><i className="tj-toast-timer" aria-hidden="true" style={{"--toast-ms":`${{error:6000,warning:6000,info:4500,success:3500,challenge:9000}[toast.type]||4000}ms`}}/></div>}
       {challengeSetupPrompt&&<ChallengeCompatibleDialog recommendation={challengeSetupPrompt.recommendation} onClose={()=>setChallengeSetupPrompt(null)} onApply={applyChallengeSetupRecommendation}/>} 
       <SidebarShell open={sidebarOpen} page={page} v2={SHELL_V2}>
@@ -9266,6 +9291,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
             {routineToday.unfinished && <button type="button" className="tj-btn-outline tj-continue-routine-action" disabled={routineTriggerBusy} aria-label={`Continue daily routine, ${routineToday.ticked} of ${routineToday.total} tasks completed`} onClick={continueDailyRoutine}><ClipboardCheck size={15}/>Routine {routineToday.ticked}/{routineToday.total}</button>}
             <button type="button" className="tj-btn-outline tj-start-day-action" disabled={routineTriggerBusy} onClick={() => requireWorkspace(openNewMarkup)}><ScanLine size={15}/>{startDayNeeded ? 'Start day' : 'New markup'}</button>
             <button type="button" className="tj-btn-primary" disabled={guardrails.tradeEntryLocked} onClick={() => requireWorkspace(() => openNewTrade())}><Plus size={16}/>Log trade</button>
+            <MemberBell userId={user?.id}/>
             <div id={PHONE_HEADER_SLOT_ID} className="tj-phone-header-slot"/>
             <div className="tj-header-account-control" ref={accountMenuRef}>
               <button type="button" className="tj-header-account-switcher" aria-label={account.isPlaceholder ? "Add account" : `Switch journal: ${account.name}`} aria-expanded={showAccountMenu} onClick={() => requireWorkspace(() => setShowAccountMenu((open) => !open))}><span className="tj-account-initial" aria-hidden="true">{account.isPlaceholder ? <Plus size={14}/> : accountInitial(account.name)}</span><span>{account.isPlaceholder ? 'Add account' : account.name.length > 14 ? `${account.name.slice(0, 14)}…` : account.name}</span><ChevronDown size={16}/></button>
@@ -9292,12 +9318,12 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           <PageScrollMemory page={page}/>
           {page !== "management" && page !== "journal" && page !== "challenge" && page !== "backtest" && page !== "reviews" && page !== "case-studies" && <JournalSignalHeader key={page} page={page} trades={page === "dashboard" ? dashboardAccount.trades : page === "backtest" ? backtestTrades : account.trades} markups={markups.filter(m=>m.accountId===account.id)} reviews={reviews.filter(r=>r.accountId===account.id)} guardrails={guardrails} monthCursor={monthCursor} challenge={challenge} loginQuote={loginQuote}/>} 
           {page === "dashboard" && (account.isPlaceholder ? <div className="tj-panel tj-empty-start-dashboard"><NoWorkspaceState onAdd={() => setModal('addaccount')} importLink={() => requireWorkspace(() => setModal('addaccount'))}/></div> : financialValidation.valid ? <DashboardSurface routine={routineStore.routine} onStartDay={openNewMarkup} routineBusy={routineTriggerBusy} account={dashboardAccount} workspace={account} stats={dashboardStats} liveBalance={financeTotals(dashboardAccount).tradingBalance} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} guardrails={dashboardGuardrails || guardrails} displayName={displayName} loginQuote={loginQuote} challenge={challenge} userId={user.id} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} onViewTrades={() => { window.history.pushState({}, "", JOURNAL_PATHS.tradelog); setPage("tradelog"); }} onViewCalendar={() => navigateMobile('calendar')} onViewChallenge={() => navigateMobile('challenge')} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {(page === "tradelog" || page === "journal") && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <TradeLogPage account={account} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveReview={handleSaveReview} onNewTrade={() => openNewTrade()} onEdit={(t) => { if (guardrails.tradeEntryLocked) return showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period."); beginTradeEntry({editing:t}); }} onRetrySave={(trade) => { void saveTrade(trade); }} onDelete={handleDeleteTrade} onLinkMarkup={(trade, markupId) => saveTrade({ ...trade, premarketMarkupId: markupId })} locked={guardrails.tradeEntryLocked} />)}
+          {(page === "tradelog" || page === "journal") && <FeatureReadOnly off={featureOff(memberAccess, 'trade_logs')}>{(account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <TradeLogPage account={account} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveReview={handleSaveReview} onNewTrade={() => openNewTrade()} onEdit={(t) => { if (guardrails.tradeEntryLocked) return showInfo("This account is locked by its loss limit. Trade changes resume after the applicable reset period."); beginTradeEntry({editing:t}); }} onRetrySave={(trade) => { void saveTrade(trade); }} onDelete={handleDeleteTrade} onLinkMarkup={(trade, markupId) => saveTrade({ ...trade, premarketMarkupId: markupId })} locked={guardrails.tradeEntryLocked} />)}</FeatureReadOnly>}
           
-          {page === "backtest" && (backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} membership={membership} api={localBacktests ? localBacktestApi : backtestCloud} localOnly={localBacktests} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}
+          {page === "backtest" && <FeatureReadOnly off={featureOff(memberAccess, 'strategy_testing')}>{(backtestSnapshotReady ? <BacktestAccounts key={user.id} user={user} membership={membership} api={localBacktests ? localBacktestApi : backtestCloud} localOnly={localBacktests} initialData={startupBacktestData} onClearLegacy={() => { ['profile', ...accounts.map(item => item.id)].forEach(scope => window.localStorage.removeItem(backtestStorageKey(user.id,scope))); setBacktestTrades([]); }} instruments={knownInstruments} defaultRules={account.rules || []} legacyTrades={readBacktestTrades(user.id,accounts)} onViewImage={setImageViewerSrc} renderLog={props => <BacktestCenterPage {...props} logOnly/>} renderTradeForm={({run,trade,trades,onClose,onSave,busy}) => <NewTradeModal backtest testType={run.testType} lockedInstrument={run.instrument} saving={busy} editing={trade} draft={trade ? null : {asset:run.instrument,timeframe:run.timeframe}} typeTags={typeTags} mistakeTags={allMistakeTags(mistakeTags)} confluenceSessions={confluenceSessions} instruments={[run.instrument]} markups={[]} rules={run.rules || []} defaultCommission={0} account={{...account,id:run.id,name:run.name,balance:run.startingBalance,baseCurrency:run.currency,defaultRiskPct:run.riskPct,workspaceType:WORKSPACE_TYPES.STANDARD,balances:[],trades,positionSizeEnabled:true}} onClose={onClose} onSave={onSave}/>} /> : <section className="tj-panel" role="status">Preparing backtests…</section>)}</FeatureReadOnly>}
           {page === "analytics" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : financialValidation.valid ? <AnalyticsPage account={dashboardAccount} balances={dashboardBalances} selectedBalanceId={dashboardBalanceId} onSelectBalance={setDashboardBalanceId} reviews={reviews.filter((review) => review.accountId === account.id)} markups={markups.filter((markup) => markup.accountId === account.id)} onSaveTradeReview={handleSaveReview} onViewMarkups={() => setPage("markups")} onOpenAccountSettings={guardrails.tradeEntryLocked ? undefined : () => setModal("account")} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {page === "finance" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : financialValidation.valid ? <FinancePage account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} onSaveSavings={handleSaveSavings} onCheckDeposit={checkDepositFunding} /> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
-          {page === "challenge" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : financialValidation.valid ? <TraderNameContext.Provider value={displayName}><ChallengePage key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
+          {page === "finance" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : financialValidation.valid ? <div className={featureOff(memberAccess, 'finance') ? 'tj-feature-off' : 'tj-feature-on'}><FinancePage readOnly={featureOff(memberAccess, 'finance')} account={account} onRecord={handleRecordFinanceMovement} onDelete={handleDeleteFinanceMovement} onSaveSavings={handleSaveSavings} onCheckDeposit={checkDepositFunding} /></div> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
+          {page === "challenge" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : financialValidation.valid ? <div className={featureOff(memberAccess, 'challenge') ? 'tj-feature-off' : 'tj-feature-on'}><TraderNameContext.Provider value={displayName}><ChallengePage readOnly={featureOff(memberAccess, 'challenge')} key={account.id} account={account} challenge={challenge} challengeProgress={challengeProgress} progressReady={challengeProgressReady} loginQuote={loginQuote} userId={user.id} onDelete={handleDeleteChallenge} onSaveSetup={handleSaveChallengeSetup} onComplete={handleCompleteChallenge}/></TraderNameContext.Provider></div> : <FinancialDataCorrection issues={financialValidation.issues}/>)}
           {page === "calendar" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : phoneCalendar
             ? <MobileCalendarV2 account={dashboardAccount} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails} formatMoney={fmtMoney} formatDate={formatDate} cashImpact={financeTradingImpact} renderReadout={view => <CalendarPerformanceNarrative phone view={view} trades={dashboardAccount.trades} cap={dashboardAccount.breakevenCap} balance={dashboardAccount.balance}/>}/>
             : <CalendarPage account={account} markups={markups.filter((markup)=>markup.accountId===account.id)} reviews={reviews.filter((review)=>review.accountId===account.id)} monthCursor={monthCursor} setMonthCursor={setMonthCursor} onDayClick={openDayDetails}/>) }
@@ -9306,7 +9332,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
           {page === "management" && <ManagementPage membershipAdmin={membershipAdmin} revokeMembershipAdmin={revokeMembershipAdmin} onPhoneTitle={setPhoneListTitle} userId={user.id} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onRoutineProfile={() => setModal("profile")} onOpenRiskGuardrails={() => { setAccountSettingsPane("risk"); setModal("account"); }} routineRequest={routineRequest} rulesRequest={managementRulesRequest} account={account} typeTags={typeTags} mistakeTags={mistakeTags} confluenceSessions={confluenceSessions} instruments={customInstruments} riskPresets={riskPresets} onRiskPresets={setRiskPresets} onTypeTags={(x)=>saveList("types",x)} onMistakes={(x)=>saveList("mistakes",x)} onConfluence={(x)=>saveList("confluence",x)} onInstruments={(x)=>saveList("instruments",x)} onAddRule={handleAddRule} onUpdateRule={handleUpdateRule} onRemoveRule={handleRemoveRule} onExportBackup={exportBackup} onExportCloudRecovery={exportCloudRecovery} promotionPanel={membershipPreviewEnabled && cloudSyncEntitled ? <JournalPromotion userId={user.id}/> : null} onImportBackup={importBackup} snapshots={localSnapshots} onRestoreSnapshot={restoreLocalSnapshot} protectedStorage={persistentStorage} localOnly={localJournal.isLocalJournal()} />}
           {page === "markups" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : phoneCalendar ? <MobileMarkupsV2 markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} currency={account.baseCurrency} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} /> : <MarkupsRedesign markups={markups.filter((markup)=>markup.accountId===account.id)} trades={account.trades} onNew={openNewMarkup} onEdit={(markup)=>beginMarkupEntry({editing:markup})} onDelete={handleDeleteMarkup} onTrade={(markup)=>openNewTrade({ premarketMarkupId: markup.id, asset: markup.instrument || "", entrySession: markup.market || SESSIONS[2], session: markup.market || SESSIONS[2] })} onViewImage={setImageViewerSrc} />)}
           {page === "reviews" && (account.isPlaceholder ? <div className="tj-panel"><NoWorkspaceState onAdd={() => setModal('addaccount')}/></div> : <ReviewLibraryPage draftContext={journalSafety.forWorkspace(account.id)} onPhoneTitle={setPhoneListTitle} account={account} reviews={reviews.filter(r=>r.accountId===account.id)} trades={account.trades} markups={markups.filter((markup)=>markup.accountId===account.id)} periodReviews={periodReviews.filter(r=>r.accountId===account.id)} onSavePeriod={handleSavePeriodReview} onSaveTrade={handleSaveReview} />)}
-          {page === "case-studies" && (phoneCalendar ? <MobileCaseStudies draftContext={journalSafety.forWorkspace("profile")} profileRevision={profileCaseStudyRevision} onSavePatch={handleSaveMobileCaseStudyPatch} sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}
+          {page === "case-studies" && <FeatureReadOnly off={featureOff(memberAccess, 'case_studies')}>{(phoneCalendar ? <MobileCaseStudies draftContext={journalSafety.forWorkspace("profile")} profileRevision={profileCaseStudyRevision} onSavePatch={handleSaveMobileCaseStudyPatch} sessionOwner={user.id} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} /> : <CaseStudyLibrary sessionOwner={user.id} gateMembership={membershipGate} allowCloudImages={!membershipPreviewEnabled || (cloudSyncAccess === true && membership?.cloudWritesAllowed === true)} profileWorkspace={profileCaseStudyState.status === 'recovery' ? (temporaryCaseStudyWorkspaceOwnerRef.current === user.id ? temporaryCaseStudyWorkspace : profileCaseStudyWorkspace) : profileCaseStudyWorkspace} libraryState={profileCaseStudyState.status === 'recovery' ? {status:'ready',message:''} : profileCaseStudyState} temporaryNotice={profileCaseStudyState.status === 'recovery' ? 'Device-only temporary library. Your recovered legacy library remains protected and unchanged.' : ''} syncStatus={profileCaseStudySyncStatus} onUploadDeviceLibrary={membershipPreviewEnabled && cloudSyncAccess !== true ? null : (temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || (profileCaseStudyState.status === 'recovery' && !!profileCaseStudyWorkspace) ? prepareCaseStudyLibraryUpload : profileCaseStudyState.status === 'ready' && !!caseStudySyncOutboxRef.current?.pending && !profileCaseStudyConflict ? retryPendingCaseStudyLibrarySync : null} syncActionLabel={(temporaryCaseStudyWorkspaceOwnerRef.current === user.id && !!temporaryCaseStudyWorkspace) || profileCaseStudyState.status === 'recovery' ? 'Upload device library' : 'Retry Case Study sync'} syncConflict={profileCaseStudyConflict} onReconcileConflict={reconcileCaseStudyLibrary} onRetryLoad={()=>setProfileCaseStudyRetry(value=>value+1)} profileName={displayName} trades={accounts.flatMap(item=>item.trades||[])} markups={markups} onSaveWorkspace={profileCaseStudyState.status === 'recovery' ? handleSaveTemporaryCaseStudyWorkspace : handleSaveCaseStudyWorkspace} />)}</FeatureReadOnly>}
           </div>
           </MobilePageStage>
           </BacktestViewSession>
@@ -9320,7 +9346,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       {modal === "import" && !account.isPlaceholder && !guardrails.tradeEntryLocked && <ImportTradesModal account={account} onClose={() => setModal(null)} onImport={(plan, onProgress, balanceId) => importTradesToAccount(account, plan, onProgress, balanceId)} />}
       {modal === "profile" && <ProfileSettingsModal navVia={modalVia.current} onLogout={onLogout} routine={routineStore.routine} onUpdateRoutine={routineStore.update} onOpenRoutine={openRoutineManagement} user={{ ...user, user_metadata: { ...user.user_metadata, full_name: profileDetails.fullName, display_name: displayName, avatar_url: personalProfileImage, timezone: profileDetails.timezone, date_format: profileDetails.dateFormat, time_format: profileDetails.timeFormat, privacy_screen_enabled: privacySettings.enabled, privacy_screen_timeout_minutes: privacySettings.timeoutMinutes, theme_palettes: profilePalettes, trade_panel_position:entryPanelPosition, trade_panel_behavior:entryPanelBehavior, ...displayMetadata(displaySettings) } }} account={account} themeValue={profileTheme} themePreference={profileThemePreference} paletteValue={profilePalettes} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior} onPreviewAppearance={(nextTheme, nextPalettes) => { const resolvedTheme = nextTheme === "system" ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") : nextTheme; applyProfilePalettes(nextPalettes, resolvedTheme); setProfileTheme(nextTheme); setProfilePalettes(nextPalettes); }} onClose={() => setModal(null)} onSave={handleSaveProfileSettings} onDeleteProfile={handleDeleteProfile} onSync={syncJournal} syncing={syncing} lastSyncedAt={lastSyncedAt} cloudSyncAccess={cloudSyncAccess} cloudSyncEntitled={cloudSyncEntitled} onOpenPricing={() => window.location.assign('/pricing')} onToggleCloudSync={toggleCloudSync} />}
       {routinePrompt && isRoutineTradingDay() && <DailyRoutinePopup continueOnly={routineContinueOnly} saveAndOpenMarkup={routineOpenMarkupAfterSave} entryKind={routineEntryKind} routine={routineStore.routine} firstName={(displayName || "Trader").split(/\s+/)[0]} sessionFor={now => entrySessionFromOpenTime(now.toISOString().slice(11,16), now.toISOString().slice(0,10))} accountSummary={{name:routineBalance?.name || account.name,balance:fmtMoney(routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance),cap:guardrails.dailyLossHit ? "Daily cap reached" : "Daily cap open",level:Math.min(routineChallenge.state?.activeLevel || challenge.state?.activeLevel || 1, routineBalance?.challengeLevelCount || account.challengeLevelCount || 30)}} onClose={closeDailyRoutine} onSave={saveDailyRoutine} onSaveTicks={tickedIds => routineStore.update(latest => completeRoutine(latest, tickedIds, new Date()))} onEdit={openRoutineManagement} onNews={() => {closeDailyRoutine();setPage("news");}} onGuardrails={() => {closeDailyRoutine();setPage("analytics");}}/>}
-      {modal === "addaccount" && <AddAccountModal onClose={() => setModal(null)} onCreate={handleCreateAccount} userId={user.id} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior}/>}
+      {modal === "addaccount" && !atAccountLimit && <AddAccountModal onClose={() => setModal(null)} onCreate={handleCreateAccount} userId={user.id} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior}/>}
       {dayModalDate && (
         <DayTradesModal
           date={dayModalDate}
@@ -9345,7 +9371,7 @@ export function TradingJournalApp({ user, membership, onLogout }) {
       {privacyLocked && <div className="tj-privacy-screen" role="presentation" onPointerDown={(event) => event.stopPropagation()} onDoubleClick={() => setPrivacyLocked(false)} />}
     </div>
     <ImageViewer src={imageViewerSrc} onClose={() => setImageViewerSrc(null)} />
-    </PanelPrefsContext.Provider></ImageViewerContext.Provider></NewsAlertsProvider>
+    </PanelPrefsContext.Provider></ImageViewerContext.Provider></NewsAlertsProvider></AccountCapacityContext.Provider>
   );
 }
 
@@ -12279,6 +12305,7 @@ export default function AppRoot() {
   const [sessionTheme] = useSiteTheme();
   const [user, setUser] = useState(undefined); // undefined = checking, null = logged out
   const [membership, setMembership] = useState({ status: 'unauthenticated', membership: null, error: '' });
+  const { access: memberAccess, refresh: refreshMemberAccess, markDeleting: markMemberDeleting } = useMemberAccess(user?.id);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [financialDisclaimer, setFinancialDisclaimer] = useState(null);
   const [financialDisclaimerBusy, setFinancialDisclaimerBusy] = useState(false);
@@ -12398,7 +12425,10 @@ export default function AppRoot() {
   return (
     <TradingJournalApp key={user.id}
       user={user}
-      membership={membership}
+      membership={applyMemberAccess(membership, memberAccess)}
+      memberAccess={memberAccess}
+      onRefreshMemberAccess={refreshMemberAccess}
+      onMarkDeleting={markMemberDeleting}
       onLogout={async () => { const result = await signOut(); if (!result.error) setUser(null); }}
     />
   );

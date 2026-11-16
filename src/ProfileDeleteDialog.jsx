@@ -28,12 +28,12 @@ export default function ProfileDeleteDialog({name, value, onChange, busy, ready 
     }}>
       <i aria-hidden="true" className="tj-sheet-handle"/>
       <div className="tj-profile-delete-icon"><Trash2 size={21}/></div>
-      <h3 id="profile-delete-title">Delete your profile?</h3>
-      <p id="profile-delete-description">This permanently deletes your profile and all your journal data.</p>
-      <ul><li>All your accounts and their trading data</li><li>Saved trades, markups, reviews and cash movements</li><li>Your profile, settings and uploaded files — this cannot be undone</li></ul>
+      <h3 id="profile-delete-title">Schedule profile deletion?</h3>
+      <p id="profile-delete-description">This starts a 14-day deletion countdown. An administrator can cancel it while it runs.</p>
+      <ul><li>Your account becomes read-only straight away</li><li>You can still view and export your records during the 14 days</li><li>Nothing is erased when you confirm, and your data on this device is kept</li></ul>
       <label>Type <strong>{name}</strong> to confirm<input className="tj-input" aria-label="Profile name to confirm deletion" autoComplete="off" placeholder={name} value={value} disabled={busy} onChange={event => onChange(event.target.value)}/></label>
       {error && <p role="alert" className="tj-profile-delete-error">{error}</p>}
-      <div className="tj-profile-delete-actions"><button type="button" className="tj-btn-outline" disabled={busy} onClick={onCancel}>Cancel</button><button type="button" className="tj-danger-button" disabled={busy || !ready || !name || value !== name} onClick={onConfirm}>{busy ? 'Deleting…' : 'Delete profile'}</button></div>
+      <div className="tj-profile-delete-actions"><button type="button" className="tj-btn-outline" disabled={busy} onClick={onCancel}>Cancel</button><button type="button" className="tj-danger-button" disabled={busy || !ready || !name || value !== name} onClick={onConfirm}>{busy ? 'Scheduling…' : 'Schedule deletion'}</button></div>
     </section>
   </div>;
   // Render alongside the outer modal so its disabled content cannot trap the confirmation.

@@ -12,6 +12,7 @@ export async function loadProfileCaseStudyLibrary(userId) {
   return { data:data?.library ?? null, revision:data?.revision ?? null, updatedAt:data?.updated_at || null, failure:null };
 }
 export async function saveProfileCaseStudyLibrary(userId, library, expectedRevision) {
+  if(globalThis.__tjCloudWritesPaused===true) return { error:'Saving is paused for this account.' };
   // The server function compares the revision in its single write. Never
   // replace this with a read followed by an unconditional client upsert.
   const { data, error } = await supabase.rpc('tj_save_profile_case_study_library', { expected_revision:expectedRevision ?? null, next_library:library }).single();

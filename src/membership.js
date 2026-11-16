@@ -1,5 +1,6 @@
 export const MEMBERSHIP = Object.freeze({
   OWNER: 'owner',
+  PREMIUM: 'premium',
   FREE: 'free',
 });
 
@@ -22,7 +23,8 @@ export async function resolveEffectiveMembership({ client, authenticated = false
     }
     const { data, error } = await client.rpc('tj_current_membership');
     if (error) return membershipState('error', MEMBERSHIP.FREE, error.message || 'Membership lookup failed.');
-    return membershipState('ready', data === MEMBERSHIP.OWNER ? MEMBERSHIP.OWNER : MEMBERSHIP.FREE);
+    // Premium is recognized as a plan label only. It grants no Owner or administrator right; permissions come from the server (my_access, RLS).
+    return membershipState('ready', data === MEMBERSHIP.OWNER ? MEMBERSHIP.OWNER : data === MEMBERSHIP.PREMIUM ? MEMBERSHIP.PREMIUM : MEMBERSHIP.FREE);
   } catch (error) {
     return membershipState('error', MEMBERSHIP.FREE, error?.message || 'Membership lookup failed.');
   }
@@ -38,7 +40,7 @@ export async function resolveCurrentEntitlements({ client, authenticated = false
     if (!client) ({ supabase: client } = await import('./supabaseClient.js'));
     const { data, error } = await client.rpc('tj_current_entitlements');
     const result = Array.isArray(data) && data.length === 1 ? data[0] : null;
-    if (error || ![MEMBERSHIP.FREE, MEMBERSHIP.OWNER].includes(result?.membership)
+    if (error || ![MEMBERSHIP.FREE, MEMBERSHIP.PREMIUM, MEMBERSHIP.OWNER].includes(result?.membership)
       || typeof result.cloud_writes_allowed !== 'boolean') {
       return denied('error', error?.message || 'Could not confirm cloud permissions.');
     }
