@@ -9,6 +9,7 @@ export function databaseErrorMessage(error, action) {
   const lower = detail.toLowerCase();
   const code = String(error?.code || "");
 
+  if (code === "PT409" && error?.message === "client_update_required") return "Refresh this tab before saving. Keep your unsaved work before refreshing.";
   if (/workspace_balances_challenge_mode_check|challenge_mode/.test(detail) && /check constraint|violates/i.test(detail)) return "This challenge mode is not available in your database yet. Apply adaptive_balance_mode_migration.sql, then save again.";
   if (/risk_method|risk_preset|stop_loss_pips|take_profit_pips|exit_pips|stop_loss_price|take_profit_price|planned_rr|realized_rr/.test(detail) && /schema cache|does not exist|column/i.test(detail)) return "Calculated R values need a one-time database update before they can be saved.";
   if (/entry_price|exit_price/.test(detail) && /schema cache|does not exist|column/i.test(detail)) return "Entry and exit prices need a one-time database update before they can be saved.";

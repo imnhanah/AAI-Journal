@@ -916,7 +916,7 @@ export function CaseStudyReconciliationDialog({ conflict, onClose, onSave }) {
   </Cs2Dialog>;
 }
 
-function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudImages=true, temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncActionLabel='Upload device library', syncConflict = null, onReconcileConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace }) {
+function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudImages=true, temporaryNotice = '', syncStatus = '', onUploadDeviceLibrary = null, syncActionLabel='Upload device library', syncConflict = null, onReconcileConflict = null, profileName = 'Profile', trades = [], markups = [], onSaveWorkspace, gateMembership = null }) {
   const prompt=usePrompt();
   const alert=useAlert();
   const confirm=useConfirmation();
@@ -962,14 +962,17 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     imageSyncOwner.current = sessionOwner;
     return () => { imageSyncOwner.current = ''; };
   }, [sessionOwner]);
-  const [imageMembership,setImageMembership]=useState({status:'loading',membership:null});
+  const [rawImageMembership,setImageMembership]=useState({status:'loading',membership:null});
+  const gateRef=useRef(gateMembership); gateRef.current=gateMembership;
+  const gateNow=value=>gateRef.current?gateRef.current(value):value;
+  const imageMembership=gateNow(rawImageMembership);
   useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner,allowCloudImages]);
   const syncSharedCaseStudyImages=async currentWorkspace=>{
     if (!sessionOwner || !allowCloudImages) return {processed:0,failed:0,workspace:currentWorkspace};
     const result=await caseStudySharedImageIntegration.synchronizeWorkspace({
       userId:sessionOwner,
       membership:imageMembership,
-      getMembership:()=>resolveJournalMembership({authenticated:true}),
+      getMembership:()=>resolveJournalMembership({authenticated:true}).then(gateNow),
       workspace:currentWorkspace,
     });
     if (imageSyncOwner.current !== sessionOwner) return result;
@@ -1027,7 +1030,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   useEffect(()=>{
     if (!allowCloudImages || !sessionOwner || imageMembership?.imageAccessStatus !== 'ready' || !imageMembership?.imageUploadsAllowed) return;
     void syncSharedCaseStudyImages(workspaceRef.current);
-  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.imageUploadsAllowed]);
+  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.imageAccessStatus,imageMembership?.imageUploadsAllowed,imageMembership?.cloudWritesAllowed,imageMembership?.imageUploadAllowed]);
   useEffect(() => {
     if (screen === 'editor' && selectedId) writeCaseStudyNavigation(sessionOwner,{studyId:selectedId,...editorNavigation});
     else clearCaseStudyNavigation(sessionOwner);

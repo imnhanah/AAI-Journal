@@ -22,7 +22,7 @@ function WorkflowMark({open, percent}) {
   </>;
 }
 
-export default function MobileShell({page, sheet, onSheet, nav, onNavigate, displayName, avatar, initials, verified, account, accounts, onSelectAccount, onAddAccount, routine, busy, tradeLocked, challengeEnabled, financeEnabled, onProfile, onAccount, onStartDay, onContinueRoutine, search, blocked=false}) {
+export default function MobileShell({page, sheet, onSheet, nav, onNavigate, displayName, avatar, initials, verified, account, accounts, onSelectAccount, onAddAccount, routine, busy, journalReadOnly = false, tradeLocked, challengeEnabled, financeEnabled, onProfile, onAccount, onStartDay, onContinueRoutine, search, blocked=false}) {
   const [phone,setPhone] = useState(()=>window.matchMedia(MOBILE_MEDIA).matches);
   const [failedAvatar,setFailedAvatar] = useState(null);
   const sheetRef = useRef(null), dragStart = useRef(null), opener = useRef(null);
@@ -56,7 +56,7 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
   const moreActive=MOBILE_MORE_PAGES.includes(page);
   const sheetTitle={more:'More',add:'Quick menu',search:'Search',workspace:'Switch journal'}[sheet];
   const due=!status.skipped&&!status.completed&&isRoutineTradingDay();
-  const startDayLock=due&&!status.started?'Start your day first':'';
+  const startDayLock=!journalReadOnly&&due&&!status.started?'Start your day first':'';
   const floating=FLOATING_SHEETS.includes(sheet);
   const current=id=>sheet!=='more'&&(page===id||(id==='journal'&&page==='tradelog'))?'page':undefined;
   // One indicator slides to the active tab instead of each tab drawing its own.
@@ -96,7 +96,7 @@ export default function MobileShell({page, sheet, onSheet, nav, onNavigate, disp
           </div>
         </>}
         {sheet==='add' && <div className="tj-qa">
-          {due&&<button type="button" className="tj-qa-hero" disabled={busy} aria-label={status.unfinished?`Continue daily routine, ${status.ticked} of ${status.total} tasks completed`:undefined} onClick={action(onContinueRoutine)}>
+          {due&&<button type="button" className="tj-qa-hero" disabled={busy || journalReadOnly} aria-label={status.unfinished?`Continue daily routine, ${status.ticked} of ${status.total} tasks completed`:undefined} onClick={action(onContinueRoutine)}>
             <span><ClipboardCheck size={22} aria-hidden="true"/></span>
             <strong>{status.unfinished?'Continue Start day':'Start day'}</strong>
             <span className="tj-qa-ring" style={{'--ring':`${status.total?Math.round(status.ticked/status.total*100):0}%`}}><i>{status.ticked}/{status.total}</i></span>

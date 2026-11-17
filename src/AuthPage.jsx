@@ -28,7 +28,7 @@ const COPY = {
   forgot: { eyebrow: 'RESET', title: 'Reset your password', body: 'We’ll email you a link to reset your password.', submit: 'Send reset link' },
 };
 
-export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange, onBack, brand = 'AAICOREFX' }) {
+export default function AuthPage({ onAuthed, initialMode = 'login', initialError = '', onModeChange, onBack, brand = 'AAICOREFX' }) {
   useLanguage(); // Re-render when the visitor switches language.
   const [mode, setMode] = useState(initialMode);
   const [firstName, setFirstName] = useState('');
@@ -38,7 +38,7 @@ export default function AuthPage({ onAuthed, initialMode = 'login', onModeChange
   const [showPassword, setShowPassword] = useState(false);
   const [financialDisclaimerAcknowledged, setFinancialDisclaimerAcknowledged] = useState(false);
   const [financialDisclaimerOpen, setFinancialDisclaimerOpen] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');

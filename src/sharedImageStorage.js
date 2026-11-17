@@ -48,7 +48,9 @@ export async function calculateImageChecksum(blob) {
   return `fallback-${(hash >>> 0).toString(16)}`;
 }
 
-export const canQueueCloudUpload = membership => membership?.imageAccessStatus === 'ready' && membership.imageUploadsAllowed === true;
+// The deployed independent image grant remains authoritative; Office can only pause it.
+export const setImageUploadsPaused = paused => { globalThis.__tjImageUploadsPaused = paused === true; };
+export const canQueueCloudUpload = membership => globalThis.__tjImageUploadsPaused !== true && membership?.imageAccessStatus === 'ready' && membership.imageUploadsAllowed === true && membership.imageUploadAllowed !== false;
 const isUploadPending = state => state === IMAGE_STORAGE_STATES.PENDING_UPLOAD || state === IMAGE_STORAGE_STATES.SYNC_FAILED;
 export const isHistoricalImageReference = value => typeof value === 'string' && (value.startsWith('data:image/') || value.startsWith('tj-image:') || value.startsWith('tj-case-study-media:') || value.startsWith('tj-shared-media:') || value.startsWith('tj-trade-media:') || value.startsWith('tj-case-study-evidence:') || value.startsWith('tj-case-study-image:') || value.startsWith('tj-case-study-storage:') || /^https?:\/\//.test(value));
 

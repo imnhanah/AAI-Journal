@@ -9,17 +9,17 @@ import './mobilePeriodReviews.css';
 // them out. `h` holds the shared number formatting and charts, so both views show the same figures.
 const KV = ({rows}) => <dl className="tj-pr-kv">{rows.map(([label, value, tone]) => <div key={label}><dt>{label}</dt><dd className={tone || ''}>{value ?? '—'}</dd></div>)}</dl>;
 
-function AutoText({label, value, onChange, tone}) {
+function AutoText({label, value, onChange, tone, readOnly}) {
   const area = useRef(null);
   useEffect(() => { const node = area.current; if (!node) return; node.style.height = 'auto'; node.style.height = `${Math.max(92, node.scrollHeight)}px`; }, [value]);
-  return <label className="tj-pr-q"><span className={tone || ''}>{label}</span><textarea ref={area} placeholder="Start writing…" value={value} onChange={event => onChange(event.target.value)}/></label>;
+  return <label className="tj-pr-q"><span className={tone || ''}>{label}</span><textarea readOnly={readOnly} ref={area} placeholder="Start writing…" value={value} onChange={event => onChange(event.target.value)}/></label>;
 }
 
 const Group = ({title, children}) => <div className="tj-pr-group"><h4>{title}</h4>{children}</div>;
 
-function Reflection({kind, questions, val, set, written, sectionCount}) {
-  const long = (key, label) => <AutoText key={key} label={label} value={val(key)} onChange={text => set(key, text)}/>;
-  const glance = <Group title="Short reads">{questions.glance.map(item => <label className="tj-pr-q" key={item.key}><span>{item.label}</span><input placeholder="Add a short read…" value={val(item.key)} onChange={event => set(item.key, event.target.value)}/></label>)}</Group>;
+function Reflection({kind, questions, val, set, written, sectionCount, readOnly}) {
+  const long = (key, label) => <AutoText readOnly={readOnly} key={key} label={label} value={val(key)} onChange={text => set(key, text)}/>;
+  const glance = <Group title="Short reads">{questions.glance.map(item => <label className="tj-pr-q" key={item.key}><span>{item.label}</span><input readOnly={readOnly} placeholder="Add a short read…" value={val(item.key)} onChange={event => set(item.key, event.target.value)}/></label>)}</Group>;
   const bars = <div className="tj-pr-prog" aria-label={`${written} of ${sectionCount} reflection sections written`}>{Array.from({length:sectionCount}, (_, index) => <i key={index} className={index < written ? 'is-done' : ''}/>)}</div>;
   if (kind === 'quarter') return <>{bars}
     <Group title="Action plan">{long('goals', 'What are my goals for next quarter?')}{long('habits', 'Which habits will I keep or strengthen next quarter?')}{long('mistakes', 'Which recurring mistakes will I address?')}</Group>
@@ -36,8 +36,8 @@ function Reflection({kind, questions, val, set, written, sectionCount}) {
   </>;
 }
 
-function NextSteps({kind, val, set}) {
-  const long = (key, label) => <AutoText key={key} label={label} value={val(key)} onChange={text => set(key, text)}/>;
+function NextSteps({kind, val, set, readOnly}) {
+  const long = (key, label) => <AutoText readOnly={readOnly} key={key} label={label} value={val(key)} onChange={text => set(key, text)}/>;
   if (kind === 'year') return <Group title="Next-year planning">{long('goals', 'Did I complete the goals I set for this period? Why or why not?')}{long('overall', 'What did I do well this period?')}</Group>;
   return <Group title="Next month">{long('goals', 'What are my goals for next month?')}{long('overall', 'What did I do well this month?')}</Group>;
 }
@@ -98,11 +98,11 @@ function detailSections({review, h, onJump, reflection, nextSteps}) {
   ];
 }
 
-function Detail({review, h, questions, val, set, written, sectionCount, onJump, onReviewTrades, onCancel, onSave, dirty, saving, saveLocked, error, pendingNotice}) {
+function Detail({review, readOnly, h, questions, val, set, written, sectionCount, onJump, onReviewTrades, onCancel, onSave, dirty, saving, saveLocked, error, pendingNotice}) {
   useLeaveGuard(dirty, 'review-detail');
   const m = review.metrics, {money, pct, has, rate} = h;
-  const reflection = <Reflection kind={review.kind} questions={questions} val={val} set={set} written={written} sectionCount={sectionCount}/>;
-  const nextSteps = <NextSteps kind={review.kind} val={val} set={set}/>;
+  const reflection = <Reflection readOnly={readOnly} kind={review.kind} questions={questions} val={val} set={set} written={written} sectionCount={sectionCount}/>;
+  const nextSteps = <NextSteps readOnly={readOnly} kind={review.kind} val={val} set={set}/>;
   const sections = detailSections({review, h, onJump, reflection, nextSteps});
   const root = useRef(null);
   // A review always opens at its top, wherever the list had been scrolled to.
@@ -116,20 +116,20 @@ function Detail({review, h, questions, val, set, written, sectionCount, onJump, 
       : [['Win rate', rate(m.winRate)], ['Trades', m.trades], ['Reviewed', `${m.reviewed}/${m.trades}`], ['Average R', m.avgR || '—']];
   const toReview = m.trades - m.reviewed;
   return <div className="tj-pr is-detail" ref={root}>
-    <PhoneHeaderSlot><span className={`tj-pr-saved ${dirty ? 'is-dirty' : ''}`}>{saveLocked ? 'Unlocks in Q4' : dirty ? 'Unsaved changes' : <><Check size={14} aria-hidden="true"/>Saved</>}</span></PhoneHeaderSlot>
+    <PhoneHeaderSlot><span className={`tj-pr-saved ${dirty ? 'is-dirty' : ''}`}>{readOnly ? 'Read-only' : saveLocked ? 'Unlocks in Q4' : dirty ? 'Unsaved changes' : <><Check size={14} aria-hidden="true"/>Saved</>}</span></PhoneHeaderSlot>
     <nav className="tj-pr-tabs" aria-label="Review sections" data-scroll-row="true">{sections.map(([title], index) => <button type="button" key={title} onClick={() => jump(index)}><span>{title}</span></button>)}</nav>
     {pendingNotice}
     <section className="tj-pr-hero">
       <small>{eyebrow}</small>
       <div className="tj-pr-hero-row"><strong className={has(m.netPnl) ? h.tone(m.netPnl) : ''}>{has(m.netPnl) ? money(m.netPnl, true) : '—'}</strong><span className={h.tone(m.returnPct)}><small>Return</small>{pct(m.returnPct)}</span></div>
       <Stats rows={stats}/>
-      {review.kind === 'month' && toReview > 0 && <button type="button" className="tj-pr-needs" onClick={() => onReviewTrades?.(review)}><AlertTriangle size={16} aria-hidden="true"/><span>{toReview} trade{toReview === 1 ? '' : 's'} still need{toReview === 1 ? 's' : ''} review</span><ChevronRight size={16} aria-hidden="true"/></button>}
+      {review.kind === 'month' && toReview > 0 && !readOnly && <button type="button" className="tj-pr-needs" onClick={() => onReviewTrades?.(review)}><AlertTriangle size={16} aria-hidden="true"/><span>{toReview} trade{toReview === 1 ? '' : 's'} still need{toReview === 1 ? 's' : ''} review</span><ChevronRight size={16} aria-hidden="true"/></button>}
     </section>
     {sections.map(([title, content, side], index) => <section className="tj-pr-sec" key={title} data-pr-section={index}>
       <header><i>{String(index + 1).padStart(2, '0')}</i><h2>{title}</h2>{side && <span>{side === 'written' ? `${written} of ${sectionCount} written` : side}</span>}</header>
       {content}
     </section>)}
-    {(dirty || error) && <div className="tj-pr-savebar" role="group" aria-label="Save review">
+    {!readOnly && (dirty || error) && <div className="tj-pr-savebar" role="group" aria-label="Save review">
       {error && <p role="alert">{error}</p>}
       <div><button type="button" disabled={saving} onClick={onCancel}>Cancel</button><button type="button" className="is-save" disabled={saving || saveLocked || !dirty} onClick={onSave}>{saving ? 'Saving…' : 'Save review'}</button></div>
     </div>}
@@ -184,9 +184,9 @@ function PeriodList({year, quarterGroups, h, onOpen, controls}) {
   </div>;
 }
 
-export default function MobilePeriodReviews({showDetail, review, years, quarterGroups, h, questions, val, set, written, sectionCount, onOpen, onReviewTrades, onCancel, onSave, dirty, saving, saveLocked, error, pendingNotice, controls, onPhoneTitle}) {
+export default function MobilePeriodReviews({readOnly = false, showDetail, review, years, quarterGroups, h, questions, val, set, written, sectionCount, onOpen, onReviewTrades, onCancel, onSave, dirty, saving, saveLocked, error, pendingNotice, controls, onPhoneTitle}) {
   const title = showDetail && review ? review.title : 'Period reviews';
   useEffect(() => { onPhoneTitle?.(title); return () => onPhoneTitle?.(''); }, [title]);
-  if (showDetail && review) return <Detail review={review} h={h} questions={questions} val={val} set={set} written={written} sectionCount={sectionCount} onJump={onOpen} onReviewTrades={onReviewTrades} onCancel={onCancel} onSave={onSave} dirty={dirty} saving={saving} saveLocked={saveLocked} error={error} pendingNotice={pendingNotice}/>;
+  if (showDetail && review) return <Detail readOnly={readOnly} review={review} h={h} questions={questions} val={val} set={set} written={written} sectionCount={sectionCount} onJump={onOpen} onReviewTrades={onReviewTrades} onCancel={onCancel} onSave={onSave} dirty={dirty} saving={saving} saveLocked={saveLocked} error={error} pendingNotice={pendingNotice}/>;
   return <PeriodList year={years[0]} quarterGroups={quarterGroups} h={h} onOpen={onOpen} controls={controls}/>;
 }

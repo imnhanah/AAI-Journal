@@ -72,7 +72,7 @@ test('desktop Account settings opens in the side panel and keeps its settings lo
   const fields = readFileSync(new URL('./writingFields.css', import.meta.url), 'utf8');
   assert.match(journal, /const deskPanel = SHELL_V2 && !phone;/);
   assert.match(journal, /entryPanel=\{deskPanel\} entryPanelOpen=\{accountPanelOpen\} entryPanelPosition=\{tradePanelPosition\} entryPanelBehavior=\{tradePanelBehavior\} entryPanelUserId=\{`\$\{userId\}:account`\} entryPanelWidth=\{680\} onClose=\{closeAccount\}/);
-  assert.match(journal, /<AccountSettingsModal tradePanelPosition=\{entryPanelPosition\} tradePanelBehavior=\{entryPanelBehavior\}/);
+  assert.match(journal, /<AccountSettingsModal journalReadOnly=\{tradeLogsReadOnly\} tradePanelPosition=\{entryPanelPosition\} tradePanelBehavior=\{entryPanelBehavior\}/);
   assert.match(journal, /onClick=\{closeAccount\}>Cancel<\/button>/);
   assert.match(account, /^@media \(min-width:768px\) \{/m);
   assert.doesNotMatch(account, /#[0-9a-f]{3,8}\b|rgba?\(/i);

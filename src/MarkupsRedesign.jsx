@@ -31,7 +31,7 @@ function MarkupChart({item,onView}) {
 }
 function Charts({items,empty,onView}) { return items.length ? <div className="mk2-shots">{items.map((item,index)=><MarkupChart key={index} item={item} onView={onView}/>)}</div> : <div className="mk2-empty"><b>No charts saved</b>{empty}</div>; }
 
-export default function MarkupsRedesign({markups=[],trades=[],onNew,onEdit,onDelete,onTrade,onViewImage}) {
+export default function MarkupsRedesign({markups=[],trades=[],readOnly=false,onNew,onEdit,onDelete,onTrade,onViewImage}) {
   const confirm=useConfirmation();
   const currentYear=String(new Date().getFullYear());
   const [selectedId,setSelectedId]=useState(markups[0]?.id);
@@ -121,7 +121,7 @@ export default function MarkupsRedesign({markups=[],trades=[],onNew,onEdit,onDel
       {current&&<section className="mk2-detail" aria-label="Markup detail">
         <div className="mk2-card mk2-head">
           <div className="mk2-head-copy"><h2>{current.instrument||'Untitled markup'}<span className={`mk2-chip is-${biasOf(current)}`}>{biasOf(current)!=='none'&&biasIcon(biasOf(current),13)}{current.bias||'No bias'}</span><span className={`mk-chip mk-chip--status mk-chip--status-${statusClass(statusFor(current))}`}>{statusFor(current)==='Executed'&&<Check size={13} aria-hidden="true"/>}{statusFor(current)}</span></h2><p className="mk2-num">{dateLabel(current.date)} · {current.time||'—'} · {current.market||'No session'}</p></div>
-          <div className="mk2-actions"><button type="button" className="mk2-btn is-primary" onClick={()=>onTrade?.(current)}><Plus size={15} aria-hidden="true"/>Trade</button><button type="button" className="mk2-icon" title="Edit markup" aria-label="Edit markup" onClick={()=>onEdit?.(current)}><Pencil size={15}/></button><div className="mk2-more"><button type="button" className="mk2-icon" aria-label="Markup actions" aria-expanded={moreOpen} onClick={()=>setMoreOpen(open=>!open)}><MoreHorizontal size={16}/></button>{moreOpen&&<div role="menu"><button type="button" role="menuitem" className="mk2-menu-delete" onClick={async()=>{setMoreOpen(false);if(await confirm({title:'Delete markup?',description:'Delete this markup? This cannot be undone.',confirmLabel:'Delete markup'}))onDelete?.(current.id);}}><Trash2 size={14} aria-hidden="true"/>Delete markup</button></div>}</div></div>
+          <div className="mk2-actions"><button type="button" className="mk2-btn is-primary" disabled={readOnly} onClick={()=>onTrade?.(current)}><Plus size={15} aria-hidden="true"/>Trade</button><button type="button" className="mk2-icon" title="Edit markup" aria-label="Edit markup" disabled={readOnly} onClick={()=>onEdit?.(current)}><Pencil size={15}/></button><div className="mk2-more"><button type="button" className="mk2-icon" aria-label="Markup actions" disabled={readOnly} aria-expanded={!readOnly && moreOpen} onClick={()=>setMoreOpen(open=>!open)}><MoreHorizontal size={16}/></button>{!readOnly&&moreOpen&&<div role="menu"><button type="button" role="menuitem" className="mk2-menu-delete" onClick={async()=>{setMoreOpen(false);if(await confirm({title:'Delete markup?',description:'Delete this markup? This cannot be undone.',confirmLabel:'Delete markup'}))onDelete?.(current.id);}}><Trash2 size={14} aria-hidden="true"/>Delete markup</button></div>}</div></div>
         </div>
         <div className="mk2-card mk2-summary">
           <div><small>Linked P&amp;L</small><div className={`mk2-value mk2-num ${linked.length?(pnl<0?'is-loss':'is-gain'):''}`}>{linked.length?money(pnl):'—'}</div><em>{linked.length?`from ${count(linked.length,'linked trade')}`:'No linked trades yet'}</em></div>
@@ -137,6 +137,6 @@ export default function MarkupsRedesign({markups=[],trades=[],onNew,onEdit,onDel
           {recovered.length>0&&<div className="mk2-card mk2-pad"><h3>Recovered legacy images</h3><Charts items={recovered} onView={onViewImage}/></div>}
         </div>
       </section>}
-    </div>:<div className="mk2-card mk2-pad"><div className="mk2-empty"><b>{markups.length?'No markups match':'No markups yet'}</b>{markups.length?'Try another filter.':'Create a markup to plan the session before you trade.'}<button type="button" className="mk2-btn is-primary" onClick={()=>markups.length?clearFilters():onNew?.()}>{markups.length?'Clear filters':<><Plus size={15} aria-hidden="true"/>New markup</>}</button></div></div>}
+    </div>:<div className="mk2-card mk2-pad"><div className="mk2-empty"><b>{markups.length?'No markups match':'No markups yet'}</b>{markups.length?'Try another filter.':'Create a markup to plan the session before you trade.'}<button type="button" className="mk2-btn is-primary" disabled={readOnly && !markups.length} onClick={()=>markups.length?clearFilters():onNew?.()}>{markups.length?'Clear filters':<><Plus size={15} aria-hidden="true"/>New markup</>}</button></div></div>}
   </section>;
 }

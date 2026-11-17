@@ -49,7 +49,7 @@ export default function MobileFinance(p) {
   };
   const ready=p.savings.reduce((sum,s)=>sum+s.allocation.remaining,0);
   const close=()=>{if(!saving)setOpen(false);};
-  const openNew=type=>{p.onType(type);setError('');setOpen(true);};
+  const openNew=type=>{if(p.readOnly)return;p.onType(type);setError('');setOpen(true);};
   const capital=p.money(p.totals.tradingBalance);
   const flowTotal=p.totals.deposits+p.totals.withdrawals;
   const groups=financeMonthGroups(p.movements,p.allMovements);
@@ -93,7 +93,7 @@ export default function MobileFinance(p) {
         {p.totalMovements>6&&<button type="button" className="tj-phone-finance-older" aria-expanded={p.showOlder} onClick={p.onOlder}>{p.showOlder?'Show recent movements':'Show older movements'}</button>}
       </>}
       {tab==='savings'&&<section className="tj-phone-finance-plans" aria-label="Savings plans">{p.savings.map(s=>{
-        return <SavingsPlanCard key={s.id} saving={s} saved={s.saved} allocation={s.allocation} ownerName={s.ownerName || p.balances.find(b=>b.id===s.ownerBalanceId)?.name || ''} money={p.money} onTransfer={()=>{p.onPlanned(s);setError('');setOpen(true);}}/>;
+        return <SavingsPlanCard key={s.id} saving={s} saved={s.saved} allocation={s.allocation} ownerName={s.ownerName || p.balances.find(b=>b.id===s.ownerBalanceId)?.name || ''} money={p.money} onTransfer={()=>{if(p.readOnly)return;p.onPlanned(s);setError('');setOpen(true);}}/>;
       })}{!p.savings.length&&<p className="tj-phone-finance-empty">Add a savings account to use transfers.</p>}<button type="button" className="tj-phone-finance-manage" onClick={p.onManageSavings}>{p.savings.length?'Add or edit savings accounts':'Add savings account'}</button></section>}
     </div>
     {open&&<div className="tj-phone-finance-layer"><div className="tj-phone-finance-backdrop" onClick={close}/><section className="tj-phone-finance-sheet" data-type={p.type} role="dialog" aria-modal="true" aria-label="New movement" ref={dialog}>

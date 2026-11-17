@@ -15,12 +15,23 @@ const timedFetch = async (input, init = {}) => {
   else parentSignal?.addEventListener?.("abort", abort, { once: true });
   const timer = window.setTimeout(abort, SAFARI_SAFE_REQUEST_TIMEOUT);
   try {
-    const response = await fetch(input, { ...init, signal: controller.signal });
-    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
-    const table = url.pathname.match(/\/rest\/v1\/([^/]+)$/)?.[1];
+    const requestUrl = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+    const method = init.method || (input instanceof Request ? input.method : 'GET');
+    const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+    // Compatibility marker only. Authentication, RLS and Office permissions
+    // remain authoritative for every write.
+    if (requestUrl.origin === new URL(url).origin && requestUrl.pathname.startsWith('/rest/v1/')
+      && !['GET','HEAD','OPTIONS'].includes(method.toUpperCase())) {
+      const info = headers.get('x-client-info') || '';
+      if (!info.split(/\s+/).includes('aai-journal/atomic-broker-v1')) {
+        headers.set('x-client-info', [info, 'aai-journal/atomic-broker-v1'].filter(Boolean).join(' '));
+      }
+    }
+    const response = await fetch(input, { ...init, headers, signal: controller.signal });
+    const table = requestUrl.pathname.match(/\/rest\/v1\/([^/]+)$/)?.[1];
     if (response.ok && table && !['GET','HEAD'].includes(String(init.method || 'GET').toUpperCase())) {
       let body; try { body = JSON.parse(init.body || '{}'); } catch { body = {}; }
-      const id = url.searchParams.get('id')?.replace(/^eq\./, '') || null;
+      const id = requestUrl.searchParams.get('id')?.replace(/^eq\./, '') || null;
       notifyJournalMutation(table, init.method === 'DELETE' || Object.hasOwn(body, 'screenshots'), id);
     }
     return response;

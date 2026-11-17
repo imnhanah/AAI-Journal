@@ -24,9 +24,11 @@ export async function syncBacktests(user) {
   return privateCache.get(backtestProfileKey(user),async()=>scopeBacktests(all),{refresh:true});
 }
 export async function saveTestRun(run,remove=false) {
+  if(globalThis.__tjCloudWritesPaused===true) throw new Error('Saving is paused for this account.');
   return rpc('tj_save_backtest_run',{row_id:run.id,expected_version:run.updatedAt||null,settings:run,remove_row:remove});
 }
 export async function saveTestTrade(run,trade,remove=false) {
+  if(globalThis.__tjCloudWritesPaused===true) throw new Error('Saving is paused for this account.');
   const safe=protectTestTrade(run,trade);
   return rpc('tj_save_backtest_trade',{row_id:trade.id,run_id:run.id,expected_version:trade.updatedAt||null,trade_data:safe.metadata,media:safe.screenshots??null,remove_row:remove});
 }

@@ -82,7 +82,7 @@ export default function DesktopFinanceV2(p) {
   p.allMovements.forEach((movement) => { counts[movement.type] = (counts[movement.type] || 0) + 1; });
   const transfers = p.allMovements.filter((movement) => movement.type === 'transfer');
   const balance = p.balances.find((item) => item.id === p.balanceId) || p.balances[0] || null;
-  const openNew = (type) => { p.onType(type); setError(''); setDrawer(true); };
+  const openNew = (type) => { if (p.readOnly) return; p.onType(type); setError(''); setDrawer(true); };
   const submit = async () => {
     if (saving) return;
     const issue = financeMovementIssue({ amount: p.amount, date: p.date, requiresSavings: p.requiresSavings, savingsId: p.savingsId, balanceId: p.balanceId });
@@ -98,7 +98,7 @@ export default function DesktopFinanceV2(p) {
     if (!await confirm({ title: 'Delete this movement?', description: `${movement.title} of ${noPlus(p.money(Math.abs(movement.amount)))} on ${movement.date} will be removed from your finance ledger.`, confirmLabel: 'Delete movement', tone: 'danger' })) return;
     await p.onDelete(movement.id); notify('Movement deleted');
   };
-  const planTransfer = (item) => { p.onPlanned(item); setError(''); setDrawer(true); };
+  const planTransfer = (item) => { if (p.readOnly) return; p.onPlanned(item); setError(''); setDrawer(true); };
   const flowIn = flow ? p.totals.deposits / flow * 100 : 0;
 
   return <main className="fn2" aria-label="Finance">

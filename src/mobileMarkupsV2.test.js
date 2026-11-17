@@ -49,7 +49,7 @@ test('Mobile Markups V2 places its New Markup action directly below the library 
   const source = read('./MobileMarkupsV2.jsx');
   const css = read('./mobileMarkupsV2.css');
   assert.ok(source.indexOf('tj-mk2-create-wrap') > source.indexOf('tj-mk2-tools'));
-  assert.match(source, /className="tj-mk2-create" onClick=\{onNew\} aria-label="New Markup"><Plus/);
+  assert.match(source, /className="tj-mk2-create" disabled=\{readOnly\} onClick=\{onNew\} aria-label="New Markup"><Plus/);
   assert.doesNotMatch(source, /tj-mk2-fab/);
   assert.match(css, /\.tj-root \.tj-mk2-create-wrap \{display:flex;justify-content:center/);
   assert.match(css, /\.tj-root \.tj-mk2-create \{[^}]*min-height:46px/);
