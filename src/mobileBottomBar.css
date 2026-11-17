@@ -74,7 +74,7 @@
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-100% - 16px));box-shadow:none;pointer-events:none;}
   html[data-tj-display-mode="standalone"] .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-topbar.tj-topbar-hidden {transform:translateY(calc(-100% - 16px));}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-mobile-bottom {transition:transform .22s ease;}
-  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-mobile-bottom {transform:translateY(calc(100% + 4px));pointer-events:none;}
+  .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-mobile-bottom {transform:translateY(calc(100% + 56px));pointer-events:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root .tj-ma-head {transition:transform .22s ease;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-ma-modal .tj-ma-head {transform:translateY(-110%);pointer-events:none;}
   .tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-root.tj-chrome-hidden .tj-modal-overlay:has(.tj-ma-modal) {bottom:0!important;}
