@@ -226,7 +226,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTION_LABELS = {
   admin_unlock: 'Unlocked the office', admin_lock: 'Locked the office', admin_list_members: 'Opened the register',
   admin_update_member: 'Changed a member’s settings', admin_set_status: 'Changed a member’s access',
-  admin_change_pin: 'Changed their own PIN', admin_backup_codes_enable: 'Backup codes turned on', admin_backup_codes_disable: 'Backup codes turned off',
+  admin_change_pin: 'Changed the shared Office PIN', admin_backup_codes_enable: 'Backup codes turned on', admin_backup_codes_disable: 'Backup codes turned off',
   admin_send_announcement: 'Sent an announcement', suspend: 'Suspended a member', ban: 'Banned a member', delete: 'Started the 14-day deletion countdown',
   reactivate: 'Reactivated a member', unban: 'Unbanned a member', cancel_delete: 'Cancelled a deletion',
 };
@@ -258,6 +258,16 @@ const createLiveApi = () => {
     return value;
   };
   return {
+    async enrollmentStatus() { return call('admin_enrollment_status'); },
+    async enrollmentBegin() { return call('admin_enrollment_begin'); },
+    async enrollmentVerify(fields) { return call('admin_enrollment_verify', fields); },
+    async enrollmentComplete(fields) { return call('admin_enrollment_complete', fields); },
+    async enrollmentCancel(fields) { return call('admin_enrollment_cancel', fields); },
+    async watchEnrollmentIdentity(onChanged) {
+      const supabase=await client(); const initial=await supabase.auth.getSession(); const owner=initial.data?.session?.user?.id;
+      const {data}=supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user?.id!==owner)onChanged();});
+      return ()=>data.subscription.unsubscribe();
+    },
     async unlock({ code, pin }) { const result = await call('admin_unlock', { totp_code: code, pin }); return { expiresAt: Date.parse(result.expires_at) }; },
     async lock() { try { await call('admin_lock'); } catch { /* already locked */ } return true; },
     async listMembers({ search = '', filter = 'all', after = null } = {}) {

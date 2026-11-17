@@ -1,3 +1,4 @@
+import OfficeEnrollment from './OfficeEnrollment.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Ban, Check, ChevronRight, Crown, Info, KeyRound, Lock, Megaphone, Pencil, ScrollText, Search, ShieldCheck, Trash2, Pause, Undo2, Users, UserRound, X } from 'lucide-react';
@@ -89,7 +90,8 @@ function Gate({ onUnlocked, onClose, note }) {
       onUnlocked(session);
     } catch (problem) {
       setPin('');
-      if (problem.code === 'wrong_code') { setCode(''); setStep(0); setError('That authenticator code isn’t right. Try the next one.'); }
+      if (problem.code === 'authenticator_code_used') { setCode(''); setStep(0); setError('That code was already used. Wait for the next code.'); }
+      else if (problem.code === 'wrong_code') { setCode(''); setStep(0); setError('That authenticator code isn’t right. Try the next one.'); }
       else if (problem.code === 'wrong_pin') setError(`Wrong PIN. ${problem.triesLeft} ${problem.triesLeft === 1 ? 'try' : 'tries'} left.`);
       else if (problem.code === 'locked') setError(`Too many wrong PINs. Locked until ${new Date(problem.until).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`);
       else setError('Could not open the office. Please try again.');
@@ -525,8 +527,10 @@ const TITLES = { members: ['The Register', 'Plans, features, limits and access f
 export default function AdminOffice({ onClose }) {
   const phone = usePhone();
   const [session, setSession] = useState(null);
+  const [enrollmentReady, setEnrollmentReady] = useState(!officeIsLive);
   const [note, setNote] = useState('');
   const [left, setLeft] = useState(IDLE_SECONDS);
+  const activityDeadline = useRef(0);
   const [tab, setTab] = useState('members');
   const frame = useRef(null);
   const [editing, setEditing] = useState(null);
@@ -543,26 +547,39 @@ export default function AdminOffice({ onClose }) {
   const lock = useCallback((message = '') => { officeApi.lock?.(); setEditing(null); setSendDraft(null); setVaultModal(null); setSession(null); setNote(message); setLeft(IDLE_SECONDS); }, []);
   useEffect(() => {
     if (!session) return undefined;
-    const timer = setInterval(() => setLeft(value => value - 1), 1000);
-    return () => clearInterval(timer);
+    const update = () => setLeft(Math.max(0, Math.ceil((activityDeadline.current - Date.now()) / 1000)));
+    const timer = setInterval(update, 1000);
+    document.addEventListener('visibilitychange', update);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', update); };
   }, [session]);
   useEffect(() => { if (session && left <= 0) lock('Locked after 15 minutes of inactivity.'); }, [left, session, lock]);
+  const closeOffice = useCallback(() => {
+    if (session) officeApi.lock();
+    onClose();
+  }, [session, onClose]);
   useEffect(() => {
-    const onKey = event => { if (event.key === 'Escape') onClose(); };
+    const onKey = event => { if (event.key === 'Escape') closeOffice(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [closeOffice]);
   useEffect(() => { setOfficeLockHandler(code => lock(code === 'locked' ? 'Locked after too many wrong attempts.' : 'The office was locked. Please sign in again.')); return () => setOfficeLockHandler(null); }, [lock]);
-  const touch = () => { if (session) setLeft(IDLE_SECONDS); };
+  const touch = () => {
+    if (!session) return;
+    if (Date.now() >= activityDeadline.current) { lock('Locked after 15 minutes of inactivity.'); return; }
+    activityDeadline.current = Date.now() + IDLE_SECONDS * 1000;
+    setLeft(IDLE_SECONDS);
+  };
   const title = TITLES[tab];
 
-  const content = !session
-    ? <Gate note={note} onClose={onClose} onUnlocked={result => { setSession(result); setNote(''); setLeft(IDLE_SECONDS); }}/>
+  const content = officeIsLive && !enrollmentReady
+    ? <OfficeEnrollment onClose={onClose} onReady={message => { setEnrollmentReady(true); if (message) setNote(message); }}/>
+    : !session
+    ? <Gate note={note} onClose={onClose} onUnlocked={result => { activityDeadline.current = Date.now() + IDLE_SECONDS * 1000; setSession(result); setNote(''); setLeft(IDLE_SECONDS); }}/>
     : phone
       ? <div className="pw">
         <div className="ph"><div style={{ flex: 1, minWidth: 0 }}><div className="eyebrow">{{ ann: 'Announcements', log: 'Activity log', sec: 'Security', user: 'Member view' }[tab] || 'Members'}</div><h1>{{ ann: 'Mailroom', log: 'Records', sec: 'Vault', user: 'Front of House' }[tab] || 'Register'}</h1></div>
           <div className="ring" style={{ '--p': `${left / 9}%` }}><i/><span>{clock(left)}</span></div>
-          <button type="button" className="pback" aria-label="Close the office" onClick={onClose}><X size={16}/></button></div>
+          <button type="button" className="pback" aria-label="Close the office" onClick={closeOffice}><X size={16}/></button></div>
         <div className="pscroll">{tab === 'user' ? <MemberPreview phone refreshKey={sentKey}/> : tab === 'sec' ? <VaultView phone onAction={type => type === 'goto-user' ? setTab('user') : setVaultModal({ type })} refreshKey={secKey}/> : tab === 'log' ? <LogView phone/> : tab === 'ann' ? <Mailroom phone onReview={setSendDraft} resetKey={resetKey} sentKey={sentKey}/> : <MembersView phone onEdit={openMember} refreshKey={refreshKey}/>}</div>
         <div className="dock">
           <button type="button" className={`t ${tab === 'members' ? 'on' : ''}`} aria-current={tab === 'members' ? 'page' : undefined} onClick={() => setTab('members')}><Users/>Members</button>
@@ -579,7 +596,7 @@ export default function AdminOffice({ onClose }) {
           <div className="door"><div className="dl"><span className="eyebrow">Office door</span><b>{clock(left)}</b></div><div className="meter"><i style={{ width: `${left / 9}%` }}/></div><button type="button" className="btn ghost" onClick={() => lock()}><Lock size={15}/>Lock the door</button></div>
         </aside>
         <main className="main"><div className="mh"><div><div className="eyebrow">{new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>{title[0]}</h1><p>{title[1]}</p></div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="chip gold"><Crown size={13}/>Owner access</span><button type="button" className="ib" aria-label="Close the office" onClick={onClose}><X size={16}/></button></div></div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="chip gold"><Crown size={13}/>Owner access</span><button type="button" className="ib" aria-label="Close the office" onClick={closeOffice}><X size={16}/></button></div></div>
           <div className="mc">{tab === 'user' ? <MemberPreview refreshKey={sentKey}/> : tab === 'sec' ? <VaultView onAction={type => setVaultModal({ type })} refreshKey={secKey}/> : tab === 'log' ? <LogView/> : tab === 'ann' ? <Mailroom onReview={setSendDraft} resetKey={resetKey} sentKey={sentKey}/> : <MembersView onEdit={openMember} refreshKey={refreshKey}/>}</div></main></div>;
 
   return <div className={`ao ${phone ? 'is-phone' : ''}`} role="dialog" aria-modal="true" aria-label="Administration Office" onPointerDown={touch} onKeyDown={touch}>
@@ -587,7 +604,7 @@ export default function AdminOffice({ onClose }) {
       {session && editing && <MemberPanel key={editing.row.user_id} row={editing.row} focusFeatures={editing.focusFeatures} onClose={() => setEditing(null)} onChanged={changed}/>}
       {session && sendDraft && <ConfirmModal icon={Megaphone} title="Send this announcement?" body={`To ${sendDraft.label}. It appears as a “From Admin” message in their bell.`} confirmLabel="Send" onClose={() => setSendDraft(null)}
         onRun={({ pin }) => officeApi.sendAnnouncement({ title: sendDraft.title, body: sendDraft.body, audience: sendDraft.audience, pin }).then(() => { setSendDraft(null); setResetKey(value => value + 1); setSentKey(value => value + 1); setNotice('Sent · members see it in their bell'); setTimeout(() => setNotice(''), 2800); })}/>}
-      {session && vaultModal?.type === 'pin' && <ChangePinModal onClose={() => setVaultModal(null)} onDone={() => lock('PIN changed. Please sign in again.')}/>}
+      {session && vaultModal?.type === 'pin' && <ChangePinModal onClose={() => setVaultModal(null)} onDone={() => lock('Shared PIN changed. Both Owners must unlock again.')}/>}
       {session && vaultModal?.type === 'codes-on' && <ConfirmModal icon={KeyRound} title="Turn on backup codes?" body="You’ll get eight one-time codes, shown once. Keep them somewhere safe." confirmLabel="Turn on" onClose={() => setVaultModal(null)}
         onRun={({ pin }) => officeApi.backupCodesEnable({ pin }).then(result => { setVaultModal({ type: 'codes', codes: result.codes }); })}/>}
       {session && vaultModal?.type === 'codes-off' && <ConfirmModal icon={KeyRound} tone="bad" needsCode title="Turn off backup codes?" body="Enter one of your backup codes and your PIN to switch this off." confirmLabel="Turn off" onClose={() => setVaultModal(null)}
