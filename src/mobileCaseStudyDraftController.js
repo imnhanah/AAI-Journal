@@ -1,10 +1,16 @@
+import {attachDocumentImageEvidence} from './caseStudyWorkspace.js';
+import {applyVerifiedCaseStudyImageReferences} from './caseStudySharedImageIntegration.js';
 import {normaliseCaseStudyWorkspace} from './caseStudyWorkspace.js';
 import {patchSectionRichDocument,richDocumentText,migrateSectionRichDocument} from './studyRichDocument.js';
+import {isPlainCaseStudyDocument,validateCaseStudyDocument} from './caseStudyRichFormat.js';
 import {normalizeSaveOutcome,saveSucceeded} from './syncOutcome.js';
 
 function apply(base,intents){
   let workspace=normaliseCaseStudyWorkspace(base);
-  for(const intent of intents){workspace={...workspace,studies:workspace.studies.map(study=>{
+  for(const intent of intents){
+    if(intent.kind==='evidence'){workspace=attachDocumentImageEvidence(workspace,intent.studyId,intent.evidence).workspace;continue;}
+    if(intent.kind==='imageReferences'){workspace=applyVerifiedCaseStudyImageReferences(workspace,intent.evidence,intent.assets);continue;}
+    workspace={...workspace,studies:workspace.studies.map(study=>{
     if(study.id!==intent.studyId)return study;
     const patch=intent.kind==='section'?patchSectionRichDocument(study,intent.name,intent.index,intent.document):intent.patch;
     return {...study,...patch,updatedAt:intent.at};
@@ -52,8 +58,23 @@ export function createMobileStudyDraftController({context,workspace,revision,tex
       else if(!flight&&nextRevision!==draft.getSnapshot().value.baseRevision){error=new Error('Cloud changes are available; local edits are retained for reconciliation.');publish();}
     },
     patchStudy(studyId,patch){edit({kind:'patch',studyId,patch,identity:JSON.stringify([studyId,'patch',Object.keys(patch).sort()])});},
-    editSection(studyId,{name,index,text}){edit({kind:'section',studyId,name,index,document:textToDoc(text),identity:JSON.stringify([studyId,'section',index,name])});},
+    editSection(studyId,{name,index,text,document}){
+      const study=draft.getSnapshot().value.workspace.studies.find(item=>item.id===studyId);
+      const current=migrateSectionRichDocument(study,name,index);
+      if(!document&&!isPlainCaseStudyDocument(current))throw new Error('Use the rich editor to change this section. Existing formatting and images are preserved.');
+      const next=document??textToDoc(text);
+      if(!validateCaseStudyDocument(next))throw new Error('This document needs a newer editor. Existing content is preserved.');
+      edit({kind:'section',studyId,name,index,document:next,identity:JSON.stringify([studyId,'section',index,name])});
+    },
     sectionText(studyId,{name,index}){const study=draft.getSnapshot().value.workspace.studies.find(s=>s.id===studyId);return study?richDocumentText(migrateSectionRichDocument(study,name,index)):'';},
+    attachEvidence(studyId,evidence){
+      edit({kind:'evidence',studyId,evidence,identity:JSON.stringify([studyId,'evidence',evidence.id])});
+    },
+    applyImageReferences(evidence,assets){
+      const current=draft.getSnapshot().value.workspace;
+      if(applyVerifiedCaseStudyImageReferences(current,evidence,assets)===current)return;
+      edit({kind:'imageReferences',evidence,assets,identity:'verified-image-references'});
+    },
     flushLocal:()=>draft.flush(),flushCloud,
     attachView(){attached=true;if(!unsubscribe)unsubscribe=draft.subscribe(publish);publish();},
     detachView(){attached=false;timers.clearTimeout(timer);timer=null;unsubscribe?.();unsubscribe=null;},

@@ -27,6 +27,11 @@ const timedFetch = async (input, init = {}) => {
         headers.set('x-client-info', [info, 'aai-journal/atomic-broker-v1'].filter(Boolean).join(' '));
       }
     }
+    if (requestUrl.origin === new URL(url).origin && requestUrl.pathname === '/rest/v1/rpc/tj_save_profile_case_study_library'
+      && method.toUpperCase() === 'POST') {
+      const client = headers.get('x-client-info') || '';
+      headers.set('x-client-info', [...client.split(/\s+/).filter(Boolean), 'case-study-v8/1'].filter((value,index,all)=>all.indexOf(value)===index).join(' '));
+    }
     const response = await fetch(input, { ...init, headers, signal: controller.signal });
     const table = requestUrl.pathname.match(/\/rest\/v1\/([^/]+)$/)?.[1];
     if (response.ok && table && !['GET','HEAD'].includes(String(init.method || 'GET').toUpperCase())) {

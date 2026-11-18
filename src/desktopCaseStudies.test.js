@@ -106,15 +106,17 @@ test('study header controls stay on one centre line', () => {
 });
 
 test('every section is one document with a shared toolbar, rename, remove and add', () => {
-  assert.match(library, /<RichDocumentEditor bare document=\{migrateSectionRichDocument\(study, name, index\)\}/);
+  assert.match(library, /<RichDocumentEditor bare document=\{study\.sectionDocuments\?\.\[name\] \|\| \(index === 0 && study\.richDocument\) \|\| migrateSectionRichDocument\(study, name, index\)\}/);
   assert.match(library, /onFocusEditor=\{setActiveEditor\}/);
   assert.match(library, /<Cs2Toolbar editor=\{activeEditor\}/);
-  assert.match(library, /else if \(!isSafeLink\(value\)\) \{ setNotice\('Use an http, https, or mailto link\.'\); return; \}/);
+  const toolbar = readFileSync(new URL('./CaseStudyV8Toolbar.jsx', import.meta.url), 'utf8');
+  assert.match(library, /<CaseStudyV8Toolbar editor=\{editor\}/);
+  assert.match(toolbar, /!isSafeLink\(url\)/);
   assert.match(library, /const renameStudySection = \(study, index, next\) =>/);
   assert.match(library, /const removeStudySection = \(study, index\) =>/);
   const editor = readFileSync(new URL('./RichDocumentEditor.jsx', import.meta.url), 'utf8');
   assert.match(editor, /export async function insertImageInView\(view,file,coordinates,\{saveImage\}=\{\}\)/);
-  assert.match(editor, /bare=false, placeholder='', onFocusEditor=null/);
+  assert.match(editor, /bare = false, placeholder = '', onFocusEditor, advanced = false, readOnly = false/);
 });
 
 test('the workspace side panel has Evidence, Links, Connections and Validate', () => {

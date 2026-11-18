@@ -1,3 +1,9 @@
+import {caseStudySharedImageIntegration, isCaseStudySharedImageReference} from './caseStudySharedImageIntegration.js';
+import {resolveJournalMembership} from './membership.js';
+import {isDocumentImageReference,readCaseStudyDocumentImage} from './caseStudyDocumentImages.js';
+import RichDocumentEditor from './RichDocumentEditor.jsx';
+import {caseStudyV8Preview} from './caseStudyRichFormat.js';
+import {isLocalJournal} from './localJournalDb.js';
 import {useMobileCaseStudyDraftController} from './journalDataSafety.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -70,10 +76,54 @@ function StatusBadge({ status }) {
 export default function MobileCaseStudies({
   profileWorkspace, onSaveWorkspace, profileName, draftContext, profileRevision, onSavePatch,
   trades = [], markups = [], libraryState, onRetryLoad,
-  sessionOwner, syncConflict = null, onReconcileConflict = null,
+  sessionOwner, gateMembership, allowCloudImages=false, syncConflict = null, onReconcileConflict = null,
 }) {
   const studyDraft=useMobileCaseStudyDraftController({context:draftContext,confirmedWorkspace:profileWorkspace,confirmedRevision:profileRevision,submitPatch:onSavePatch,textToDoc});
   const workspace=studyDraft.workspace;
+  const workspaceRef=useRef(workspace);
+  workspaceRef.current=workspace;
+  const imageOwner=useRef(sessionOwner);
+  imageOwner.current=sessionOwner;
+  const [imageError,setImageError]=useState('');
+  const currentImageMembership=async()=>{
+    const value=await resolveJournalMembership({authenticated:!!sessionOwner});
+    if(imageOwner.current!==sessionOwner)throw new Error('The signed-in account changed.');
+    return allowCloudImages ? (gateMembership ? gateMembership(value) : value) : null;
+  };
+  const onStoreDocumentImage=async(file,studyId)=>{
+    const membership=await currentImageMembership();
+    const saved=await caseStudySharedImageIntegration.saveDocumentImage({userId:sessionOwner,membership,file,sourceRecordId:studyId});
+    return {src:saved.reference,localOnly:saved.localOnly};
+  };
+  const onSaveDocumentImage=async(fields,studyId)=>{
+    if(!isDocumentImageReference(fields.imageRef)&&!isCaseStudySharedImageReference(fields.imageRef))throw new Error('This image cannot be added safely.');
+    let reference=fields.imageRef;
+    if(isDocumentImageReference(reference)){
+      const blob=await readCaseStudyDocumentImage(reference);
+      if(!blob)throw new Error('The image is unavailable on this device. Existing notes are preserved.');
+      reference=(await onStoreDocumentImage(new File([blob],'Research image',{type:blob.type}),studyId)).src;
+    }
+    studyDraft.attachEvidence(studyId,{id:uid(),title:fields.title,source:fields.source,tags:fields.tags,
+      documentImageRef:fields.imageRef,url:reference,kind:'Chart',createdAt:new Date().toISOString()});
+    await studyDraft.flushLocal();
+    if(!await studyDraft.flushCloud())throw new Error('Evidence is retained on this device and needs retry. Keep this dialog open.');
+  };
+  useEffect(()=>{
+    if(!sessionOwner||!allowCloudImages)return undefined;
+    let cancelled=false;
+    const sync=async()=>{
+      try{
+        const membership=await currentImageMembership();
+        const result=await caseStudySharedImageIntegration.synchronizeWorkspace({
+          userId:sessionOwner,membership,getMembership:currentImageMembership,workspace:workspaceRef.current,
+        });
+        if(!cancelled&&imageOwner.current===sessionOwner)studyDraft.applyImageReferences(result.workspace.evidence,result.verifiedAssets);
+      }catch(error){if(!cancelled)setImageError(error.message);}
+    };
+    void sync();
+    return()=>{cancelled=true;};
+  },[sessionOwner,profileRevision,allowCloudImages]);
+
 
   const [view, setView] = useState('lib');
   const [openStudyId, setOpenStudyId] = useState(null);
@@ -181,9 +231,9 @@ export default function MobileCaseStudies({
     return studyDraft.sectionText(study.id,{name,index:idx});
   }, [studyDraft.sectionText,workspace]);
 
-  const handleSectionChange = useCallback((name, idx, value) => {
-    setLocalSecs(prev => ({ ...prev, [name]: value }));
-    studyDraft.editSection(openStudyId,{name,index:idx,text:value});
+  const handleSectionChange = useCallback((name, idx, document) => {
+    setLocalSecs(prev => ({ ...prev, [name]: richDocumentText(document) }));
+    studyDraft.editSection(openStudyId,{name,index:idx,document});
   }, [openStudyId,studyDraft.editSection]);
 
   useEffect(()=>()=>studyDraft.detachView(),[studyDraft.detachView]);
@@ -611,7 +661,10 @@ export default function MobileCaseStudies({
         </div>
 
         {/* document */}
-        <div className="mcs-doc">
+        <div className="mcs-doc">{imageError&&<p role="status">{imageError}</p>}
+          {studyDraft.getSnapshot().error&&<p role="status">Edits are saved on this device and need retry.
+            <button type="button" className="case-button" onClick={()=>void studyDraft.flushCloud()}>Retry saved edits</button>
+          </p>}
           {sections.map((name, idx) => {
             const text = getSectionText(study, name, idx);
             return (
@@ -620,14 +673,16 @@ export default function MobileCaseStudies({
                   <span className="mcs-num">{String(idx + 1).padStart(2, '0')}</span>
                   <h3>{name}</h3>
                 </div>
-                <textarea
-                  className="mcs-sbody"
-                  value={getSectionText(study, name, idx)}
-                  onChange={e => handleSectionChange(name, idx, e.target.value)}
-                  onFocus={() => setEditSecIdx(idx)}
-                  placeholder={`Write your ${name.toLowerCase()} here…`}
-                  rows={6}
-                />
+                <RichDocumentEditor document={study.sectionDocuments?.[name] || (idx === 0 && study.richDocument) || migrateSectionRichDocument(study, name, idx)}
+                  sectionName={name} onChange={document => handleSectionChange(name, idx, document)}
+                  onFocusEditor={() => setEditSecIdx(idx)} imageOwnerUserId={sessionOwner}
+                  advanced={caseStudyV8Preview(isLocalJournal())}
+                  onStoreImage={onStoreDocumentImage ? file => onStoreDocumentImage(file, study.id) : undefined}
+                  onSaveImage={onSaveDocumentImage ? fields => onSaveDocumentImage(fields, study.id) : undefined}
+                  documentEvidence={Object.fromEntries(workspace.evidence.filter(item => item.documentImageRef).map(item => [item.documentImageRef, item]))}
+                  saveState={studyDraft.getSnapshot().error ? 'Saved on device · retry needed' : 'Autosave'}
+                  placeholder={`Write your ${name.toLowerCase()} here…`}/>
+
               </div>
             );
           })}

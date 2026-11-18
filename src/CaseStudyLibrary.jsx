@@ -27,6 +27,9 @@ import { evidenceImageReference, resolveCaseStudyCover } from './caseStudyCover.
 import { applyVerifiedCaseStudyImageReferences, caseStudySharedImageIntegration, isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
 import { resolveJournalMembership } from './membership.js';
 import { BUILT_IN_CASE_STUDY_TEMPLATES, applyTemplateToStudy, templateSectionNames, templateSections } from './caseStudyTemplates.js';
+import CaseStudyV8Toolbar from './CaseStudyV8Toolbar.jsx';
+import { caseStudyV8Preview } from './caseStudyRichFormat.js';
+import { isLocalJournal } from './localJournalDb.js';
 import { caseStudyReconciliationCounts, createCaseStudyReconciliationProposal } from './caseStudyReconciliation.js';
 
 const now = () => new Date().toISOString();
@@ -81,7 +84,14 @@ const readCaseStudyPanelWidth = () => {
 };
 const writeCaseStudyPanelWidth = value => { try { window.localStorage.setItem(CASE_STUDY_PANEL_WIDTH_KEY,String(value)); } catch {} };
 class ChartViewerBoundary extends Component { constructor(props){super(props);this.state={error:false};} static getDerivedStateFromError(){return {error:true};} componentDidCatch(error){console.error('Case Study chart viewer failed to render.', error);} render(){return this.state.error ? <main className="cv"><header><button onClick={this.props.onBack}><ArrowLeft/>Evidence</button></header><p className="cv-error">The chart viewer could not open this evidence safely. Return to the study and check the evidence image.</p></main> : this.props.children;} }
-class RichDocumentBoundary extends Component { constructor(props){super(props);this.state={error:false};} static getDerivedStateFromError(){return {error:true};} componentDidCatch(error){console.error('Case Study document editor failed to render.', error);} render(){if(!this.state.error)return this.props.children;return <div className="cse-writing"><p className="cse-muted">The document editor could not open safely. Your existing text is still available below.</p><textarea aria-label="Overview fallback" value={this.props.value||''} onChange={event=>this.props.onChange(event.target.value)}/></div>;} }
+class RichDocumentBoundary extends Component {
+  constructor(props) { super(props); this.state = { error:false }; }
+  static getDerivedStateFromError() { return { error:true }; }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return <div className="cse-writing rde-protected"><p role="alert">The document editor could not open safely. This section is protected from changes.</p><p className="rde-protected-text">{this.props.value || ''}</p></div>;
+  }
+}
 
 function CaseStudyDropdown({id,label,value,options,onChange,openId,setOpenId,className='',align='start'}) {
   const rootRef=useRef(null);
@@ -615,40 +625,23 @@ const removeStudySection = (study, index) => {
   }
   return patch;
 };
-function Cs2Toolbar({ editor, meta, onStoreImage }) {
-  const [, setTick] = useState(0);
-  const [linkOpen, setLinkOpen] = useState(false);
-  const [href, setHref] = useState('');
-  const [notice, setNotice] = useState('');
+function Cs2Toolbar({ editor, meta, onStoreImage, sections, activeIndex, onSelectSection }) {
   const fileInput = useRef(null);
-  useEffect(() => { if (!editor) return undefined; const update = () => setTick((value) => value + 1); editor.on('transaction', update); editor.on('focus', update); return () => { editor.off('transaction', update); editor.off('focus', update); }; }, [editor]);
-  const ready = !!editor && !editor.isDestroyed;
-  const run = (fn) => () => { if (ready) fn(editor.chain().focus()).run(); };
-  const button = (Icon, label, action, active = false, disabled = false) => <button type="button" aria-label={label} title={label} className={active ? 'is-on' : ''} disabled={!ready || disabled} onMouseDown={(event) => event.preventDefault()} onClick={action}><Icon size={16}/></button>;
-  const openLink = () => { if (!ready) return; setHref(editor.getAttributes('link').href || ''); setNotice(''); setLinkOpen(true); };
-  const applyLink = () => {
-    if (!ready) return;
-    const value = href.trim();
-    if (!value) editor.chain().focus().extendMarkRange('link').unsetLink().run();
-    else if (!isSafeLink(value)) { setNotice('Use an http, https, or mailto link.'); return; }
-    else editor.chain().focus().extendMarkRange('link').setLink({ href: value }).run();
-    setLinkOpen(false);
+  const [notice, setNotice] = useState('');
+  const insertImage = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !editor || editor.isDestroyed) return;
+    try { await insertImageInView(editor.view, file, undefined, { saveImage:onStoreImage }); }
+    catch (error) { setNotice(error.message); }
   };
-  const insertImage = async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file || !ready) return; try { await insertImageInView(editor.view, file, undefined, {saveImage:onStoreImage}); setNotice(''); } catch (error) { setNotice(error.message); } };
-  const is = (name, attrs) => ready && editor.isActive(name, attrs);
-  return <div className="cs2-tbar" role="toolbar" aria-label="Document formatting">
-    <div className="cs2-tbtns">
-      {button(Undo2, 'Undo', run((chain) => chain.undo()), false, !ready || !editor.can().undo())}{button(Redo2, 'Redo', run((chain) => chain.redo()), false, !ready || !editor.can().redo())}<i/>
-      {button(Bold, 'Bold', run((chain) => chain.toggleBold()), is('bold'))}{button(Italic, 'Italic', run((chain) => chain.toggleItalic()), is('italic'))}{button(UnderlineIcon, 'Underline', run((chain) => chain.toggleUnderline()), is('underline'))}{button(Strikethrough, 'Strikethrough', run((chain) => chain.toggleStrike()), is('strike'))}{button(RemoveFormatting, 'Clear formatting', run((chain) => chain.unsetAllMarks().clearNodes()))}<i/>
-      {button(Heading1, 'Heading 1', run((chain) => chain.toggleHeading({ level: 1 })), is('heading', { level: 1 }))}{button(Heading2, 'Heading 2', run((chain) => chain.toggleHeading({ level: 2 })), is('heading', { level: 2 }))}{button(Heading3, 'Heading 3', run((chain) => chain.toggleHeading({ level: 3 })), is('heading', { level: 3 }))}<i/>
-      {button(List, 'Bullet list', run((chain) => chain.toggleBulletList()), is('bulletList'))}{button(ListOrdered, 'Numbered list', run((chain) => chain.toggleOrderedList()), is('orderedList'))}{button(Quote, 'Quote', run((chain) => chain.toggleBlockquote()), is('blockquote'))}{button(Minus, 'Divider', run((chain) => chain.setHorizontalRule()))}<i/>
-      {button(Link2, 'Add link', openLink, is('link'))}{button(Unlink, 'Remove link', run((chain) => chain.extendMarkRange('link').unsetLink()), false, !is('link'))}{button(ImagePlus, 'Insert image', () => fileInput.current?.click())}
-      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={insertImage}/>
-      <span className="cs2-mut cs2-tmeta">{ready ? meta : 'Click into a section to format it'}</span>
-    </div>
-    {linkOpen && <div className="cs2-lnk"><input autoFocus value={href} onChange={(event) => { setHref(event.target.value); setNotice(''); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyLink(); } if (event.key === 'Escape') setLinkOpen(false); }} placeholder="Paste a link and press Enter" aria-label="Link address"/><button type="button" className="cs2-btn is-sm is-pri" onClick={applyLink}>Apply</button><button type="button" className="cs2-btn is-sm" onClick={() => setLinkOpen(false)}>Cancel</button></div>}
-    {notice && <p className="cs2-err" role="alert">{notice}</p>}
-  </div>;
+  return <>
+    <CaseStudyV8Toolbar editor={editor} meta={meta} sections={sections} activeIndex={activeIndex}
+      onSelectSection={onSelectSection} advanced={caseStudyV8Preview(isLocalJournal())}
+      onInsertImage={() => fileInput.current?.click()}/>
+    <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={insertImage} hidden/>
+    {notice && <p role="alert" className="rde-notice">{notice}</p>}
+  </>;
 }
 function Cs2SectionHeading({ name, index, words, onRename, onRemove }) {
   const [draft, setDraft] = useState(name);
@@ -749,12 +742,12 @@ function Cs2StudyWorkspace({ study, workspace, templates, trades = [], markups =
         <div className="cs2-oa"><button type="button" className="cs2-btn is-full" onClick={addSection}><Plus size={14}/>Add section</button><button type="button" className="cs2-btn is-full" onClick={onOpenTemplates}><LayoutTemplate size={14}/>Add from template</button></div>
       </aside>
       <section className="cs2-doc" aria-label="Study document">
-        <Cs2Toolbar editor={activeEditor} onStoreImage={onStoreDocumentImage} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
+        <Cs2Toolbar editor={activeEditor} sections={sections} activeIndex={activeIndex} onSelectSection={goTo} onStoreImage={onStoreDocumentImage} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
         {notice && <p className="cs2-err cs2-docn" role="alert">{notice}</p>}
         {sections.map((name, index) => <section className="cs2-sec" key={`${study.id}:${name}`} ref={(node) => { sectionRefs.current[index] = node; }} onFocusCapture={() => setActiveIndex(index)}>
           <Cs2SectionHeading name={name} index={index} words={cs2Words(texts[index])} onRename={rename} onRemove={removeSection}/>
           <RichDocumentBoundary value={texts[index]} onChange={(value) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, { version: 1, content: { type: 'doc', content: String(value).split(/\n{2,}/).map((block) => ({ type: 'paragraph', content: block ? [{ type: 'text', text: block }] : undefined })) } }))}>
-            <RichDocumentEditor bare document={migrateSectionRichDocument(study, name, index)} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/>
+            <RichDocumentEditor bare document={study.sectionDocuments?.[name] || (index === 0 && study.richDocument) || migrateSectionRichDocument(study, name, index)} advanced={caseStudyV8Preview(isLocalJournal())} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/>
           </RichDocumentBoundary>
         </section>)}
         <section className="cs2-sec" ref={(node) => { sectionRefs.current.evidence = node; }}>
@@ -1231,7 +1224,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     const evidence={id,title:title.trim(),source:source.trim(),url:reference,documentImageRef:imageRef,notes:'',tags,kind:'Chart',createdAt:now()};
     const attached=attachDocumentImageEvidence(currentWorkspace,selectedId,evidence);
     const persisted=await save(attached.workspace,true);
-    if (persisted) await syncSharedCaseStudyImages(attached.workspace);
+    if (!persisted) throw new Error('Evidence details are retained on this device. Retry saving before closing this dialog.');
+    await syncSharedCaseStudyImages(attached.workspace);
     return attached.evidence;
   };
   const openEvidenceLibrary=(id)=>{setEvidenceSelection(id);returnToLibrary();setLibraryView('evidence');};
@@ -1656,7 +1650,7 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
   useEffect(() => { setSelectedEvidenceId((current) => resolveActiveEvidenceId(linkedEvidence, current)); }, [study.id, study.evidenceIds, workspace.evidence]);
   if (viewerId) return <ChartViewerBoundary onBack={()=>setViewerId(null)}><ChartViewer study={study} evidence={linkedEvidence} allEvidence={workspace.evidence} studies={workspace.studies} activeId={viewerId} accountId="profile" imageOwnerUserId={imageOwnerUserId} saveState={saveState} onRetrySave={onRetrySave} onBack={()=>setViewerId(null)} onUpdate={onUpdate}/></ChartViewerBoundary>;
 
-  const currentDocument = migrateSectionRichDocument(study, currentSection, activeSection);
+  const currentDocument = study.sectionDocuments?.[currentSection] || (activeSection === 0 && study.richDocument) || migrateSectionRichDocument(study, currentSection, activeSection);
   const updateDocument = (document) => onUpdate((latestStudy) => patchSectionRichDocument(latestStudy, currentSection, activeSection, document));
   const addSection = () => {
     const section = `New section ${sections.length + 1}`;
@@ -1704,7 +1698,7 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
     setSafePanelWidth(next,{persist:true});
   };
   const documentEvidence=Object.fromEntries(workspace.evidence.filter(item=>item.documentImageRef).map(item=>[item.documentImageRef,item]));
-  const writing = <div className="cse-writing"><RichDocumentEditor key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}:${imageOwnerUserId||''}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/></div>;
+  const writing = <div className="cse-writing"><RichDocumentEditor advanced={caseStudyV8Preview(isLocalJournal())} key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}:${imageOwnerUserId||''}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/></div>;
   const editorHeader = <header className="cse-header">
     <button className="cse-crumb" onClick={onBack}><ArrowLeft size={16}/>Library</button><span className="cse-crumb-separator">/</span><select className="cse-notebook" value={study.notebookId} onChange={(e) => onUpdate({ notebookId: e.target.value })}>{workspace.notebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.name}</option>)}</select><input className="cse-title" value={study.title} onChange={(e) => onUpdate({ title: e.target.value })} aria-label="Study title"/><select className="cse-status" value={study.status || 'Draft'} onChange={(e) => onUpdate({ status: e.target.value })}>{STATUSES.map((status) => <option key={status} disabled={status==='Validated'&&study.status!=='Validated'&&!reviewCanValidate}>{status}</option>)}</select><div className="cse-mode-switch" aria-label="Editor mode">{['Write','Split','Analyze','Review'].map((item) => <button key={item} className={mode === item ? 'is-active' : ''} onClick={() => switchMode(item)}>{item}</button>)}</div><span className="cse-save"><Check size={14}/>{saveState}</span>{mode!=='Review'&&<><button className={showOutline ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowOutline((value) => !value)}>Outline</button><button className={showPanel ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowPanel((value) => !value)}>Panel</button></>}<div className="cse-overflow"><button className="case-icon-button" title="Duplicate study" onClick={onDuplicate}><Copy size={16}/></button><button className="case-icon-button" title="Export study" onClick={onExport}><Download size={16}/></button><button className="case-icon-button case-icon-button--danger" title="Delete study" onClick={onRemove}><Trash2 size={16}/></button></div>
   </header>;
