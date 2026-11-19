@@ -58,7 +58,7 @@ function AddBar({ placeholder, label, disabled, onAdd, children }) {
   return <div className="js2-ad"><label className="js2-in"><input aria-label={label || placeholder} placeholder={placeholder} maxLength={160} value={value} disabled={disabled} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && add()}/></label>{children}<button type="button" className="js2-bn is-pri" disabled={disabled || !value.trim()} onClick={add}><Plus size={15}/>Add</button></div>;
 }
 
-function ListSection({ id, title, desc, one, many, placeholder, items, grid, onAdd, onRename, onDelete, toast }) {
+function ListSection({ id, title, desc, one, many, placeholder, items, grid, onAdd, onRename, onDelete, toast, orderControls, orderStatus }) {
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(null);
   const shown = items.filter((item) => lower(item.label).includes(lower(query)));
@@ -67,10 +67,10 @@ function ListSection({ id, title, desc, one, many, placeholder, items, grid, onA
   const rename = (item, text) => { if (!text) { toast("A name can't be empty"); return false; } if (exists(text, item.id)) { toast('Already in the list'); return false; } if (text !== item.label) onRename(item.id, text); };
   return <>
     <Head id={id} title={title} count={plural(items.length, one, many)} desc={desc}><SearchBox value={query} onChange={setQuery} placeholder="Search this list…"/></Head>
-    <AddBar placeholder={placeholder} onAdd={add}/>
-    {shown.length ? <div className={`js2-list ${grid ? 'is-g2' : ''}`}>{shown.map((item) => <div className="js2-rw" key={item.id}>
+    <AddBar placeholder={placeholder} onAdd={add}/>{orderStatus}
+    {shown.length ? <div className={`js2-list ${grid ? 'is-g2' : ''}`}>{shown.map((item) => <div className="js2-rw" key={item.id} data-classification-order={orderControls ? "" : undefined}>
       <NameField label={item.label} editing={editing === item.id} onCancel={() => setEditing(null)} onRename={(text) => rename(item, text)}/>
-      {editing !== item.id && <div className="js2-ac">{item.locked ? <span className="js2-pr">{item.tag || 'Preset'}</span> : <><button type="button" className="js2-ib" title={`Rename ${item.label}`} aria-label={`Rename ${item.label}`} onClick={() => setEditing(item.id)}><Pencil size={15}/></button><DeleteButton label={item.label} onDelete={() => { onDelete(item.id); toast('Deleted'); }}/></>}</div>}
+      {editing !== item.id && <div className="js2-ac">{!query.trim() && orderControls?.(item)}{item.locked ? <span className="js2-pr">{item.tag || 'Preset'}</span> : <><button type="button" className="js2-ib" title={`Rename ${item.label}`} aria-label={`Rename ${item.label}`} onClick={() => setEditing(item.id)}><Pencil size={15}/></button><DeleteButton label={item.label} onDelete={() => { onDelete(item.id); toast('Deleted'); }}/></>}</div>}
     </div>)}</div> : <div className="js2-em">{items.length ? 'No match.' : 'Nothing here yet.'}</div>}
   </>;
 }
@@ -244,7 +244,7 @@ function BackupSection({ onExportBackup, onExportCloudRecovery, onImportBackup, 
   </>;
 }
 
-export default function DesktopJournalSetup({ section, onSection, membershipAdmin, membershipPanel, userId, account, certificates = [], typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onExportCloudRecovery, promotionPanel, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
+export default function DesktopJournalSetup({ entrySettings, confluenceSettings, ruleOrdering, section, onSection, membershipAdmin, membershipPanel, userId, account, certificates = [], typeTags = [], mistakeTags = [], mistakeDefaults = [], confluenceSessions = [], instruments = [], riskPresets = [], onRiskPresets, onTypeTags, onMistakes, onConfluence, onInstruments, onAddRule, onUpdateRule, onRemoveRule, onExportBackup, onExportCloudRecovery, promotionPanel, onImportBackup, snapshots, onRestoreSnapshot, protectedStorage, localOnly, routine, onUpdateRoutine }) {
   const [pending, setPending] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -274,9 +274,9 @@ export default function DesktopJournalSetup({ section, onSection, membershipAdmi
     : section === 'certificates' ? <CertificateArchive certificates={certificates} currency={account?.baseCurrency}/>
     : section === 'backup' ? <>{promotionPanel}<BackupSection onExportBackup={onExportBackup} onExportCloudRecovery={onExportCloudRecovery} onImportBackup={onImportBackup} snapshots={snapshots} onRestoreSnapshot={onRestoreSnapshot} protectedStorage={protectedStorage} localOnly={localOnly}/></>
     : section === 'mistakes' ? <ListSection id="mistakes" title="Mistake management" one="mistake" many="mistakes" grid placeholder="Add a mistake…" desc="Mistakes you can tag on a trade when reviewing it. Presets are built in and cannot be removed." toast={toast} items={[...mistakeDefaults.map((item) => ({ id: item, label: item, locked: true, tag: 'Preset' })), ...customMistakes.map((item) => ({ id: item, label: item }))]} onAdd={(text) => saveWith(onMistakes)([...customMistakes, text])} onRename={(id, text) => saveWith(onMistakes)(customMistakes.map((item) => item === id ? text : item))} onDelete={(id) => saveWith(onMistakes)(customMistakes.filter((item) => item !== id))}/>
-    : section === 'confluences' ? <ListSection id="confluences" title="Confluences" one="confluence" many="confluences" grid placeholder="Add a confluence…" desc="The reasons that line up behind an entry. Tag them when you log a trade." toast={toast} {...stringList(typeTags, onTypeTags)}/>
-    : section === 'entries' ? <ListSection id="entries" title="Entry types" one="entry type" many="entry types" placeholder="Add an entry type…" desc="How you got into the trade, such as with or against the trend." toast={toast} {...stringList(confluenceSessions, onConfluence)}/>
-    : <ListSection id="rules" title="Trading rules" one="trading rule" many="trading rules" placeholder="Add a trading rule…" desc="Your rules. Link them to a trade or a test to measure how often you follow them." toast={toast} items={rules.map((rule) => ({ id: rule.id, label: rule.text }))} onAdd={(text) => void run(() => onAddRule(text))} onRename={(id, text) => void run(() => onUpdateRule(id, text))} onDelete={(id) => void run(() => onRemoveRule(id))}/>;
+    : section === 'confluences' ? (confluenceSettings || <ListSection id="confluences" title="Confluences" one="confluence" many="confluences" grid placeholder="Add a confluence…" desc="The reasons that line up behind an entry. Tag them when you log a trade." toast={toast} {...stringList(typeTags, onTypeTags)}/>)
+    : section === 'entries' ? (entrySettings || <ListSection id="entries" title="Entry types" one="entry type" many="entry types" placeholder="Add an entry type…" desc="How you got into the trade, such as with or against the trend." toast={toast} {...stringList(confluenceSessions, onConfluence)}/>)
+    : <ListSection orderControls={ruleOrdering?.controls} orderStatus={ruleOrdering?.status} id="rules" title="Trading rules" one="trading rule" many="trading rules" placeholder="Add a trading rule…" desc="Your rules. Link them to a trade or a test to measure how often you follow them." toast={toast} items={rules.map((rule) => ({ id: rule.id, label: rule.text }))} onAdd={(text) => void run(() => onAddRule(text))} onRename={(id, text) => void run(() => onUpdateRule(id, text))} onDelete={(id) => void run(() => onRemoveRule(id))}/>;
   return <div className="js2">
     <section className="js2-hd"><div><span className="js2-eb">Setup</span><h1>Journal Setup</h1><p>Customize your trading workflow, rules, and journal preferences.</p></div><span className={`js2-sv ${pending ? 'is-saving' : ''} ${error ? 'is-err' : ''}`} role="status" aria-live="polite">{pending ? <><i/>Saving…</> : error ? <><AlertTriangle size={13}/>{error}</> : <><Check size={13}/>All changes saved</>}</span></section>
     <nav className="js2-nv" aria-label="Journal Setup sections"><div className="js2-navin" ref={navRef} role="tablist" aria-label="Journal Setup sections" onKeyDown={tabKeys}>{groups.map(([group, list]) => <div className={`js2-grp${group === 'Administration' ? ' is-last' : ''}`} key={group} role="presentation">{list.map(([id, label, Icon]) => <button type="button" key={id} role="tab" id={`js2-tab-${id}`} aria-selected={section === id} tabIndex={section === id ? 0 : -1} className={`js2-tab${section === id ? ' is-on' : ''}`} onClick={() => onSection(id)}><Icon size={15} aria-hidden="true"/>{label}</button>)}</div>)}</div></nav>

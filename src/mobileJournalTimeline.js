@@ -1,3 +1,4 @@
+import { entryTypeKey, entryTypeLabel } from './workspaceClassification.js';
 // Presentation helpers for the phone Journal timeline and trade detail page.
 const dayOf = trade => trade.date || trade.closeDate || '';
 export const journalSortKey = trade => `${dayOf(trade)} ${trade.time || ''}`;
@@ -22,7 +23,9 @@ export function journalFilterOptions(trades = []) {
     years: unique(trades.map(trade => dayOf(trade).slice(0, 4))).sort().reverse(),
     months: unique(trades.map(trade => dayOf(trade).slice(5, 7))).sort(),
     sessions: unique(trades.map(trade => trade.entrySession || trade.session)).sort(),
-    models: unique(trades.map(trade => trade.entryType || trade.confluenceSession)).sort(),
+    models: unique(trades.map(entryTypeKey)).sort(),
+    ...(trades.some(trade=>trade.entryTypeLabel && trade.entryTypeLabel!==entryTypeKey(trade))
+      ? {modelLabels:Object.fromEntries(trades.filter(entryTypeKey).map(trade=>[entryTypeKey(trade),entryTypeLabel(trade)]))} : {}),
   };
 }
 
@@ -50,7 +53,7 @@ export function journalTradeMoney(trade, balances = []) {
   return {gross, costs: commission + swap, accounts};
 }
 
-export function journalActiveFilters(filters = {}) {
+export function journalActiveFilters(filters = {}, modelLabels = {}) {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const results = {win:'Wins', loss:'Losses', be:'Break-even', running:'Running'};
   const chips = [];
@@ -62,7 +65,7 @@ export function journalActiveFilters(filters = {}) {
   if(filters.month) chips.push({key:'month', label:months[Number(filters.month) - 1] || filters.month});
   if(filters.week) chips.push({key:'week', label:`Week ${filters.week}`});
   (filters.sessions || []).forEach(session => chips.push({key:'sessions', value:session, label:session}));
-  if(filters.model) chips.push({key:'model', label:filters.model});
+  if(filters.model) chips.push({key:'model', label:modelLabels[filters.model] ?? filters.model});
   return chips;
 }
 

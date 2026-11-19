@@ -1,3 +1,4 @@
+import { classificationProtocol } from './workspaceClassification.js';
 import { createClient } from "@supabase/supabase-js";
 import { notifyJournalMutation } from './privateCacheRuntime';
 
@@ -25,6 +26,12 @@ const timedFetch = async (input, init = {}) => {
       const info = headers.get('x-client-info') || '';
       if (!info.split(/\s+/).includes('aai-journal/atomic-broker-v1')) {
         headers.set('x-client-info', [info, 'aai-journal/atomic-broker-v1'].filter(Boolean).join(' '));
+      }
+      if (/^\/rest\/v1\/(?:trades|rpc\/tj_save_workspace_classification|rpc\/tj_publish_device_journal)$/.test(requestUrl.pathname)) {
+        const compatibleInfo = headers.get('x-client-info') || '';
+        if (!compatibleInfo.split(/\s+/).includes(classificationProtocol)) {
+          headers.set('x-client-info', [compatibleInfo,classificationProtocol].filter(Boolean).join(' '));
+        }
       }
     }
     if (requestUrl.origin === new URL(url).origin && requestUrl.pathname === '/rest/v1/rpc/tj_save_profile_case_study_library'

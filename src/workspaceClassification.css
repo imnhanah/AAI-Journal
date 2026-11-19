@@ -1,0 +1,84 @@
+/* Workspace library styling; navigation and the surrounding Setup layout stay unchanged. */
+.tj-classification-setup,.tj-classification-selection{display:grid;gap:18px;min-width:0;color:var(--text)}
+.tj-classification-line,.tj-classification-actions,.tj-classification-order,.tj-classification-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tj-classification-line{justify-content:space-between}
+.tj-classification-setup h2,.tj-classification-setup h3,.tj-classification-label p{margin:0}
+.tj-classification-heading{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+.tj-classification-heading-icon{display:grid;place-items:center;flex:none;width:50px;height:50px;border-radius:16px;background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));color:var(--on-accent)}
+.tj-classification-heading-copy{flex:1;min-width:140px}
+.tj-classification-heading h2{font-size:22px;line-height:1.25;letter-spacing:-.03em}
+.tj-classification-heading p{margin:5px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.tj-root .tj-classification-setup .tj-classification-add{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;border-radius:12px;padding:0 14px;font-size:13px;font-weight:600;white-space:nowrap;box-shadow:none}
+.tj-classification-label{flex:1;min-width:0;overflow:hidden}
+.tj-classification-label strong{font-size:14px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.tj-classification-label p{margin-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--muted);font-size:12px;line-height:1.5}
+.tj-classification-label>small:not(.tj-classification-mode){display:inline-block;margin-inline-start:8px;font-size:12px;color:var(--muted)}
+.tj-classification-entry-list{display:grid;gap:8px}
+.tj-classification-row{min-width:0;padding:14px 16px;border:1px solid transparent;border-radius:13px;background:var(--raised,var(--surface))}
+.tj-classification-row:focus-within{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.tj-classification-row.is-archived .tj-classification-label{color:var(--muted)}
+.tj-classification-category{min-width:0;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+.tj-classification-category-heading{padding:16px 18px;background:color-mix(in srgb,var(--raised,var(--surface)) 70%,var(--surface));border-bottom:1px solid var(--border)}
+.tj-classification-category-heading .tj-classification-label{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tj-classification-category h3{font-size:14px;font-weight:650;letter-spacing:-.01em;line-height:1.5}
+.tj-classification-mode{padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:12px;line-height:1.4;white-space:nowrap}
+.tj-classification-tag-list{padding:0 18px}
+.tj-classification-tag-list>.tj-classification-row{padding:13px 0;border:0;border-radius:0;background:none}
+.tj-classification-tag-list>.tj-classification-row+.tj-classification-row{border-top:1px solid var(--border)}
+.tj-classification-item-actions{flex:none;gap:4px;flex-wrap:nowrap}
+.tj-root .tj-classification-icon,.tj-root .tj-classification-grip{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:34px;min-height:34px;padding:0;border:1px solid transparent;border-radius:8px;background:none;color:var(--muted);cursor:pointer;box-shadow:none}
+.tj-root .tj-classification-icon:hover:not(:disabled),.tj-root .tj-classification-grip:hover:not(:disabled){color:var(--accent);border-color:var(--border);background:var(--raised,var(--surface))}
+.tj-classification-order{flex:none;gap:0;flex-wrap:nowrap}
+.tj-root .tj-classification-order select{width:40px;height:32px;min-height:32px;padding:0 3px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.tj-root .tj-classification-order select:hover{border-color:var(--border)}
+.tj-root .tj-classification-order>.tj-btn-outline{min-height:32px;padding:0 8px;font-size:12px;border-radius:8px}
+.tj-root .tj-classification-grip{touch-action:none;cursor:grab;width:25px}
+.tj-root .tj-classification-grip:active{cursor:grabbing}
+.tj-root .tj-classification-setup .tj-classification-add-tag{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;margin:0 10px 7px;min-height:38px;width:fit-content;padding:0 8px;border:0;border-radius:8px;background:none;color:var(--accent);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.tj-root .tj-classification-setup .tj-classification-add-tag:hover{background:var(--raised,var(--surface))}
+.tj-classification-editor{display:grid;gap:14px;margin-top:12px;padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.tj-classification-setup>.tj-classification-editor{margin:0}
+.tj-classification-category>.tj-classification-editor{margin:14px 18px}
+.tj-classification-editor label{display:grid;gap:7px;font-size:12px;font-weight:600;color:var(--text)}
+.tj-classification-editor label small{display:contents;color:var(--muted);font-weight:400}
+.tj-classification-editor textarea{resize:vertical;min-height:88px}
+.tj-classification-editor .tj-input{font:inherit;font-size:13px;border-radius:9px}
+.tj-classification-editor>.tj-classification-actions{justify-content:flex-end;padding-top:2px}
+.tj-root .tj-classification-editor .tj-btn-primary,.tj-root .tj-classification-editor .tj-btn-outline{min-height:36px;padding:0 15px;border-radius:9px;font-size:12px;box-shadow:none}
+.tj-classification-setup button:focus-visible,.tj-classification-order select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.tj-classification-setup button:disabled,.tj-classification-order select:disabled,.tj-classification-grip:disabled{opacity:.4;cursor:default}
+.tj-classification-info-trigger{border:0;background:transparent;color:var(--muted);border-radius:6px;min-height:30px;padding:4px}
+@media(max-width:600px){
+  .tj-classification-setup{gap:14px}
+  .tj-classification-heading{gap:10px;padding-bottom:16px}
+  .tj-classification-heading-icon{width:40px;height:40px;border-radius:12px}
+  .tj-classification-heading h2{font-size:19px}
+  .tj-classification-heading p{font-size:12px}
+  .tj-classification-heading-copy{min-width:100px}
+  .tj-classification-heading p span{display:none}
+  .tj-root .tj-classification-setup .tj-classification-add{width:100%;min-height:38px}
+  .tj-classification-row{padding:13px 12px}
+  .tj-classification-category-heading{padding:12px;gap:4px}
+  .tj-classification-category-heading .tj-classification-label{display:grid;gap:5px;justify-items:start}
+  .tj-classification-tag-list{padding:0 12px}
+  .tj-classification-line{gap:5px}
+  .tj-root .tj-classification-icon{width:30px;min-height:38px;height:38px}
+  .tj-root .tj-classification-order select{width:35px;min-height:38px}
+  .tj-classification-editor{padding:13px}
+  .tj-classification-category>.tj-classification-editor{margin:12px}
+}
+.tj-classification-info{position:relative;display:inline-flex;vertical-align:middle;margin-inline-start:.35rem}
+.tj-classification-info-trigger{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:0}
+.tj-classification-popover{position:absolute;z-index:50;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;display:grid;gap:.45rem;padding:.7rem;border:1px solid var(--border);border-radius:.7rem;color:var(--text);background:var(--surface,var(--tj-panel));box-shadow:var(--tj-shadow);text-align:start;white-space:normal;text-transform:none;letter-spacing:normal}
+.tj-classification-definition{display:grid;gap:.25rem;padding:.35rem 0;border-top:1px solid var(--border);overflow-wrap:anywhere}
+.tj-classification-definition span{white-space:pre-wrap;color:var(--muted)}
+.tj-classification-tabs{display:flex;gap:.4rem;overflow:auto;padding-bottom:.25rem}
+.tj-classification-tabs button,.tj-classification-chips button,.tj-classification-summary{font:inherit;padding:.4rem .65rem;border:1px solid var(--border);border-radius:.55rem;background:transparent;color:inherit;cursor:pointer}
+.tj-classification-tabs button{flex:0 0 auto;max-width:100%;white-space:normal}
+.tj-classification-tabs [aria-selected=true],.tj-classification-chips [aria-pressed=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.tj-classification-chips button{display:inline-flex;gap:.3rem;align-items:center;max-width:100%;overflow-wrap:anywhere}
+.tj-classification-summary{justify-self:start}
+.tj-ml .tj-classification-rule-row{flex-wrap:nowrap}
+.tj-ml .tj-classification-rule-row .tj-ml-item{flex:1;min-width:0;width:auto}
+.tj-ml .tj-classification-rule-row .tj-classification-order{flex-wrap:nowrap}
+.tj-ml .tj-classification-rule-row .tj-classification-grip{padding:.25rem;touch-action:none}

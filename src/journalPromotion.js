@@ -1,3 +1,4 @@
+import { assertClassificationRecovery } from './workspaceClassification.js';
 import { supabase } from './supabaseClient.js';
 import { accountInsertRows, balanceRow, markupRow, toTrade, tradeBalanceResultRow } from './db.js';
 import { createPromotionSnapshot, exportLocalJournal } from './localJournalDb.js';
@@ -105,6 +106,7 @@ async function prepareMedia(value, kind, resolveImage) {
 }
 
 export async function buildPromotionRows(userId, data, media = async value => value) {
+  assertClassificationRecovery(data.accounts);
   const tables = {};
   const add = (table, row) => (tables[table] ||= []).push(row);
   const id = (table, value) => promotionId(userId, table, value);
@@ -112,7 +114,13 @@ export async function buildPromotionRows(userId, data, media = async value => va
   for (const account of data.accounts) {
     const accountId = await id('accounts', account.id);
     if (account.profileImage?.startsWith('blob:')) throw new Error('An account image is only available in the current session. Save it again before publishing.');
-    add('accounts', { ...accountInsertRows(userId, { ...account, id:accountId }).modern, profile_image: account.profileImage || null });
+    const classification = account.classification ? structuredClone(account.classification) : null;
+    if (classification?.ruleOrder) {
+      const liveRules = new Set((account.rules || []).map(rule => rule.id));
+      classification.ruleOrder.ids = await Promise.all(classification.ruleOrder.ids
+        .filter(ruleId => liveRules.has(ruleId)).map(ruleId => id('rules',ruleId)));
+    }
+    add('accounts', { ...(classification ? {classification} : {}), ...accountInsertRows(userId, { ...account, id:accountId }).modern, profile_image: account.profileImage || null });
     add('finance_settings', { account_id:accountId, enabled:!!account.finance?.enabled, trading_target:Number(account.finance?.tradingTarget || 0) });
     for (const balance of account.balances || []) add('workspace_balances', {
       ...balanceRow(userId, accountId, balance), id:await id('workspace_balances', balance.id),
@@ -129,7 +137,11 @@ export async function buildPromotionRows(userId, data, media = async value => va
     for (const trade of account.trades || []) {
       const tradeId = await id('trades', trade.id);
       add('trades', { ...toTrade(userId,accountId,{
-        ...trade, screenshots:await media(trade.screenshots,'journal'),
+        ...trade,
+        ruleEvaluations:await Promise.all((trade.ruleEvaluations || []).map(async evaluation => ({
+          ...evaluation, ...(evaluation.ruleId ? {ruleId:await id('rules',evaluation.ruleId)} : {}),
+        }))),
+        screenshots:await media(trade.screenshots,'journal'),
         premarketMarkupId:await optionalId('premarket_markups',trade.premarketMarkupId),
       }), id:tradeId });
       for (const result of trade.balanceResults || []) {

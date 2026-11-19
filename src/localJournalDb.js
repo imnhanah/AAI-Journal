@@ -1,3 +1,4 @@
+import { applyClassificationSave, assertClassificationRecovery, rawTradeClassification } from './workspaceClassification.js';
 import { normaliseBalance, WORKSPACE_TYPES } from './balanceModel.js';
 import { accountPatch } from './accountPatch.js';
 
@@ -243,6 +244,7 @@ export async function saveProfileCaseStudyLibrary(userId, library) { return chan
 export async function exportLocalJournal(userId) { await pendingChanges.get(userId); const data = await dataFor(userId); return { version:1, exportedAt:now(), data:clone(data), routine:clone(cachedRoutine(userId)) }; }
 export async function importLocalJournal(userId, backup) {
   if (!backup || backup.version !== 1 || !backup.data || !Array.isArray(backup.data.accounts)) return { error:'This backup is not an AAICOREFX journal backup.' };
+  try { assertClassificationRecovery(backup.data.accounts); } catch (error) { return {error:error.message}; }
   await pendingChanges.get(userId);
   const data = { ...clone(backup.data), financeReady:true, balancesReady:true };
   // Backups may be restored into another login. Keep ownership scoped to the
@@ -284,6 +286,16 @@ export async function deleteChallengeProgress(scope, targetId, userId) {
 }
 
 export async function createAccount(userId, fields) { return change(data => { const accountId = fields.id || id(); const account = { ...fields, id:accountId, icon:fields.baseCurrency || 'USD', profileImage:'', balance:Number(fields.balance) || 0, workspaceType:fields.workspaceType || WORKSPACE_TYPES.STANDARD, trades:[], rules:[], checkins:{}, balances:[], finance:{enabled:!!fields.financeEnabled,tradingTarget:0}, savingsAccounts:[], financeMovements:[], createdAt:now(), updatedAt:now() }; data.accounts.push(account); return okay(account); }); }
+export async function saveWorkspaceClassification(request) {
+  try {
+    return await change(data => {
+      const workspace = findAccount(data,request.workspace_id);
+      if (!workspace) throw new Error('Workspace unavailable on this device.');
+      workspace.classification = applyClassificationSave(workspace,request);
+      return okay(workspace.classification);
+    });
+  } catch (error) { return {error:error.message}; }
+}
 export async function updateAccount(accountId, fields) { return change(data => { const account=findAccount(data,accountId); if (!account) return { error:'Account not found on this device.' }; Object.assign(account, touch(accountPatch(fields, { warn:true }))); return okay(clone(account)); }); }
 export async function addRewardPreset(accountId, rewardPreset) { return change(data => { const account=findAccount(data,accountId); if (!account) return { error:'Account not found on this device.' }; const value=Number(rewardPreset); if (!(value > 0)) return okay({ account:clone(account), rewardPresets:account.rewardPresets || [] }); const rewardPresets=[...(account.rewardPresets || []).map(Number).filter(item=>Number.isFinite(item)&&item>0),value].filter((item,index,items)=>items.findIndex(other=>Math.abs(other-item)<1e-9)===index).sort((left,right)=>left-right); Object.assign(account,touch({ rewardPresets })); return okay({ account:clone(account), rewardPresets }); }); }
 export async function deleteAccount(accountId) { return change(data => { data.accounts=data.accounts.filter(item=>item.id!==accountId); data.markups=data.markups.filter(item=>item.accountId!==accountId); data.reviews=data.reviews.filter(item=>item.accountId!==accountId); data.periodReviews=data.periodReviews.filter(item=>item.accountId!==accountId); return {}; }); }
@@ -301,13 +313,13 @@ export async function createFinanceMovement(userId, accountId, value) { return c
 export async function updateFinanceMovement(movementId, value) { return change(data => { for (const account of data.accounts) { const current=(account.financeMovements||[]).find(item=>item.id===movementId); if (current) { Object.assign(current,{...value,id:movementId}); return okay(current); } } return {error:'Cash movement not found on this device.'}; }); }
 export async function deleteFinanceMovement(movementId) { return change(data=>{data.accounts.forEach(account=>{account.financeMovements=(account.financeMovements||[]).filter(item=>item.id!==movementId);});return {};}); }
 
-export async function createTrade(userId, accountId, value) { return change(data => { const account=findAccount(data,accountId); if (!account) return {error:'Account not found on this device.'}; const tradeId=value.id || id(); const existing=(account.trades||[]).find(item=>item.id===tradeId); const item=touch({...existing,...value,id:tradeId,accountId,createdAt:existing?.createdAt || now(),screenshots:value.screenshots ?? existing?.screenshots ?? {entry:[],exit:[]},balanceResults:value.balanceResults ?? existing?.balanceResults ?? []}); account.trades=existing ? account.trades.map(current=>current.id===tradeId?item:current) : [...(account.trades||[]),item]; return okay(item); }); }
-export async function updateTrade(tradeId, value) { return change(data => { const trade=findTrade(data,tradeId); if (!trade) return {error:'Trade not found on this device.'}; Object.assign(trade,touch({...value,id:tradeId,accountId:trade.accountId})); return okay(trade); }); }
+export async function createTrade(userId, accountId, value) { return change(data => { const account=findAccount(data,accountId); if (!account) return {error:'Account not found on this device.'}; const tradeId=value.id || id(); const existing=(account.trades||[]).find(item=>item.id===tradeId); const item=touch({...existing,...rawTradeClassification(value),id:tradeId,accountId,createdAt:existing?.createdAt || now(),screenshots:value.screenshots ?? existing?.screenshots ?? {entry:[],exit:[]},balanceResults:value.balanceResults ?? existing?.balanceResults ?? []}); account.trades=existing ? account.trades.map(current=>current.id===tradeId?item:current) : [...(account.trades||[]),item]; return okay(item); }); }
+export async function updateTrade(tradeId, value) { return change(data => { const trade=findTrade(data,tradeId); if (!trade) return {error:'Trade not found on this device.'}; Object.assign(trade,touch({...rawTradeClassification(value),id:tradeId,accountId:trade.accountId})); return okay(trade); }); }
 export async function deleteTrade(tradeId) { return change(data=>{data.accounts.forEach(account=>{account.trades=(account.trades||[]).filter(item=>item.id!==tradeId);});data.reviews=data.reviews.filter(item=>item.tradeId!==tradeId);return {};}); }
 export async function saveTradeBalanceResults(userId, tradeId, results) { return change(data=>{const trade=findTrade(data,tradeId);if(!trade)return {error:'Trade not found on this device.'};trade.balanceResults=(results||[]).filter(item=>item?.balanceId).map(item=>({...item,id:item.id||id(),tradeId}));return okay(trade.balanceResults);}); }
 export async function deleteTradeBalanceResultsNotIn(userId, tradeId, balanceIds) { return change(data=>{const trade=findTrade(data,tradeId);if(!trade)return {error:'Trade not found on this device.'};trade.balanceResults=(trade.balanceResults||[]).filter(item=>(balanceIds||[]).includes(item.balanceId));return {};}); }
 
-export async function createRule(userId, accountId, text) { return change(data=>{const account=findAccount(data,accountId);if(!account)return {error:'Account not found on this device.'};const item={id:id(),text,active:true};account.rules=[...(account.rules||[]),item];return okay(item);}); }
+export async function createRule(userId, accountId, text) { return change(data=>{const account=findAccount(data,accountId);if(!account)return {error:'Account not found on this device.'};const item={id:id(),text,active:true,createdAt:now()};account.rules=[...(account.rules||[]),item];return okay(item);}); }
 export async function updateRule(ruleId, text) { return change(data=>{for(const account of data.accounts){const item=(account.rules||[]).find(rule=>rule.id===ruleId);if(item){item.text=text;return okay(item);}}return {error:'Rule not found on this device.'};}); }
 export async function deleteRule(ruleId) { return change(data=>{data.accounts.forEach(account=>{account.rules=(account.rules||[]).filter(rule=>rule.id!==ruleId);Object.values(account.checkins||{}).forEach(day=>delete day[ruleId]);});return {};}); }
 export async function setCheckin(userId, accountId, ruleId, date, checked) { return change(data=>{const account=findAccount(data,accountId);if(!account)return {error:'Account not found on this device.'};account.checkins={...(account.checkins||{}),[date]:{...(account.checkins?.[date]||{}),[ruleId]:!!checked}};return {};}); }
