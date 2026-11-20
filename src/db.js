@@ -1,3 +1,4 @@
+import {journalWriteSafetyEnabled, journalWriteProtocol, requireBaseRevision, writeOperationKey, savingsBase, savingsValues} from './journalWriteSafety.js';
 import { notifyJournalMutation } from './privateCacheRuntime.js';
 import {preserveTradeScreenshots, preserveMarkupScreenshots} from './legacyScreenshotMedia.js';
 import { supabase } from "./supabaseClient";
@@ -33,8 +34,11 @@ const mediaForSave = async (table, id, x, creating = false) => {
   return { write:true, value:await materializeScreenshots(incoming), local };
 };
 const versionedUpdate = (table, id, x, row) => {
+  requireBaseRevision(x.updatedAt);
   const query = supabase.from(table).update(row).eq("id",id);
-  if (table === "trades" && x.updatedAt) query.setHeader("x-client-info",`aai-trade-revision:${x.updatedAt}`);
+  const revisionInfo = journalWriteSafetyEnabled ? ` aai-record-revision:${x.updatedAt}` : "";
+  if (table === "trades" && x.updatedAt) query.setHeader("x-client-info",`aai-trade-revision:${x.updatedAt}${revisionInfo}`);
+  else if (journalWriteSafetyEnabled) query.setHeader("x-client-info",revisionInfo.trim());
   // Editing an old media revision must not overwrite a newer remote save.
   return x.updatedAt ? query.eq("updated_at",x.updatedAt) : query;
 };
@@ -98,8 +102,8 @@ const account = (x, extras = {}) => ({
   caseStudyWorkspace: parseLegacyAccountPreferences(x.rating_style).caseStudyWorkspace ?? null,
   ...extras,
 });
-const financeSetting = x => ({ enabled: !!x?.enabled, tradingTarget: Number(x?.trading_target || 0) });
-const savingsAccount = x => ({ id:x.id, accountId:x.account_id, balanceId:x.balance_id || null, name:x.name || "Savings", target:Number(x.target || 0), allocationPct:Number(x.allocation_pct || 0), interval:x.transfer_interval || "Manual", reminderMinutes:Number(x.reminder_minutes)||30, createdAt:x.created_at });
+const financeSetting = x => ({ updatedAt:x?.updated_at??null, enabled: !!x?.enabled, tradingTarget: Number(x?.trading_target || 0) });
+const savingsAccount = x => ({ id:x.id, accountId:x.account_id, balanceId:x.balance_id || null, updatedAt:x.updated_at, name:x.name || "Savings", target:Number(x.target || 0), allocationPct:Number(x.allocation_pct || 0), interval:x.transfer_interval || "Manual", reminderMinutes:Number(x.reminder_minutes)||30, createdAt:x.created_at });
 const financeMovement = x => ({ id:x.id, accountId:x.account_id, balanceId:x.balance_id || null, type:x.movement_type, amount:Number(x.amount || 0), date:x.movement_date, note:x.note || "", source:x.source || "trading", savingsAccountId:x.savings_account_id || null, createdAt:x.created_at });
 const workspaceBalance = x => normaliseBalance({ id:x.id, workspaceId:x.workspace_id, name:x.name, startingBalance:x.starting_balance, baseCurrency:x.base_currency, goals:x.goals, riskSettings:x.risk_settings, guardrails:x.guardrails, challengeEnabled:x.challenge_enabled, challengeStartingBalance:x.challenge_starting_balance, challengeMode:x.challenge_mode, challengeLevelCount:x.risk_settings?.challengeLevelCount, challengeReward:x.risk_settings?.challengeReward, challengeAdaptiveRiskPct:x.risk_settings?.challengeAdaptiveRiskPct, challengeAdaptiveDrawdownPct:x.risk_settings?.challengeAdaptiveDrawdownPct, challengeCertificates:x.risk_settings?.challengeCertificates, isActive:x.is_active });
 export const tradeBalanceResult = x => ({ id:x.id, tradeId:x.trade_id, balanceId:x.balance_id, riskPct:Number(x.risk_pct || 0), positionSize:Number(x.position_size || 0), entryPrice:x.entry_price == null ? "" : Number(x.entry_price), exitPrice:x.exit_price == null ? "" : Number(x.exit_price), grossPnl:Number(x.gross_pnl || 0), commission:Number(x.commission || 0), swap:Number(x.swap || 0), netPnl:persistedBalanceResultNetPnl(x.net_pnl), closeDate:x.close_date || "", closeTime:(x.close_time || "").slice(0,5), status:x.status || "closed" });
@@ -157,7 +161,7 @@ export async function createMarkup(userId,accountId,x){if(globalThis.__tjCloudWr
 export async function updateMarkup(id,x){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};try{const media=await mediaForSave("premarket_markups",id,x,false);const q=markupRow(x);if(media.write)q.screenshots=media.value;else delete q.screenshots;const {data,error}=await versionedUpdate("premarket_markups",id,x,q).select(THIN_COLUMNS.premarket_markups).single();return error?fail(error,"update the markup"):{data:markup({...data,screenshots:media.local})};}catch(e){return fail(e,"update the markup");}}
 export async function deleteMarkup(id){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};const {error}=await supabase.from("premarket_markups").delete().eq("id",id);return error?fail(error,"delete the markup"):{};}
 export async function saveTradeReview(userId,accountId,x){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};try{const id=persistedUuid(x.id)?x.id:recordUuid();const creating=!x.id;const media=await mediaForSave("trade_reviews",id,{...x,userId},creating);const q={user_id:userId,account_id:accountId,trade_id:x.tradeId,review_date:x.date,review_time:x.time||null,done_well:x.doneWell,went_wrong:x.wentWrong,execution_review:x.execution,rule_adherence:x.adherence,psychology:x.psychology,execution_score:reviewScore(x.executionScore)||null,adherence_score:reviewScore(x.adherenceScore)||null,psychology_score:reviewScore(x.psychologyScore)||null,lessons:x.lessons,action_items:x.actions,notes:x.notes,screenshots:x.screenshots||[]};if(media.write)q.screenshots=media.value;else delete q.screenshots;const {data,error}=creating?await supabase.from("trade_reviews").insert({id,...q}).select(THIN_COLUMNS.trade_reviews).single():await versionedUpdate("trade_reviews",id,x,q).select(THIN_COLUMNS.trade_reviews).single();return error?fail(error,"save the review"):{data:review({...data,screenshots:media.local})};}catch(e){return fail(e,"save the review");}}
-export async function savePeriodReview(userId,accountId,x){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};try{const q={user_id:userId,account_id:accountId,period_type:x.type,period_key:x.key,content:x.content||{},completed:!!x.completed};const {data,error}=await supabase.from("period_reviews").upsert(q,{onConflict:"account_id,period_type,period_key"}).select("id,account_id,period_type,period_key,completed,updated_at").single();return error?fail(error,"save the period review"):{data:periodReview({...data,content:q.content})};}catch(e){return fail(e,"save the period review");}}
+export async function savePeriodReview(userId,accountId,x){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};try{const q={user_id:userId,account_id:accountId,period_type:x.type,period_key:x.key,content:x.content||{},completed:!!x.completed};const {data,error}=journalWriteSafetyEnabled ? await supabase.rpc("tj_save_progress",{kind:"period-review",target_id:accountId,expected_version:x.updatedAt??null,value:{type:x.type,key:x.key,content:q.content,completed:q.completed},operation_key:await writeOperationKey("period-review",userId,{accountId,base:x.updatedAt??null,value:q}),protocol:journalWriteProtocol}) : await supabase.from("period_reviews").upsert(q,{onConflict:"account_id,period_type,period_key"}).select("id,account_id,period_type,period_key,completed,updated_at").single();return error?fail(error,"save the period review"):{data:periodReview({...data,content:q.content})};}catch(e){return fail(e,"save the period review");}}
 export async function markLocalDataMigrated(userId){if(globalThis.__tjCloudWritesPaused===true)return{data:null,error:'Saving is paused for this account.'};await supabase.from("user_settings").upsert({user_id:userId,migrated_local_data:true},{onConflict:"user_id"});}
 export async function hasMigratedLocalData(userId){const {data}=await supabase.from("user_settings").select("migrated_local_data").eq("user_id",userId).maybeSingle();return !!data?.migrated_local_data;}
 export async function importLegacyAccount(userId,x){const a=await createAccount(userId,x);if(a.error)return a;for(const t of x.trades||[]){const r=await createTrade(userId,a.data.id,t);if(r.error)return r;}for(const r of x.rules||[])await createRule(userId,a.data.id,r.text);return {data:{accountId:a.data.id}};}
@@ -200,4 +204,27 @@ export async function saveBrokerImport(userId, workspaceId, expectedVersion, pla
     if (error || data?.account_id !== workspaceId) return {error:'Could not confirm the import. Refresh the journal before retrying.'};
     return {data};
   } catch { return {error:'Could not confirm the import. Refresh the journal before retrying.'}; }
+}
+
+export async function replaceSavingsAccounts(userId, accountId, list, existing, options = {}) {
+  if(globalThis.__tjCloudWritesPaused===true)return {error:'Saving is paused for this account.'};
+  try {
+    if (!journalWriteSafetyEnabled) return {error:'Atomic savings saves are not activated on this server. Your current savings are unchanged.'};
+    const items=savingsValues(list),expected_rows=savingsBase(existing);
+    const args={workspace_id:accountId,expected_rows,items,...(options.finance ? {finance_patch:{enabled:!!options.finance.enabled,tradingTarget:Number(options.finance.tradingTarget)||0},expected_finance:options.previousFinance?.updatedAt ? {enabled:!!options.previousFinance.enabled,tradingTarget:Number(options.previousFinance.tradingTarget)||0,updatedAt:options.previousFinance.updatedAt} : null} : {})};
+    const operation_key=await writeOperationKey('savings',userId,args);
+    const {data,error}=await supabase.rpc('tj_replace_savings',{...args,operation_key,protocol:journalWriteProtocol});
+    if(error)return fail(error,'save savings accounts');
+    if(!Array.isArray(data)&&!Array.isArray(data?.savings))return {error:'The savings save was not confirmed. Keep your draft and retry.'};
+    notifyJournalMutation('savings_accounts',false,accountId);
+    return {data:(Array.isArray(data)?data:data.savings).map(savingsAccount),...(data.finance?{finance:financeSetting(data.finance)}:{})};
+  }catch(error){return fail(error,'save savings accounts');}
+}
+
+export async function convertLegacyCatalog(userId,workspaceId,expectedCatalog,expectedClassification) {
+ if(globalThis.__tjCloudWritesPaused===true)return {error:'Saving is paused for this account.'};
+ if(!journalWriteSafetyEnabled)return {error:'Legacy catalog conversion is not activated.'};
+ const {data,error}=await supabase.rpc('tj_convert_legacy_catalog',{workspace_id:workspaceId,expected_catalog:expectedCatalog,expected_classification:expectedClassification,protocol:journalWriteProtocol});
+ if(error)return fail(error,'convert the original catalog');
+ notifyJournalMutation('accounts',false,workspaceId);return {data};
 }

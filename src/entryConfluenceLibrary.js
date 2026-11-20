@@ -1,3 +1,4 @@
+import {canonicalWrite} from './journalWriteSafety.js';
 import {classificationSection} from './workspaceClassification.js';
 // Stable keys preserve historical associations; current labels are presentation only.
 const copy = value => structuredClone(value);
@@ -17,7 +18,7 @@ export function readEntryConfluenceLibrary(account = {}, typeTags = account.type
     entries:entrySection.items.map(display),
     categories:confluenceSection.categories.map(category=>({...display(category),tags:category.tags.map(display)})),
     base:{id:account.id,classification:account.classification,confluenceSessions:entryTypes||[],typeTags:typeTags||[]},
-    legacyCatalog:account.entryConfluenceLibrary ?? null,
+    legacyCatalog:account.classification?.legacyCatalogSource && canonicalWrite(account.classification.legacyCatalogSource)===canonicalWrite(account.entryConfluenceLibrary??null) ? null : account.entryConfluenceLibrary ?? null,
   };
 }
 export function librarySaveValue(library, section) {

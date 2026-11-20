@@ -135,7 +135,8 @@ export function assertClassificationRecovery(accounts) {
     const config=workspace.classification;
     if (config != null) {
       const badCatalog=typeof config!=='object' || Array.isArray(config) ||
-        Object.keys(config).some(key=>!['entryTypes','confluences','ruleOrder'].includes(key));
+        Object.keys(config).some(key=>!['entryTypes','confluences','ruleOrder','legacyCatalogSource'].includes(key));
+      if(Object.hasOwn(config,'legacyCatalogSource') && (config.legacyCatalogSource?.version!==1 || !Array.isArray(config.legacyCatalogSource.entries) || !Array.isArray(config.legacyCatalogSource.categories)))throw new Error('Invalid original catalog in recovery copy.');
       const entries=config.entryTypes;
       const confluences=config.confluences;
       const order=config.ruleOrder;

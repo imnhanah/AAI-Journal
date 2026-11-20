@@ -1,3 +1,4 @@
+export const backtestCloudModelLinksEnabled = (cloudAdapter,env=import.meta.env) => cloudAdapter===true && env?.VITE_JOURNAL_WRITE_SAFETY==='true' && env?.VITE_BACKTEST_MODEL_LINKS_CLOUD==='true';
 import {classificationSection} from './workspaceClassification.js';
 
 export function backtestModelLinksEnabled(localOnly, env=import.meta.env, hostname=globalThis.location?.hostname) {

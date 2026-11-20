@@ -21,7 +21,7 @@ const normaliseProgress = (progress) => progress ? {
 export default function useChallenge(account, userId, startupProgress = null, startupComplete = false) {
   const key=account?.id ? `${isLocalJournal()?'local':'cloud'}:${userId}:${account.id}` : '';
   const currentKey=useRef(key); currentKey.current=key;
-  const seed=useMemo(()=>normaliseProgress(startupProgress) || (startupComplete ? emptyChallenge() : null),[startupProgress,startupComplete]);
+  const seed=useMemo(()=>normaliseProgress(startupProgress) || (startupComplete ? {...emptyChallenge(),baseRevision:null} : null),[startupProgress,startupComplete]);
   const [record,setRecord]=useState(()=>seed && key ? {key,state:seed,modesReady:true} : null);
   const [loading,setLoading]=useState(()=>Boolean(key && !seed)), [saving,setSaving]=useState(false), [error,setError]=useState('');
   const ready=record?.key === key;
@@ -49,7 +49,7 @@ export default function useChallenge(account, userId, startupProgress = null, st
       // A zero-row column query distinguishes an old schema from a fresh account.
       const probe=await challengeDb.probe('account',account.id);
       if(currentKey.current!==key)return;
-      const next=data ? {activeLevel:data.active_level,statuses:data.statuses || {},notes:data.notes || {},automation:data.automation || null} : emptyChallenge();
+      const next=data ? {activeLevel:data.active_level,statuses:data.statuses || {},notes:data.notes || {},automation:data.automation || null,baseRevision:data.updated_at??null} : {...emptyChallenge(),baseRevision:null};
       setReadVerified(true);setRecord({key,state:latest.current?.key===key?latest.current.next:next,modesReady:!probe.error});
     } catch(failure) {if(currentKey.current===key){setReadVerified(false);setError(`Could not load challenge: ${failure.message}. Check that the Challenge SQL migrations are applied.`);}}
     finally {if(currentKey.current===key)setLoading(false);}
@@ -88,6 +88,7 @@ export default function useChallenge(account, userId, startupProgress = null, st
   },[account?.id,key]);
   async function persist(next) {
     if(!draft)return false;
+    if(!Object.hasOwn(next,'baseRevision'))next={...next,baseRevision:baseline.baseRevision};
     latest.current={key,next};setRecord(current=>current?.key===key?{...current,state:next}:current);draft.edit({next});
     let attempt;try{attempt=await draft.capture();}catch(error){setError(error.message);return false;}
     if(!ready || loading || !readVerified || flight.current===key){setError('Progress is retained on this device. Load the saved challenge before retrying.');return false;}
@@ -97,7 +98,8 @@ export default function useChallenge(account, userId, startupProgress = null, st
       await queueChallengeWrite(key,async()=>{
         const payload={account_id:account.id,user_id:userId,active_level:next.activeLevel,statuses:next.statuses,notes:next.notes,updated_at:new Date().toISOString()};
         if(record.modesReady)payload.automation=next.automation || null;
-        const {error:failure}=await challengeDb.save('account',payload);
+        const {data:saved,error:failure}=await challengeDb.save('account',payload,next.baseRevision);
+        if(saved?.updated_at)next={...next,baseRevision:saved.updated_at};
         if(failure)throw failure;
       });
       await draft.acknowledge(attempt);

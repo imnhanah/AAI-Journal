@@ -1,3 +1,4 @@
+import {journalWriteSafetyEnabled, journalWriteProtocol, writeOperationKey} from './journalWriteSafety.js';
 import {supabase} from './supabaseClient';
 import {privateCache,notifyJournalMutation} from './privateCacheRuntime';
 import {mergeBacktestDelta,protectTestTrade} from './backtestModel';
@@ -30,6 +31,8 @@ export async function saveTestRun(run,remove=false) {
 export async function saveTestTrade(run,trade,remove=false) {
   if(globalThis.__tjCloudWritesPaused===true) throw new Error('Saving is paused for this account.');
   const safe=protectTestTrade(run,trade);
+  const args={row_id:trade.id,run_id:run.id,expected_version:trade.updatedAt||null,trade_data:safe.metadata,media:safe.screenshots??null,remove_row:remove};
+  if(journalWriteSafetyEnabled)return rpc('tj_save_backtest_trade_v2',{...args,operation_key:await writeOperationKey('backtest',privateCache.token().owner,args),protocol:journalWriteProtocol});
   return rpc('tj_save_backtest_trade',{row_id:trade.id,run_id:run.id,expected_version:trade.updatedAt||null,trade_data:safe.metadata,media:safe.screenshots??null,remove_row:remove});
 }
 export async function loadTestMedia(user,trade) {

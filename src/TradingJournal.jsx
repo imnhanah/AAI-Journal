@@ -1,4 +1,5 @@
-import {backtestModelLinksEnabled,backtestModelWorkspace,backtestModelLabel,selectBacktestModel,presentBacktestEntryModel,rawBacktestEntryModel} from './backtestEntryModel.js';
+import {journalWriteSafetyEnabled} from './journalWriteSafety.js';
+import {backtestCloudModelLinksEnabled,backtestModelLinksEnabled,backtestModelWorkspace,backtestModelLabel,selectBacktestModel,presentBacktestEntryModel,rawBacktestEntryModel} from './backtestEntryModel.js';
 import {EntryTypeControl,ConfluenceControls} from './EntryConfluenceControls.jsx';
 import {readEntryConfluenceLibrary} from './entryConfluenceLibrary.js';
 import {EntryConfluenceSetup, useRuleOrdering} from './WorkspaceClassification.jsx';
@@ -210,7 +211,7 @@ import { validateImageFile, shouldHandleImagePaste } from './mediaMutation';
 import {
   fetchAllUserData as cloudFetchAllUserData, createAccount as cloudCreateAccount, updateAccount as cloudUpdateAccount, saveWorkspaceClassification as cloudSaveWorkspaceClassification, addRewardPreset as cloudAddRewardPreset, deleteAccount as cloudDeleteAccount, resetAccountData as cloudResetAccountData,
   createTrade as cloudCreateTrade, updateTrade as cloudUpdateTrade, deleteTrade as cloudDeleteTrade, createRule as cloudCreateRule, updateRule as cloudUpdateRule, deleteRule as cloudDeleteRule, setCheckin as cloudSetCheckin,
-  saveManagedLists as cloudSaveManagedLists, createMarkup as cloudCreateMarkup, updateMarkup as cloudUpdateMarkup, deleteMarkup as cloudDeleteMarkup, saveTradeReview as cloudSaveTradeReview, savePeriodReview as cloudSavePeriodReview, hasMigratedLocalData as cloudHasMigratedLocalData, markLocalDataMigrated as cloudMarkLocalDataMigrated, importLegacyAccount as cloudImportLegacyAccount, saveFinanceSettings as cloudSaveFinanceSettings, createSavingsAccount as cloudCreateSavingsAccount, updateSavingsAccount as cloudUpdateSavingsAccount, deleteSavingsAccount as cloudDeleteSavingsAccount, createFinanceMovement as cloudCreateFinanceMovement, updateFinanceMovement as cloudUpdateFinanceMovement, deleteFinanceMovement as cloudDeleteFinanceMovement, createWorkspaceBalance as cloudCreateWorkspaceBalance, updateWorkspaceBalance as cloudUpdateWorkspaceBalance, deleteWorkspaceBalance as cloudDeleteWorkspaceBalance, saveTradeBalanceResults as cloudSaveTradeBalanceResults, deleteTradeBalanceResultsNotIn as cloudDeleteTradeBalanceResultsNotIn,
+  saveManagedLists as cloudSaveManagedLists, createMarkup as cloudCreateMarkup, updateMarkup as cloudUpdateMarkup, deleteMarkup as cloudDeleteMarkup, saveTradeReview as cloudSaveTradeReview, savePeriodReview as cloudSavePeriodReview, hasMigratedLocalData as cloudHasMigratedLocalData, markLocalDataMigrated as cloudMarkLocalDataMigrated, importLegacyAccount as cloudImportLegacyAccount, replaceSavingsAccounts as cloudReplaceSavingsAccounts, saveFinanceSettings as cloudSaveFinanceSettings, createSavingsAccount as cloudCreateSavingsAccount, updateSavingsAccount as cloudUpdateSavingsAccount, deleteSavingsAccount as cloudDeleteSavingsAccount, createFinanceMovement as cloudCreateFinanceMovement, updateFinanceMovement as cloudUpdateFinanceMovement, deleteFinanceMovement as cloudDeleteFinanceMovement, createWorkspaceBalance as cloudCreateWorkspaceBalance, updateWorkspaceBalance as cloudUpdateWorkspaceBalance, deleteWorkspaceBalance as cloudDeleteWorkspaceBalance, saveTradeBalanceResults as cloudSaveTradeBalanceResults, deleteTradeBalanceResultsNotIn as cloudDeleteTradeBalanceResultsNotIn,
 } from "./db";
 import * as localJournal from './localJournalDb';
 import { createAccountPatch, mergeAccountPatch } from './accountPatch.js';
@@ -252,6 +253,7 @@ const hasMigratedLocalData = journalStorage(localJournal.hasMigratedLocalData, c
 const markLocalDataMigrated = journalStorage(localJournal.markLocalDataMigrated, cloudMarkLocalDataMigrated);
 const importLegacyAccount = journalStorage(localJournal.importLegacyAccount, cloudImportLegacyAccount);
 const saveFinanceSettings = journalStorage(localJournal.saveFinanceSettings, cloudSaveFinanceSettings);
+const replaceSavingsAccounts = journalStorage(localJournal.replaceSavingsAccounts, cloudReplaceSavingsAccounts);
 const createSavingsAccount = journalStorage(localJournal.createSavingsAccount, cloudCreateSavingsAccount);
 const updateSavingsAccount = journalStorage(localJournal.updateSavingsAccount, cloudUpdateSavingsAccount);
 const deleteSavingsAccount = journalStorage(localJournal.deleteSavingsAccount, cloudDeleteSavingsAccount);
@@ -1316,7 +1318,7 @@ export function NewTradeModal({ onClose, onSave, editing, draft, onDraftChange, 
   const selectEntryModel=(value,choice)=>{
     if (!backtest) {set('entryType',value);return;}
     try {
-      const next=backtestModelLinksEnabled(backtestLocalOnly && localJournal.isLocalJournal())
+      const next=(backtestModelLinksEnabled(backtestLocalOnly && localJournal.isLocalJournal()) || backtestCloudModelLinksEnabled(!backtestLocalOnly && !localJournal.isLocalJournal()))
         ? selectBacktestModel(form,modelWorkspace,value,choice) : {...form,strategy:value,entryType:value};
       setForm(next);setSaveError('');
     } catch(error) {setSaveError(error.message);}
@@ -3537,7 +3539,7 @@ function ReviewLibraryPage({ readOnly = false, account: workspace, trades: works
     const record = reviewBalanceId
       ? { type, key, completed: Boolean(rawPrevious?.completed), content: { ...(rawPrevious?.content || {}), accountScopes: { ...(rawPrevious?.content?.accountScopes || {}), [reviewBalanceId]: { content, completed } } } }
       : { type, key, content, completed };
-    return onSavePeriod({...record,id:rawPrevious?.id,updatedAt:rawPrevious?.updatedAt},attempt);
+    return onSavePeriod({...record,id:rawPrevious?.id,updatedAt:Object.hasOwn(attempt||{},"baseRevision") ? attempt.baseRevision : rawPrevious?.updatedAt},attempt);
   };
 
   const reviewAnnual = reviewModels.find((model) => model.kind === "year")?.metrics;
@@ -3555,7 +3557,7 @@ function ReviewLibraryPage({ readOnly = false, account: workspace, trades: works
       <PhoneHeaderSlot>{accountPicker}
       <div className="tj-review-year-switch"><button className="tj-icon-btn" aria-label="Previous review year" onClick={() => setReviewYear((year) => year - 1)}><ChevronLeft size={17}/></button><strong>{reviewYear}</strong><button className="tj-icon-btn" aria-label="Next review year" onClick={() => setReviewYear((year) => year + 1)}><ChevronRight size={17}/></button></div></PhoneHeaderSlot>
     </div>}
-    <ReviewPage readOnly={readOnly} draftContext={draftContext.forReviewScope(reviewBalanceId || null)} reviews={reviewModels} answers={answers} questions={REVIEW_QUESTIONS} onSave={save} defaultSelectedId={`annual:${reviewYear}`} phoneControls={{year:reviewYear, onYear:setReviewYear, account:accountPicker}} onPhoneTitle={onPhoneTitle} onReviewTrades={readOnly ? undefined : reviewMonthTrades} />
+    <ReviewPage readOnly={readOnly} draftContext={draftContext.forReviewScope(reviewBalanceId || null)} reviews={reviewModels} answers={answers} answerRevisions={Object.fromEntries(reviewModels.map(model=>[model.id,rawPersisted.get(model.id)?.updatedAt??null]))} questions={REVIEW_QUESTIONS} onSave={save} defaultSelectedId={`annual:${reviewYear}`} phoneControls={{year:reviewYear, onYear:setReviewYear, account:accountPicker}} onPhoneTitle={onPhoneTitle} onReviewTrades={readOnly ? undefined : reviewMonthTrades} />
     {monthTrades && <TradeReviewEditorModal trade={monthTrades[0]} trades={monthTrades} account={account} reviews={reviews} markups={markups} onClose={() => setMonthTrades(null)} readOnly={readOnly} onSave={onSaveTrade} />}
   </div>;
 }
@@ -8832,16 +8834,9 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
     if (!account?.id) return false;
     const bad = list.find(item => !String(item.name || "").trim() || !Number.isInteger(Number(item.reminderMinutes ?? 30)) || Number(item.reminderMinutes ?? 30) < 1 || Number(item.reminderMinutes ?? 30) > 10080);
     if (bad) { showError("Check each savings account: a name and a reminder of 1 to 10,080 whole minutes."); return false; }
-    const existing = account.savingsAccounts || [];
-    const keep = new Set(list.filter(item => !String(item.id).startsWith("draft-")).map(item => item.id));
-    for (const item of existing.filter(item => !keep.has(item.id))) { const result = await deleteSavingsAccount(item.id); if (result.error) { showError(result.error); return false; } }
-    const saved = [];
-    for (const item of list) {
-      const value = { ...item, target: Number(item.target) || 0, allocationPct: Number(item.allocationPct) || 0, reminderMinutes: Number(item.reminderMinutes ?? 30), balanceId: item.balanceId || null };
-      const result = String(item.id).startsWith("draft-") ? await createSavingsAccount(user.id, account.id, value) : await updateSavingsAccount(item.id, value);
-      if (result.error) { showError(`${result.error} For cloud savings ownership, apply supabase/savings_account_scope_migration.sql.`); return false; }
-      saved.push(result.data);
-    }
+    const result = await replaceSavingsAccounts(user.id,account.id,list,account.savingsAccounts||[]);
+    if(result.error){showError(result.error);return false;}
+    const saved=result.data;
     setAccounts((items) => items.map((item) => item.id === account.id ? { ...item, savingsAccounts: saved } : item));
     showInfo("Savings accounts saved.");
     return true;
@@ -8888,7 +8883,8 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
       const updatedBalance={...balance,name:patch.name.trim(),challengeEnabled:true,challengeStartingBalance:nextBalance,challengeMode:nextMode,challengeReward:nextReward,challengeLevelCount:nextCount,challengeAdaptiveRiskPct:adaptiveRiskPct,challengeAdaptiveDrawdownPct:adaptiveDrawdownPct,goals:{...balance.goals,...goals},guardrails:{...balance.guardrails,...guardrails}};
       const saved=await updateWorkspaceBalance(user.id,account.id,updatedBalance);
       if(saved.error){showError(saved.error);return false;}
-      const persisted=await challengeDb.save('balance',{balance_id:balance.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation});
+      const persisted=await challengeDb.save('balance',{balance_id:balance.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation},state.baseRevision);
+      if(persisted.data?.updated_at)nextState.baseRevision=persisted.data.updated_at;
       if(persisted.error){showError(persisted.error.message);return false;}
       setAccounts(items=>items.map(item=>item.id===account.id?{...item,balances:item.balances.map(target=>target.id===balance.id?{...target,...saved.data}:target)}:item));
       window.dispatchEvent(new CustomEvent('aaicorefx:balance-challenge-updated',{detail:{balanceId:balance.id,state:nextState}}));
@@ -8897,7 +8893,8 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
       const settingsPatch=createAccountPatch(updatedAccount);
       const saved=await updateAccount(account.id,settingsPatch);
       if(saved.error){showError(saved.error);return false;}
-      const persisted=await challengeDb.save('account',{account_id:account.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation});
+      const persisted=await challengeDb.save('account',{account_id:account.id,user_id:user.id,active_level:nextState.activeLevel,statuses:nextState.statuses || {},notes:nextState.notes || {},automation:nextState.automation},state.baseRevision);
+      if(persisted.data?.updated_at)nextState.baseRevision=persisted.data.updated_at;
       if(persisted.error){showError(persisted.error.message);return false;}
       setAccounts(items=>items.map(item=>item.id===account.id?mergeAccountPatch(item,saved.data || settingsPatch):item));
       window.dispatchEvent(new CustomEvent('aaicorefx:account-challenge-updated',{detail:{accountId:account.id,state:nextState}}));
@@ -8921,6 +8918,16 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
 
   const handleDeleteChallenge = async (balanceId, state) => {
     const balance=balanceId?account.balances.find(item=>item.id===balanceId):null;
+    if(journalWriteSafetyEnabled && !localJournal.isLocalJournal()) {
+      const scope=balance?'balance':'account',target=balanceId||account.id;
+      const prior=await challengeDb.read(scope,target,user.id);
+      if(prior.error){showError(prior.error.message);return false;}
+      const removed=await challengeDb.remove(scope,target,user.id,prior.data?.updated_at??null);
+      if(removed.error){showError(removed.error.message);return false;}
+      setAccounts(items=>items.map(item=>item.id!==account.id?item:{...item,...(balance?{balances:item.balances.map(target=>target.id===balanceId?{...target,challengeEnabled:false}:target)}:{challengeEnabled:false})}));
+      if(!balance)await challenge.reload();
+      showInfo('Challenge deleted. Your account and trade history were kept.');return true;
+    }
     // Trades belong to the account, not to its challenge. Deleting a
     // challenge clears only challenge progress so historical journal data is
     // still available for analysis and a later challenge can start fresh.
@@ -9191,7 +9198,8 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
             Object.keys(next.statuses).forEach(key=>{if(next.statuses[key]==='In progress')next.statuses[key]='';});
             next.statuses[next.activeLevel]='In progress';
           }
-          const persisted=await challengeDb.save('balance',{balance_id:result.data.id,user_id:user.id,active_level:next.activeLevel,statuses:next.statuses,notes:next.notes,automation:next.automation});
+          const persisted=await challengeDb.save('balance',{balance_id:result.data.id,user_id:user.id,active_level:next.activeLevel,statuses:next.statuses,notes:next.notes,automation:next.automation},prior.data?.updated_at??null);
+          if(persisted.data?.updated_at)next.baseRevision=persisted.data.updated_at;
           if(persisted.error){showError(persisted.error.message);return false;}
           window.dispatchEvent(new CustomEvent('aaicorefx:balance-challenge-updated',{detail:{balanceId:result.data.id,state:next}}));
         }
@@ -9266,17 +9274,16 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
       migratedTradeResults = savedByTradeId;
     }
     let savedSavings = account.savingsAccounts || [];
+    let savedFinance = account.finance;
     if (!financeReadOnly) {
-      const financeResult = await saveFinanceSettings(user.id, updated.id, financeDraft || updated.finance || { enabled:false, tradingTarget:0 });
-      if (financeResult.error) { showError(`${financeResult.error} Apply supabase/finance_migration.sql, then try again.`); return false; }
       const existingSavings = account.savingsAccounts || [];
       const desiredSavings = financeDraft?.savingsAccounts || existingSavings;
-      const desiredIds = new Set(desiredSavings.filter((item) => !String(item.id).startsWith("draft-")).map((item) => item.id));
-      for (const item of existingSavings.filter((item) => !desiredIds.has(item.id))) { const result = await deleteSavingsAccount(item.id); if (result.error) { showError(result.error); return false; } }
-      savedSavings = [];
-      for (const item of desiredSavings) { const saving = {...item, balanceId:savedBalanceIds.get(item.balanceId) || item.balanceId || null}; const result = String(item.id).startsWith("draft-") ? await createSavingsAccount(user.id, updated.id, saving) : await updateSavingsAccount(item.id, saving); if (result.error) { showError(`${result.error} For cloud savings ownership, apply supabase/savings_account_scope_migration.sql.`); return false; } savedSavings.push(result.data); }
+      const savingsResult = await replaceSavingsAccounts(user.id,updated.id,desiredSavings.map(item=>({...item,balanceId:savedBalanceIds.get(item.balanceId)||item.balanceId||null})),existingSavings,{finance:financeDraft||updated.finance||{enabled:false,tradingTarget:0},previousFinance:account.finance});
+      if(savingsResult.error){showError(savingsResult.error);return false;}
+      savedSavings=savingsResult.data;
+      savedFinance=savingsResult.finance||savedFinance;
     }
-    const nextAccount = { ...updated, balances:savedBalances, trades:convertedToSingleTrades || prunedMultiTrades || (account.trades || []).map((trade) => migratedTradeResults?.has(trade.id) ? { ...trade, balanceResults:migratedTradeResults.get(trade.id) } : trade), finance:financeReadOnly ? account.finance : {enabled:!!financeDraft?.enabled}, savingsAccounts:savedSavings, financeMovements:(account.financeMovements || []).filter((movement) => !removedFinanceMovementIds.has(movement.id)) };
+    const nextAccount = { ...updated, balances:savedBalances, trades:convertedToSingleTrades || prunedMultiTrades || (account.trades || []).map((trade) => migratedTradeResults?.has(trade.id) ? { ...trade, balanceResults:migratedTradeResults.get(trade.id) } : trade), finance:financeReadOnly ? account.finance : savedFinance, savingsAccounts:savedSavings, financeMovements:(account.financeMovements || []).filter((movement) => !removedFinanceMovementIds.has(movement.id)) };
     const committedSettings = res.data || settingsPatch;
     setAccounts((accs) => accs.map((a) => (a.id === updated.id ? { ...a, ...mergeAccountPatch(a, committedSettings), balances:nextAccount.balances, trades:nextAccount.trades, finance:nextAccount.finance, savingsAccounts:nextAccount.savingsAccounts, financeMovements:nextAccount.financeMovements } : a)));
     const modeChanged = nextMode !== (challenge.state.automation?.mode ?? null);

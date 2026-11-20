@@ -878,7 +878,7 @@ function YearDetail({ review, ctx, questions, written, sectionCount, onJump }) {
 }
 
 /* ---------- page ---------- */
-export default function ReviewPage({ readOnly = false, draftContext, reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
+export default function ReviewPage({ readOnly = false, draftContext, reviews, answers = {}, answerRevisions = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(() => { const media = window.matchMedia(MOBILE_MEDIA), change = () => setPhone(media.matches); media.addEventListener("change", change); return () => media.removeEventListener("change", change); }, []);
   const years = reviews.filter((r) => r.kind === "year");
@@ -894,7 +894,7 @@ export default function ReviewPage({ readOnly = false, draftContext, reviews, an
   useStepMotion(showDetail ? 1 : 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const reviewDraft=useReviewDraftController({context:draftContext,periodId:selId,confirmedAnswers:answers[selId]??{},onDrafts:setDrafts,onError:setError});
+  const reviewDraft=useReviewDraftController({context:draftContext,periodId:selId,confirmedAnswers:answers[selId]??{},confirmedRevision:answerRevisions[selId],onDrafts:setDrafts,onError:setError});
 
   const review = byId[selId];
   const annualSaveLocked = review?.kind === "year" && !canSaveAnnualReview(review.year);
