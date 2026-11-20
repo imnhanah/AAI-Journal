@@ -338,20 +338,20 @@ function MonthTile({ review, selected, related, onSelect }) {
 }
 
 /* ---------- field helpers shared by the three layouts ---------- */
-function makeCtx(questions, val, set) {
+function makeCtx(questions, val, set, readOnly) {
   const used = new Set();
   const sectionKeys = new Set(questions.sections.map((section) => section.key));
   const field = (key, label, prompt, rows = 3) => (
     <div className="rv-field" key={key}>
       <label className="rv-label" htmlFor={`rv-${key}`}>{label}</label>
-      <textarea id={`rv-${key}`} className="rv-ta" rows={rows} placeholder={prompt} aria-label={prompt || label} value={val(key)} onChange={(e) => set(key, e.target.value)} />
+      <textarea readOnly={readOnly} id={`rv-${key}`} className="rv-ta" rows={rows} placeholder={prompt} aria-label={prompt || label} value={val(key)} onChange={(e) => set(key, e.target.value)} />
     </div>
   );
   const editorialLong = (key, label, prompt, rows = 4) => {
     if (sectionKeys.has(key)) used.add(key);
     return <div className="rv-editorial-field" key={key}>
       <label htmlFor={`rv-${key}`}>{label}</label>
-      <textarea id={`rv-${key}`} rows={rows} placeholder={prompt || "Start writing…"} aria-label={prompt || label} value={val(key)} onChange={(e) => set(key, e.target.value)} />
+      <textarea readOnly={readOnly} id={`rv-${key}`} rows={rows} placeholder={prompt || "Start writing…"} aria-label={prompt || label} value={val(key)} onChange={(e) => set(key, e.target.value)} />
     </div>;
   };
   return {
@@ -360,13 +360,13 @@ function makeCtx(questions, val, set) {
     glance: () => questions.glance.map((g) => (
       <div className="rv-field" key={g.key}>
         <label className="rv-label" htmlFor={`rv-${g.key}`}>{g.label}</label>
-        <input id={`rv-${g.key}`} className="rv-line" placeholder="Add a short read…" value={val(g.key)} onChange={(e) => set(g.key, e.target.value)} />
+        <input readOnly={readOnly} id={`rv-${g.key}`} className="rv-line" placeholder="Add a short read…" value={val(g.key)} onChange={(e) => set(g.key, e.target.value)} />
       </div>
     )),
     editorialShort: (key, label, prompt = "Add a short read…") => (
       <div className="rv-editorial-field rv-editorial-field--short" key={key}>
         <label htmlFor={`rv-${key}`}>{label}</label>
-        <input id={`rv-${key}`} placeholder={prompt} value={val(key)} onChange={(e) => set(key, e.target.value)} />
+        <input readOnly={readOnly} id={`rv-${key}`} placeholder={prompt} value={val(key)} onChange={(e) => set(key, e.target.value)} />
       </div>
     ),
     editorialLong,
@@ -878,7 +878,7 @@ function YearDetail({ review, ctx, questions, written, sectionCount, onJump }) {
 }
 
 /* ---------- page ---------- */
-export default function ReviewPage({ draftContext, reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
+export default function ReviewPage({ readOnly = false, draftContext, reviews, answers = {}, questions = DEFAULT_QUESTIONS, onSave, defaultSelectedId, phoneControls, onPhoneTitle, onReviewTrades }) {
   const [phone, setPhone] = useState(() => window.matchMedia(MOBILE_MEDIA).matches);
   useEffect(() => { const media = window.matchMedia(MOBILE_MEDIA), change = () => setPhone(media.matches); media.addEventListener("change", change); return () => media.removeEventListener("change", change); }, []);
   const years = reviews.filter((r) => r.kind === "year");
@@ -907,11 +907,11 @@ export default function ReviewPage({ draftContext, reviews, answers = {}, questi
   const dirty = Object.keys(drafts).length > 0;
   const saved = (key) => answers[selId]?.[key] ?? "";
   const val = (key) => (drafts[key] !== undefined ? drafts[key] : saved(key));
-  const set = (key,text) => reviewDraft.edit(key,text);
+  const set = (key,text) => { if (!readOnly) reviewDraft.edit(key,text); };
 
   const sectionKeys = [questions.technical.map((t) => t.key), ...questions.sections.map((s) => [s.key])];
   const written = sectionKeys.filter((keys) => keys.some((k) => val(k).trim())).length;
-  const ctx = makeCtx(questions, val, set);
+  const ctx = makeCtx(questions, val, set, readOnly);
 
   const goTo = async (id,{discard=false}={}) => {
     try{if(discard)await reviewDraft.dismissCurrent();else await reviewDraft.flushLocal();
@@ -922,11 +922,11 @@ export default function ReviewPage({ draftContext, reviews, answers = {}, questi
   const discardReviewDraft=()=>{void reviewDraft.dismissCurrent().catch(error=>setError(error.message));};
   const select = (id) => {
     if (id === selId) { setShowDetail(true); return; }
-    if (dirty) { setPending(id); return; }
+    if (dirty && !readOnly) { setPending(id); return; }
     goTo(id);
   };
   const doSave = async () => {
-    if (annualSaveLocked || saving) return false;
+    if (readOnly || annualSaveLocked || saving) return false;
     setSaving(true); setError("");
     try {
       const attempt=await reviewDraft.captureAndPersist();
@@ -956,7 +956,7 @@ export default function ReviewPage({ draftContext, reviews, answers = {}, questi
 
   if (!review) return <div className="rv"><Empty>No reviews yet.</Empty></div>;
 
-  const switchNotice = pending && (
+  const switchNotice = !readOnly && pending && (
     <div className="rv-guard" role="alert">
       <span>You have unsaved changes in {review.title}. Switch to {byId[pending].title}?</span>
       <span className="rv-bar-group">
@@ -966,7 +966,7 @@ export default function ReviewPage({ draftContext, reviews, answers = {}, questi
       </span>
     </div>
   );
-  if (phone) return <MobilePeriodReviews showDetail={showDetail} review={review} years={years} quarterGroups={quarterGroups} questions={questions} val={val} set={set} written={written} sectionCount={sectionKeys.length} onOpen={select} onReviewTrades={onReviewTrades} onCancel={discardReviewDraft} onSave={doSave} dirty={dirty} saving={saving} saveLocked={annualSaveLocked} error={error} pendingNotice={switchNotice} controls={phoneControls} onPhoneTitle={onPhoneTitle} h={{money, pct, has, rate, short, winLoss, statusOf, tone:sign, EquityChart, QuarterTrendChart}}/>;
+  if (phone) return <MobilePeriodReviews readOnly={readOnly} showDetail={showDetail} review={review} years={years} quarterGroups={quarterGroups} questions={questions} val={val} set={set} written={written} sectionCount={sectionKeys.length} onOpen={select} onReviewTrades={onReviewTrades} onCancel={discardReviewDraft} onSave={doSave} dirty={dirty} saving={saving} saveLocked={annualSaveLocked} error={error} pendingNotice={switchNotice} controls={phoneControls} onPhoneTitle={onPhoneTitle} h={{money, pct, has, rate, short, winLoss, statusOf, tone:sign, EquityChart, QuarterTrendChart}}/>;
 
   return (
     <div className="rv">
@@ -984,9 +984,9 @@ export default function ReviewPage({ draftContext, reviews, answers = {}, questi
               <b>{review.title}</b>
             </div>
             <div className="rv-bar-group">
-              <span className={`rv-save-state${dirty ? " rv-save-state--dirty" : ""}`}>{error || (annualSaveLocked ? "Annual review unlocks in Q4" : dirty ? "Unsaved changes" : "All changes saved")}</span>
-              <button type="button" className="rv-btn" disabled={!dirty || saving} onClick={() => setDrafts({})}>Cancel</button>
-              <button type="button" className="rv-btn rv-btn--primary" disabled={!dirty || saving || annualSaveLocked} onClick={doSave}>{saving ? "Saving…" : "Save review"}</button>
+              <span className={`rv-save-state${dirty ? " rv-save-state--dirty" : ""}`}>{error || (readOnly ? "Read-only" : annualSaveLocked ? "Annual review unlocks in Q4" : dirty ? "Unsaved changes" : "All changes saved")}</span>
+              <button type="button" className="rv-btn" disabled={readOnly || !dirty || saving} onClick={() => setDrafts({})}>Cancel</button>
+              <button type="button" className="rv-btn rv-btn--primary" disabled={readOnly || !dirty || saving || annualSaveLocked} onClick={doSave}>{saving ? "Saving…" : "Save review"}</button>
             </div>
           </div>
 

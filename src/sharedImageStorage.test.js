@@ -6,7 +6,7 @@ import { IMAGE_STORAGE_STATES, MAX_NEW_IMAGE_BYTES, calculateImageChecksum, crea
 const png = () => new Blob([new Uint8Array([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])], { type: 'image/png' });
 const jpeg = () => new Blob([new Uint8Array([0xff,0xd8,0xff,0xe0])], { type: 'image/jpeg' });
 const webp = () => new Blob([new Uint8Array([0x52,0x49,0x46,0x46,0,0,0,0,0x57,0x45,0x42,0x50])], { type: 'image/webp' });
-const owner = { status: 'ready', membership: MEMBERSHIP.OWNER };
+const owner = { status: 'ready', membership:MEMBERSHIP.OWNER,imageAccessStatus:'ready',imageUploadsAllowed:true };
 const free = { status: 'ready', membership: MEMBERSHIP.FREE };
 const unresolved = { status: 'error', membership: MEMBERSHIP.FREE };
 
@@ -37,7 +37,7 @@ test('new uploads validate actual PNG, JPEG, and WebP bytes at the shared bounda
   assert.equal((await validateNewImage(webp())).mimeType, 'image/webp');
   assert.match((await validateNewImage(new Blob(['not an image'], { type: 'image/png' }))).error, /PNG, JPEG, or WebP/);
   const oversized = new Blob([new Uint8Array(MAX_NEW_IMAGE_BYTES + 1)], { type: 'image/png' });
-  assert.match((await validateNewImage(oversized)).error, /5 MB/);
+  assert.match((await validateNewImage(oversized)).error, /3 MiB/);
 });
 
 test('both Owner identities receive a pending local asset and a durable upload operation', async () => {
@@ -175,4 +175,12 @@ test('historical references are compatibility inputs, including legacy images ov
   assert.equal(isHistoricalImageReference('tj-shared-media:asset-a'), true);
   assert.equal(isHistoricalImageReference('tj-case-study-storage:user-a/evidence-a'), true);
   assert.equal(isHistoricalImageReference('plain-text'), false);
+});
+
+test('temporary image-permission failures retain pending work and retry without changing originals',async()=>{
+ const persistence=memoryPersistence(),storage=createSharedImageStorage({persistence});
+ const asset=await storage.saveImage({userId:'owner-a',membership:owner,file:png(),sourceModule:'trade-journal'});let uploaded=0;
+ const failed=await storage.processUploadQueue({userId:'owner-a',membership:owner,getMembership:async()=>({imageAccessStatus:'unavailable',imageUploadsAllowed:false}),uploader:async args=>{uploaded++;return verifiedUpload(args);}});
+ assert.equal(uploaded,0);assert.equal(failed.failed,1);assert.equal((await persistence.listQueue('owner-a')).length,1);assert.equal((await storage.getImage(asset.id,'owner-a')).size,png().size);
+ const retried=await storage.processUploadQueue({userId:'owner-a',membership:owner,uploader:verifiedUpload});assert.equal(retried.processed,1);assert.equal(await storage.getStorageStatus(asset.id,'owner-a'),IMAGE_STORAGE_STATES.CLOUD_VERIFIED);
 });

@@ -6,7 +6,7 @@ import { caseStudyEvidenceCloudReference } from './caseStudyEvidenceCloud.js';
 import { applyVerifiedCaseStudyImageReferences, createCaseStudySharedImageIntegration, caseStudySharedImageId, isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
 
 const png = () => new Blob([new Uint8Array([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])], {type:'image/png'});
-const owner = {status:'ready',membership:MEMBERSHIP.OWNER};
+const owner = {status:'ready',membership:MEMBERSHIP.OWNER,imageAccessStatus:'ready',imageUploadsAllowed:true};
 const free = {status:'ready',membership:MEMBERSHIP.FREE};
 
 function memoryPersistence() {
@@ -103,11 +103,11 @@ test('late verification preserves newer edits, deleted records and replaced imag
   ];
   const updated = applyVerifiedCaseStudyImageReferences(workspace, synchronizedEvidence);
   assert.equal(updated.studies, workspace.studies);
-  assert.deepEqual(updated.evidence, [{...evidence[0],cloudRef:synchronizedEvidence[0].cloudRef}, evidence[1]]);
+  assert.deepEqual(updated.evidence, [{...evidence[0],cloudRef:synchronizedEvidence[0].cloudRef,localOnly:false}, evidence[1]]);
   assert.equal(applyVerifiedCaseStudyImageReferences(updated, synchronizedEvidence), updated);
   const laterEdit = {...workspace, evidence:[{...evidence[0],title:'Next title'}, evidence[1]]};
   assert.deepEqual(applyVerifiedCaseStudyImageReferences(laterEdit, updated.evidence).evidence[0], {
-    ...laterEdit.evidence[0], cloudRef:synchronizedEvidence[0].cloudRef,
+    ...laterEdit.evidence[0], cloudRef:synchronizedEvidence[0].cloudRef, localOnly:false,
   });
 });
 
@@ -124,4 +124,17 @@ test('Case Study synchronization leaves other features’ queued images alone', 
   assert.equal(result.processed, 0);
   assert.equal(result.failed, 0);
   assert.equal(await storage.getStorageStatus(foreign.id,'owner-a'),IMAGE_STORAGE_STATES.PENDING_UPLOAD);
+});
+
+test('new image approval promotes referenced local-only document images without changing membership or unreferenced originals',async()=>{
+ const storage=createSharedImageStorage({persistence:memoryPersistence()});let uploads=0;
+ const integration=createCaseStudySharedImageIntegration({storage,uploader:async({userId,evidenceId,blob})=>{uploads++;return {verified:true,cloudRef:caseStudyEvidenceCloudReference(`${userId}/${evidenceId}`),checksum:await calculateImageChecksum(blob)};}});
+ const selected=await integration.saveDocumentImage({userId:'free-a',membership:free,file:png(),sourceRecordId:'current'});
+ const other=await integration.saveDocumentImage({userId:'free-a',membership:free,file:png(),sourceRecordId:'unreferenced'});
+ const workspace={evidence:[],studies:[{id:'s',doc:{type:'image',attrs:{src:selected.reference,localOnly:true}}}]};
+ const approved={...free,imageAccessStatus:'ready',imageUploadsAllowed:true};
+ const result=await integration.synchronizeWorkspace({userId:'free-a',membership:free,getMembership:async()=>approved,workspace});
+ assert.equal(uploads,1);assert.equal(result.workspace.studies[0].doc.attrs.localOnly,false);assert.ok(result.workspace.studies[0].doc.attrs.cloudRef);
+ assert.equal(await storage.getStorageStatus(other.asset.id,'free-a'),IMAGE_STORAGE_STATES.LOCAL_ONLY);
+ assert.equal(approved.membership,MEMBERSHIP.FREE);assert.equal((await storage.getImage(selected.asset.id,'free-a')).size,png().size);
 });

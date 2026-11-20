@@ -1,3 +1,4 @@
+import {resolveImageUploadAccess} from './imagePolicy.js';
 export const MEMBERSHIP = Object.freeze({
   OWNER: 'owner',
   PREMIUM: 'premium',
@@ -53,6 +54,7 @@ export async function resolveCurrentEntitlements({ client, authenticated = false
   }
 }
 
-export const resolveJournalMembership = options => membershipPreviewEnabled
-  ? resolveCurrentEntitlements(options)
-  : resolveEffectiveMembership(options);
+export const resolveJournalMembership = async options => {
+  const [membership,images]=await Promise.all([membershipPreviewEnabled ? resolveCurrentEntitlements(options) : resolveEffectiveMembership(options),resolveImageUploadAccess(options)]);
+  return {...membership,...images};
+};

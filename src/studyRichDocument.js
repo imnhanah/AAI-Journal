@@ -1,3 +1,4 @@
+import {validateCaseStudyDocument} from './caseStudyRichFormat.js';
 export const RICH_DOCUMENT_VERSION = 1;
 
 export const emptyRichDocument = () => ({ version:RICH_DOCUMENT_VERSION, content:{ type:'doc', content:[{ type:'paragraph' }] } });
@@ -45,7 +46,10 @@ export const migrateSectionRichDocument = (study, sectionName, sectionIndex = 0)
 // section to legacy fields.  The mirror keeps exports and older UI paths
 // readable without allowing a later section to overwrite the overview.
 export const patchSectionRichDocument = (study, sectionName, sectionIndex, document) => {
-  const current = normaliseRichDocument(document) || emptyRichDocument();
+  if (!validateCaseStudyDocument(document)) throw new Error('This document needs a newer editor. The existing section was preserved.');
+  const existing = study?.sectionDocuments?.[sectionName] || (sectionIndex === 0 ? study?.richDocument : null);
+  if (existing && !validateCaseStudyDocument(existing)) throw new Error('The existing section needs a newer editor and is protected.');
+  const current = normaliseRichDocument(document);
   const text = richDocumentText(current);
   const patch = { sectionDocuments:{ ...(study?.sectionDocuments || {}), [sectionName]:current } };
   if (sectionIndex === 0) {

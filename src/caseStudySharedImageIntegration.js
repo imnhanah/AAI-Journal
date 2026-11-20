@@ -20,16 +20,18 @@ export const isCaseStudySharedImageReference = value => !!caseStudySharedImageId
 
 // Apply verified references to the same evidence and asset in the latest
 // workspace. Uploads can finish after edits, removals or an image replacement.
-export function applyVerifiedCaseStudyImageReferences(workspace, synchronizedEvidence) {
+export function applyVerifiedCaseStudyImageReferences(workspace, synchronizedEvidence, verifiedAssets=[]) {
   const verified = new Map(synchronizedEvidence.filter(item => item.cloudRef).map(item => [item.id, item]));
   let changed = false;
   const evidence = workspace.evidence.map(item => {
     const candidate = verified.get(item.id);
     if (!candidate || item.cloudRef || !item.url || candidate.url !== item.url) return item;
     changed = true;
-    return { ...item, cloudRef: candidate.cloudRef };
+    return { ...item, cloudRef: candidate.cloudRef, localOnly:false };
   });
-  return changed ? { ...workspace, evidence } : workspace;
+  const refs=new Map(verifiedAssets.map(asset=>[asset.reference,asset.cloudRef]));
+  const visit=value=>{if(!value||typeof value!=='object')return value;if(Array.isArray(value)){const next=value.map(visit);return next.some((x,i)=>x!==value[i])?next:value;}let next=value;for(const [key,item]of Object.entries(value)){const result=visit(item);if(result!==item){if(next===value)next={...value};next[key]=result;}}const ref=refs.get(value.src);if(ref&&!value.cloudRef)next={...next,cloudRef:ref,localOnly:false};return next;};
+  return visit(changed ? { ...workspace, evidence } : workspace);
 }
 
 // This adapter is intentionally narrow: it makes the Case Study Library use
@@ -38,20 +40,22 @@ export function applyVerifiedCaseStudyImageReferences(workspace, synchronizedEvi
 export function createCaseStudySharedImageIntegration({ storage = createSharedImageStorage(), uploader = uploadCaseStudyEvidenceImage } = {}) {
   const save = async ({ userId, membership, file, sourceRecordId = '', sourceModule = 'case-study-evidence' } = {}) => {
     const asset = await storage.saveImage({ userId, membership, file, sourceModule, sourceRecordId, fileName: file?.name || 'Case Study image' });
-    return { asset, reference: caseStudySharedImageReference(asset.id) };
+    return { asset, reference: caseStudySharedImageReference(asset.id), localOnly: asset.storageState === IMAGE_STORAGE_STATES.LOCAL_ONLY };
   };
   const sync = async ({ userId, membership, getMembership, workspace } = {}) => {
+    if(getMembership)membership=await getMembership();
     // An image can be selected while membership is still resolving. In that
     // case it is deliberately stored local-only, rather than risk an
-    // unauthorized upload. Once an authenticated Owner is known, promote
-    // *only* un-published Case Study evidence assets into the existing queue.
+    // unauthorized upload. Once independent image authorization is confirmed, promote
+    // *only* referenced, un-published Case Study assets into the existing queue.
     // This preserves the evidence record and its stable reference; the
     // cloudRef is still published only after processUploadQueue verifies bytes.
     let recoveredLocalOnly = 0;
     if (canQueueCloudUpload(membership)) {
-      for (const item of workspace?.evidence || []) {
-        const assetId = caseStudySharedImageId(item?.url);
-        if (!assetId || item?.cloudRef) continue;
+      const references=new Set((workspace?.evidence||[]).filter(item=>!item.cloudRef).map(item=>caseStudySharedImageId(item.url)).filter(Boolean));
+      const collect=value=>{if(Array.isArray(value)){value.forEach(collect);return;}if(value&&typeof value==='object'){if(value.src&&!value.cloudRef){const id=caseStudySharedImageId(value.src);if(id)references.add(id);}for(const[key,item]of Object.entries(value))if(key!=='src'&&key!=='cloudRef')collect(item);}else if(typeof value==='string'){const id=caseStudySharedImageId(value);if(id)references.add(id);}};
+      collect(workspace?.studies||[]);
+      for (const assetId of references) {
         const asset = await storage.getImageMetadata(assetId, userId);
         if (asset?.storageState !== IMAGE_STORAGE_STATES.LOCAL_ONLY || asset.cloudPath || !CASE_STUDY_IMAGE_MODULES.includes(asset.sourceModule)) continue;
         if (await storage.queueCloudUpload(assetId, { userId, membership })) recoveredLocalOnly += 1;
@@ -81,9 +85,11 @@ export function createCaseStudySharedImageIntegration({ storage = createSharedIm
       if (asset?.storageState !== IMAGE_STORAGE_STATES.CLOUD_VERIFIED || !asset.cloudPath || item.cloudRef || !CASE_STUDY_IMAGE_MODULES.includes(asset.sourceModule)) return item;
       // Keep the local shared reference as url. It is always tried first;
       // cloudRef is only metadata published after byte verification.
-      return { ...item, cloudRef: caseStudyEvidenceCloudReference(asset.cloudPath) };
+      return { ...item, cloudRef: caseStudyEvidenceCloudReference(asset.cloudPath), localOnly:false };
     }));
-    return { ...result, recoveredLocalOnly, workspace: { ...workspace, evidence } };
+    const assets=await storage.getImagesForRecord(userId,'');
+    const verifiedAssets=assets.filter(asset=>asset.storageState===IMAGE_STORAGE_STATES.CLOUD_VERIFIED&&asset.cloudPath&&CASE_STUDY_IMAGE_MODULES.includes(asset.sourceModule)).map(asset=>({reference:caseStudySharedImageReference(asset.id),cloudRef:caseStudyEvidenceCloudReference(asset.cloudPath)}));
+    return { ...result, recoveredLocalOnly, verifiedAssets, workspace:applyVerifiedCaseStudyImageReferences({...workspace,evidence},evidence,verifiedAssets) };
   };
   return {
     saveEvidenceImage: save,

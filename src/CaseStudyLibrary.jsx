@@ -1,3 +1,4 @@
+import {LOCAL_IMAGE_WARNING} from './imagePolicy.js';
 import { Component, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {ConfirmationContext, useAlert, useConfirmation, usePrompt} from './ConfirmationDialog.jsx';
 import {useNavStep} from './useBackNavigation.js';
@@ -26,13 +27,16 @@ import { evidenceImageReference, resolveCaseStudyCover } from './caseStudyCover.
 import { applyVerifiedCaseStudyImageReferences, caseStudySharedImageIntegration, isCaseStudySharedImageReference } from './caseStudySharedImageIntegration.js';
 import { resolveJournalMembership } from './membership.js';
 import { BUILT_IN_CASE_STUDY_TEMPLATES, applyTemplateToStudy, templateSectionNames, templateSections } from './caseStudyTemplates.js';
+import CaseStudyV8Toolbar from './CaseStudyV8Toolbar.jsx';
+import { caseStudyV8Preview } from './caseStudyRichFormat.js';
+import { isLocalJournal } from './localJournalDb.js';
 import { caseStudyReconciliationCounts, createCaseStudyReconciliationProposal } from './caseStudyReconciliation.js';
 
 const now = () => new Date().toISOString();
 const CaseStudyImageOwnerContext = createContext('');
-const useCaseStudyEvidenceImage = item => {
+const useCaseStudyEvidenceImage = (item, options={}) => {
   const ownerUserId = useContext(CaseStudyImageOwnerContext);
-  return useEvidenceImageUrl(evidenceImageReference(item), { userId: ownerUserId, cloudRef: item?.cloudRef || '' });
+  return useEvidenceImageUrl(evidenceImageReference(item), { userId: ownerUserId, cloudRef: item?.cloudRef || '',localOnly:item?.localOnly===true,...options });
 };
 const uid = (prefix) => globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const NOTEBOOKS = [
@@ -80,7 +84,14 @@ const readCaseStudyPanelWidth = () => {
 };
 const writeCaseStudyPanelWidth = value => { try { window.localStorage.setItem(CASE_STUDY_PANEL_WIDTH_KEY,String(value)); } catch {} };
 class ChartViewerBoundary extends Component { constructor(props){super(props);this.state={error:false};} static getDerivedStateFromError(){return {error:true};} componentDidCatch(error){console.error('Case Study chart viewer failed to render.', error);} render(){return this.state.error ? <main className="cv"><header><button onClick={this.props.onBack}><ArrowLeft/>Evidence</button></header><p className="cv-error">The chart viewer could not open this evidence safely. Return to the study and check the evidence image.</p></main> : this.props.children;} }
-class RichDocumentBoundary extends Component { constructor(props){super(props);this.state={error:false};} static getDerivedStateFromError(){return {error:true};} componentDidCatch(error){console.error('Case Study document editor failed to render.', error);} render(){if(!this.state.error)return this.props.children;return <div className="cse-writing"><p className="cse-muted">The document editor could not open safely. Your existing text is still available below.</p><textarea aria-label="Overview fallback" value={this.props.value||''} onChange={event=>this.props.onChange(event.target.value)}/></div>;} }
+class RichDocumentBoundary extends Component {
+  constructor(props) { super(props); this.state = { error:false }; }
+  static getDerivedStateFromError() { return { error:true }; }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return <div className="cse-writing rde-protected"><p role="alert">The document editor could not open safely. This section is protected from changes.</p><p className="rde-protected-text">{this.props.value || ''}</p></div>;
+  }
+}
 
 function CaseStudyDropdown({id,label,value,options,onChange,openId,setOpenId,className='',align='start'}) {
   const rootRef=useRef(null);
@@ -262,8 +273,8 @@ function Cs2StudyCard({ view, study, notebook, evidence, menuOpen, menuRootRef, 
 
 // Evidence tab (stage 2): searchable card grid with a details aside for the selected item.
 function Cs2EvidenceThumb({ item }) {
-  const image = useCaseStudyEvidenceImage(item);
-  return image.url ? <img src={image.url} alt=""/> : <ImageIcon size={26} aria-hidden="true"/>;
+  const image = useCaseStudyEvidenceImage(item,{defer:true});
+  return image.url ? <img ref={image.observeRef} src={image.url} alt=""/> : <ImageIcon ref={image.observeRef} size={26} aria-hidden="true"/>;
 }
 function Cs2Field({ label, value, multiline = false, onCommit }) {
   const [draft, setDraft] = useState(value || '');
@@ -614,40 +625,23 @@ const removeStudySection = (study, index) => {
   }
   return patch;
 };
-function Cs2Toolbar({ editor, meta, onStoreImage }) {
-  const [, setTick] = useState(0);
-  const [linkOpen, setLinkOpen] = useState(false);
-  const [href, setHref] = useState('');
-  const [notice, setNotice] = useState('');
+function Cs2Toolbar({ editor, meta, onStoreImage, sections, activeIndex, onSelectSection }) {
   const fileInput = useRef(null);
-  useEffect(() => { if (!editor) return undefined; const update = () => setTick((value) => value + 1); editor.on('transaction', update); editor.on('focus', update); return () => { editor.off('transaction', update); editor.off('focus', update); }; }, [editor]);
-  const ready = !!editor && !editor.isDestroyed;
-  const run = (fn) => () => { if (ready) fn(editor.chain().focus()).run(); };
-  const button = (Icon, label, action, active = false, disabled = false) => <button type="button" aria-label={label} title={label} className={active ? 'is-on' : ''} disabled={!ready || disabled} onMouseDown={(event) => event.preventDefault()} onClick={action}><Icon size={16}/></button>;
-  const openLink = () => { if (!ready) return; setHref(editor.getAttributes('link').href || ''); setNotice(''); setLinkOpen(true); };
-  const applyLink = () => {
-    if (!ready) return;
-    const value = href.trim();
-    if (!value) editor.chain().focus().extendMarkRange('link').unsetLink().run();
-    else if (!isSafeLink(value)) { setNotice('Use an http, https, or mailto link.'); return; }
-    else editor.chain().focus().extendMarkRange('link').setLink({ href: value }).run();
-    setLinkOpen(false);
+  const [notice, setNotice] = useState('');
+  const insertImage = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !editor || editor.isDestroyed) return;
+    try { await insertImageInView(editor.view, file, undefined, { saveImage:onStoreImage }); }
+    catch (error) { setNotice(error.message); }
   };
-  const insertImage = async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file || !ready) return; try { await insertImageInView(editor.view, file, undefined, {saveImage:onStoreImage}); setNotice(''); } catch (error) { setNotice(error.message); } };
-  const is = (name, attrs) => ready && editor.isActive(name, attrs);
-  return <div className="cs2-tbar" role="toolbar" aria-label="Document formatting">
-    <div className="cs2-tbtns">
-      {button(Undo2, 'Undo', run((chain) => chain.undo()), false, !ready || !editor.can().undo())}{button(Redo2, 'Redo', run((chain) => chain.redo()), false, !ready || !editor.can().redo())}<i/>
-      {button(Bold, 'Bold', run((chain) => chain.toggleBold()), is('bold'))}{button(Italic, 'Italic', run((chain) => chain.toggleItalic()), is('italic'))}{button(UnderlineIcon, 'Underline', run((chain) => chain.toggleUnderline()), is('underline'))}{button(Strikethrough, 'Strikethrough', run((chain) => chain.toggleStrike()), is('strike'))}{button(RemoveFormatting, 'Clear formatting', run((chain) => chain.unsetAllMarks().clearNodes()))}<i/>
-      {button(Heading1, 'Heading 1', run((chain) => chain.toggleHeading({ level: 1 })), is('heading', { level: 1 }))}{button(Heading2, 'Heading 2', run((chain) => chain.toggleHeading({ level: 2 })), is('heading', { level: 2 }))}{button(Heading3, 'Heading 3', run((chain) => chain.toggleHeading({ level: 3 })), is('heading', { level: 3 }))}<i/>
-      {button(List, 'Bullet list', run((chain) => chain.toggleBulletList()), is('bulletList'))}{button(ListOrdered, 'Numbered list', run((chain) => chain.toggleOrderedList()), is('orderedList'))}{button(Quote, 'Quote', run((chain) => chain.toggleBlockquote()), is('blockquote'))}{button(Minus, 'Divider', run((chain) => chain.setHorizontalRule()))}<i/>
-      {button(Link2, 'Add link', openLink, is('link'))}{button(Unlink, 'Remove link', run((chain) => chain.extendMarkRange('link').unsetLink()), false, !is('link'))}{button(ImagePlus, 'Insert image', () => fileInput.current?.click())}
-      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={insertImage}/>
-      <span className="cs2-mut cs2-tmeta">{ready ? meta : 'Click into a section to format it'}</span>
-    </div>
-    {linkOpen && <div className="cs2-lnk"><input autoFocus value={href} onChange={(event) => { setHref(event.target.value); setNotice(''); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyLink(); } if (event.key === 'Escape') setLinkOpen(false); }} placeholder="Paste a link and press Enter" aria-label="Link address"/><button type="button" className="cs2-btn is-sm is-pri" onClick={applyLink}>Apply</button><button type="button" className="cs2-btn is-sm" onClick={() => setLinkOpen(false)}>Cancel</button></div>}
-    {notice && <p className="cs2-err" role="alert">{notice}</p>}
-  </div>;
+  return <>
+    <CaseStudyV8Toolbar editor={editor} meta={meta} sections={sections} activeIndex={activeIndex}
+      onSelectSection={onSelectSection} advanced={caseStudyV8Preview(isLocalJournal())}
+      onInsertImage={() => fileInput.current?.click()}/>
+    <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={insertImage} hidden/>
+    {notice && <p role="alert" className="rde-notice">{notice}</p>}
+  </>;
 }
 function Cs2SectionHeading({ name, index, words, onRename, onRemove }) {
   const [draft, setDraft] = useState(name);
@@ -748,12 +742,12 @@ function Cs2StudyWorkspace({ study, workspace, templates, trades = [], markups =
         <div className="cs2-oa"><button type="button" className="cs2-btn is-full" onClick={addSection}><Plus size={14}/>Add section</button><button type="button" className="cs2-btn is-full" onClick={onOpenTemplates}><LayoutTemplate size={14}/>Add from template</button></div>
       </aside>
       <section className="cs2-doc" aria-label="Study document">
-        <Cs2Toolbar editor={activeEditor} onStoreImage={onStoreDocumentImage} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
+        <Cs2Toolbar editor={activeEditor} sections={sections} activeIndex={activeIndex} onSelectSection={goTo} onStoreImage={onStoreDocumentImage} meta={`${totalWords} ${totalWords === 1 ? 'word' : 'words'} · Updated ${dateLabel(study.updatedAt)}`}/>
         {notice && <p className="cs2-err cs2-docn" role="alert">{notice}</p>}
         {sections.map((name, index) => <section className="cs2-sec" key={`${study.id}:${name}`} ref={(node) => { sectionRefs.current[index] = node; }} onFocusCapture={() => setActiveIndex(index)}>
           <Cs2SectionHeading name={name} index={index} words={cs2Words(texts[index])} onRename={rename} onRemove={removeSection}/>
           <RichDocumentBoundary value={texts[index]} onChange={(value) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, { version: 1, content: { type: 'doc', content: String(value).split(/\n{2,}/).map((block) => ({ type: 'paragraph', content: block ? [{ type: 'text', text: block }] : undefined })) } }))}>
-            <RichDocumentEditor bare document={migrateSectionRichDocument(study, name, index)} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/>
+            <RichDocumentEditor bare document={study.sectionDocuments?.[name] || (index === 0 && study.richDocument) || migrateSectionRichDocument(study, name, index)} advanced={caseStudyV8Preview(isLocalJournal())} placeholder={templateGuidance(templates.find((item) => item.id === study.templateId), name) || 'Write your notes here…'} onChange={(document) => onUpdate((latest) => patchSectionRichDocument(latest, name, index, document))} onFocusEditor={setActiveEditor} saveState={saveState} sectionName={name} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/>
           </RichDocumentBoundary>
         </section>)}
         <section className="cs2-sec" ref={(node) => { sectionRefs.current.evidence = node; }}>
@@ -965,7 +959,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   const gateRef=useRef(gateMembership); gateRef.current=gateMembership;
   const gateNow=value=>gateRef.current?gateRef.current(value):value;
   const imageMembership=gateNow(rawImageMembership);
-  useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner]);
+  useEffect(()=>{ let live=true; resolveJournalMembership({authenticated:!!sessionOwner}).then(value=>{if(live)setImageMembership(value);}); return()=>{live=false;}; },[sessionOwner,allowCloudImages]);
   const syncSharedCaseStudyImages=async currentWorkspace=>{
     if (!sessionOwner || !allowCloudImages) return {processed:0,failed:0,workspace:currentWorkspace};
     const result=await caseStudySharedImageIntegration.synchronizeWorkspace({
@@ -976,7 +970,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     });
     if (imageSyncOwner.current !== sessionOwner) return result;
     const latest = workspaceRef.current;
-    const updated = applyVerifiedCaseStudyImageReferences(latest, result.workspace.evidence);
+    const updated = applyVerifiedCaseStudyImageReferences(latest, result.workspace.evidence,result.verifiedAssets);
     const referencesSaved = updated === latest || await save(updated, true);
     return { ...result, referencesSaved };
   };
@@ -1027,9 +1021,9 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   // replacing records from the cloud. Free and unresolved accounts remain
   // local-only.
   useEffect(()=>{
-    if (!allowCloudImages || !sessionOwner || imageMembership?.status !== 'ready' || imageMembership?.membership !== 'owner') return;
+    if (!allowCloudImages || !sessionOwner || imageMembership?.imageAccessStatus !== 'ready' || !imageMembership?.imageUploadsAllowed) return;
     void syncSharedCaseStudyImages(workspaceRef.current);
-  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.cloudWritesAllowed,imageMembership?.imageUploadAllowed]);
+  },[profileWorkspace,sessionOwner,allowCloudImages,imageMembership?.status,imageMembership?.membership,imageMembership?.imageAccessStatus,imageMembership?.imageUploadsAllowed,imageMembership?.cloudWritesAllowed,imageMembership?.imageUploadAllowed]);
   useEffect(() => {
     if (screen === 'editor' && selectedId) writeCaseStudyNavigation(sessionOwner,{studyId:selectedId,...editorNavigation});
     else clearCaseStudyNavigation(sessionOwner);
@@ -1189,7 +1183,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
       return {
       id,
       title:(files.length > 1 ? (file?.name || `Evidence ${index+1}`).replace(/\.[^.]+$/,'') : fields.title.trim()) || `Evidence ${index+1}`,
-      source:fields.source?.trim() || '', url:stored?.reference || fields.url?.trim() || '', notes:fields.notes?.trim() || '',
+      source:fields.source?.trim() || '', url:stored?.reference || fields.url?.trim() || '',localOnly:stored?.localOnly === true, notes:fields.notes?.trim() || '',
       tags:Array.isArray(fields.tags) ? fields.tags : [], kind:fields.kind || 'Chart', createdAt:now()
     };}));
     const next=addEvidenceRecords(currentWorkspace,records,{studyId:linkToSelectedStudy ? selectedId : null});
@@ -1205,6 +1199,7 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
       throw new Error('Evidence could not be saved locally. Your selected files and details are still available to retry.');
     }
     const imageSync=await syncSharedCaseStudyImages(workspaceRef.current);
+    if (records.some(item=>item.localOnly)) notify(LOCAL_IMAGE_WARNING);
     if (imageSync.failed) notify('Evidence saved locally. Its private cloud copy will retry when available.');
     setEvidenceDialog(false);
     return records;
@@ -1212,7 +1207,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
   const storeDocumentImage=async file=>{
     const stored=await caseStudySharedImageIntegration.saveDocumentImage({userId:sessionOwner,membership:allowCloudImages ? imageMembership : null,file,sourceRecordId:selectedId || ''});
     void syncSharedCaseStudyImages(workspaceRef.current);
-    return stored.reference;
+    if(stored.localOnly)notify(LOCAL_IMAGE_WARNING);
+    return {src:stored.reference,localOnly:stored.localOnly};
   };
   const saveDocumentImageToEvidence=async ({imageRef,title,source='',tags=[]})=>{
     if (!isDocumentImageReference(imageRef) && !isCaseStudySharedImageReference(imageRef)) throw new Error('This document image cannot be shared safely.');
@@ -1228,7 +1224,8 @@ function CaseStudyLibraryReady({ profileWorkspace, sessionOwner='', allowCloudIm
     const evidence={id,title:title.trim(),source:source.trim(),url:reference,documentImageRef:imageRef,notes:'',tags,kind:'Chart',createdAt:now()};
     const attached=attachDocumentImageEvidence(currentWorkspace,selectedId,evidence);
     const persisted=await save(attached.workspace,true);
-    if (persisted) await syncSharedCaseStudyImages(attached.workspace);
+    if (!persisted) throw new Error('Evidence details are retained on this device. Retry saving before closing this dialog.');
+    await syncSharedCaseStudyImages(attached.workspace);
     return attached.evidence;
   };
   const openEvidenceLibrary=(id)=>{setEvidenceSelection(id);returnToLibrary();setLibraryView('evidence');};
@@ -1413,7 +1410,7 @@ function StudyCardActions({favorite,onToggle,onMenu,menuOpen,menuRootRef,study,o
   return <div ref={menuRootRef} className="case-study-card__actions"><button type="button" className={`case-study-card__favorite${favorite?' is-favorite':''}`} aria-label={favorite?'Remove from favorites':'Add to favorites'} aria-pressed={favorite} onClick={onToggle}><Star size={17} fill={favorite?'currentColor':'none'}/></button><button type="button" aria-label="Study menu" aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={menuId} onClick={event=>{event.stopPropagation();onMenu();}}><MoreHorizontal size={17}/></button>{menuOpen&&<div id={menuId} className="case-card-menu" role="menu" onClick={event=>event.stopPropagation()}><button type="button" role="menuitem" className={favorite?'is-favorite':''} aria-pressed={favorite} onClick={event=>{onToggle(event);onMenu();}}><Star size={15} fill={favorite?'currentColor':'none'}/>{favorite?'Remove favorite':'Favorite'}</button><button type="button" role="menuitem" onClick={runAction(()=>onPatch({pinned:!study.pinned}))}><Pin size={15}/>{study.pinned?'Unpin':'Pin playbook'}</button><button type="button" role="menuitem" onClick={runAction(onDuplicate)}><Copy size={15}/>Duplicate</button>{study.archived?<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:false}))}><Archive size={15}/>Restore to Library</button>:<button type="button" role="menuitem" onClick={runAction(()=>onPatch({archived:true}))}><Archive size={15}/>Archive</button>}<button type="button" role="menuitem" className="is-danger" onClick={runAction(onDelete)}><Trash2 size={15}/>Delete</button></div>}</div>;
 }
 function LibraryShelf({title,subtitle,studies,total=studies.length,emptyMessage,notebooks,evidence = [],onOpen,onViewAll,compact=false}) { return <section className={`case-shelf ${compact?'case-shelf--compact':''}`}><div className="case-shelf__heading"><div><h2>{title}</h2><p>{subtitle}</p></div>{total > studies.length&&<button className="case-button case-button--quiet" onClick={onViewAll}>View all</button>}</div><div className={`case-shelf__items ${!studies.length?'is-empty':''}`}>{studies.length ? studies.map(study=>{const notebook=notebooks.find(item=>item.id===study.notebookId);return <button key={study.id} onClick={()=>onOpen(study.id)}><div className="case-shelf__preview" aria-hidden="true"><StudyCover study={study} evidence={evidence} notebook={notebook} compact/></div><div className="case-shelf__copy"><strong>{studyTitle(study)}</strong><small>{notebook?.name || 'Notebook'} · Updated {dateLabel(study.updatedAt)}</small></div><span><i className={`case-status case-status--${study.status.toLowerCase().replaceAll(' ','-')}`}>{study.status}</i>{study.pinned&&<Pin size={13} aria-label="Pinned"/>}</span></button>;}) : <p className="case-shelf__empty"><BookOpen size={17}/>{emptyMessage}</p>}</div></section>; }
-function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const image=useCaseStudyEvidenceImage(cover); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[cover?.url,cover?.cloudRef,image.url]); if(!cover || !image.url || failed) return <><BookOpen size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>{reportCaseStudyImageDecodeFailure();setFailed(true);}}/>; }
+function StudyCover({study,evidence,notebook,compact=false}) { const cover=resolveCaseStudyCover(study,evidence); const image=useCaseStudyEvidenceImage(cover,{defer:true}); const [failed,setFailed]=useState(false); useEffect(()=>setFailed(false),[cover?.url,cover?.cloudRef,image.url]); if(!cover || !image.url || failed) return <><BookOpen ref={image.observeRef} size={compact?17:28}/>{!compact&&<span>{notebook?.name || 'Study'}</span>}</>; return <img src={image.url} alt="" onError={()=>{reportCaseStudyImageDecodeFailure();setFailed(true);}}/>; }
 function EvidenceImage({item,alt='',className=''}) { const image=useCaseStudyEvidenceImage(item); if(!image.url)return <div className={`case-evidence-image-placeholder ${className}`}>{image.loading?'Loading image…':<ImageIcon size={22}/>}</div>; return <img className={className} src={image.url} alt={alt} onError={event=>{event.currentTarget.style.display='none';}}/>; }
 function EvidenceLibrary({evidence,studies,selectedEvidenceId=null,onAdd,onPatch,onRemove,onBack}) {
   const [query,setQuery]=useState(''),[kind,setKind]=useState('All'),[sort,setSort]=useState('recent'),[view,setView]=useState('grid'),[selectedId,setSelectedId]=useState(evidence[0]?.id||null),[uploadOpen,setUploadOpen]=useState(false);
@@ -1480,7 +1477,7 @@ function EvidenceDialog({onClose,onSave}) {
       setSaving(false);
     }
   };
-  return <div className="case-dialog-backdrop"><form className="case-form-dialog case-evidence-upload" onSubmit={submit} onPaste={event=>{const images=[...(event.clipboardData?.files||[])].filter(file=>file.type.startsWith('image/'));if(images.length){event.preventDefault();addFiles(images);}}}><button type="button" className="case-close" onClick={onClose}><X size={18}/></button><p className="case-eyebrow">Shared evidence</p><h2>Upload evidence</h2><label>Title <small>Optional for multiple uploads</small><input autoFocus value={fields.title} onChange={event=>patch('title',event.target.value)} placeholder="e.g. London sweep, 15m"/></label><input ref={fileInput} hidden type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={event=>addFiles(event.target.files||[])}/><button type="button" className="case-evidence-dropzone" onClick={()=>fileInput.current?.click()} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();addFiles(event.dataTransfer.files||[]);}}><ImageIcon size={23}/><strong>Drop images here or choose files</strong><span>Paste from clipboard also works · PNG, JPEG, or WebP · 3 MB each</span></button>{files.length>0&&<ul className="case-evidence-upload-list">{files.map(({id,file,preview})=><li key={id}><img src={preview} alt="Selected evidence preview"/><span><strong>{file.name}</strong><small>{Math.ceil(file.size/1024)} KB</small></span><button type="button" onClick={()=>removeFile(id)}>Remove</button></li>)}</ul>}<label>Or image URL<input value={fields.url} onChange={event=>patch('url',event.target.value)} placeholder="https://…png"/></label><label>Source<input value={fields.source} onChange={event=>patch('source',event.target.value)} placeholder="Optional source"/></label><label>Tags<input value={fields.tags} onChange={event=>patch('tags',event.target.value)} placeholder="EUR/USD, M15"/></label><label>Research notes<textarea value={fields.notes} onChange={event=>patch('notes',event.target.value)} placeholder="What does this evidence support or challenge?"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving evidence…':files.length>1?`Save ${files.length} images`:'Save evidence'}</button></footer></form></div>;
+  return <div className="case-dialog-backdrop"><form className="case-form-dialog case-evidence-upload" onSubmit={submit} onPaste={event=>{const images=[...(event.clipboardData?.files||[])].filter(file=>file.type.startsWith('image/'));if(images.length){event.preventDefault();addFiles(images);}}}><button type="button" className="case-close" onClick={onClose}><X size={18}/></button><p className="case-eyebrow">Shared evidence</p><h2>Upload evidence</h2><label>Title <small>Optional for multiple uploads</small><input autoFocus value={fields.title} onChange={event=>patch('title',event.target.value)} placeholder="e.g. London sweep, 15m"/></label><input ref={fileInput} hidden type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={event=>addFiles(event.target.files||[])}/><button type="button" className="case-evidence-dropzone" onClick={()=>fileInput.current?.click()} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();addFiles(event.dataTransfer.files||[]);}}><ImageIcon size={23}/><strong>Drop images here or choose files</strong><span>Paste from clipboard also works · PNG, JPEG, or WebP · 3 MiB each</span></button>{files.length>0&&<ul className="case-evidence-upload-list">{files.map(({id,file,preview})=><li key={id}><img src={preview} alt="Selected evidence preview"/><span><strong>{file.name}</strong><small>{Math.ceil(file.size/1024)} KB</small></span><button type="button" onClick={()=>removeFile(id)}>Remove</button></li>)}</ul>}<label>Or image URL<input value={fields.url} onChange={event=>patch('url',event.target.value)} placeholder="https://…png"/></label><label>Source<input value={fields.source} onChange={event=>patch('source',event.target.value)} placeholder="Optional source"/></label><label>Tags<input value={fields.tags} onChange={event=>patch('tags',event.target.value)} placeholder="EUR/USD, M15"/></label><label>Research notes<textarea value={fields.notes} onChange={event=>patch('notes',event.target.value)} placeholder="What does this evidence support or challenge?"/></label>{error&&<p className="case-form-error" role="alert">{error}</p>}<footer><button type="button" className="case-button case-button--quiet" onClick={onClose}>Cancel</button><button disabled={saving} className="case-button case-button--primary">{saving?'Saving evidence…':files.length>1?`Save ${files.length} images`:'Save evidence'}</button></footer></form></div>;
 }
 const templateEditorRows=template=>{
   const source=templateSections(template);
@@ -1653,7 +1650,7 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
   useEffect(() => { setSelectedEvidenceId((current) => resolveActiveEvidenceId(linkedEvidence, current)); }, [study.id, study.evidenceIds, workspace.evidence]);
   if (viewerId) return <ChartViewerBoundary onBack={()=>setViewerId(null)}><ChartViewer study={study} evidence={linkedEvidence} allEvidence={workspace.evidence} studies={workspace.studies} activeId={viewerId} accountId="profile" imageOwnerUserId={imageOwnerUserId} saveState={saveState} onRetrySave={onRetrySave} onBack={()=>setViewerId(null)} onUpdate={onUpdate}/></ChartViewerBoundary>;
 
-  const currentDocument = migrateSectionRichDocument(study, currentSection, activeSection);
+  const currentDocument = study.sectionDocuments?.[currentSection] || (activeSection === 0 && study.richDocument) || migrateSectionRichDocument(study, currentSection, activeSection);
   const updateDocument = (document) => onUpdate((latestStudy) => patchSectionRichDocument(latestStudy, currentSection, activeSection, document));
   const addSection = () => {
     const section = `New section ${sections.length + 1}`;
@@ -1701,7 +1698,7 @@ function StudyEditor({study,workspace,templates=[],profileName,storageNotice='',
     setSafePanelWidth(next,{persist:true});
   };
   const documentEvidence=Object.fromEntries(workspace.evidence.filter(item=>item.documentImageRef).map(item=>[item.documentImageRef,item]));
-  const writing = <div className="cse-writing"><RichDocumentEditor key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}:${imageOwnerUserId||''}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/></div>;
+  const writing = <div className="cse-writing"><RichDocumentEditor advanced={caseStudyV8Preview(isLocalJournal())} key={`${study.id}:${currentSection}:${Object.keys(documentEvidence).join('|')}:${imageOwnerUserId||''}`} document={currentDocument} onChange={updateDocument} saveState={saveState} sectionName={currentSection} documentEvidence={documentEvidence} onSaveImage={onSaveDocumentImage} onStoreImage={onStoreDocumentImage} imageOwnerUserId={imageOwnerUserId} onViewEvidence={onViewEvidence}/></div>;
   const editorHeader = <header className="cse-header">
     <button className="cse-crumb" onClick={onBack}><ArrowLeft size={16}/>Library</button><span className="cse-crumb-separator">/</span><select className="cse-notebook" value={study.notebookId} onChange={(e) => onUpdate({ notebookId: e.target.value })}>{workspace.notebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.name}</option>)}</select><input className="cse-title" value={study.title} onChange={(e) => onUpdate({ title: e.target.value })} aria-label="Study title"/><select className="cse-status" value={study.status || 'Draft'} onChange={(e) => onUpdate({ status: e.target.value })}>{STATUSES.map((status) => <option key={status} disabled={status==='Validated'&&study.status!=='Validated'&&!reviewCanValidate}>{status}</option>)}</select><div className="cse-mode-switch" aria-label="Editor mode">{['Write','Split','Analyze','Review'].map((item) => <button key={item} className={mode === item ? 'is-active' : ''} onClick={() => switchMode(item)}>{item}</button>)}</div><span className="cse-save"><Check size={14}/>{saveState}</span>{mode!=='Review'&&<><button className={showOutline ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowOutline((value) => !value)}>Outline</button><button className={showPanel ? 'cse-tool is-active' : 'cse-tool'} onClick={() => setShowPanel((value) => !value)}>Panel</button></>}<div className="cse-overflow"><button className="case-icon-button" title="Duplicate study" onClick={onDuplicate}><Copy size={16}/></button><button className="case-icon-button" title="Export study" onClick={onExport}><Download size={16}/></button><button className="case-icon-button case-icon-button--danger" title="Delete study" onClick={onRemove}><Trash2 size={16}/></button></div>
   </header>;

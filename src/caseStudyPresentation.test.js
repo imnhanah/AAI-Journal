@@ -161,8 +161,8 @@ test('the selected Research Notes image action preserves node selection and neve
   const library=readFileSync(new URL('./CaseStudyLibrary.jsx',import.meta.url),'utf8');
   assert.match(editor,/const keepNodeSelected=event=>event\.preventDefault\(\)/);
   assert.match(editor,/rde-evidence-action" onMouseDown=\{keepNodeSelected\}/);
-  assert.match(editor,/onRequestEvidence\?\.\(\{ref:node\.attrs\.src,preview:resolved\}\)/);
-  assert.match(editor,/evidenceActions\.current=\{documentEvidence,onRequestEvidence:setEvidenceImage,onViewEvidence\}/);
+  assert.match(editor,/onRequestEvidence\(\{ref:node\.attrs\.src,preview:imageUrl,title:node\.attrs\.alt\}\)/);
+  assert.match(editor,/evidenceActions\.current = \{ documentEvidence, onRequestEvidence:onSaveImage \? setEvidenceImage : null, onViewEvidence \}/);
   assert.doesNotMatch(editor,/setEvidenceDialog/);
   assert.match(library,/onClick=\{onAddEvidence\}>.*Add shared evidence/);
   assert.match(library,/\{evidenceDialog && <EvidenceDialog/);

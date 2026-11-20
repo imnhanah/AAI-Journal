@@ -1,5 +1,5 @@
 import { calculateImageChecksum, createSharedImageStorage } from './sharedImageStorage.js';
-import { caseStudyEvidenceCloudPath, caseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl, uploadCaseStudyEvidenceImage } from './caseStudyEvidenceCloud.js';
+import { caseStudyEvidenceCloudPath, caseStudyEvidenceCloudReference, resolveCaseStudyEvidenceCloudUrl, resolveCaseStudyEvidenceDisplayUrl, uploadCaseStudyEvidenceImage } from './caseStudyEvidenceCloud.js';
 
 // This deliberately does not reuse tj-image: (legacy Case Study) or
 // tj-shared-media: (Strategy Testing). Trade Journal media has its own durable
@@ -49,7 +49,7 @@ const knownSources = value => {
   return values;
 };
 
-export function createTradeJournalSharedMediaAdapter({ storage = createSharedImageStorage(), upload = uploadCaseStudyEvidenceImage, resolveCloud = resolveCaseStudyEvidenceCloudUrl } = {}) {
+export function createTradeJournalSharedMediaAdapter({ storage = createSharedImageStorage(), upload = uploadCaseStudyEvidenceImage, resolveCloud = resolveCaseStudyEvidenceDisplayUrl } = {}) {
   const assetFor = async (userId, id) => storage.getImageMetadata(id, userId);
   return {
     storage,
@@ -68,13 +68,15 @@ export function createTradeJournalSharedMediaAdapter({ storage = createSharedIma
           reusable.set(checksum, asset);
         }
         const base = typeof item === 'string' ? {} : cleanDisplayFields(item);
-        return { ...base, src: tradeJournalMediaReference(asset.id), cloudRef: base.cloudRef || '' };
+        for(const key of ['url','dataUrl','source','data','preview','image'])if(base[key]===source)base[key]=tradeJournalMediaReference(asset.id);
+        return { ...base, src: tradeJournalMediaReference(asset.id), cloudRef: asset.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : '', localOnly: !asset.cloudPath };
       });
     },
     async synchronizeScreenshots({ userId, membership, getMembership, screenshots } = {}) {
       const ids = new Set();
       await mapMedia(screenshots || {}, item => { const id = tradeJournalMediaId(sourceOf(item)); if (id) ids.add(id); return item; });
-      for (const id of ids) await storage.retryFailedUpload(id, { userId, membership });
+      const latestAccess=getMembership ? await getMembership() : membership;
+      for (const id of ids) await storage.retryFailedUpload(id, { userId, membership:latestAccess });
       await storage.processUploadQueue({ userId, membership, getMembership, sourceModule: TRADE_JOURNAL_MEDIA_MODULE, uploader: async ({ asset, blob }) => {
         const result = await upload({ userId, evidenceId: asset.id, blob, cloudRef: asset.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : '' });
         return result?.verified ? { verified: true, cloudPath: caseStudyEvidenceCloudPath(result.cloudRef), checksum: result.checksum } : result;
@@ -84,7 +86,7 @@ export function createTradeJournalSharedMediaAdapter({ storage = createSharedIma
         if (!id) return cleanDisplayFields(item);
         const asset = await assetFor(userId, id);
         const base = typeof item === 'string' ? {} : cleanDisplayFields(item);
-        return { ...base, src: tradeJournalMediaReference(id), cloudRef: asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : (base.cloudRef || '') };
+        return { ...base, src: tradeJournalMediaReference(id), cloudRef: asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : (base.cloudRef || ''), localOnly: !(asset?.cloudPath || base.cloudRef) };
       });
     },
     async resolveScreenshots({ userId, screenshots } = {}) {
@@ -96,6 +98,7 @@ export function createTradeJournalSharedMediaAdapter({ storage = createSharedIma
         const localUrl = await storage.getLocalImageUrl(id, userId);
         if (localUrl) return { ...base, src: source, displaySrc: localUrl };
         const asset = await assetFor(userId, id);
+        if(!base.cloudRef&&!asset?.cloudPath&&(base.localOnly||asset?.storageState==='local-only'))return {...base,src:source,displayError:'local-only'};
         // A second authenticated browser has no local asset metadata. The
         // fallback path remains constrained below to this owner's namespace.
         const cloudRef = base.cloudRef || (asset?.cloudPath ? caseStudyEvidenceCloudReference(asset.cloudPath) : caseStudyEvidenceCloudReference(`${userId}/${id}`));

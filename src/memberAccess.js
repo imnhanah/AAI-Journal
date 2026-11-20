@@ -101,12 +101,12 @@ export async function clearNotification(id, { client } = {}) {
 export function applyMemberAccess(membership, access, enabled = memberAccessUiEnabled) {
   if (!enabled || !membership) return membership;
   // Access not yet verified: no image uploads until the server answers (journal saves are left to the server's own rules).
-  if (!access) return { ...membership, imageUploadAllowed: false };
-  if (access.available !== true || access.status !== 'active') return { ...membership, cloudWritesAllowed: false, imageUploadAllowed: false };
+  if (!access) return { ...membership, imageUploadAllowed: false, imageUploadsAllowed: false };
+  if (access.available !== true || access.status !== 'active') return { ...membership, cloudWritesAllowed: false, imageUploadAllowed: false, imageUploadsAllowed: false };
   // Active: only an explicit "no" from the server narrows. An absent plan hint never counts as a denial.
   const next = { ...membership };
   if (access.journalCloudWriteAllowed === false) next.cloudWritesAllowed = false;
-  if (access.imageUploadAllowed === false) next.imageUploadAllowed = false;
+  if (access.imageUploadAllowed === false) { next.imageUploadAllowed = false; next.imageUploadsAllowed = false; }
   return next;
 }
 
@@ -144,4 +144,23 @@ export function writesAreExplicitlyPaused(access, enabled = memberAccessUiEnable
   if (!enabled) return false;
   if (!access || access.available !== true || access.status !== 'active') return true;
   return access.journalCloudWriteAllowed === false;
+}
+
+// Image rights are independent of journal sync. Fresh image permission lookups
+// must still honor a current Office pause, even when the underlying grant is on.
+export function imageUploadsAreExplicitlyPaused(access, enabled = memberAccessUiEnabled) {
+  if (!enabled) return false;
+  return !access || access.available !== true || access.status !== 'active' || access.imageUploadAllowed === false;
+}
+
+// Broker imports can touch multiple feature areas. Check the whole plan before
+// creating an account, merging duplicate trades or saving the first row.
+export function brokerImportAccessError(plan, access, enabled = memberAccessUiEnabled) {
+  const trades = Array.isArray(plan) ? plan : plan?.trades;
+  const cashMovements = Array.isArray(plan) ? [] : plan?.cashMovements;
+  if (!enabled || (!trades?.length && !cashMovements?.length)) return null;
+  if (writesAreExplicitlyPaused(access, enabled)) return 'Journal writes are unavailable. Nothing was imported.';
+  if (trades?.length && access.features?.trade_logs !== true) return 'Trade Logs is read-only. Nothing was imported.';
+  if (cashMovements?.length && access.features?.finance !== true) return 'This file includes cash movements and Finance is read-only. Nothing was imported.';
+  return null;
 }

@@ -1,3 +1,4 @@
+import {prepareProfileImage} from './profileImageMedia.js';
 import { supabase } from "./supabaseClient";
 import { START_PAGES } from './displayPreferences';
 import { activatePrivateUser } from './privateCacheRuntime';
@@ -235,6 +236,7 @@ export async function updateProfile({ fullName, displayName, avatarUrl, sessionT
   try {
     const { data: currentSession } = await supabase.auth.getSession();
     const currentAvatar = currentSession?.session?.user?.user_metadata?.avatar_url || null;
+    const avatarData = avatarUrl !== undefined && (avatarUrl || null) !== currentAvatar ? await prepareProfileImage({userId:currentSession?.session?.user?.id,source:avatarUrl||'',current:currentAvatar,client:supabase}) : {};
     const displayData = {};
     if (week_start !== undefined) displayData.week_start = week_start === 'sunday' ? 'sunday' : 'monday';
     if (start_page !== undefined) displayData.start_page = START_PAGES.includes(start_page) ? start_page : 'dashboard';
@@ -243,7 +245,7 @@ export async function updateProfile({ fullName, displayName, avatarUrl, sessionT
     if (trade_panel_position !== undefined) displayData.trade_panel_position = trade_panel_position === 'left' ? 'left' : 'right';
     if (trade_panel_behavior !== undefined) displayData.trade_panel_behavior = trade_panel_behavior === 'overlay' ? 'overlay' : 'push';
     const { data, error } = await supabase.auth.updateUser({
-      data: { ...displayData, ...(language !== undefined ? { language } : {}), display_name: cleanDisplayName, full_name: cleanName, ...(avatarUrl !== undefined && (avatarUrl || null) !== currentAvatar ? {avatar_url:avatarUrl || null} : {}), session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, privacy_screen_enabled: !!privacyScreenEnabled, privacy_screen_timeout_minutes: [5, 15, 60].includes(Number(privacyScreenTimeoutMinutes)) ? Number(privacyScreenTimeoutMinutes) : 15, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", ...(themePalettes && typeof themePalettes === 'object' ? { theme_palettes: themePalettes } : {}), timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
+      data: { ...displayData, ...(language !== undefined ? { language } : {}), display_name: cleanDisplayName, full_name: cleanName, ...avatarData, session_timeout_minutes: Number(sessionTimeoutMinutes) || 0, privacy_screen_enabled: !!privacyScreenEnabled, privacy_screen_timeout_minutes: [5, 15, 60].includes(Number(privacyScreenTimeoutMinutes)) ? Number(privacyScreenTimeoutMinutes) : 15, theme: theme === "light" ? "light" : "dark", theme_preference: ["light", "dark", "system"].includes(themePreference) ? themePreference : (theme === "light" ? "light" : "dark"), accent_color: accentColor || "default", ...(themePalettes && typeof themePalettes === 'object' ? { theme_palettes: themePalettes } : {}), timezone: timezone || "Africa/Accra", date_format: dateFormat || "DD/MM/YYYY", time_format: timeFormat === "24" ? "24" : "12" },
     });
     if (error) return { error: friendlyAuthError(error) };
     const { error: profileError } = await supabase

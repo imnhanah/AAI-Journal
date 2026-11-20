@@ -75,7 +75,7 @@ test('mark read and clear report success only when the server says so', async ()
 
 import { canQueueCloudUpload } from './sharedImageStorage.js';
 const allowed = { ...good, image_upload_allowed: true };
-const ownerReady = { status: 'ready', membership: MEMBERSHIP.OWNER, cloudWritesAllowed: true };
+const ownerReady = { status: 'ready', membership: MEMBERSHIP.OWNER, cloudWritesAllowed: true, imageAccessStatus: 'ready', imageUploadsAllowed: true };
 test('the access answer never grants a free member cloud writes', () => {
   const free = { status: 'ready', membership: MEMBERSHIP.FREE, cloudWritesAllowed: false };
   const r = applyMemberAccess(free, normalizeAccess({ ...good, journal_cloud_write_allowed: true, image_upload_allowed: true }), true);
@@ -117,7 +117,7 @@ test('only an explicit false switches a feature off, and only for an active acco
 });
 test('a normal Owner keeps working while access is active, and pauses when it is not', () => {
   assert.deepEqual(applyMemberAccess(ownerReady, normalizeAccess(allowed), true), ownerReady);
-  const plain = { status: 'ready', membership: MEMBERSHIP.OWNER, error: '' };
+  const plain = { status: 'ready', membership: MEMBERSHIP.OWNER, error: '', imageAccessStatus: 'ready', imageUploadsAllowed: true };
   assert.equal(canQueueCloudUpload(applyMemberAccess(plain, normalizeAccess(allowed), true)), true);
   assert.equal(canQueueCloudUpload(applyMemberAccess(plain, null, true)), false);
   assert.equal(applyMemberAccess(plain, null, false), plain);
@@ -144,7 +144,7 @@ test('the tighter account limit applies, including zero, and unverified access b
 });
 
 test('an explicit no from the server narrows an active reply, and nothing else does', () => {
-  const plain = { status: 'ready', membership: MEMBERSHIP.OWNER, error: '' };
+  const plain = { status: 'ready', membership: MEMBERSHIP.OWNER, error: '', imageAccessStatus: 'ready', imageUploadsAllowed: true };
   const noJournal = applyMemberAccess(plain, normalizeAccess({ ...good, journal_cloud_write_allowed: false }), true);
   assert.equal(noJournal.cloudWritesAllowed, false);
   const noImages = applyMemberAccess(plain, normalizeAccess({ ...good, image_upload_allowed: false }), true);
@@ -165,7 +165,9 @@ test('every cloud write in the data layer checks the pause first', () => {
   assert.match(source, /export const setCloudWritesPaused/);
   const writes = [...source.matchAll(/export async function ((?:create|update|delete|save|set|add|reset|markLocal)\w*)\([^)]*\)\s*\{([^]{0,60})/g)];
   assert.ok(writes.length >= 31);
-  for (const [, name, start] of writes) if (name !== 'saveTypeTags') assert.ok(start.startsWith('if(globalThis.__tjCloudWritesPaused===true)return'), `${name} must check the pause first`);
+  for (const [, name, start] of writes) {
+    if (name !== 'saveTypeTags') assert.match(start, /^\s*if\s*\(globalThis\.__tjCloudWritesPaused\s*===\s*true\)\s*return/, `${name} must check the pause first`);
+  }
 });
 
 test('case study and strategy testing cloud saves also check the pause first', () => {

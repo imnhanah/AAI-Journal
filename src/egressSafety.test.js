@@ -142,5 +142,5 @@ test('one paste targets only the intentionally active uploader; duplicate images
   event.defaultPrevented=true; assert.equal(shouldHandleImagePaste(event,rootA),false);
   event.defaultPrevented=false; assert.equal(shouldHandleImagePaste(event,rootB),false);
   const file={size:1024,type:'image/png'}; assert.equal(validateImageFile(file),''); assert.equal(validateImageFile(file),'');
-  assert.match(validateImageFile({size:11*1024*1024,type:'image/png'}),/10 MB/);
+  assert.match(validateImageFile({size:11*1024*1024,type:'image/png'}),/3 MiB/);
 });

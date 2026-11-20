@@ -130,7 +130,7 @@ test('all live trade creation entry points use the shared gate; edits and backte
   assert.match(code,/const openNewTrade = \(draft = null\) => \{/);
   assert.match(code,/routineGate\.current\.request\('trade', draft\)/);
   assert.match(code,/if \(entryPanelMode\)/);
-  assert.match(code,/onNewTrade=\{onNewTrade\} locked=\{locked\}/);
+  assert.match(code,/onNewTrade=\{onNewTrade\} locked=\{locked \|\| readOnly\}/);
   assert.match(code,/onNewTrade=\{\(\) => openNewTrade\(\)\}/);
   assert.match(code,/onTrade=\{\(markup\)=>openNewTrade\(\{ premarketMarkupId/);
   assert.match(code,/openNewTrade\(\)/);

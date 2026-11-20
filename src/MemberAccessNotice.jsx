@@ -7,6 +7,7 @@ import './memberAccess.css';
 export function useMemberAccess(userId) {
   const [access, setAccess] = useState(null);
   const last = useRef(0);
+  const request = useRef(0);
   const current = useRef(userId);
   const paused = useRef(false);
   current.current = userId;
@@ -14,14 +15,17 @@ export function useMemberAccess(userId) {
     if (!memberAccessUiEnabled || !userId) return;
     if (!force && Date.now() - last.current < 15000) return;
     last.current = Date.now();
+    const attempt = ++request.current;
     const result = await fetchMyAccess();
-    if (current.current !== userId) return;
+    if (current.current !== userId || attempt !== request.current) return;
     // After scheduling deletion the pause holds until the server answers; a failed refresh never lifts it.
     if (paused.current && !result.available) return;
     paused.current = false;
     setAccess(result);
+    return result;
   }, [userId]);
   const markDeleting = useCallback(deletionAt => {
+    request.current++;
     paused.current = true;
     setAccess(current => ({ ...(current || {}), available: true, status: 'deleting', deletionAt, features: current?.features || {}, supportEmail: current?.supportEmail || SUPPORT_EMAIL }));
   }, []);
@@ -32,7 +36,7 @@ export function useMemberAccess(userId) {
     const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     window.addEventListener('focus', onVisible);
     document.addEventListener('visibilitychange', onVisible);
-    return () => { window.removeEventListener('focus', onVisible); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { request.current++; window.removeEventListener('focus', onVisible); document.removeEventListener('visibilitychange', onVisible); };
   }, [userId, refresh]);
   return { access, refresh, markDeleting };
 }

@@ -18,7 +18,7 @@ test('all IndexedDB-backed evidence references begin unresolved so an invalid im
 test('Evidence Library retains the existing safe image size and type policy',()=>{
   assert.equal(validateEvidenceImage({type:'image/png',size:EVIDENCE_IMAGE_MAX_BYTES}),null);
   assert.match(validateEvidenceImage({type:'image/gif',size:1}),/PNG, JPEG, or WebP/);
-  assert.match(validateEvidenceImage({type:'image/webp',size:EVIDENCE_IMAGE_MAX_BYTES+1}),/3 MB/);
+  assert.match(validateEvidenceImage({type:'image/webp',size:EVIDENCE_IMAGE_MAX_BYTES+1}),/3 MiB/);
 });
 
 test('shared images retain a cloud fallback after refresh even when this browser has no IndexedDB metadata',()=>{

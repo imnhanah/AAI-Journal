@@ -1,13 +1,14 @@
+import {IMAGE_MAX_BYTES,IMAGE_LIMIT_MESSAGE} from './imagePolicy.js';
 import { normaliseCaseStudyConnections } from './caseStudyConnections.js';
 
 export const CASE_STUDY_BACKUP_VERSION = 1;
 export const EVIDENCE_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-export const EVIDENCE_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+export const EVIDENCE_IMAGE_MAX_BYTES = IMAGE_MAX_BYTES;
 
 export const validateEvidenceImage = (file) => {
   if (!file) return 'Choose a chart image first.';
   if (!EVIDENCE_IMAGE_TYPES.includes(file.type)) return 'Use a PNG, JPEG, or WebP chart image.';
-  if (file.size > EVIDENCE_IMAGE_MAX_BYTES) return 'Chart images must be 3 MB or smaller.';
+  if (file.size > EVIDENCE_IMAGE_MAX_BYTES) return IMAGE_LIMIT_MESSAGE;
   return null;
 };
 

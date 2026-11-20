@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AuthPage from './AuthPage';
+import { signInCallbackError } from './authCallbackError.js';
 import './public-site.css';
 import LandingPage from './LandingPage';
 import { FinancialDisclaimerDialog } from './FinancialDisclaimer.jsx';
@@ -16,24 +17,29 @@ export function PlatformLogo({ platform }) {
 export function Brand() { return <span className="pub-brand"><span className="pub-brand-mark"><img className="pub-logo-dark" src="/brand/logo-dark.png" width="48" height="48" alt=""/><img className="pub-logo-light" src="/brand/logo-light.png" width="48" height="48" alt=""/></span>AAICOREFX</span>; }
 
 export default function PublicSite({ onAuthed, user }) {
-  const [path, setPath] = useState(window.location.pathname);
+  const [callbackError, setCallbackError] = useState(() => signInCallbackError(window.location.href));
+  const [path, setPath] = useState(() => callbackError ? '/login' : window.location.pathname);
   const [financialDisclaimerOpen, setFinancialDisclaimerOpen] = useState(false);
 
   useEffect(() => {
+    if (callbackError) {
+      window.history.replaceState(window.history.state, '', '/login');
+      return;
+    }
     if (!RETIRED_PATHS.has(window.location.pathname)) return;
     window.history.replaceState({}, '', '/');
     setPath('/');
-  }, []);
+  }, [callbackError]);
   useEffect(() => {
-    const sync = () => setPath(window.location.pathname);
+    const sync = () => { setCallbackError(''); setPath(window.location.pathname); };
     window.addEventListener('popstate', sync);
     return () => window.removeEventListener('popstate', sync);
   }, []);
 
-  const navigate = (next) => { window.history.pushState({}, '', next); setPath(next); window.scrollTo(0, 0); };
+  const navigate = (next) => { setCallbackError(''); window.history.pushState({}, '', next); setPath(next); window.scrollTo(0, 0); };
   const authMode = path === '/signup' ? 'signup' : path === '/login' ? 'login' : null;
 
-  if (authMode) return <AuthPage key={authMode} initialMode={authMode} onModeChange={(mode) => navigate(mode === 'signup' ? '/signup' : '/login')} onBack={() => navigate('/')} onAuthed={onAuthed}/>;
+  if (authMode) return <AuthPage key={authMode} initialMode={authMode} initialError={callbackError} onModeChange={(mode) => navigate(mode === 'signup' ? '/signup' : '/login')} onBack={() => navigate('/')} onAuthed={onAuthed}/>;
 
   return <>
     <LandingPage user={user} onNavigate={navigate} onDisclaimer={() => setFinancialDisclaimerOpen(true)} PlatformLogo={PlatformLogo}/>

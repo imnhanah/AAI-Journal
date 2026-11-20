@@ -1,3 +1,5 @@
+import {createCloudImageCache} from './cloudImageCache.js';
+import {IMAGE_MAX_BYTES,IMAGE_LIMIT_MESSAGE} from './imagePolicy.js';
 import { calculateImageChecksum, createSharedImageStorage, IMAGE_STORAGE_STATES } from './sharedImageStorage.js';
 
 export const CASE_STUDY_EVIDENCE_BUCKET='case-study-evidence';
@@ -30,18 +32,22 @@ const unauthorized = () => failed('signed-url-authorization-failed');
 export function createCaseStudyImageResolver({
   client, storage = imageStorage, fetchImage = globalThis.fetch.bind(globalThis),
   now = Date.now, maxEntries = 64, maxBytes = 24 * 1024 * 1024,
+  persistentCache = createCloudImageCache({namespace:client?.supabaseUrl || "injected-client"}),
 } = {}) {
   const signedUrls = new Map();
   const images = new Map();
   const signing = new Map();
   const downloading = new Map();
   let owner;
+  let cacheBarrier = Promise.resolve();
   let imageBytes = 0;
   let session = new AbortController();
 
   function setOwner(nextOwner) {
     if (owner === nextOwner) return;
+    const previousOwner = owner;
     owner = nextOwner;
+    if (previousOwner) cacheBarrier = cacheBarrier.then(()=>persistentCache.clearOwner(previousOwner)).catch(()=>{});
     session.abort();
     session = new AbortController();
     signedUrls.clear();
@@ -110,10 +116,14 @@ export function createCaseStudyImageResolver({
       sessionSignal.removeEventListener('abort', abort);
     }
   }
-  async function download(path, signal) {
-    const cached = readCached(images, path, removeImage);
+  async function download(path, signal, version = 'immutable-v1') {
+    const cacheKey=JSON.stringify([path,version]);
+    const cached = readCached(images, cacheKey, removeImage);
     if (cached) return { blob: cached.blob, code: 'ok' };
-    return share(downloading, path, async () => {
+    return share(downloading, cacheKey, async () => {
+      await cacheBarrier;
+      if(signal.aborted)return unauthorized();
+      try { const blob=await persistentCache.read(owner,path,version);if(signal.aborted)return unauthorized();if(blob){rememberImage(cacheKey,blob);return {blob,code:"ok"};} } catch { /* A disposable download cache must not prevent cloud recovery. */ }
       const assetId = path.slice(owner.length + 1);
       if (assetId && !assetId.includes('/')) {
         try {
@@ -138,12 +148,14 @@ export function createCaseStudyImageResolver({
         }
         if (!blob) return failed(status === 404 ? 'cloud-object-missing' : 'cloud-network-failed');
         if (!blob.size) return failed('cloud-image-empty');
-        rememberImage(path, blob);
+        await persistentCache.write(owner,path,blob,{version,isCurrent:()=>!signal.aborted}).catch(()=>{});
+        if(signal.aborted)return unauthorized();
+        rememberImage(cacheKey, blob);
         return { blob, code: 'ok' };
       }
     });
   }
-  async function resolve(reference, { userId = '', bytes = false } = {}) {
+  async function resolve(reference, { userId = '', bytes = false, version = 'immutable-v1' } = {}) {
     const path = caseStudyEvidenceCloudPath(reference);
     const pathOwner = path.split('/')[0];
     if (!pathOwner || !path.slice(pathOwner.length + 1)) return failed('invalid-cloud-reference');
@@ -155,7 +167,7 @@ export function createCaseStudyImageResolver({
       setOwner(current);
       if (pathOwner !== current || (userId && userId !== current)) return unauthorized();
       const { signal } = session;
-      const result = await (bytes ? download(path, signal) : sign(path, signal));
+      const result = await (bytes ? download(path, signal, version) : sign(path, signal));
       return signal.aborted ? unauthorized() : result;
     } catch (error) {
       return failed(classifyCaseStudyEvidenceCloudError(error));
@@ -164,19 +176,20 @@ export function createCaseStudyImageResolver({
   resolve.peekBlob = (reference, userId) => {
     const path = caseStudyEvidenceCloudPath(reference);
     if (!userId || userId !== owner || !path.startsWith(`${userId}/`)) return undefined;
-    return readCached(images, path, removeImage)?.blob;
+    return readCached(images, JSON.stringify([path,'immutable-v1']), removeImage)?.blob;
   };
+  resolve.invalidate=async(reference,userId)=>{const path=caseStudyEvidenceCloudPath(reference);if(owner!==userId||!path.startsWith(userId+'/'))return false;for(const key of images.keys())if(JSON.parse(key)[0]===path)removeImage(key);signedUrls.delete(path);await persistentCache.invalidate(userId,path);return true;};
   return resolve;
 }
 
 let defaultResolver;
-async function resolveCloudImage(reference, { client, userId, bytes } = {}) {
+async function resolveCloudImage(reference, { client, userId, bytes, version } = {}) {
   try {
     const supabase = client || await storageClient();
     if (!clientResolvers.has(supabase)) clientResolvers.set(supabase, createCaseStudyImageResolver({ client: supabase }));
     const resolve = clientResolvers.get(supabase);
     if (!client) defaultResolver = resolve;
-    return await resolve(reference, { userId, bytes });
+    return await resolve(reference, { userId, bytes, version });
   } catch (error) {
     return failed(classifyCaseStudyEvidenceCloudError(error));
   }
@@ -187,6 +200,7 @@ export const resolveCaseStudyEvidenceCloudBlob = (reference, options) => resolve
 export const peekCaseStudyEvidenceCloudBlob = (reference, userId) => defaultResolver?.peekBlob(reference, userId);
 export async function uploadCaseStudyEvidenceImage({userId,evidenceId,blob,cloudRef='',client}={}) {
   if (!userId||!evidenceId||!blob) return {error:'The evidence image is incomplete.'};
+  if(blob.size>IMAGE_MAX_BYTES)return {error:IMAGE_LIMIT_MESSAGE};
   const path=caseStudyEvidenceCloudPath(cloudRef)||imagePath(userId,evidenceId); const supabase=client||await storageClient();
   const bucket=supabase.storage.from(CASE_STUDY_EVIDENCE_BUCKET);
   // storage-js wraps Blobs in multipart FormData. Safari's IndexedDB-backed
@@ -204,4 +218,11 @@ export async function uploadCaseStudyEvidenceImage({userId,evidenceId,blob,cloud
   const [expectedChecksum,verifiedChecksum]=await Promise.all([calculateImageChecksum(blob),calculateImageChecksum(verified)]);
   if (expectedChecksum!==verifiedChecksum) return {error:'The uploaded evidence image did not match the local image.'};
   return {cloudRef:caseStudyEvidenceCloudReference(path),checksum:verifiedChecksum,verified:true};
+}
+
+const displayCopies=new WeakMap();
+export async function resolveCaseStudyEvidenceDisplayUrl(reference,options) {
+ const result=await resolveCaseStudyEvidenceCloudBlob(reference,options);if(!result.blob)return result;
+ if(!displayCopies.has(result.blob))displayCopies.set(result.blob,(async()=>{const bytes=new Uint8Array(await result.blob.arrayBuffer());let body='';for(let i=0;i<bytes.length;i+=8192)body+=String.fromCharCode(...bytes.subarray(i,i+8192));return `data:${result.blob.type||'image/png'};base64,${btoa(body)}`;})());
+ return {...result,url:await displayCopies.get(result.blob)};
 }

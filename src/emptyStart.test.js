@@ -47,5 +47,5 @@ test('workspace-dependent pages show NoWorkspaceState when placeholder', () => {
 test('account settings and import modals are suppressed for placeholder', () => {
   const source = read('TradingJournal.jsx');
   assert.match(source, /modal === "account" && !account\.isPlaceholder/);
-  assert.match(source, /modal === "import" && !account\.isPlaceholder/);
+  assert.match(source, /modal === "import" && !tradeLogsReadOnly && !account\.isPlaceholder/);
 });

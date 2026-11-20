@@ -101,5 +101,5 @@ test('backup retains templates, validation and conflict-safe imports', () => {
 test('chart uploads accept persistent supported image payloads only', () => {
   assert.equal(validateEvidenceImage({type:'image/png',size:1024}), null);
   assert.match(validateEvidenceImage({type:'application/pdf',size:1}), /PNG, JPEG, or WebP/);
-  assert.match(validateEvidenceImage({type:'image/jpeg',size:3 * 1024 * 1024 + 1}), /3 MB/);
+  assert.match(validateEvidenceImage({type:'image/jpeg',size:3 * 1024 * 1024 + 1}), /3 MiB/);
 });
