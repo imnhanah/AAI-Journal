@@ -1,3 +1,4 @@
+import { entryTypeLabel, confluenceLabels } from './workspaceClassification.js';
 import { useState } from 'react';
 import { useConfirmation } from './ConfirmationDialog.jsx';
 import './trade-logs.css';
@@ -257,13 +258,13 @@ export default function TradeLogs({ theme = 'light', trades = [], markups = [], 
         { label: 'Rules checked', value: `${(trade.ruleEvaluations || []).filter(item => item.checked).length}/${(trade.ruleEvaluations || []).length}` },
         { label: 'Held for', value: trade.heldFor || '—' }
       ],
-      execution: [['Entry model', trade.entryType || '—'], ['Mood shift', `${trade.moodBefore || '—'} → ${trade.moodAfter || '—'}`], ['Mistakes', trade.mistakes?.length ? trade.mistakes.join(', ') : 'No mistakes logged']],
+      execution: [['Entry model', entryTypeLabel(trade) || '—'], ['Mood shift', `${trade.moodBefore || '—'} → ${trade.moodAfter || '—'}`], ['Mistakes', trade.mistakes?.length ? trade.mistakes.join(', ') : 'No mistakes logged']],
       rating: trade.rating || 0,
       accounts: results.map(item => {
         const accountPnl = Number(item.netPnl ?? item.grossPnl ?? 0);
         return { name: item.accountName || 'Account', pnl: signedMoney(accountPnl), share: 50, tone: accountPnl > 0 ? 'profit' : accountPnl < 0 ? 'loss' : 'neutral' };
       }),
-      confluences: trade.confluence || trade.types || [], screenshots: trade.screenshots || [], note: trade.context || 'No trade note added.', linkedMarkup
+      confluences: confluenceLabels(trade), screenshots: trade.screenshots || [], note: trade.context || 'No trade note added.', linkedMarkup
     }];
   }));
   const [selectedId, setSelectedId] = useState(source[0]?.id || 't1');

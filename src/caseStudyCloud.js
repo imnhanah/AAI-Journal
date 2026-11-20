@@ -1,3 +1,4 @@
+import {caseStudyLibraryUsesV8, caseStudyV8CloudEnabled} from './caseStudyRichFormat.js';
 import { supabase } from './supabaseClient.js';
 import { profileLibraryLoadFailure } from './profileCaseStudyLoadFailure.js';
 export { profileLibraryLoadFailure } from './profileCaseStudyLoadFailure.js';
@@ -13,6 +14,7 @@ export async function loadProfileCaseStudyLibrary(userId) {
 }
 export async function saveProfileCaseStudyLibrary(userId, library, expectedRevision) {
   if(globalThis.__tjCloudWritesPaused===true) return { error:'Saving is paused for this account.' };
+  if(caseStudyLibraryUsesV8(library) && !caseStudyV8CloudEnabled())return {error:'This compatible-reader build preserves V8 documents. Update the app before saving rich document changes.'};
   // The server function compares the revision in its single write. Never
   // replace this with a read followed by an unconditional client upsert.
   const { data, error } = await supabase.rpc('tj_save_profile_case_study_library', { expected_revision:expectedRevision ?? null, next_library:library }).single();

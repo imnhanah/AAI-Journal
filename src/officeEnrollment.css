@@ -1,0 +1,6 @@
+.ao .office-enrollment {max-width:440px;}
+.ao .office-enrollment form {display:grid;gap:16px;}
+.ao .office-enrollment label {display:grid;gap:8px;text-align:left;font-size:14px;}
+.ao .office-enrollment input {box-sizing:border-box;width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;letter-spacing:.2em;}
+.ao .office-enrollment input:focus-visible {outline:2px solid var(--acc);outline-offset:3px;}
+.ao .office-enrollment-qr {display:block;width:220px;max-width:100%;height:auto;margin:0 auto;padding:10px;border-radius:12px;background:var(--color-white);}

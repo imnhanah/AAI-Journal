@@ -41,7 +41,7 @@ function ItemSheet({kind, row, initial, rows, onClose, onSubmit, onDelete}) {
 }
 
 // Mistakes, Confluences, Entry types and Trading rules. The parent keeps saving as it always has.
-export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelete}) {
+export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelete, orderControls, orderStatus}) {
   const kind = KINDS[type];
   const [search, setSearch] = useState(''), [expanded, setExpanded] = useState(false), [sheet, setSheet] = useState(null);
   const showToast = useMobileAlert();
@@ -66,12 +66,14 @@ export function MobileSetupList({type, rows, emptyNote, onAdd, onRename, onDelet
       {search && <button type="button" aria-label="Clear search" onClick={() => setSearch('')}><b><X size={12}/></b></button>}
     </label>
 
+    {orderStatus}
     {shown.length > 0
       ? <div className="tj-ml-list">{shown.map(row => {
           const inner = <><span className="tj-ml-dot">{kind.numbered ? row.number : <kind.Glyph size={16} aria-hidden="true"/>}</span><strong>{row.label}</strong>{row.locked ? <em>{row.tag}</em> : <ChevronRight className="tj-ml-chev" size={16} aria-hidden="true"/>}</>;
-          return row.locked
-            ? <div className="tj-ml-item" key={row.id}>{inner}</div>
-            : <button type="button" className="tj-ml-item" key={row.id} aria-haspopup="dialog" onClick={() => setSheet({row})}>{inner}</button>;
+          const edit = <button type="button" className="tj-ml-item" key={row.id} aria-haspopup="dialog" onClick={() => setSheet({row})}>{inner}</button>;
+          return row.locked ? <div className="tj-ml-item" key={row.id}>{inner}</div>
+            : orderControls && !query ? <div className="tj-classification-line tj-classification-rule-row" key={row.id}
+              data-classification-order>{edit}{orderControls(row)}</div> : edit;
         })}</div>
       : <div className="tj-ml-empty">
           <b>{query ? `No match for “${search.trim()}”` : `No ${kind.one}s yet`}</b>

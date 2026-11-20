@@ -1,4 +1,5 @@
 import { protectTestTrade } from './backtestModel.js';
+import {assertBacktestModelWrite} from './backtestEntryModel.js';
 import { changeBacktestWorkspace, readBacktestWorkspace } from './localJournalDb.js';
 
 const find = (rows, id) => rows.find(row => row.id === id);
@@ -50,6 +51,7 @@ export function createLocalBacktestApi(userId) {
         workspace.trades = workspace.trades.filter(row => row.id !== trade.id);
         return { deleted: trade.id };
       }
+      assertBacktestModelWrite(current,trade);
       const { metadata, screenshots } = protectTestTrade(parent, trade);
       return save(workspace.trades, current, {
         ...metadata, runId: parent.id, updatedAt: versionAfter(current),

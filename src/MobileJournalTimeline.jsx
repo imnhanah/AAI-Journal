@@ -1,3 +1,4 @@
+import { entryTypeLabel, confluenceLabels } from './workspaceClassification.js';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {ArrowRight, ChevronDown, ChevronLeft, ChevronUp, Ellipsis, ImagePlus, Pencil, Plus, Search, SlidersHorizontal, X} from 'lucide-react';
 import {ThemeSelect} from './JournalControls.jsx';
@@ -51,7 +52,7 @@ function FilterSheet({filters, onFilters, onReset, count, options, onClose}) {
       {group('Month', 'month', list(options.months, value => MONTHS[Number(value) - 1] || value))}
       {filters.month ? group('Week', 'week', [['','All'],...['1','2','3','4','5'].map(week => [week, `W${week}`])]) : <div className="tj-jr-fgroup"><span>Week</span><p>Select a month first</p></div>}
       <div className="tj-jr-fgroup"><span>Session</span><div>{[...new Set(['Asia','London','NY AM','NY PM'])].map(session => <button type="button" key={session} aria-pressed={filters.sessions.includes(session)} onClick={() => onFilters({...filters, sessions:filters.sessions.includes(session) ? filters.sessions.filter(item => item !== session) : [...filters.sessions, session]})}><i>{session}</i></button>)}</div></div>
-      {group('Entry model', 'model', list(options.models))}
+      {group('Entry model', 'model', list(options.models,value=>options.modelLabels?.[value] ?? value))}
       {group('Direction', 'direction', [['All','All'],['BUY','Buy'],['SELL','Sell']], 'All')}
       {group('Review', 'review', [['All','All'],[PHONE_REVIEW_NEEDED,'Needs review'],['reviewed','Reviewed']], 'All')}
     </div>
@@ -63,7 +64,7 @@ function TradeList({rows, netPnl, money, filters, onFilters, onReset, options, s
   const [sheet,setSheet] = useState(false), [searching,setSearching] = useState(Boolean(search)), [limit,setLimit] = useState(PAGE_SIZE);
   useEffect(() => setLimit(PAGE_SIZE), [filters, search]);
   const closed = rows.filter(row => !row.running), wins = closed.filter(row => row.trade.pnl > 0).length, losses = closed.filter(row => row.trade.pnl < 0).length;
-  const chips = journalActiveFilters(filters);
+  const chips = journalActiveFilters(filters,options.modelLabels);
   const months = useMemo(() => journalMonths(rows.slice(0, limit).map(row => row.trade)), [rows, limit]);
   const byId = useMemo(() => new Map(rows.map(row => [row.trade.id, row])), [rows]);
   const closeSheet = React.useCallback(() => setSheet(false), []);
@@ -79,7 +80,7 @@ function TradeList({rows, netPnl, money, filters, onFilters, onReset, options, s
       {month.trades.map((trade, index) => { const row = byId.get(trade.id), info = row, previous = month.trades[index - 1], day = trade.date ? asDate(trade.date) : null, dot = info.running ? 'is-run' : trade.pnl < 0 ? 'is-loss' : 'is-win'; return <button type="button" key={trade.id} className="tj-jr-event" onClick={() => onOpen(trade.id)}>
         <span className="tj-jr-date">{previous?.date !== trade.date && day ? <><b>{day.getDate()}</b><small>{day.toLocaleDateString(undefined, {weekday:'short'})}</small></> : null}</span>
         <span className={`tj-jr-dot ${dot}`} aria-hidden="true"/>
-        <span className="tj-jr-card"><span className="tj-jr-card-top"><span><b>{trade.asset || 'No instrument'}</b><em className={trade.direction === 'BUY' ? 'is-buy' : 'is-sell'}>{trade.direction}</em></span><i className={dot}>{info.running ? 'Running' : rrText(trade.rr)}</i></span><span className="tj-jr-card-bottom"><span>{[trade.time, trade.entrySession || trade.session, trade.entryType || trade.confluenceSession].filter(Boolean).join(' · ')}</span><span className={tone(trade.pnl)}>{info.running ? '' : money(trade.pnl)}</span></span></span>
+        <span className="tj-jr-card"><span className="tj-jr-card-top"><span><b>{trade.asset || 'No instrument'}</b><em className={trade.direction === 'BUY' ? 'is-buy' : 'is-sell'}>{trade.direction}</em></span><i className={dot}>{info.running ? 'Running' : rrText(trade.rr)}</i></span><span className="tj-jr-card-bottom"><span>{[trade.time, trade.entrySession || trade.session, entryTypeLabel(trade)].filter(Boolean).join(' · ')}</span><span className={tone(trade.pnl)}>{info.running ? '' : money(trade.pnl)}</span></span></span>
       </button>; })}
     </div>; })}
     {rows.length > limit && <button type="button" className="tj-jr-more" onClick={() => setLimit(value => value + PAGE_SIZE)}><span>Show {Math.min(PAGE_SIZE, rows.length - limit)} more</span></button>}
@@ -99,7 +100,7 @@ function TradeDetail({row, position, total, money, date, balances, markups, note
   useEffect(() => { setActions(false); setConfirming(false); setLink(trade.premarketMarkupId || ''); }, [trade.id, trade.premarketMarkupId]);
   const figures = journalTradeMoney(trade, balances), held = journalHeldLabel(trade), note = noteOf(trade);
   const rules = trade.ruleEvaluations || [], checked = rules.filter(rule => rule.checked).length;
-  const confluences = trade.confluence || trade.types || [], mistakes = trade.mistakes || [];
+  const confluences = confluenceLabels(trade), mistakes = trade.mistakes || [];
   const linked = markups.find(markup => markup.id === trade.premarketMarkupId);
   const maximum = Math.max(1e-9, ...figures.accounts.map(account => Math.abs(account.pnl)));
   const tabs = ['Overview','Process','Media','Notes'], tabIndex = tabs.indexOf(tab);
@@ -116,7 +117,7 @@ function TradeDetail({row, position, total, money, date, balances, markups, note
       {actions && <button type="button" className={`tj-jr-delete ${confirming ? 'is-armed' : ''}`} onClick={() => { if(confirming) onDelete(trade.id); else setConfirming(true); }}>{confirming ? 'Tap again to permanently delete' : 'Delete trade'}</button>}
     </section>
     <div className="tj-jr-tabs" role="tablist" aria-label="Trade sections" style={{'--tab-index':tabIndex}}><i aria-hidden="true"/>{tabs.map(name => <button type="button" role="tab" key={name} aria-selected={tab === name} onClick={() => setTab(name)}>{name}</button>)}</div>
-    {tab === 'Overview' && <><div className="tj-jr-tiles">{tile('Gross P&L', figures.gross == null ? '—' : money(figures.gross), tone(figures.gross))}{tile('Costs', figures.costs ? money(-Math.abs(figures.costs)) : '—')}{tile('Held for', held || '—')}{tile('Entry model', trade.entryType || trade.confluenceSession || '—', '', 'is-text')}</div>
+    {tab === 'Overview' && <><div className="tj-jr-tiles">{tile('Gross P&L', figures.gross == null ? '—' : money(figures.gross), tone(figures.gross))}{tile('Costs', figures.costs ? money(-Math.abs(figures.costs)) : '—')}{tile('Held for', held || '—')}{tile('Entry model', entryTypeLabel(trade) || '—', '', 'is-text')}</div>
       <article className="tj-jr-panel"><header><h3>By account</h3>{figures.accounts.length > 0 && <small>{money(trade.pnl)}</small>}</header>{figures.accounts.length ? <>{figures.accounts.length > 1 && <div className="tj-jr-split">{figures.accounts.map(account => <i key={account.id} className={account.pnl < 0 ? 'is-loss' : ''} style={{flex:Math.abs(account.pnl) / maximum || .02}}/>)}</div>}{figures.accounts.map(account => <div className="tj-jr-account" key={account.id}><span>{account.name}</span><b className={tone(account.pnl)}>{money(account.pnl)}</b></div>)}</> : <p>Account split was not recorded for this trade.</p>}</article></>}
     {tab === 'Process' && <><article className="tj-jr-panel tj-jr-rules"><Ring checked={checked} total={rules.length}/><div><b>Rules checked</b><small>{rules.length ? checked === rules.length ? 'Every rule confirmed' : `${rules.length - checked} not confirmed` : 'Not recorded'}</small></div></article>
       <article className="tj-jr-panel"><header><h3>Mood shift</h3></header>{trade.moodBefore || trade.moodAfter ? <div className="tj-jr-mood"><span className="tj-jr-chip is-ok">{trade.moodBefore || '—'}</span><ArrowRight size={16}/><span className="tj-jr-chip is-bad">{trade.moodAfter || '—'}</span></div> : <p>Not recorded.</p>}</article>

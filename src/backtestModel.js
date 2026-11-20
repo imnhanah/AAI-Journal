@@ -1,3 +1,4 @@
+import {rawBacktestEntryModel} from './backtestEntryModel.js';
 export const isClosedTest = t => !!t && t.pnl !== null && t.pnl !== '' && Number.isFinite(Number(t.pnl)) && !String(t.context || '').includes('[aaicorefx-running-trade]');
 // Older saved runs predate test types. Treating them as backtests keeps their
 // history intact while allowing new forward tests to use the same isolated data model.
@@ -17,7 +18,7 @@ export function backtestStats(run, trades = []) {
   for(const t of [...closed].reverse()) { if(Math.sign(Number(t.pnl||0))!==sign || !sign)break; streak++; }
   const groups = field => {
     const grouped=new Map();
-    for(const t of closed) for(const label of new Set(Array.isArray(t[field]) ? t[field] : [t[field]||'Not tagged'])) { const x=grouped.get(label)||{label,total:0,wins:0,pnl:0}; x.total++;x.wins+=Number(Number(t.pnl)>0);x.pnl+=Number(t.pnl||0);grouped.set(label,x); }
+    for(const t of closed) for(const label of new Set(Array.isArray(t[field]) ? t[field] : [t[field]||'Not tagged'])) { const identity=field==='entryType' && t._entryModelKey ? t._entryModelKey : label; const x=grouped.get(identity)||{label,...(identity!==label?{id:identity}:{}),total:0,wins:0,pnl:0}; x.total++;x.wins+=Number(Number(t.pnl)>0);x.pnl+=Number(t.pnl||0);grouped.set(identity,x); }
     return [...grouped.values()].map(x=>({...x,rate:100*x.wins/x.total})).sort((a,b)=>b.pnl-a.pnl||a.label.localeCompare(b.label));
   };
   const rules=closed.flatMap(t=>t.ruleEvaluations||[]);
@@ -33,6 +34,7 @@ export function mergeBacktestDelta(previous, delta) {
   return {runs:merge(previous.runs,delta.runVersions,delta.runs),trades:merge(previous.trades,delta.tradeVersions,delta.trades)};
 }
 export function protectTestTrade(run, trade) {
+  trade=rawBacktestEntryModel(trade);
   if(trade.asset!==run.instrument)throw new Error('This backtest is limited to '+run.instrument+'.');
   const {screenshots,mediaEdited,_mediaLoaded,...metadata}=trade;
   if(mediaEdited&&!_mediaLoaded&&trade.updatedAt)throw new Error('Open screenshots before replacing existing media.');
