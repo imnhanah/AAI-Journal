@@ -4,19 +4,19 @@ import {emptyChallenge,buildChallengePlan,challengeSetupFits,snapChallengeReward
 import {resetAutomation,replayChallenge} from './challengeAutomation.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
-const row=(id,grossPnl)=>({id,grossPnl,pnl:0,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`});
+const row=(id,grossPnl)=>({id,grossPnl,pnl:grossPnl,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`});
 const adaptive=(rule,level=1)=>{
   const base={...emptyChallenge(),automation:{rewardRatio:3,adaptiveRiskPct:10,adaptiveDrawdownPct:50,adaptiveStepBack:rule}};
   return {...resetAutomation(base,[],'adaptive',1,now,10,100),testStartLevel:level};
 };
 const run=(base,trades)=>{
-  // Earn the desired Adaptive rung with actual funded closes; a manually
-  // selected Level 3 at only its Level 1 balance is no longer valid.
+  // Earn the Adaptive rung with real net wins and spare capital, so loss-count
+  // tests are independent of the unchanged minimum-balance requirement.
   const earned=base.automation?.mode==='adaptive' && base.testStartLevel===3 ? [
-    {...row(0,30),id:'earned-1',pnl:30,createdAt:'2026-09-14T10:01:00Z'},
-    {...row(0,39),id:'earned-2',pnl:39,createdAt:'2026-09-14T10:02:00Z'},
+    {...row(0,35),id:'earned-1',pnl:35,createdAt:'2026-09-14T10:01:00Z'},
+    {...row(0,45),id:'earned-2',pnl:45,createdAt:'2026-09-14T10:02:00Z'},
   ] : [];
-  return replayChallenge(base,{...account,balance:100,trades:[...earned,...trades]});
+  return replayChallenge(base,{...account,balance:base.automation?.startingBalance ?? 100,trades:[...earned,...trades]});
 };
 test('defaults are 1.5R for Mode 1 and 2.8R for Mode 2',()=>{
   assert.equal(defaultChallengeReward('risk'),1.5);
@@ -57,10 +57,10 @@ test('Adaptive Two losses steps back only on the second loss; a win does not res
 test('Adaptive Net loss steps back when the level net loss reaches its risk',()=>{
   const base=adaptive('net',3);
   assert.equal(run(base,[row(1,-0.5)]).activeLevel,3);
-  assert.equal(run(base,[row(1,-100)]).activeLevel,2);
+  assert.equal(run(base,[row(1,-19)]).activeLevel,2);
 });
 test('Mode 2 counts two losses on the same level; breakevens and small wins do not reset the count',()=>{
-  const base=resetAutomation(emptyChallenge(),[],'streak',3,now,10,100);
+  const base=resetAutomation(emptyChallenge(),[],'streak',3,now,10,110);
   assert.equal(run(base,[row(1,-1),row(2,0),row(3,0.5)]).lossStreak,1);
   const start=run(base,[]).activeLevel;
   assert.equal(run(base,[row(1,-1),row(2,0.5),row(3,-1)]).activeLevel,start-1);

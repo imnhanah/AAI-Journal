@@ -5,9 +5,9 @@ import {emptyChallenge,CHALLENGE_PLAN,buildChallengePlan,changeChallengeStatus} 
 import {fundedChallengeLevel} from './challengeLifecycle.js';
 const now=new Date(2026,8,14,10,0);
 const account={id:'a',challengeEnabled:true,challengeStartingBalance:20};
-// Mode-specific loss tests use flat net deliberately; the balance-gate suite
-// covers real losses and costs. Winning fixtures must also fund their pass.
-const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:Math.max(0,grossPnl),createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
+// Every fixture has its actual net result; use spare capital when testing
+// a loss-count rule independently of the minimum-balance gate.
+const row=(id,grossPnl,extra={})=>({id,grossPnl,pnl:grossPnl,createdAt:new Date(2026,8,14,11,Number(id)).toISOString(),closeDate:'2026-09-14',closeTime:`11:${String(id).padStart(2,'0')}`,...extra});
 const start=(mode,level=1,old=[])=>resetAutomation(emptyChallenge(),old,mode,level,now);
 const replay=(base,trades,patch={})=>{
   const plan=buildChallengePlan(20,base.automation?.mode || 'risk',30,base.automation?.rewardRatio);
@@ -83,10 +83,10 @@ test('Mode 2 falls back after one loss when net capital no longer funds the curr
 });
 test('a risk-limit step-back is never re-promoted by the remaining funded balance',()=>{
   const baseline=resetAutomation(emptyChallenge(),[],'risk',1,now,30,100);
-  // $100 starts on level 6. The gross loss fails that rung, while the small
-  // net loss leaves enough capital to fund it; replay must retain level 5.
-  const state=replayChallenge(baseline,{...account,balance:100,trades:[row(1,-30,{pnl:-0.01})]});
-  assert.equal(state.liveBalance,99.99);
+  // $100 starts on Level 6 ($18 risk). A $7.21 net loss exceeds 40%,
+  // while remaining capital still funds that level; retain the step-back.
+  const state=replayChallenge(baseline,{...account,balance:100,trades:[row(1,-7,{pnl:-7.21,commission:.21,swap:0})]});
+  assert.equal(state.liveBalance,92.79);
   assert.equal(state.activeLevel,5);
   assert.equal(state.statuses[6],'Step back');
   assert.equal(state.statuses[5],'In progress');
@@ -99,12 +99,12 @@ test('cash out within current funding preserves progress; savings-funded transfe
 });
 test('activity counts repeated downward moves even after a level is revisited',()=>{
   const base=start('risk',4);
-  const trades=[row(1,-10),row(2,14),row(3,-10)];
+  const trades=[row(1,-4.01,{pnl:-4.01}),row(2,20,{pnl:20}),row(3,-4.01,{pnl:-4.01})];
   const state=replay(base,trades);
   assert.equal(state.stepBacks,2);
   assert.equal(state.activeLevel,3);
   assert.equal(replay(base,trades.slice(0,2)).stepBacks,1);
-  assert.equal(replay(base,[...trades.slice(0,2),{...trades[2],grossPnl:0}]).stepBacks,1);
+  assert.equal(replay(base,[...trades.slice(0,2),{...trades[2],grossPnl:0,pnl:0}]).stepBacks,1);
   assert.equal(replay(base,[]).stepBacks,0);
 });
 test('activity excludes level-one boundary, deposits and foreign trades from step-backs',()=>{
@@ -128,27 +128,28 @@ test('one trade must reach the profit target; small wins never add up and a loss
   const state=replay(start('risk'),[row(1,3),row(2,4)]);
   assert.equal(state.activeLevel,1);assert.equal(state.counted,2);
   assert.equal(replay(start('risk'),[row(1,100000)]).activeLevel,2);
-  assert.equal(replay(start('risk'),[row(1,-2),row(2,100000)]).activeLevel,2);
+  assert.equal(replay(start('risk'),[row(1,-2),row(2,100000)],{balance:25}).activeLevel,2);
 });
-test('Mode 1 steps back on a single stop-loss trade, not on losses adding up',()=>{
-  assert.equal(replay(start('risk',4),[row(1,-100)]).activeLevel,3);
-  assert.equal(replay(start('risk',4),[row(1,-100),row(2,-100)]).activeLevel,2);
-  assert.equal(replay(start('risk',4),[row(1,-1),row(2,-1)]).activeLevel,4);
+test('Mode 1 steps back on a single net loss above forty percent, not on losses adding up',()=>{
+  assert.equal(replay(start('risk',4),[row(1,-4.01,{pnl:-4.01})]).activeLevel,3);
+  assert.equal(replay(start('risk',4),[row(1,-4.01,{pnl:-4.01}),row(2,-3.21,{pnl:-3.21})]).activeLevel,2);
+  // Spare capital keeps the separate minimum-balance gate out of this check.
+  assert.equal(replay(start('risk',4),[row(1,-1,{pnl:-1}),row(2,-1,{pnl:-1})],{balance:60}).activeLevel,4);
 });
 test('Mode 2 steps back on any two losses, including tiny ones',()=>{
-  const state=replay(start('streak',4),[row(1,-.01),row(2,-.01)]);
+  const state=replay(start('streak',4),[row(1,-.01),row(2,-.01)],{balance:80});
   assert.equal(state.activeLevel,3);assert.equal(state.lossStreak,0);
-  assert.equal(replay(start('streak',4),[row(1,-100)]).activeLevel,4);
+  assert.equal(replay(start('streak',4),[row(1,-.01)],{balance:80}).activeLevel,4);
 });
 test('Mode 2 follows the win, loss, loss, win transition sequence',()=>{
   const base=start('streak');
-  const afterWin=replay(base,[row(1,13.95)]);
+  const afterWin=replay(base,[row(1,13.95)],{balance:25});
   assert.equal(afterWin.activeLevel,2);assert.equal(afterWin.lossStreak,0);
-  const afterFirstLoss=replay(base,[row(1,13.95),row(2,-4.5)]);
+  const afterFirstLoss=replay(base,[row(1,13.95),row(2,-.5)],{balance:25});
   assert.equal(afterFirstLoss.activeLevel,2);assert.equal(afterFirstLoss.lossStreak,1);
-  const afterSecondLoss=replay(base,[row(1,13.95),row(2,-4.5),row(3,-4.5)]);
+  const afterSecondLoss=replay(base,[row(1,13.95),row(2,-.5),row(3,-.5)],{balance:25});
   assert.equal(afterSecondLoss.activeLevel,1);assert.equal(afterSecondLoss.lossStreak,0);assert.equal(afterSecondLoss.stepBacks,1);
-  const afterRecoveryWin=replay(base,[row(1,13.95),row(2,-4.5),row(3,-4.5),row(4,13.95)]);
+  const afterRecoveryWin=replay(base,[row(1,13.95),row(2,-.5),row(3,-.5),row(4,13.95)],{balance:25});
   assert.equal(afterRecoveryWin.activeLevel,2);assert.equal(afterRecoveryWin.lossStreak,0);assert.equal(afterRecoveryWin.stepBacks,1);
 });
 test('Mode 2 uses the 3.1R target while retaining its two-loss step-back rule',()=>{
@@ -156,17 +157,17 @@ test('Mode 2 uses the 3.1R target while retaining its two-loss step-back rule',(
   assert.equal(replay(start('streak'),[row(1,13.95)]).activeLevel,2);
 });
 test('Mode 2 keeps a loss count through breakeven and resets it only on a passing win',()=>{
-  const breakeven=replay(start('streak',4),[row(1,-1),row(2,0),row(3,-1)]);
+  const breakeven=replay(start('streak',4),[row(1,-1),row(2,0),row(3,-1)],{balance:80});
   assert.equal(breakeven.activeLevel,3);assert.equal(breakeven.lossStreak,0);assert.equal(breakeven.stepBacks,1);
-  const state=replay(start('streak',4),[row(1,-1),row(2,.1),row(3,-1)]);
+  const state=replay(start('streak',4),[row(1,-1),row(2,.1),row(3,-1)],{balance:80});
   assert.equal(state.activeLevel,3);assert.equal(state.lossStreak,0);assert.equal(state.stepBacks,1);
-  const passed=replay(start('streak',4),[row(1,-1),row(2,32),row(3,-1)]);
+  const passed=replay(start('streak',4),[row(1,-1),row(2,32),row(3,-1)],{balance:80});
   assert.equal(passed.activeLevel,5);assert.equal(passed.lossStreak,1);
 });
 test('manual checkpoint freezes prior progress and resets counters',()=>{
   const trades=[row(1,-1)];
   const state=replay(start('streak',4),trades);
-  const base=resetAutomation(state,trades,'streak',5,new Date(2026,8,14,12));
+  const base=resetAutomation(state,trades,'streak',5,new Date(2026,8,14,12),30,110);
   const result=replay(base,[...trades,row(2,-1,{createdAt:new Date(2026,8,14,13).toISOString(),closeTime:'13:00'})]);
   assert.equal(result.activeLevel,5);assert.equal(result.lossStreak,1);
   assert.equal(result.counted,1);
@@ -181,10 +182,10 @@ test('pre-checkpoint and foreign-account trades do not count; close timing is op
   assert.equal(replay(start('risk'),[row(1,6.75,{closeDate:'',closeTime:''})]).activeLevel,2);
   assert.equal(replay(start('risk'),[row(4,6.75,{closeTime:''})]).activeLevel,2);
 });
-test('gross edits and deletions replay; close date and time changes have no effect',()=>{
+test('net edits and deletions replay; close date and time changes have no effect',()=>{
   const base=start('risk');const trade=row(1,6.75);
   assert.equal(replay(base,[trade]).activeLevel,2);
-  assert.equal(replay(base,[{...trade,grossPnl:1}]).activeLevel,1);
+  assert.equal(replay(base,[{...trade,grossPnl:1,pnl:1}]).activeLevel,1);
   assert.equal(replay(base,[]).activeLevel,1);
   assert.equal(replay(base,[{...trade,closeDate:'',closeTime:''}]).activeLevel,2);
   assert.deepEqual(replay(base,[trade]),replay(base,[{...trade,closeDate:'2030-01-01',closeTime:'00:00'}]));
@@ -222,8 +223,8 @@ test('the final level remains active until real equity reaches the final target'
   const initial={...emptyChallenge(),automation:{rewardRatio:1.5}};
   const plan=buildChallengePlan(20,'risk',10,1.5);
   const baseline=resetAutomation(initial,[],'risk',10,now,10,plan[9].start);
-  // Gross P&L can clear the last rung while net equity remains below the
-  // challenge target (for example after costs or earlier setbacks).
+  // A gross target is insufficient when costs leave net profit and equity
+  // below the required targets.
   const state=replayChallenge(baseline,{...account,balance:plan[9].start,trades:[
     row(1,plan[9].profit,{pnl:0})
   ]});
@@ -282,7 +283,7 @@ test('entry dates in the past do not exclude newly logged trades',()=>{
 test('a trade imported after automation starts is explicitly included in challenge replay',()=>{
   const imported=row(99,-1,{id:'imported',createdAt:new Date(2026,8,14,9,0).toISOString()});
   const base={...start('streak',2),automation:{...start('streak',2).automation,includedIds:['imported']}};
-  const state=replay(base,[imported]);
+  const state=replay(base,[imported],{balance:40});
   assert.equal(state.counted,1);
   assert.equal(state.lossStreak,1);
 });

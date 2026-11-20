@@ -9,7 +9,7 @@ const SHARED = {
   completion: ['Completing the challenge', 'It completes when a trade passes the last level and the balance has reached the planned final target. Planned balances are the clean path, so your live balance can finish above them.'],
   lock: ['Locked after trades', 'Once a trade is linked, the mode, plan length, reward and setup rules are locked.'],
 };
-const PASS = ['How you pass', 'One closed trade must meet or exceed the level’s full profit target, and the account balance after that same trade, fees and commissions must meet or exceed the level’s planned ending balance. Both are required on the same trade; otherwise you stay on the level. Small wins do not add up or unlock an earlier attempt.'];
+const PASS = ['How you pass', 'One closed trade must meet or exceed the level’s full profit target, and the account balance after that same trade, fees and commissions must meet or exceed the level’s planned ending balance. Both are required on the same trade; otherwise you stay on the level. Small wins do not add up or unlock an earlier attempt. All profit and loss checks use net P&L after commission, swap and other recorded costs.'];
 
 const ADAPTIVE_STEP_BACK_TEXT = {
   one: ['Step-back · One loss', 'A losing trade from Level 2 onward steps the challenge back one level. A Level 1 loss stays at Level 1.'],
@@ -35,7 +35,7 @@ export function challengeRulesFor(mode = 'risk', stepBack) {
       title: 'Mode 2 · Two-Loss Streak rules',
       items: [
         PASS,
-        ['How you step back', 'Two losses on the same level step you back one level. A win that does not pass the level, or a breakeven, does not clear the count. A Level 1 loss stays on Level 1.'],
+        ['How you step back', 'Two losses on the same level step you back one level. A loss means a trade with negative net P&L after costs. A win that does not pass the level, or a breakeven, does not clear the count. A Level 1 loss stays on Level 1.'],
         SHARED.balance, SHARED.completion, SHARED.lock,
       ],
     };
@@ -44,7 +44,7 @@ export function challengeRulesFor(mode = 'risk', stepBack) {
     title: 'Mode 1 · Risk Limit rules',
     items: [
       PASS,
-      ['How you step back', 'One trade that hits its stop loss, losing the level’s planned risk, steps you back one level. A Level 1 loss stays on Level 1.'],
+      ['How you step back', 'One closed trade with a net loss greater than 40% of the level’s planned risk steps you back one level. Net P&L includes commission, swap and other recorded costs. Exactly 40% does not trigger this rule, and smaller losses do not accumulate toward it. The separate minimum-balance rule still applies. A Level 1 loss stays on Level 1.'],
       SHARED.balance, SHARED.completion, SHARED.lock,
     ],
   };

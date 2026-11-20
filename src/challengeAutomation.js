@@ -6,12 +6,21 @@ const isClosedTrade = closedChallengeTrade;
 export const validMode = mode => mode === 'risk' || mode === 'streak' || mode === 'adaptive' ? mode : null;
 // A pass belongs to one closed trade. No accumulated profit or remembered
 // earlier attempt can satisfy either half of this shared three-mode gate.
-export function challengeTradePasses({grossPnl, profitTarget, netBalance, balanceTarget}) {
-  const values=[grossPnl,profitTarget,netBalance,balanceTarget];
+export function challengeTradePasses({netPnl, profitTarget, netBalance, balanceTarget}) {
+  const values=[netPnl,profitTarget,netBalance,balanceTarget];
   if(values.some(value=>value==null || value==='' || !Number.isFinite(Number(value)))) return false;
   const [profit,requiredProfit,balance,requiredBalance]=values.map(value=>Math.round(Number(value)*100));
   return requiredProfit>0 && requiredBalance>0 && profit>=requiredProfit && balance>=requiredBalance;
 }
+// A single recorded net loss must be strictly greater than 40% of planned risk.
+// Compare integer cents without rounding the percentage threshold up or down.
+export function modeOneTradeStepsBack(netPnl, plannedRisk) {
+  if ([netPnl, plannedRisk].some(value => value == null || value === '' || !Number.isFinite(Number(value)))) return false;
+  const netCents = Math.round(Number(netPnl) * 100);
+  const riskCents = Math.round(Number(plannedRisk) * 100);
+  return riskCents > 0 && netCents < 0 && (-netCents * 100) > (riskCents * 40);
+}
+
 export function challengeProfitTarget(row,mode,balanceBeforeTrade) {
   return isAdaptiveBalanceMode(mode)
     ? Math.round(Number(balanceBeforeTrade)*Number(row.profitPct || 0))/100
@@ -63,7 +72,7 @@ export function replayChallenge(baseline, account) {
   const loggedAt=t=>Date.parse(t.createdAt || `${t.date}T${t.time || '00:00'}`);
   const rows=(account.trades || []).filter(t=>{
     if (excluded.has(t.id) || (t.accountId && t.accountId !== account.id)) return false;
-    return isClosedTrade(t) && (included.has(t.id) || loggedAt(t) >= Date.parse(config.startedAt)) && t.grossPnl != null && Number.isFinite(Number(t.grossPnl));
+    return isClosedTrade(t) && (included.has(t.id) || loggedAt(t) >= Date.parse(config.startedAt)) && t.pnl != null && t.pnl !== '' && Number.isFinite(Number(t.pnl));
   }).sort((a,b)=>loggedAt(a)-loggedAt(b) || String(a.id).localeCompare(String(b.id)));
   state.settingsLocked = linkedChallengeTrades(baseline,account).length > 0;
   const startTime = Date.parse(config.startedAt);
@@ -83,7 +92,7 @@ export function replayChallenge(baseline, account) {
   const enforceBalanceMinimum = balanceInCents => {
     const previous=state.activeLevel;
     const required=previous>totalLevels ? plan[totalLevels-1].end : plan[previous-1]?.start;
-    if(!Number.isFinite(required) || balanceInCents>=Math.round(required*100)) return;
+    if(!Number.isFinite(required) || balanceInCents>=Math.round(required*100)) return false;
     const fundedLevel=fundedChallengeLevel(plan,balanceInCents/100);
     for(const key of Object.keys(state.statuses)) if(Number(key)>=fundedLevel) delete state.statuses[key];
     for(const key of Object.keys(state.fundingJumps)) if(Number(key)>=fundedLevel) delete state.fundingJumps[key];
@@ -94,9 +103,11 @@ export function replayChallenge(baseline, account) {
     }
     state.activeLevel=fundedLevel;
     state.statuses[fundedLevel]='In progress';
-    state.stepBacks+=Math.max(0,Math.min(previous,totalLevels)-fundedLevel);
     cents=0;
     state.lossStreak=0;
+    // Report movement to the event owner. Levels crossed are not separate
+    // step-back events; opening/final reconciliation must not invent one.
+    return Math.min(previous,totalLevels)>fundedLevel;
   };
   const openingFunding = live / 100;
   const openingLevel = fundedChallengeLevel(plan,openingFunding);
@@ -130,7 +141,7 @@ export function replayChallenge(baseline, account) {
           if (!String(state.notes[previous] || '').includes(reason)) state.notes[previous]=[state.notes[previous],reason].filter(Boolean).join('\n');
           state.activeLevel = fundedLevel;
           state.statuses[fundedLevel] = 'In progress';
-          state.stepBacks += Math.max(0, Math.min(previous, totalLevels) - fundedLevel);
+          if (Math.min(previous, totalLevels) > fundedLevel) state.stepBacks++;
           cents = 0;
           state.lossStreak = 0;
         }
@@ -162,16 +173,24 @@ export function replayChallenge(baseline, account) {
     // Preserve each mode’s profit/risk sizing. All modes additionally require
     // this same close’s real net balance to fund the planned ending balance.
     const balanceBeforeTrade = live;
+    const stepBacksBeforeTrade = state.stepBacks;
     live += Math.round(Number(trade.pnl || 0)*100);
     if (state.activeLevel > totalLevels) { enforceBalanceMinimum(live); continue; }
     state.counted++;
-    if (state.failed || hasFailedAtBalance(live)) { state.failed=true; continue; }
+    if (state.failed || hasFailedAtBalance(live)) {
+      // Count the first failing close without moving its level early. Failed
+      // challenges retain their existing replay/final-reconciliation behavior.
+      if (!state.failed && Math.min(state.activeLevel,totalLevels) > fundedChallengeLevel(plan,live/100)) state.stepBacks++;
+      state.failed=true;
+      continue;
+    }
     const row=plan[state.activeLevel-1];
-    const amount=Number(trade.grossPnl);
-    const gross=Math.round(amount*100);
-    cents+=gross;
+    const amount=Number(trade.pnl);
+    const net=Math.round(amount*100);
+    cents+=net;
     const profitTarget=challengeProfitTarget(row,config.mode,balanceBeforeTrade/100);
-    const pass=challengeTradePasses({grossPnl:amount,profitTarget,netBalance:live/100,balanceTarget:row.end});
+    const pass=challengeTradePasses({netPnl:amount,profitTarget,netBalance:live/100,balanceTarget:row.end});
+    // Every mode uses recorded net P&L, including commission and swap.
     // Mode 2 counts losses within the current level. A breakeven is neutral:
     // it neither adds a loss nor clears a previous one. Only passing the
     // level (or a resulting step-back below) starts a fresh count. Adaptive
@@ -188,7 +207,10 @@ export function replayChallenge(baseline, account) {
     // no lower level, so Two losses and Net loss simply restart the count there.
     const adaptiveRiskCents = Math.round(balanceBeforeTrade * (row.riskPct || 0) / 100);
     const adaptiveBack = adaptiveRule === 'two' ? state.lossStreak >= 2 : adaptiveRule === 'net' ? cents <= -adaptiveRiskCents : amount < 0;
-    const back=isAdaptiveBalanceMode(config.mode) ? adaptiveBack && state.activeLevel > 1 : config.mode === 'streak' && canUseLossStreak(streakReward) ? state.lossStreak >= 2 : gross <= -Math.round(row.risk*100);
+    const back=isAdaptiveBalanceMode(config.mode) ? adaptiveBack && state.activeLevel > 1
+      : config.mode === 'streak' && canUseLossStreak(streakReward) ? state.lossStreak >= 2
+      : config.mode === 'risk' ? modeOneTradeStepsBack(trade.pnl, row.risk)
+      : net <= -Math.round(row.risk*100);
     if (isAdaptiveBalanceMode(config.mode) && !pass && adaptiveBack && state.activeLevel === 1 && adaptiveRule !== 'one') { cents=0; state.lossStreak=0; }
     if (pass || back) {
       const previous=state.activeLevel;
@@ -199,7 +221,9 @@ export function replayChallenge(baseline, account) {
       if (state.activeLevel <= totalLevels) {state.statuses[state.activeLevel]='In progress';delete state.fundingJumps[state.activeLevel];}
       cents=0; state.lossStreak=0;
     }
-    enforceBalanceMinimum(live);
+    // A single close can trip the loss rule and also cross several balance
+    // minimums. Keep its final level, but count the close only once.
+    if (enforceBalanceMinimum(live) && state.stepBacks === stepBacksBeforeTrade) state.stepBacks++;
   }
   state.levelPnl=cents/100;
   state.liveBalance=liveChallengeBalance(account);
