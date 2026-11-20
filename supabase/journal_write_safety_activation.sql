@@ -34,6 +34,9 @@ begin
    and not exists(select 1 from public.workspace_balances b where b.id=(to_jsonb(old)->>'balance_id')::uuid)
    then return new;end if;
  end if;
+ -- Existing journal promotion only inserts new rows and rejects conflicting
+ -- cloud records. Keep that owner-checked recovery route available.
+ if tg_op='INSERT' and path='/rpc/tj_publish_device_journal' then return new;end if;
  if tg_table_name in ('challenge_progress','balance_challenge_progress','period_reviews') and path is distinct from '/rpc/tj_save_progress' then raise sqlstate 'PT409' using message='Use the revision-checked progress save';end if;
  if tg_table_name in ('trades','trade_reviews','premarket_markups') and tg_op='UPDATE' then
   stamp:=nullif(substring(coalesce(headers->>'x-client-info','') from 'aai-record-revision:([^[:space:]]+)'),'')::timestamptz;
