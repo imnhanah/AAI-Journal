@@ -1,3 +1,4 @@
+import {canonicalWrite} from './journalWriteSafety.js';
 import {classificationSection} from './workspaceClassification.js';
 // Stable keys preserve historical associations; current labels are presentation only.
 const copy = value => structuredClone(value);
@@ -17,7 +18,7 @@ export function readEntryConfluenceLibrary(account = {}, typeTags = account.type
     entries:entrySection.items.map(display),
     categories:confluenceSection.categories.map(category=>({...display(category),tags:category.tags.map(display)})),
     base:{id:account.id,classification:account.classification,confluenceSessions:entryTypes||[],typeTags:typeTags||[]},
-    legacyCatalog:account.entryConfluenceLibrary ?? null,
+    legacyCatalog:account.classification?.legacyCatalogSource && canonicalWrite(account.classification.legacyCatalogSource)===canonicalWrite(account.entryConfluenceLibrary??null) ? null : account.entryConfluenceLibrary ?? null,
   };
 }
 export function librarySaveValue(library, section) {
@@ -40,6 +41,21 @@ export function entryConfluencePatch(library) {
   throw new Error('Use the revision-checked workspace classification save.');
 }
 export function libraryEntryForValue(library,value) {return library.entries.find(e=>e.id===value);}
+
+// Strategy Testing retains its existing text-valued model records. Journal
+// classifications use stable IDs; sharing the control must not mix the formats.
+export function libraryEntryControlModel(library, value = '', valueMode = 'id') {
+  const labels = valueMode === 'label';
+  const legacy = labels && library.legacyCatalog?.version === 1 && Array.isArray(library.legacyCatalog.entries)
+    ? library.legacyCatalog.entries.filter(item => item && typeof item.label === 'string' && item.label.trim())
+    : null;
+  const all = legacy || library.entries;
+  const entries = all.filter(item => !item.archived).map(item => ({...item, value:labels ? item.label : item.id}));
+  const entry = all.find(item => labels
+    ? item.label === value || (Array.isArray(item.aliases) && item.aliases.includes(value))
+    : item.id === value);
+  return {entries, entry, historical:!!value && !entries.some(item => item.value === value)};
+}
 export function libraryItemById(library,kind,id) {return (kind==='entry'?library.entries:kind==='category'?library.categories:libraryTags(library)).find(item=>item.id===id);}
 export function validateLibraryName(library,kind,label,id,categoryId) {
   const name=text(label).trim();if(!name)throw new Error('Enter a name with at least one non-space character.');

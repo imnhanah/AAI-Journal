@@ -23,7 +23,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
   const balanceId = balance?.id;
   const localMode = isLocalJournal();
   const cacheKey = `${localMode?'local':'cloud'}:${userId}:${balanceId}`;
-  const seed = useMemo(() => normaliseProgress(startupProgress) || (startupComplete ? emptyChallenge() : null), [startupProgress, startupComplete]);
+  const seed = useMemo(() => normaliseProgress(startupProgress) || (startupComplete ? {...emptyChallenge(),baseRevision:null} : null), [startupProgress, startupComplete]);
   const [record, setRecord] = useState(() => ({key:cacheKey,state:cache.read(cacheKey) || seed || emptyChallenge()}));
   const state = record.key === cacheKey ? record.state : cache.read(cacheKey) || emptyChallenge();
   const setState = useCallback(next => setRecord({key:cacheKey,state:next}), [cacheKey]);
@@ -54,7 +54,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
       const { data, error: failure } = await challengeDb.read('balance', balanceId, userId);
       if (failure) throw failure;
       if(!mounted.current || ticket!==request.current || currentKey.current!==cacheKey)return;
-      const next=data ? { activeLevel:data.active_level, statuses:data.statuses || {}, notes:data.notes || {}, automation:data.automation ? { ...data.automation, startedAt:data.automation.startedAt || data.updated_at } : null } : emptyChallenge();
+      const next=data ? { activeLevel:data.active_level, statuses:data.statuses || {}, notes:data.notes || {}, automation:data.automation ? { ...data.automation, startedAt:data.automation.startedAt || data.updated_at } : null,baseRevision:data.updated_at??null } : {...emptyChallenge(),baseRevision:null};
       cache.write(cacheKey,next);
       setReadVerified(true);setState(latest.current?.key===cacheKey?latest.current.next:next);
     } catch (failure) {
@@ -64,7 +64,7 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
   }, [balance?.name, balanceId, hasSavedBalanceId, userId, localMode, cache, cacheKey, setState]);
 
   useEffect(() => {
-    const next = cache.read(cacheKey) || normaliseProgress(startupProgress) || (startupComplete ? emptyChallenge() : null);
+    const next = cache.read(cacheKey) || normaliseProgress(startupProgress) || (startupComplete ? {...emptyChallenge(),baseRevision:null} : null);
     if(latest.current?.key!==cacheKey){setState(next || emptyChallenge());latest.current=null;}
     setReadVerified(startupComplete===true);
     if (next) setLoading(false);
@@ -98,12 +98,14 @@ export default function useBalanceChallenge(balance, userId, startupProgress = n
   const persist = useCallback(async (next) => {
     if (!userId) return false;
     if (!hasSavedBalanceId) { setState(next); setError(''); return true; }
+    if(!Object.hasOwn(next,'baseRevision'))next={...next,baseRevision:state.baseRevision};
     latest.current={key:cacheKey,next};setState(next);draft.edit({next});
     let attempt;try{attempt=await draft.capture();}catch(error){setError(error.message);return false;}
     if(!readVerified){setError('Progress is retained on this device. Load the saved challenge before retrying.');return false;}
     setSaving(true); setError('');
     try {
-      const { error: failure } = await challengeDb.save('balance', { balance_id:balanceId, user_id:userId, active_level:next.activeLevel, statuses:next.statuses, notes:next.notes, automation:next.automation || { mode:balance.challengeMode || 'risk' }, updated_at:new Date().toISOString() });
+      const { data:saved, error: failure } = await challengeDb.save('balance', { balance_id:balanceId, user_id:userId, active_level:next.activeLevel, statuses:next.statuses, notes:next.notes, automation:next.automation || { mode:balance.challengeMode || 'risk' }, updated_at:new Date().toISOString() },next.baseRevision);
+      if(saved?.updated_at)next={...next,baseRevision:saved.updated_at};
       if (failure) throw failure;
       await draft.acknowledge(attempt);
       request.current++;

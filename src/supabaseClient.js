@@ -1,3 +1,4 @@
+import {journalWriteSafetyEnabled, journalWriteProtocol} from './journalWriteSafety.js';
 import { classificationProtocol } from './workspaceClassification.js';
 import { createClient } from "@supabase/supabase-js";
 import { notifyJournalMutation } from './privateCacheRuntime';
@@ -23,11 +24,12 @@ const timedFetch = async (input, init = {}) => {
     // remain authoritative for every write.
     if (requestUrl.origin === new URL(url).origin && requestUrl.pathname.startsWith('/rest/v1/')
       && !['GET','HEAD','OPTIONS'].includes(method.toUpperCase())) {
+      if(journalWriteSafetyEnabled) headers.set('x-client-info',[headers.get('x-client-info')||'',journalWriteProtocol,'backtest-model-v1'].filter(Boolean).join(' '));
       const info = headers.get('x-client-info') || '';
       if (!info.split(/\s+/).includes('aai-journal/atomic-broker-v1')) {
         headers.set('x-client-info', [info, 'aai-journal/atomic-broker-v1'].filter(Boolean).join(' '));
       }
-      if (/^\/rest\/v1\/(?:trades|rpc\/tj_save_workspace_classification|rpc\/tj_publish_device_journal)$/.test(requestUrl.pathname)) {
+      if (/^\/rest\/v1\/(?:trades|rpc\/tj_save_workspace_classification|rpc\/tj_convert_legacy_catalog|rpc\/tj_publish_device_journal)$/.test(requestUrl.pathname)) {
         const compatibleInfo = headers.get('x-client-info') || '';
         if (!compatibleInfo.split(/\s+/).includes(classificationProtocol)) {
           headers.set('x-client-info', [compatibleInfo,classificationProtocol].filter(Boolean).join(' '));

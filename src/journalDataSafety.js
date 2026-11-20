@@ -1,3 +1,5 @@
+import {journalWriteSafetyEnabled} from './journalWriteSafety.js';
+import {editReviewIntent,readReviewIntent,reviewIntentAnswers} from './reviewWriteIntent.js';
 import {useEffect,useMemo,useRef,useSyncExternalStore} from 'react';
 import {supabase} from './supabaseClient';
 import {isLocalJournal} from './localJournalDb';
@@ -48,19 +50,19 @@ function featureContext(root,path){
   root.runtime.contexts.set(key,context);return context;
 }
 export function useJournalDataSafety({userId,mode}){return useMemo(()=>getJournalSafety(userId,{mode}),[userId,mode]);}
-export function useReviewDraftController({context,periodId,confirmedAnswers,onDrafts,onError}){
+export function useReviewDraftController({context,periodId,confirmedAnswers,confirmedRevision,onDrafts,onError}){
   const controller=useMemo(()=>context.draft('period-review',periodId,{},onError),[context,periodId]);
   const active=useRef(controller);active.current=controller;
   const state=useSyncExternalStore(controller.subscribe,controller.getSnapshot);
-  useEffect(()=>{onDrafts(state.value);if(state.error)onError(state.error.message);},[controller,state,onDrafts,onError]);
+  useEffect(()=>{onDrafts(journalWriteSafetyEnabled?reviewIntentAnswers(state.value):state.value);if(state.error)onError(state.error.message);},[controller,state,onDrafts,onError]);
   return useMemo(()=>({
-    edit(key,text){const next=controller.edit(current=>{if(text===(confirmedAnswers[key]??''))delete current[key];else current[key]=text;return current;});onDrafts(next);},
-    async captureAndPersist(){const captured=await controller.capture();return {...captured,changed:captured.value};},
-    async acknowledge(attempt){if(active.current===controller)await controller.acknowledge(attempt);},
+    edit(key,text){const next=controller.edit(current=>{if(journalWriteSafetyEnabled)return editReviewIntent(current,key,text,confirmedAnswers,confirmedRevision);if(text===(confirmedAnswers[key]??''))delete current[key];else current[key]=text;return current;});onDrafts(journalWriteSafetyEnabled?reviewIntentAnswers(next):next);},
+    async captureAndPersist(){const captured=await controller.capture();return {...captured,...(journalWriteSafetyEnabled?readReviewIntent(captured.value):{changed:captured.value})};},
+    async acknowledge(attempt){if(active.current===controller){await controller.acknowledge(attempt);if(journalWriteSafetyEnabled&&!controller.getSnapshot().dirty)controller.setConfirmed({});}},
     hasUnacknowledgedChanges:()=>controller.getSnapshot().dirty,
     flushLocal:()=>controller.flush(),isCurrent:()=>active.current===controller,
     async dismissCurrent(){await controller.dismiss();if(active.current===controller){controller.setConfirmed({});onDrafts({});}},
-  }),[controller,confirmedAnswers,onDrafts]);
+  }),[controller,confirmedAnswers,confirmedRevision,onDrafts]);
 }
 export function useMobileCaseStudyDraftController({context,confirmedWorkspace,confirmedRevision,submitPatch,textToDoc}){
   const controller=useMemo(()=>createMobileStudyDraftController({context,workspace:confirmedWorkspace,revision:confirmedRevision,textToDoc,submit:submitPatch}),[context]);

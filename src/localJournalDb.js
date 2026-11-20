@@ -1,3 +1,5 @@
+import {planLegacyCatalogConversion} from './legacyCatalogConversion.js';
+import {savingsValues, canonicalWrite, writeOperationKey} from './journalWriteSafety.js';
 import { applyClassificationSave, assertClassificationRecovery, rawTradeClassification } from './workspaceClassification.js';
 import { normaliseBalance, WORKSPACE_TYPES } from './balanceModel.js';
 import { accountPatch } from './accountPatch.js';
@@ -277,7 +279,7 @@ export async function saveChallengeProgress(scope, payload) {
     data.challengeProgress ||= { account:{}, balance:{} };
     data.challengeProgress[scope] ||= {};
     data.challengeProgress[scope][targetId] = { ...clone(payload), updated_at:now() };
-    return { error:null };
+    return { data:clone(data.challengeProgress[scope][targetId]),error:null };
   });
 }
 export async function deleteChallengeProgress(scope, targetId, userId) {
@@ -351,4 +353,45 @@ export function changeBacktestWorkspace(userId, mutate) {
     data.backtestWorkspace = workspace;
     return result;
   });
+}
+
+export async function replaceSavingsAccounts(userId,accountId,list,existing,options={}) {
+ try {
+  if(userId!==localUserId)return {error:'The signed-in journal changed. Your savings are unchanged.'};
+  const items=savingsValues(list);
+  const operation=await writeOperationKey('local-savings',userId,{accountId,base:existing,items,options});
+  if(userId!==localUserId)return {error:'The signed-in journal changed.'};
+  return await change(data=>{
+   const account=findAccount(data,accountId);if(!account)throw new Error('Account not found on this device.');
+   const receipts=data.savingsWriteReceipts||{};
+   if(receipts[operation])return clone(receipts[operation]);
+   if(canonicalWrite(account.savingsAccounts||[])!==canonicalWrite(existing||[]))throw new Error('Savings changed elsewhere. Keep your draft and reload.');
+   const ids=new Set(),stamp=now();
+   const saved=items.map(value=>{
+    const previous=(account.savingsAccounts||[]).find(row=>row.id===value.id);
+    if(!previous&&!value.id.startsWith('draft-'))throw new Error('Savings account not found on this device.');
+    if(value.balanceId&&!(account.balances||[]).some(balance=>balance.id===value.balanceId))throw new Error('Balance unavailable.');
+    const next={...previous,...value,id:previous?.id||id(),accountId,updatedAt:stamp,createdAt:previous?.createdAt||stamp};
+    if(ids.has(next.id))throw new Error('Duplicate savings identity.');ids.add(next.id);return next;
+   });
+   const removed=new Set((account.savingsAccounts||[]).filter(row=>!ids.has(row.id)).map(row=>row.id));
+   if(options.finance){if(canonicalWrite(account.finance??null)!==canonicalWrite(options.previousFinance??null))throw new Error('Finance settings changed elsewhere.');account.finance={enabled:!!options.finance.enabled,tradingTarget:Number(options.finance.tradingTarget)||0};}
+   account.savingsAccounts=saved;
+   account.financeMovements=(account.financeMovements||[]).map(row=>removed.has(row.savingsAccountId)?{...row,savingsAccountId:null}:row);
+   const result={data:saved,...(options.finance?{finance:account.finance}:{})};
+   data.savingsWriteReceipts={...receipts,[operation]:result};
+   return result;
+  });
+ }catch(error){return {error:error.message};}
+}
+
+export async function convertLegacyCatalog(userId,workspaceId,expectedCatalog,expectedClassification) {
+ if(userId!==localUserId)return {error:'The signed-in journal changed.'};
+ return change(data=>{
+  const account=findAccount(data,workspaceId);if(!account)return {error:'Workspace unavailable.'};
+  if(canonicalWrite(account.entryConfluenceLibrary??null)!==canonicalWrite(expectedCatalog)||canonicalWrite(account.classification??null)!==canonicalWrite(expectedClassification))return {error:'The catalog changed. Keep your original and review again.'};
+  const plan=planLegacyCatalogConversion(account);
+  if(plan.needed)account.classification=plan.classification;
+  return okay(account.classification);
+ });
 }

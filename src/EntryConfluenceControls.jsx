@@ -1,12 +1,12 @@
 import React, {useEffect, useId, useRef, useState} from 'react';
 import {Check, Info, X} from 'lucide-react';
 import {ThemeSelect} from './JournalControls';
-import {activeLibraryCategories, libraryEntries, libraryEntryForValue, libraryTagLabel, toggleLibraryConfluence, unavailableConfluences} from './entryConfluenceLibrary.js';
+import {activeLibraryCategories, libraryEntryControlModel, libraryTagLabel, toggleLibraryConfluence, unavailableConfluences} from './entryConfluenceLibrary.js';
 import './entryConfluenceLibrary.css';
 
-export function EntryTypeControl({library, value = '', onChange, label = 'Entry Type', ...accessibility}) {
+export function EntryTypeControl({library, value = '', onChange, label = 'Entry Type', valueMode = 'id', ...accessibility}) {
   const [info,setInfo]=useState(false), id=useId(),root=useRef(null),button=useRef(null);
-  const entries=libraryEntries(library), entry=libraryEntryForValue(library,value);
+  const {entries,entry,historical}=libraryEntryControlModel(library,value,valueMode);
   useEffect(()=>{
     if(!info)return;
     const outside=event=>{if(!root.current?.contains(event.target))setInfo(false);};
@@ -14,9 +14,8 @@ export function EntryTypeControl({library, value = '', onChange, label = 'Entry 
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape,true);
     return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape,true);};
   },[info]);
-  const historical=value&&!entries.some(e=>e.id===value);
   return <div className="ecl-entry-control" ref={root} {...accessibility}>
-    <div className="ecl-entry-pick"><ThemeSelect label={label} className="tj-input" value={value} onChange={event=>onChange(event.target.value)}><option value="">None</option>{historical&&<option value={value}>{entry?.label||(/^aai-entry:/.test(value)?'Definition unavailable':value)} · previously saved</option>}{entries.map(e=><option key={e.id} value={e.id}>{e.label}</option>)}</ThemeSelect><button ref={button} type="button" className="ecl-info" aria-label={`${label} description`} aria-expanded={info} aria-controls={id} onClick={()=>setInfo(open=>!open)}><Info size={15}/></button></div>
+    <div className="ecl-entry-pick"><ThemeSelect label={label} className="tj-input" value={value} onChange={event=>onChange(event.target.value,entries.find(entry=>entry.value===event.target.value))}><option value="">None</option>{historical&&<option value={value}>{entry?.label||(/^aai-entry:/.test(value)?'Definition unavailable':value)} · previously saved</option>}{entries.map(e=><option key={e.id||e.value} value={e.value}>{e.label}</option>)}</ThemeSelect><button ref={button} type="button" className="ecl-info" aria-label={`${label} description`} aria-expanded={info} aria-controls={id} onClick={()=>setInfo(open=>!open)}><Info size={15}/></button></div>
     {info&&<div id={id} className="ecl-info-box" role="dialog" aria-label="Entry Type definitions"><button type="button" className="ecl-icon-button" aria-label="Close definitions" onClick={()=>{setInfo(false);button.current?.focus();}}><X size={14}/></button>{[...entries,...(historical&&entry?[entry]:[])].map(item=><div key={item.id}><strong>{item.label}{item.archived?' · archived':''}</strong><p>{item.description||'No description has been added for this entry type.'}</p></div>)}{!entries.length&&!entry&&<p>No Entry Types configured yet.</p>}</div>}
   </div>;
 }
