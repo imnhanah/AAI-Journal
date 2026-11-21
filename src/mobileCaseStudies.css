@@ -494,3 +494,14 @@
 .mcs-map-head .mcs-chips { min-width: 0; max-width: 100%; flex: 1 1 100%; }
 .mcs-map-wrap .mcs-map-head .mcs-chips { flex: 1 1 100% !important; width: 100%; }
 .mcs-map-nodes button { text-align: left; }
+
+/* Study editor: the dock replaces the app tab bar, and the bars are solid so text never shows through. */
+.tj-root:has(.mcs-sw) .tj-mobile-bottom { display: none !important; }
+.mcs-wbar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom: 1px solid var(--border); }
+.mcs-schips { background: var(--bg); padding-bottom: 8px; border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent); }
+.mcs-dock { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.mcs-dtabs button { background: transparent; border: 0; }
+.mcs-dtabs button.on { background: color-mix(in oklab, var(--accent) 14%, transparent); }
+.mcs-ic { background: var(--surface); }
+.mcs-schips { top: 86px; }
+.mcs-fil .mcs-sel { flex: 1; width: 100%; }
