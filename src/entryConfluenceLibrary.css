@@ -15,7 +15,7 @@
 .ecl-category-detail.is-adding>:not(.ecl-inline){opacity:.5;pointer-events:none}.ecl-category-detail>.ecl-inline{margin-bottom:16px}
 .ecl-entry-list>.ecl-inline,.ecl-tag-list>.ecl-inline{margin:0}
 .ecl-entry-row,.ecl-tag-row{border-radius:16px}.ecl-number,.ecl-position{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);font-weight:700;font-size:12px;border:0}
-.ecl-info-box{position:absolute;z-index:60;left:0;top:calc(100% + 10px);width:min(340px,calc(100vw - 32px));margin:0;background:var(--surface);backdrop-filter:blur(14px);box-shadow:0 24px 60px color-mix(in srgb,#000 55%,transparent),0 0 30px -12px var(--accent);border-radius:16px;padding:14px 16px}
+.ecl-info-box{position:absolute;z-index:60;left:0;top:calc(100% + 10px);width:min(340px,calc(100vw - 32px));margin:0;background:var(--surface);backdrop-filter:blur(14px);box-shadow:0 24px 60px color-mix(in srgb,var(--bg) 85%,transparent),0 0 30px -12px var(--accent);border-radius:16px;padding:14px 16px}
 .ecl-info-box strong{color:var(--text);font-size:13px}
 .ecl-trade-group{border:1px solid var(--border);border-radius:16px;padding:14px;margin-top:10px;background:color-mix(in srgb,var(--bg) 35%,transparent)}.ecl-trade-group:first-child{border-top:1px solid var(--border);padding-top:14px;margin-top:0}
 .ecl-trade-group>header{margin-bottom:12px}.ecl-trade-group>header strong{flex:1;font-size:13.5px;font-weight:650}
@@ -28,7 +28,7 @@
 .ecl-heading{border-bottom:0;padding-bottom:6px;margin-bottom:14px}.ecl-heading h2{font-size:26px;letter-spacing:-.02em}.ecl-heading p{font-size:14px}
 .ecl .ecl-tile{box-shadow:0 8px 22px -6px color-mix(in srgb,var(--accent) 60%,transparent)}
 .ecl .ecl-button,.ecl .ecl-icon-button{border-radius:13px}
-.ecl .ecl-button.is-primary{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));box-shadow:0 8px 22px -8px var(--accent);font-weight:650}
+.ecl .ecl-button.is-primary{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,var(--text)),var(--accent));box-shadow:0 8px 22px -8px var(--accent);font-weight:650}
 .ecl .ecl-button.is-small.is-primary{min-height:36px;padding:7px 14px;font-size:13px}
 .ecl .ecl-segmented{padding:4px;border-radius:14px;background:color-mix(in srgb,var(--text) 5%,transparent)}
 .ecl .ecl-segmented button{padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600}
