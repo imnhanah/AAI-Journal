@@ -1,1 +1,1 @@
-export const compactBacktestMoney=(value,currency='USD')=>new Intl.NumberFormat(undefined,{style:'currency',currency,notation:'compact',maximumFractionDigits:1}).format(Number(value)||0);
+export const compactBacktestMoney=(value,currency='USD',locale=undefined)=>new Intl.NumberFormat(locale,{style:'currency',currency,notation:'compact',minimumFractionDigits:0,maximumFractionDigits:1}).format(Number(value)||0);
