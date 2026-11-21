@@ -1,22 +1,45 @@
-import React, {useEffect, useId, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useId, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {Check, Info, X} from 'lucide-react';
 import {ThemeSelect} from './JournalControls';
 import {activeLibraryCategories, libraryEntryControlModel, libraryTagLabel, toggleLibraryConfluence, unavailableConfluences} from './entryConfluenceLibrary.js';
 import './entryConfluenceLibrary.css';
+import './entryTypeDefinitions.css';
+import {entryDefinitionPosition} from './entryDefinitionPosition.js';
 
 export function EntryTypeControl({library, value = '', onChange, label = 'Entry Type', valueMode = 'id', ...accessibility}) {
-  const [info,setInfo]=useState(false), id=useId(),root=useRef(null),button=useRef(null);
+  const [info,setInfo]=useState(false), [position,setPosition]=useState(null), id=useId(),root=useRef(null),button=useRef(null),panel=useRef(null);
   const {entries,entry,historical}=libraryEntryControlModel(library,value,valueMode);
   useEffect(()=>{
     if(!info)return;
-    const outside=event=>{if(!root.current?.contains(event.target))setInfo(false);};
+    const outside=event=>{if(!root.current?.contains(event.target)&&!panel.current?.contains(event.target))setInfo(false);};
     const escape=event=>{if(event.key==='Escape'){event.stopPropagation();setInfo(false);button.current?.focus();}};
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape,true);
     return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape,true);};
   },[info]);
+  useLayoutEffect(()=>{
+    if(!info){setPosition(null);return;}
+    const place=()=>{
+      if(!button.current||!panel.current)return;
+      const viewport=window.visualViewport;
+      const rect=button.current.getBoundingClientRect();
+      const bounds={left:viewport?.offsetLeft||0,top:viewport?.offsetTop||0,width:viewport?.width||window.innerWidth,height:viewport?.height||window.innerHeight};
+      if(rect.bottom<bounds.top||rect.top>bounds.top+bounds.height){setInfo(false);return;}
+      const theme=getComputedStyle(root.current),tokens={};
+      for(const token of ['--text','--muted','--surface','--border','--accent','--bg'])tokens[token]=theme.getPropertyValue(token);
+      setPosition({...tokens,fontFamily:theme.fontFamily,...entryDefinitionPosition(rect,bounds,panel.current.scrollHeight)});
+    };
+    place();
+    const scroll=event=>{if(!panel.current?.contains(event.target))place();};
+    window.addEventListener('resize',place);document.addEventListener('scroll',scroll,true);
+    window.visualViewport?.addEventListener('resize',place);window.visualViewport?.addEventListener('scroll',place);
+    const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(place);
+    observer?.observe(panel.current);
+    return()=>{window.removeEventListener('resize',place);document.removeEventListener('scroll',scroll,true);window.visualViewport?.removeEventListener('resize',place);window.visualViewport?.removeEventListener('scroll',place);observer?.disconnect();};
+  },[info]);
   return <div className="ecl-entry-control" ref={root} {...accessibility}>
     <div className="ecl-entry-pick"><ThemeSelect label={label} className="tj-input" value={value} onChange={event=>onChange(event.target.value,entries.find(entry=>entry.value===event.target.value))}><option value="">None</option>{historical&&<option value={value}>{entry?.label||(/^aai-entry:/.test(value)?'Definition unavailable':value)} · previously saved</option>}{entries.map(e=><option key={e.id||e.value} value={e.value}>{e.label}</option>)}</ThemeSelect><button ref={button} type="button" className="ecl-info" aria-label={`${label} description`} aria-expanded={info} aria-controls={id} onClick={()=>setInfo(open=>!open)}><Info size={15}/></button></div>
-    {info&&<div id={id} className="ecl-info-box" role="dialog" aria-label="Entry Type definitions"><button type="button" className="ecl-icon-button" aria-label="Close definitions" onClick={()=>{setInfo(false);button.current?.focus();}}><X size={14}/></button>{[...entries,...(historical&&entry?[entry]:[])].map(item=><div key={item.id}><strong>{item.label}{item.archived?' · archived':''}</strong><p>{item.description||'No description has been added for this entry type.'}</p></div>)}{!entries.length&&!entry&&<p>No Entry Types configured yet.</p>}</div>}
+    {info&&createPortal(<div className="tj-root tj-picker-portal" style={{position:'fixed',inset:0,width:0,height:0,overflow:'visible',pointerEvents:'none'}}><div ref={panel} id={id} className="ecl-info-box" style={{...(position||{position:'fixed',visibility:'hidden',width:400}),pointerEvents:'auto'}} role="dialog" aria-label="Entry Type definitions"><header className="ecl-info-heading"><span>Entry Type definitions</span><button type="button" className="ecl-info-close" aria-label="Close definitions" onClick={()=>{setInfo(false);button.current?.focus();}}><X size={14}/></button></header><div className="ecl-info-list">{[...entries,...(historical&&entry?[entry]:[])].map(item=><div className="ecl-info-definition" key={item.id}><strong>{item.label}{item.archived?' · archived':''}</strong><p>{item.description||'No description has been added for this entry type.'}</p></div>)}{!entries.length&&!entry&&<p className="ecl-info-empty">No Entry Types configured yet.</p>}</div></div></div>,document.body)}
   </div>;
 }
 

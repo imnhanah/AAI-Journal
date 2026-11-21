@@ -1,0 +1,9 @@
+/* Portalled Entry Type definitions: compact, viewport-bound and independent of card overflow. */
+.tj-picker-portal .ecl-info-box{position:fixed;z-index:200200;box-sizing:border-box;max-width:none;left:auto;right:auto;top:auto;bottom:auto;margin:0;background:var(--surface);color:var(--text);border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));box-shadow:0 8px 22px color-mix(in srgb,var(--bg) 65%,transparent);border-radius:12px;padding:0;font-size:12px;line-height:1.5;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere}
+.tj-picker-portal .ecl-info-heading{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:12px;font-weight:500}
+.tj-picker-portal .ecl-info-close{display:grid;place-items:center;width:25px;height:25px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:color-mix(in srgb,var(--accent) 6%,var(--surface));color:var(--text);cursor:pointer}
+.tj-picker-portal .ecl-info-box .ecl-info-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tj-picker-portal .ecl-info-list{padding:0 12px}.tj-picker-portal .ecl-info-definition{padding:9px 0;border-bottom:1px solid var(--border)}.tj-picker-portal .ecl-info-definition:last-child{border-bottom:0}
+.tj-picker-portal .ecl-info-box strong{display:block;color:var(--text);font-size:13px;font-weight:550;line-height:1.4}
+.tj-picker-portal .ecl-info-box p{font-size:12px;line-height:1.5;margin:3px 0 0}.tj-picker-portal .ecl-info-empty{padding:9px 0}
+@media(max-width:767px){.tj-picker-portal .ecl-info-close{width:32px;height:32px}}
