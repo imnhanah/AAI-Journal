@@ -1,0 +1,371 @@
+[
+  {
+    "label": "Step1 Dashboard dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step1 Dashboard dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step1 Dashboard dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step1 Dashboard light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step1 Dashboard light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step1 Dashboard light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step2 Calendar long figures dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 positive day dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 positive day dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 positive day dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 negative day dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 negative day dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 negative day dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 cash day dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 cash day dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 cash day dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 Calendar long figures light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 Calendar long figures light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 Calendar long figures light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 day02 light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 day02 light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 day02 light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 day06 light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 day06 light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 day06 light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 day08 light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 day08 light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 day08 light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step2 Dashboard long balance dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step2 Dashboard long balance dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step2 Dashboard long balance dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step2 44px calendar dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "label": "Step2 44px calendar dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "label": "Step2 44px calendar dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "label": "Step3 routine opened dark360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 12,
+        "detail": "32.0 × 44.0",
+        "kind": "small-target",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-routine-overlay > section.tj-routine-popup.has-more-below > button.tj-icon-btn.tj-modal-close"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-routine-overlay > section.tj-routine-popup.has-more-below > div.tj-routine-sessions > span.is-current"
+      },
+      {
+        "amount": 3.14,
+        "kind": "parent-overflow",
+        "selector": "section.tj-routine-popup.has-more-below > div.tj-routine-sessions > span.is-current > small:nth-child(2)"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step3 routine opened dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step3 routine opened dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step3 routine opened dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step3 routine progress dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step3 routine progress dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step3 routine progress dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step3 routine complete dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step3 routine complete dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step3 routine complete dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  }
+]

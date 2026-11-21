@@ -56,3 +56,9 @@
   .tj-root .tj-sd .tj-sd-foot button.is-ready {background:var(--accent);color:var(--on-accent);}
   .tj-root .tj-sd .tj-sd-foot button:disabled {opacity:.6;}
 }
+
+@media (max-width:767px) {
+  .tj-sd .tj-wk {margin-bottom:16px;}
+  .tj-sd-chips span.is-up {color:var(--accent);}
+  .tj-sd-chips span.is-down {color:var(--phone-loss);}
+}

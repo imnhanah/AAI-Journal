@@ -2,7 +2,8 @@ import React,{createContext,useContext,useEffect,useRef,useState} from "react";
 import {getCalendarWindow} from "./forexFactory";
 import {archivedNewsEvents} from "./newsArchive";
 import {newsFilterKey,readNewsFilters,matchesNewsFilters} from "./newsPreferences";
-import {NEWS_ALERT_SETTINGS_KEY,NEWS_ALERT_DELIVERED_KEY,NEWS_ALERT_DESKTOP_MINUTES,NEWS_ALERT_TONES,readAlertSettings,dueNewsAlerts,dueNewsReleases,nextNewsRelease,countdownLabel} from "./newsAlertModel";
+import {postNotice} from "./appNotices.js";
+import {NEWS_ALERT_SETTINGS_KEY,NEWS_ALERT_DELIVERED_KEY,NEWS_ALERT_DESKTOP_MINUTES,NEWS_ALERT_TONES,readAlertSettings,eventAlertKey,dueNewsAlerts,dueNewsReleases,nextNewsRelease,countdownLabel} from "./newsAlertModel";
 import {unlockAlertSounds,playAlertTone} from './alertSounds';
 import {Bell,ChevronRight,Monitor,X,Zap} from 'lucide-react';
 import './newsAlertPanel.css';
@@ -80,6 +81,7 @@ export function NewsAlertsProvider({children,activePage,onViewEvent,userId}) {
     const played=sound ? await playAlertTone(tone) : false;
     browserNotify(alerts,test);
     if(inApp && mounted.current)setBanner({alerts,test,played,sound,id:Date.now()});
+    if(!test)alerts.slice(0,3).forEach(({event,minute})=>postNotice({key:`news:${eventAlertKey(event,minute)}`,kind:"news",quiet:true,title:`${event.currency||""} ${event.title}`.trim(),text:`${minute>0?`In ${minute} min`:"Out now"} · ${event.impact||"medium"} impact`,to:"news"}));
   };
   const previewTone=async(tone)=>{await unlockSound();return playAlertTone(tone);};
   const setBrowserDelivery=async(on)=>{

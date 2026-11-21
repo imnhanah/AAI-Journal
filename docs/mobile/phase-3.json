@@ -1,0 +1,306 @@
+[
+  {
+    "label": "Expanded markup light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "New markup setup light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "New markup setup light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "New markup setup light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "New markup review light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "New markup review light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "New markup review light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "Log trade execution dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "Log trade execution dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "Log trade execution dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "Instrument picker dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "Log trade process dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "Log trade process dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "Log trade process dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "trade-log dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "trade-log dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "trade-log dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "markups dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "markups dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "markups dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "trade-log light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "trade-log light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "trade-log light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "markups light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "markups light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "markups light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "New markup setup dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "New markup setup dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "New markup setup dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "New markup review dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "label": "New markup review dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "label": "New markup review dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "label": "Log trade execution light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "Log trade execution light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "Log trade execution light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "label": "Log trade process light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "label": "Log trade process light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "label": "Log trade process light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  }
+]

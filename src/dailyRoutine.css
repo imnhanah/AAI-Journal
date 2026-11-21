@@ -435,7 +435,7 @@
 
 /* Two-column Start Day reference, at the same scale as Account settings. */
 .tj-root.tj-root .tj-routine-overlay {padding:24px;}
-.tj-root.tj-root .tj-routine-popup {width:min(920px,calc(100vw - 48px));max-height:92vh;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;padding:28px;border-radius:22px;background:var(--tj-chrome);}
+.tj-root.tj-root .tj-routine-popup {width:min(920px,calc(100vw - 48px));max-height:97vh;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;padding:28px;border-radius:22px;background:var(--tj-chrome);}
 .tj-root.tj-root .tj-routine-popup > header {display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 40px 0 0;min-height:76px;flex-shrink:0;}
 .tj-root.tj-root .tj-routine-heading-copy {min-width:0;}
 .tj-root.tj-root .tj-routine-heading-copy > small {color:var(--tj-accent);font-size:12px;font-weight:800;letter-spacing:.12em;}
@@ -502,3 +502,24 @@
   .tj-root.tj-root .tj-routine-popup footer > small {grid-row:auto;grid-column:auto;}
   .tj-routine-account-detail {grid-template-columns:minmax(0,1fr);}
 }
+
+/* Daily Routine: one size, week beside the checklist, richer finish. */
+.tj-root.tj-root .tj-routine-popup {position:relative;height:min(860px,97vh);background:linear-gradient(165deg,color-mix(in srgb,var(--tj-accent) 8%,var(--tj-chrome)) 0%,var(--tj-chrome) 55%);box-shadow:0 40px 100px var(--color-shadow-29),0 0 80px color-mix(in srgb,var(--tj-accent) 8%,transparent);}
+.tj-root.tj-root .tj-routine-popup::before {content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--tj-accent),transparent);opacity:.7;pointer-events:none;}
+.tj-root.tj-root .tj-routine-ring {box-shadow:0 0 18px color-mix(in srgb,var(--tj-accent) 38%,transparent);}
+.tj-root.tj-root .tj-routine-sessions > .is-current {box-shadow:0 0 18px color-mix(in srgb,var(--tj-accent) 25%,transparent);}
+.tj-root.tj-root .tj-routine-body {flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:20px;}
+.tj-root.tj-root .tj-routine-body.has-week {grid-template-columns:minmax(0,1fr) 340px;}
+.tj-root.tj-root .tj-routine-body .tj-routine-columns {scrollbar-width:none;-ms-overflow-style:none;padding-bottom:12px;-webkit-mask-image:linear-gradient(180deg,var(--tj-text) calc(100% - 22px),transparent);mask-image:linear-gradient(180deg,var(--tj-text) calc(100% - 22px),transparent);}
+.tj-root.tj-root .tj-routine-body .tj-routine-columns::-webkit-scrollbar {display:none;width:0;height:0;}
+.tj-root.tj-root .tj-routine-body.has-week .tj-routine-columns {grid-template-columns:minmax(0,1fr);}
+.tj-root.tj-root .tj-routine-body .tj-routine-group {padding:0;border:0;background:transparent;}
+.tj-root.tj-root .tj-routine-body .tj-routine-group > header {margin:0 0 8px;}
+.tj-root.tj-root .tj-routine-body .tj-routine-row {min-height:0;padding:10px 12px;border:1px solid transparent;}
+.tj-root.tj-root .tj-routine-body .tj-routine-row:hover {border-color:var(--tj-border);}
+.tj-root.tj-root .tj-routine-body .is-checked .tj-routine-tick {background:linear-gradient(135deg,var(--tj-accent),color-mix(in srgb,var(--tj-accent) 70%,var(--tj-chrome)));box-shadow:0 4px 14px color-mix(in srgb,var(--tj-accent) 35%,transparent);}
+.tj-root.tj-root .tj-routine-body.has-week .tj-wk {padding-left:20px;border-left:1px solid var(--tj-border);}
+.tj-root.tj-root .tj-routine-account-detail .is-up b {color:var(--tj-accent);}
+.tj-root.tj-root .tj-routine-account-detail .is-down b {color:var(--tj-red);}
+.tj-root.tj-root .tj-routine-popup footer .tj-btn-primary {background:linear-gradient(135deg,var(--tj-accent),color-mix(in srgb,var(--tj-accent) 72%,var(--tj-chrome)));box-shadow:0 8px 24px color-mix(in srgb,var(--tj-accent) 32%,transparent);}
+@media (max-width:900px) {.tj-root.tj-root .tj-routine-body.has-week {grid-template-columns:minmax(0,1fr);overflow-y:auto;}.tj-root.tj-root .tj-routine-body.has-week .tj-wk {padding:0;border:0;}}

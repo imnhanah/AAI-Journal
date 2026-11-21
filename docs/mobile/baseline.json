@@ -1,0 +1,2334 @@
+[
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash > b.tj-calendar-phone-amount"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-be"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash > b.tj-calendar-phone-amount"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-be"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 27,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-phone-finance > div.tj-phone-finance-filter-wrap > div.tj-phone-finance-filters"
+      },
+      {
+        "amount": 26.5,
+        "kind": "parent-overflow",
+        "selector": "div.tj-phone-finance > div.tj-phone-finance-filter-wrap > div.tj-phone-finance-filters > button:nth-child(4)"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 215,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 37.95,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 97.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 156.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 215.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "width": 360
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      }
+    ],
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "width": 390
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "width": 390
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 185,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 7.95,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 67.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 126.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 185.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "width": 390
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      }
+    ],
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 430
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "width": 430
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "width": 430
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "ready": true,
+    "title": "Analytics",
+    "width": 430
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 430
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 145,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 27.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 86.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 145.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "ready": true,
+    "title": "News",
+    "width": 430
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 430
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash > b.tj-calendar-phone-amount"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-be"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 38,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account"
+      },
+      {
+        "amount": 38,
+        "kind": "parent-overflow",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      },
+      {
+        "amount": 16,
+        "detail": "150.0 × 28.0",
+        "kind": "small-target",
+        "selector": "div.tj-attached-calendar-head > div.tj-attached-month-nav > div.tj-themed-control.tj-control-calendar-account > button.tj-input.tj-picker-trigger"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 4,
+        "kind": "content-overflow",
+        "selector": "div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance > span.tj-attached-day-pill.tj-attached-day-cash > b.tj-calendar-phone-amount"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-finance"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-win"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-be"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.3,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-quiet"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      },
+      {
+        "amount": 2.28,
+        "detail": "41.7 × 50.0",
+        "kind": "small-target",
+        "selector": "div.tj-card.tj-attached-calendar > div.tj-attached-calendar-scroll > div.tj-attached-calendar-grid > button.tj-attached-day.tj-attached-day-loss"
+      }
+    ],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 22.25,
+        "detail": "21.8 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "ready": true,
+    "title": "Review",
+    "width": 360
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 19.75,
+        "detail": "24.3 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "ready": true,
+    "title": "Review",
+    "width": 390
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.42,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      },
+      {
+        "amount": 16.41,
+        "detail": "27.6 × 44.0",
+        "kind": "small-target",
+        "selector": "section.tj-review-annual-hero > div.tj-review-month-health > div:nth-child(2) > button.tj-review-state-pending"
+      }
+    ],
+    "ready": true,
+    "title": "Review",
+    "width": 430
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 27,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-phone-finance > div.tj-phone-finance-filter-wrap > div.tj-phone-finance-filters"
+      },
+      {
+        "amount": 26.5,
+        "kind": "parent-overflow",
+        "selector": "div.tj-phone-finance > div.tj-phone-finance-filter-wrap > div.tj-phone-finance-filters > button:nth-child(4)"
+      }
+    ],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "ready": true,
+    "title": "Analytics",
+    "width": 360
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "ready": true,
+    "title": "Analytics",
+    "width": 390
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-root.journal-dashboard-arrive > div.tj-main > div.tj-content > div.tj-content-inner"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-main > div.tj-content > div.tj-content-inner > div.tj-page-transition"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-content > div.tj-content-inner > div.tj-page-transition > div.tj-analytics.tj-analytics-workspace"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "#analytics-overview"
+      },
+      {
+        "amount": 8,
+        "kind": "content-overflow",
+        "selector": "div.tj-page-transition > div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap"
+      },
+      {
+        "amount": 8,
+        "kind": "parent-overflow",
+        "selector": "div.tj-analytics.tj-analytics-workspace > div.tj-card.tj-analytics-deck > div.tj-analytics-period-wrap > button.tj-analytics-period"
+      }
+    ],
+    "ready": true,
+    "title": "Analytics",
+    "width": 430
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 360
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 390
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 430
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 215,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 37.95,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 97.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 156.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 215.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "ready": true,
+    "title": "News",
+    "width": 360
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 185,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 7.95,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 67.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 126.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 185.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "ready": true,
+    "title": "News",
+    "width": 390
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 145,
+        "kind": "content-overflow",
+        "selector": "div.tj-card.tj-panel > div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies"
+      },
+      {
+        "amount": 27.44,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 86.22,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      },
+      {
+        "amount": 145.47,
+        "kind": "parent-overflow",
+        "selector": "div.tj-news-filters > div.tj-news-currency-rail > div.tj-news-currencies > button.tj-chip"
+      }
+    ],
+    "ready": true,
+    "title": "News",
+    "width": 430
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 360
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 390
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 430
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  }
+]

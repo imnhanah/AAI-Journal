@@ -4,7 +4,9 @@ export const membershipAdminUiEnabled = import.meta.env?.VITE_MEMBERSHIP_ADMIN_U
 
 export async function readMembershipAdmin() {
   const { data, error } = await supabase.rpc('tj_is_membership_admin');
-  return !error && data === true;
+  // A failed call is not an answer. Throwing lets the screen keep what it already knows instead of hiding the Memberships tab.
+  if (error) throw error;
+  return data === true;
 }
 
 export async function listMembershipAccounts({ search, cursor, pageSize }) {

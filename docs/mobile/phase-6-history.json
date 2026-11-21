@@ -1,0 +1,633 @@
+[
+  {
+    "label": "Management instruments dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Management instruments dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Management instruments dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Management routine dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Management routine dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Management routine dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "More sheet dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Profile dark360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      }
+    ],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Profile dark390",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      }
+    ],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Profile dark430",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      },
+      {
+        "amount": 16,
+        "kind": "content-overflow",
+        "selector": "div.tj-accent-row.tj-accent-row-twelve > button.tj-accent-option.accent-swatch > i:nth-child(1) > b.tj-accent-preview-bars"
+      }
+    ],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Delete profile confirmation dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Delete profile confirmation dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Delete profile confirmation dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Account settings dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Account settings dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Account settings dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Account goals finance dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Account goals finance dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Account goals finance dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Danger Zone sheet dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Reset confirmation dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Reset confirmation dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Reset confirmation dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Delete workspace confirmation dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Switch Single confirmation dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Switch Single confirmation dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Switch Single confirmation dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Profile light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Profile light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Profile light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Challenge completion light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Challenge completion light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Challenge completion light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Savings reminder dark360",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 11.62,
+        "kind": "small-text",
+        "selector": "div.tj-modal.tj-finance-reminder > div.tj-modal-body > div.tj-finance-reminder-copy > p:nth-child(3)"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Savings reminder dark390",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 11.62,
+        "kind": "small-text",
+        "selector": "div.tj-modal.tj-finance-reminder > div.tj-modal-body > div.tj-finance-reminder-copy > p:nth-child(3)"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Savings reminder dark430",
+    "height": 844,
+    "issues": [
+      {
+        "amount": 11.62,
+        "kind": "small-text",
+        "selector": "div.tj-modal.tj-finance-reminder > div.tj-modal-body > div.tj-finance-reminder-copy > p:nth-child(3)"
+      }
+    ],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Profile dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Profile dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Profile dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Savings reminder dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Savings reminder dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Savings reminder dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Savings reminder light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Savings reminder light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Savings reminder light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Challenge completion dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Challenge completion dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Challenge completion dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Account settings light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Account settings light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Account settings light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Account goals finance light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Account goals finance light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Account goals finance light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Delete workspace confirmation light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Delete workspace confirmation light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Delete workspace confirmation light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Reset confirmation light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Reset confirmation light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Reset confirmation light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Switch Single confirmation light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "label": "Switch Single confirmation light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "label": "Switch Single confirmation light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "label": "Routine with live news dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Expanded markup including disclosure target light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  }
+]

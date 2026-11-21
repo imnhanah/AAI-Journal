@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('./DailyRoutine.jsx',import.meta.url),'utf8');
 const css=readFileSync(new URL('./dailyRoutine.css',import.meta.url),'utf8');
 test('routine popup uses settings-scale two columns and live detail cards without celebration',()=>{
-  assert.match(css,/width:min\(920px,calc\(100vw - 48px\)\);max-height:92vh/);
+  assert.match(css,/width:min\(920px,calc\(100vw - 48px\)\);max-height:97vh/);
   assert.match(css,/\.tj-routine-columns \{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(source,/tj-routine-account-detail/);
   assert.match(source,/tj-routine-news-detail/);

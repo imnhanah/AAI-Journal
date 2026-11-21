@@ -1,0 +1,50 @@
+[
+  {
+    "label": "Step1 Dashboard dark360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step1 Dashboard dark390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step1 Dashboard dark430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "label": "Step1 Dashboard light360",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "label": "Step1 Dashboard light390",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "label": "Step1 Dashboard light430",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  }
+]

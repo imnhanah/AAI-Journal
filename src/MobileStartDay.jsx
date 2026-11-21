@@ -6,6 +6,7 @@ import {archivedNewsEvents} from './newsArchive';
 import {getBackNavigation, useNavStep} from './useBackNavigation.js';
 import {useLeaveGuard} from './useLeaveGuard.js';
 import './mobileProfileSettings.css';
+import WeeklyChallengePanel from './WeeklyChallengePanel.jsx';
 import './mobileStartDay.css';
 
 const ICONS = {slept_enough:Moon, ate_water:Utensils, moved:Activity, quiet_minute:Wind, phone_desk:VolumeX, review_plan_goals:Target, looked_chart:BarChart2, read_news:Newspaper, checked_accounts:WalletCards, reviewed_rules:ShieldCheck, accepted_risk:Heart};
@@ -18,14 +19,12 @@ function NewsPanel({news, now, busy, onNews}) {
   return <>{text}<br/><button type="button" className="tj-sd-go" disabled={busy} onClick={onNews}>Open News<ArrowUpRight size={14} aria-hidden="true"/></button></>;
 }
 
-function AccountsPanel({summary, busy, onGuardrails}) {
-  return <>
-    <div className="tj-sd-chips"><span>{summary.name} · {summary.balance}</span><span>{summary.cap}</span>{summary.level != null && <span>Level {summary.level}</span>}</div>
-    <button type="button" className="tj-sd-go" disabled={busy} onClick={onGuardrails}>Guardrails<ArrowUpRight size={14} aria-hidden="true"/></button>
-  </>;
+function AccountsPanel({summary}) {
+  const week = summary.weekPct;
+  return <div className="tj-sd-chips"><span>{summary.name} · {summary.balance}</span><span className={week == null ? '' : week > 0 ? 'is-up' : week < 0 ? 'is-down' : ''}>This week {week == null ? '—' : `${week > 0 ? '+' : ''}${week.toFixed(1)}%`}</span></div>;
 }
 
-export default function MobileStartDay({entryKind = 'markup', routine, accountSummary, onSave, onSaveTicks, onClose, onNews, onGuardrails, continueOnly = false, saveAndOpenMarkup = false}) {
+export default function MobileStartDay({entryKind = 'markup', routine, firstName, accountSummary, weekly, onSave, onSaveTicks, onClose, onNews, continueOnly = false, saveAndOpenMarkup = false}) {
   useNavStep('start-day', true, onClose);
   const [now] = useState(() => new Date());
   const items = activeRoutineItems(routine), activeIds = new Set(items.map(item => item.id));
@@ -41,7 +40,7 @@ export default function MobileStartDay({entryKind = 'markup', routine, accountSu
   useLeaveGuard(changed && !busy, 'start-day');
   // Hardware back and the bottom bar are asked by the guard; every exit on this screen comes through here.
   const leaveThen = async action => { if (!busy && await getBackNavigation().confirmLeave()) action(); };
-  // News and Guardrails are part of working through the list, so going to them keeps the ticks instead of asking.
+  // News is part of working through the list, so going to it keeps the ticks instead of asking.
   const saveThen = async action => {
     if (busy) return;
     if (!changed) { action(); return; }
@@ -84,12 +83,12 @@ export default function MobileStartDay({entryKind = 'markup', routine, accountSu
         <button type="button" className="tj-sd-grab" aria-label="Close Start day" disabled={busy} onClick={() => leaveThen(onClose)} onTouchStart={event => { dragStart.current = event.touches[0].clientY; }} onTouchEnd={event => { if (dragStart.current !== null && event.changedTouches[0].clientY - dragStart.current > 60) leaveThen(onClose); dragStart.current = null; }}><i aria-hidden="true"/></button>
         <div className="tj-sd-head">
           <div className="tj-sd-ring" role="img" aria-label={`${checked.length} of ${items.length} routine items ticked`} style={{'--ring':`${percent}%`}}><i>{checked.length}/{items.length}</i></div>
-          <div className="tj-sd-title"><h2 id="start-day-title">Start day</h2><p>{done ? 'All set. You can open the chart.' : 'Run these before you open the chart'}</p></div>
+          <div className="tj-sd-title"><h2 id="start-day-title">Start day</h2><p>{done ? 'All set. You can open the chart.' : `${now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'}${firstName ? `, ${firstName}` : ''}. Run these before you open the chart`}</p></div>
           <button type="button" className="tj-sd-close" aria-label="Close Start day" disabled={busy} onClick={() => leaveThen(onClose)}><span><X size={20}/></span></button>
         </div>
       </header>
 
-      <div className="tj-sd-body">{GROUPS.map(([group, title]) => {
+      <div className="tj-sd-body">{weekly?.rows?.length > 0 && <WeeklyChallengePanel weekly={weekly}/>}{GROUPS.map(([group, title]) => {
         const rows = items.filter(item => item.group === group);
         if (!rows.length) return null;
         const count = rows.filter(item => checked.includes(item.id)).length, closed = !!shut[group];
@@ -107,7 +106,7 @@ export default function MobileStartDay({entryKind = 'markup', routine, accountSu
                 {panel && <button type="button" className="tj-sd-expand" aria-label={`${expanded ? 'Hide' : 'Show'} ${item.label} details`} aria-expanded={expanded} disabled={busy} onClick={event => { event.stopPropagation(); setOpen(value => ({...value, [item.id]:!expanded})); }}><ChevronDown className={expanded ? 'is-open' : ''} size={16} aria-hidden="true"/></button>}
                 <span className="tj-sd-check" aria-hidden="true"><Check size={15} strokeWidth={3}/></span>
               </div>
-              {panel && expanded && <div className="tj-sd-panel">{item.id === 'read_news' ? <NewsPanel news={news} now={now} busy={busy} onNews={() => saveThen(onNews)}/> : <AccountsPanel summary={accountSummary} busy={busy} onGuardrails={() => saveThen(onGuardrails)}/>}</div>}
+              {panel && expanded && <div className="tj-sd-panel">{item.id === 'read_news' ? <NewsPanel news={news} now={now} busy={busy} onNews={() => saveThen(onNews)}/> : <AccountsPanel summary={accountSummary}/>}</div>}
             </div>;
           })}</div>}
         </section>;

@@ -37,7 +37,9 @@ test('pages move their top controls into the header, which replaces the workspac
   assert.match(slot, /if\(!phone\) return children/);
   assert.match(css, /\.tj-topbar-actions:has\(\.tj-phone-header-slot:not\(:empty\)\) \.tj-header-account-control \{display:none!important;\}/);
   assert.doesNotMatch(read('./MobileDashboardV6.jsx'), /PhoneHeaderSlot/);
-  for (const page of ['./MobileAnalyticsPulse.jsx','./MobileCalendarV2.jsx','./MobileFinance.jsx','./MobileStrategyTestingV6.jsx','./MobileNews.jsx']) assert.match(read(page), /<PhoneHeaderSlot>/);
+  for (const page of ['./MobileAnalyticsPulse.jsx','./MobileCalendarV2.jsx','./MobileFinance.jsx','./MobileStrategyTestingV6.jsx']) assert.match(read(page), /<PhoneHeaderSlot>/);
+  // News has no header bell of its own: the app's notification bell is the only one, and news alert settings live on the Next release card.
+  assert.doesNotMatch(read('./MobileNews.jsx'), /NewsAlertBell|PhoneHeaderSlot/);
   assert.match(read('./TradingJournal.jsx'), /id=\{PHONE_HEADER_SLOT_ID\}/);
 });
 

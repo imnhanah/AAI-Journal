@@ -1,0 +1,3782 @@
+[
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "route": "markups",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 360
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 390
+  },
+  {
+    "route": "review",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 430
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "route": "finance",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 360
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 390
+  },
+  {
+    "route": "markups",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Markups",
+    "width": 430
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 360
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 390
+  },
+  {
+    "route": "review",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Review",
+    "width": 430
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 360
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 390
+  },
+  {
+    "route": "finance",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Finance",
+    "width": 430
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "route": "backtest",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 360
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 390
+  },
+  {
+    "route": "analytics",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 430
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 360
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 390
+  },
+  {
+    "route": "psychology",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 430
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 360
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 390
+  },
+  {
+    "route": "backtest",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Backtest",
+    "width": 430
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 360
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 390
+  },
+  {
+    "route": "analytics",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Analytics",
+    "width": 430
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 360
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 390
+  },
+  {
+    "route": "psychology",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Psychology",
+    "width": 430
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 360
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 390
+  },
+  {
+    "route": "news",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 430
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 360
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 390
+  },
+  {
+    "route": "challenge",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 430
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "route": "management",
+    "theme": "dark",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 360
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 390
+  },
+  {
+    "route": "news",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "News",
+    "width": 430
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 360
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 390
+  },
+  {
+    "route": "challenge",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Challenge",
+    "width": 430
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 360
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 390
+  },
+  {
+    "route": "management",
+    "theme": "light",
+    "accent": "default",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Management",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ocean-blue",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "neon",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sunset",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "purple",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "deep-yellow",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "rose-gold",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mint-frost",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "ice",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "crimson",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "mono",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "sage",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "indigo",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "fuchsia",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "coral",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "slate",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "bronze",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "dark",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 360
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 390
+  },
+  {
+    "route": "dashboard",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Dashboard",
+    "width": 430
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 360
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 390
+  },
+  {
+    "route": "calendar",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Calendar",
+    "width": 430
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 360
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 390
+  },
+  {
+    "route": "trade-log",
+    "theme": "light",
+    "accent": "moss",
+    "height": 844,
+    "issues": [],
+    "ready": true,
+    "title": "Trade Logs",
+    "width": 430
+  }
+]

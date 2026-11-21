@@ -23,9 +23,9 @@ test('backtest filter rail has scroll-aware fades and momentum uses short amount
   const source=read('./BacktestFilterRail.jsx');
   assert.match(source,/new ResizeObserver\(check\)/);
   assert.match(source,/edges.after&&/);assert.match(source,/edges.before&&/);
-  assert.equal(compactBacktestMoney(-100), '-$100');
-  assert.equal(compactBacktestMoney(300), '$300');
-  assert.equal(compactBacktestMoney(15000), '$15K');
+  assert.equal(compactBacktestMoney(-100,'USD','en-US'), '-$100');
+  assert.equal(compactBacktestMoney(300,'USD','en-US'), '$300');
+  assert.equal(compactBacktestMoney(15000,'USD','en-US'), '$15K');
 });
 test('phone Strategy Testing keeps a compact accessible summary and moves configuration into secondary details',()=>{
   const css=read('./mobileBacktest.css'),source=read('./BacktestAccounts.jsx');

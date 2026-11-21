@@ -7,7 +7,7 @@ import {isLocalJournal} from './localJournalDb.js';
 import {useMobileCaseStudyDraftController} from './journalDataSafety.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Archive, BookOpen, Check, ChevronRight, Download, FileText, Grid,
+  Archive, BookOpen, Check, ChevronRight, Download, FileText,
   Image as ImageIcon, LayoutTemplate, Link2, List as ListIcon, MoreHorizontal,
   Network, Pin, Plus, Search, ShieldCheck, Star, Trash2, Upload, X,
 } from 'lucide-react';
@@ -131,7 +131,7 @@ export default function MobileCaseStudies({
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('recent');
-  const [layout, setLayout] = useState('grid');
+  const layout = 'list'; // phone uses the list only
   const [evQuery, setEvQuery] = useState('');
   const [selEvId, setSelEvId] = useState(null);
   const [selTemplId, setSelTemplId] = useState(null);
@@ -413,10 +413,6 @@ export default function MobileCaseStudies({
             <option value="recent">Recently updated</option>
             <option value="az">A to Z</option>
           </select>
-          <div className="mcs-seg" style={{ marginLeft: 'auto' }}>
-            <button className={layout === 'grid' ? 'on' : ''} onClick={() => setLayout('grid')} aria-label="Grid"><Grid size={16} /></button>
-            <button className={layout === 'list' ? 'on' : ''} onClick={() => setLayout('list')} aria-label="List"><ListIcon size={16} /></button>
-          </div>
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import './challengeSync.css';
 import JournalSignalHeader from './JournalSignalHeader';
 import ChallengeCelebration, {useCompletionCelebration, TraderNameContext} from './ChallengeCelebration';
 import ChallengeCompletePopup from './ChallengeCompletePopup.jsx';
+import { postNotice } from './appNotices.js';
 import {challengeRulesFor,normaliseAdaptiveStepBack} from './challengeRules.js';
 import ChallengeSetupWindow from './ChallengeSetupWindow.jsx';
 
@@ -154,6 +155,13 @@ function ChallengeCard({account,challenge,expanded,setExpanded,onActivityChange,
   });
   const [certOpen,setCertOpen]=useState(false);
   const [celebrating,setCelebrating]=useCompletionCelebration(!loading && complete && plan.length>0 && !completionArchived && !state.automation?.completionAcknowledgedAt);
+  // The bell tells the member how the run ended. One notice per run; failed runs get a calm note, not a celebration.
+  useEffect(()=>{
+    if(loading || !plan.length)return;
+    const run=`${certificateId}:${Number.isFinite(runStartedAt)?runStartedAt:0}`;
+    if(complete && !completionArchived)postNotice({key:`claim:${run}`,kind:'claim',urgent:true,to:'challenge',label:'View',title:`${account.name} challenge complete`,text:'Every level is passed. Your certificate is ready.'});
+    else if(failed)postNotice({key:`fail:${run}`,kind:'fail',to:'challenge',title:`${account.name} challenge ended`,text:'Open it to see what happened and what to carry forward.'});
+  },[loading,complete,completionArchived,failed,plan.length,certificateId,runStartedAt,account.name]);
   const activeRow=useRef(null);
   useEffect(()=>{onActivityChange?.(account.id,{ready:!loading,active:!loading&&plan.length>0&&!failed&&!complete,planned:plan.length>0,level:loading||!plan.length?0:Math.min(Math.max(state.activeLevel || 1,1),plan.length),total:plan.length,name:account.name});},[account.id,account.name,complete,failed,loading,onActivityChange,plan.length,state.activeLevel]);
   if(!plan.length)return null;
