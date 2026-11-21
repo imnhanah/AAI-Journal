@@ -23,7 +23,7 @@
 .ecl-confluence-controls .ecl-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .ecl-confluence-controls .ecl-chip{border-radius:12px;padding:9px 11px;min-height:40px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
 .ecl-confluence-controls .ecl-chip .sp-chip-check{width:17px;height:17px;border-radius:6px}
-@media(max-width:767px){.ecl-confluence-controls .ecl-chips{grid-template-columns:1fr}.ecl-info-box{position:fixed;left:16px;right:16px;width:auto;top:auto;bottom:16px;max-height:55dvh}.ecl-inline{padding:15px}}
+@media(max-width:767px){.ecl-confluence-controls .ecl-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.tj-root .ecl-confluence-controls .ecl-chip{white-space:normal;font-size:13px;line-height:1.25;padding:9px 10px;min-height:44px;gap:8px;text-align:left}.ecl-info-box{position:fixed;left:16px;right:16px;width:auto;top:auto;bottom:16px;max-height:55dvh}.ecl-inline{padding:15px}}
 /* Match the approved mockup: page chrome */
 .ecl-heading{border-bottom:0;padding-bottom:6px;margin-bottom:14px}.ecl-heading h2{font-size:26px;letter-spacing:-.02em}.ecl-heading p{font-size:14px}
 .ecl .ecl-tile{box-shadow:0 8px 22px -6px color-mix(in srgb,var(--accent) 60%,transparent)}
@@ -51,3 +51,15 @@
 @media (hover:none){.ecl-category .ecl-icon-button,.ecl-tag-row .ecl-actions .ecl-icon-button{opacity:1}}
 .ecl-toolbar{margin-bottom:14px}.ecl-footnote{font-size:13px}
 @media(max-width:767px){.ecl-category-grid{grid-template-columns:1fr}.ecl-category{min-width:210px}.ecl-mode{grid-template-columns:1fr}.ecl-mode .ecl-segmented{grid-column:1;grid-row:auto;margin-top:10px;justify-self:start}}
+/* Boxed fields in the inline editor (override the global underline inputs) */
+.tj-root .ecl-inline .ecl-field :is(input,textarea,select){border:1px solid color-mix(in srgb,var(--text) 16%,transparent)!important;border-radius:14px!important;background:color-mix(in srgb,var(--bg) 55%,transparent)!important;padding:12px 14px!important;box-shadow:none!important}
+.tj-root .ecl-inline .ecl-field :is(input,textarea,select):focus{border-color:var(--accent)!important;outline:2px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+/* Phone: compact rows, actions inline instead of a second line */
+@media(max-width:767px){.ecl-tag-row,.ecl-entry-row{flex-wrap:nowrap;padding:12px}.ecl-tag-row .ecl-actions,.ecl-entry-row .ecl-actions{flex-basis:auto;border-top:0;padding-top:0;margin-left:auto}.ecl-entry-row .ecl-number{display:grid}.ecl-entry-row .ecl-copy{flex-basis:auto}.ecl-tag-row .ecl-handle{display:none}.ecl .ecl-actions .ecl-icon-button,.ecl .ecl-actions .ecl-button{width:40px;min-width:40px;height:40px;min-height:40px}.ecl-tag-row .ecl-actions .ecl-icon-button{opacity:1}.ecl-tag-row .ecl-actions .ecl-icon-button[aria-label$=" up"],.ecl-tag-row .ecl-actions .ecl-icon-button[aria-label$=" down"]{display:none}}
+.tj-root.tj-root .ecl-inline .ecl-field :is(input,textarea,select){border-style:solid!important;border-width:1px!important;border-color:color-mix(in srgb,var(--text) 16%,transparent)!important;border-radius:14px!important}
+.tj-root.tj-root .ecl-inline .ecl-field :is(input,textarea,select):focus{border-color:var(--accent)!important}
+.tj-root .ecl-inline .ecl-field :is(input,textarea,select):not(#_){border-top:1px solid color-mix(in srgb,var(--text) 16%,transparent)!important;border-right:1px solid color-mix(in srgb,var(--text) 16%,transparent)!important;border-bottom:1px solid color-mix(in srgb,var(--text) 16%,transparent)!important;border-left:1px solid color-mix(in srgb,var(--text) 16%,transparent)!important;border-radius:14px!important;background-image:none!important}
+.tj-root .ecl-inline .ecl-field :is(input,textarea,select):not(#_):focus{border-color:var(--accent)!important}
+/* Entry Type info box lives outside .ecl, so style its own controls */
+.ecl-info-box>.ecl-icon-button{float:right;display:inline-grid;place-items:center;width:32px;height:32px;margin:-4px -6px 4px 8px;padding:0;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--text);cursor:pointer}
+.ecl-info-box>div{margin-bottom:12px}.ecl-info-box>div:last-child{margin-bottom:0}.ecl-info-box strong{display:block;font-size:13.5px}
