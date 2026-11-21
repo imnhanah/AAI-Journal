@@ -169,7 +169,7 @@ function MembersView({ phone, onEdit, refreshKey }) {
   </>;
 
   return <>
-    <div className="blot"><div className="bl"><small>Members</small><b>{counts.all}</b></div><div className="bl g"><small>Owners</small><b>{counts.owner}</b></div><div className="bl p"><small>Premium</small><b>{counts.premium}</b></div><div className="bl r"><small>Restricted</small><b>{counts.restricted}</b></div></div>
+    <div className="blot"><div className="bl"><div className="bl-top"><small>Members</small><span className="bl-ic"><Users size={16} aria-hidden="true"/></span></div><b>{counts.all}</b><span className="bl-bar"><i style={{ width: `${Math.round((counts.all) / Math.max(counts.all, 1) * 100)}%` }}/></span></div><div className="bl g"><div className="bl-top"><small>Owners</small><span className="bl-ic"><Crown size={16} aria-hidden="true"/></span></div><b>{counts.owner}</b><span className="bl-bar"><i style={{ width: `${Math.round((counts.owner) / Math.max(counts.all, 1) * 100)}%` }}/></span></div><div className="bl p"><div className="bl-top"><small>Premium</small><span className="bl-ic"><ShieldCheck size={16} aria-hidden="true"/></span></div><b>{counts.premium}</b><span className="bl-bar"><i style={{ width: `${Math.round((counts.premium) / Math.max(counts.all, 1) * 100)}%` }}/></span></div><div className="bl r"><div className="bl-top"><small>Restricted</small><span className="bl-ic"><Lock size={16} aria-hidden="true"/></span></div><b>{counts.restricted}</b><span className="bl-bar"><i style={{ width: `${Math.round((counts.restricted) / Math.max(counts.all, 1) * 100)}%` }}/></span></div></div>
     <div className="tool"><div className="pills" role="group" aria-label="Filter members">{[...FILTERS, ['restricted', 'Restricted']].map(([value, text]) => <button type="button" key={value} className={filter === value ? 'on' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}<em>{counts[value]}</em></button>)}</div>{searchBox}</div>
     <div className="ledger"><div className="lhead" aria-hidden="true"><span>Member</span><span>Plan</span><span>Status</span><span>Accounts</span><span>Cloud sync</span><span/></div>
       <div className="lscroll">
@@ -269,26 +269,26 @@ function MemberPanel({ row, focusFeatures, onClose, onChanged }) {
     <div className="scrim" onClick={onClose}/>
     <aside className="drawer" aria-label={`Member ${row.email}`}>
       <div className="handle"/>
-      <div className="dh"><div><h3>{row.email}</h3><div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}><PlanChip plan={row.plan}/><StatusChip row={row}/></div></div><button type="button" className="ib" aria-label="Close" onClick={onClose}><X size={16}/></button></div>
+      <div className="dh"><span className={`av lg ${row.plan === 'owner' ? 'o' : ''}`} aria-hidden="true">{initials(row.email)}</span><div className="dh-id"><h3>{row.email}</h3><div style={{ marginTop: 7, display: 'flex', gap: 7, flexWrap: 'wrap' }}><PlanChip plan={row.plan}/>{StatusChip({ row }) || <span className="chip ok">Active</span>}</div></div><button type="button" className="ib" aria-label="Close" onClick={onClose}><X size={18}/></button></div>
+      <div className="dstats"><div><small>Accounts</small><b>{row.accounts_used ?? 0} / {row.account_limit ?? '∞'}</b></div><div><small>Cloud sync</small><b className={row.journal_sync ? 'ok' : 'off'}>{row.journal_sync ? 'On' : 'Off'}</b></div><div className={offCount(row) ? 'warn' : ''}><small>Restricted</small><b>{offCount(row) ? `${offCount(row)} off` : 'None'}</b></div></div>
       <div className="db">
         {st === 'deleting' && <><div className="note bad"><Trash2 size={16}/><span>Permanent deletion is scheduled. Until then they can sign in read-only and export their records.</span></div><button type="button" className="btn pri" onClick={() => setModal({ type: 'undo', action: 'cancel_delete' })}><Undo2 size={15}/>Cancel deletion and restore</button></>}
         {st === 'banned' && <><div className="note bad"><Ban size={16}/><span>Banned. Journal data access is blocked. Sign-in blocking is being verified.</span></div><button type="button" className="btn pri" onClick={() => setModal({ type: 'undo', action: 'unban' })}><Undo2 size={15}/>Unban</button></>}
         {st === 'suspended' && <><div className="note warn"><Pause size={16}/><span>Suspended. Blocked from the app, data kept safe.</span></div><button type="button" className="btn pri" onClick={() => setModal({ type: 'undo', action: 'reactivate' })}><Undo2 size={15}/>Reactivate</button></>}
-        <div className="blk"><h4>Plan</h4>
+        <div className="blk"><h4><span className="h4i"><ShieldCheck size={16} aria-hidden="true"/></span>Plan</h4>
           <div className="opt">{['free', 'premium'].map(value => <button type="button" key={value} className={draft.plan === value ? 'on' : ''} aria-pressed={draft.plan === value} onClick={() => set({ plan: value })}>{value === 'premium' ? 'Premium' : 'Free'}<small>{value === 'premium' ? 'Upgraded' : 'Standard'}</small></button>)}</div>
           <div className="hint" style={{ marginTop: 8, textAlign: 'left' }}>Owner isn’t offered here. It can’t be assigned from the app.</div></div>
-        <div className="blk"><h4>Sync</h4>
+        <div className="blk"><h4><span className="h4i"><KeyRound size={16} aria-hidden="true"/></span>Sync</h4>
           <div className="tg"><div>Journal cloud sync<small>Regular journal synchronization</small></div><Switch on={draft.journal_sync} label="Journal cloud sync" onClick={() => set({ journal_sync: !draft.journal_sync })}/></div>
           <div className="tg"><div>Cloud image uploads<small>New screenshot uploads. Separate from journal sync.</small></div><Switch on={draft.image_access} label="Cloud image uploads" onClick={() => set({ image_access: !draft.image_access })}/></div></div>
-        <div className="blk" ref={featRef}><h4>Features</h4>
+        <div className="blk" ref={featRef}><h4><span className="h4i"><Check size={16} aria-hidden="true"/></span>Features</h4>
           {FEATURES.map(([key, name]) => <div className="tg" key={key}><div>{name}<small>{draft.features[key] ? 'Full access' : 'Read-only. Old records stay visible, no new entries.'}</small></div><Switch on={!!draft.features[key]} label={name} onClick={() => set({ features: { ...draft.features, [key]: !draft.features[key] } })}/></div>)}</div>
-        <div className="blk"><h4>Accounts</h4>
+        <div className="blk"><h4><span className="h4i"><Users size={16} aria-hidden="true"/></span>Accounts</h4>
           <div className="tg"><div>Multiple accounts<small>{draft.multiple_accounts_allowed ? 'Can create Single and Multiple accounts.' : 'Single accounts only. Any Multiple account they already have stays, they just can’t create a new one.'}</small></div><Switch on={draft.multiple_accounts_allowed} label="Multiple accounts" onClick={() => set({ multiple_accounts_allowed: !draft.multiple_accounts_allowed })}/></div>
           <div className="eyebrow" style={{ margin: '10px 0 6px' }}>Account limit</div>
-          <div className="step"><button type="button" aria-label="Lower the limit" onClick={() => set({ account_limit: draft.account_limit == null ? Math.max(1, row.accounts_used) : Math.max(1, draft.account_limit - 1) })}>−</button><b>{draft.account_limit == null ? 'No limit' : draft.account_limit}</b><button type="button" aria-label="Raise the limit" disabled={draft.account_limit == null} onClick={() => set({ account_limit: Math.min(99, draft.account_limit + 1) })}>+</button><span className="muted">{row.accounts_used} in use</span>{draft.account_limit != null && <button type="button" className="btn" style={{ marginLeft: 'auto' }} onClick={() => set({ account_limit: null })}>No limit</button>}</div>
+          <div className="step"><span className="stepper"><button type="button" aria-label="Lower the limit" onClick={() => set({ account_limit: draft.account_limit == null ? Math.max(1, row.accounts_used) : Math.max(1, draft.account_limit - 1) })}>−</button><b>{draft.account_limit == null ? 'No limit' : draft.account_limit}</b><button type="button" aria-label="Raise the limit" disabled={draft.account_limit == null} onClick={() => set({ account_limit: Math.min(99, draft.account_limit + 1) })}>+</button></span><span className="muted">{row.accounts_used} in use</span>{draft.account_limit != null && <button type="button" className="btn nolimit" onClick={() => set({ account_limit: null })}>No limit</button>}</div>
           {over && <div className="note warn" style={{ marginTop: 10 }}><AlertTriangle size={16}/><span>They already have {row.accounts_used} accounts and keep all of them, but can’t create another until they’re under {draft.account_limit}. They’ll see: “Your plan allows {draft.account_limit} accounts. You have {row.accounts_used}.”</span></div>}</div>
-        <button type="button" className="btn pri" disabled={!dirty} onClick={startSave}><Lock size={15}/>Save changes · needs PIN</button>
-        <div className="blk"><h4>Access</h4>
+        <div className="blk"><h4><span className="h4i"><Lock size={16} aria-hidden="true"/></span>Access</h4>
           <div className="acts">
             <button type="button" className="btn gold" disabled={st !== 'active'} onClick={() => setModal({ type: 'danger', kind: 'suspend' })}><Pause size={15}/>Suspend</button>
             <button type="button" className="btn bad" disabled={st === 'banned'} onClick={() => setModal({ type: 'danger', kind: 'ban' })}><Ban size={15}/>Ban</button>
@@ -297,6 +297,7 @@ function MemberPanel({ row, focusFeatures, onClose, onChanged }) {
           <div className="hint" style={{ marginTop: 8, textAlign: 'left' }}>Suspend keeps everything and is reversible. Ban blocks journal data access and their email. Delete starts a 14-day read-only countdown first.</div></div>
         <div className="note"><ShieldCheck size={16}/><span>Private trading records, balances and screenshots are never shown to Owners.</span></div>
       </div>
+      <div className="dfoot"><button type="button" className="btn pri" disabled={!dirty} onClick={startSave}><Lock size={15}/>Save changes · needs PIN</button></div>
     </aside>
     {modal?.type === 'planq' && <>
       <div className="scrim" style={{ zIndex: 55 }} onClick={() => setModal(null)}/>
@@ -517,10 +518,10 @@ function MemberPreview({ phone, refreshKey }) {
 
 const NAV = [
   ['members', 'Members', 'The register', Users],
-  ['ann', 'Announcements', 'Mailroom', Megaphone],
-  ['log', 'Activity log', 'Records', ScrollText],
-  ['sec', 'Security', 'The vault', KeyRound],
-  ['user', 'Member view', 'Front of house', UserRound],
+  ['ann', 'Announcements', 'Message members', Megaphone],
+  ['log', 'Activity log', 'Every action recorded', ScrollText],
+  ['sec', 'Security', 'PIN and authenticator', KeyRound],
+  ['user', 'Member view', 'What members see', UserRound],
 ];
 const TITLES = { members: ['The Register', 'Plans, features, limits and access for every member.'], user: ['Front of House', 'What members see in each situation.'], sec: ['The Vault', 'PIN, authenticator, backup codes and who holds the keys.'], log: ['The Records', 'Every action and every failed PIN, written once and never changed.'], ann: ['The Mailroom', 'Write once, address it, send it. One-way messages from Admin.'] };
 
@@ -591,7 +592,7 @@ export default function AdminOffice({ onClose }) {
       : <div className="office">
         <aside className="rail">
           <div className="plate"><div className="crest"><ShieldCheck size={20}/></div><div><small>AAICOREFX</small><b>Administration Office</b></div></div>
-          <div className="signed"><div className="av o">OW</div><div><b>Owner</b><small>Signed in</small></div></div>
+          <div className="signed"><div className="av o">OW</div><div><b>Owner</b><small className="on">● Signed in</small></div></div>
           <nav className="nav" aria-label="Administration Office">{NAV.map(([id, label, sub, Icon, soon]) => <button type="button" key={id} className={tab === id ? 'on' : ''} disabled={!!soon} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)} style={soon ? { opacity: .45, cursor: 'default' } : undefined}><Icon size={17} aria-hidden="true"/><span><b>{label}</b><small>{soon ? 'Coming soon' : sub}</small></span></button>)}</nav>
           <div className="door"><div className="dl"><span className="eyebrow">Office door</span><b>{clock(left)}</b></div><div className="meter"><i style={{ width: `${left / 9}%` }}/></div><button type="button" className="btn ghost" onClick={() => lock()}><Lock size={15}/>Lock the door</button></div>
         </aside>
@@ -620,7 +621,7 @@ export function AdminOfficeLauncher() {
   return <section className="ao-launch" aria-label="Administration Office">
     <div className="ao-launch-card">
       <span className="ao-launch-ico"><ShieldCheck size={24}/></span>
-      <div><h2>Administration Office</h2><p>Members, plans, features and limits. Protected by your authenticator code and PIN.</p></div>
+      <div className="ao-launch-text"><span className="ao-launch-eye">Owner only</span><h2>Administration Office</h2><p>Members, plans, features and limits. Protected by your authenticator code and PIN.</p></div>
       <button type="button" className="ao-launch-btn" onClick={() => setOpen(true)}><Lock size={15}/>Open the office</button>
     </div>
     {open && createPortal(<div className="ao-layer"><AdminOffice onClose={() => setOpen(false)}/></div>, document.body)}

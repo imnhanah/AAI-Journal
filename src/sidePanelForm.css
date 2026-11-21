@@ -258,3 +258,9 @@
 @media (min-width:768px) and (prefers-reduced-motion:reduce) {
   .sp-form *,.sp-form *::before,.sp-form *::after {transition:none!important;}
 }
+
+/* Tidy chip grids: even columns instead of scattered pills */
+.tj-root .sp-panel .sp-card .sp-chips:not(.sp-account-picks){display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tj-root .sp-panel .sp-card .sp-chips:not(.sp-account-picks) .sp-chip,.tj-root .sp-panel .ecl-confluence-controls .ecl-chip{width:100%;height:auto;min-height:40px;padding:9px 12px;border-radius:12px;justify-content:flex-start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tj-root .sp-panel .sp-card .sp-chip .sp-chip-check{width:17px;height:17px;flex:none}
+@media(max-width:767px){.tj-root .sp-panel .sp-card .sp-chips:not(.sp-account-picks){grid-template-columns:1fr}}

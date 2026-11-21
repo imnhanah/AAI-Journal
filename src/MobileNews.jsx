@@ -1,8 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Flag, List, Search, SlidersHorizontal, X} from 'lucide-react';
-import {NewsAlertBell, NewsReleaseHero} from './NewsAlerts.jsx';
+import {NewsReleaseHero} from './NewsAlerts.jsx';
 import {useNavStep} from './useBackNavigation.js';
-import PhoneHeaderSlot from './PhoneHeaderSlot.jsx';
 import {DEFAULT_NEWS_FILTERS, NEWS_CURRENCIES, toggleNewsCurrency} from './newsPreferences.js';
 import {newsDayTiming, newsEventTiming, newsFilterCount, newsImpactDots, newsWeekTitle} from './mobileNews.js';
 import {phoneScrollTarget, scrollPhoneTo} from './phoneScroll.js';
@@ -166,8 +165,6 @@ export default function MobileNews({tab, onTab, feed, dayKeys, byDay, count, fil
   const calMonthLabel = `${MON[calBase.getMonth()]} ${calBase.getFullYear()}`;
 
   return <main className="tj-nx" aria-label="News" ref={rootRef}>
-    <PhoneHeaderSlot><div className="tj-nx-header"><NewsAlertBell/></div></PhoneHeaderSlot>
-
     {/* Stats hero card */}
     <div className="tj-nx-stats-card">
       <div className="tj-nx-stats-top">

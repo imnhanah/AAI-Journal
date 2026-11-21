@@ -23,9 +23,9 @@ test('every exit asks first when there are unsaved ticks', () => {
   assert.doesNotMatch(screen, /onClick=\{onClose\}/);
 });
 
-test('News and Guardrails keep the ticks, and a failed save stays on Start day', () => {
+test('News keeps the ticks, there is no Guardrails link, and a failed save stays on Start day', () => {
   assert.match(screen, /saveThen\(onNews\)/);
-  assert.match(screen, /saveThen\(onGuardrails\)/);
+  assert.doesNotMatch(screen, /Guardrails/);
   assert.match(screen, /if \(!changed\) \{ action\(\); return; \}/);
   assert.match(screen, /await onSaveTicks\(checked\); action\(\); \} catch/);
 });

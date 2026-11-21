@@ -91,7 +91,7 @@ import { useDisclosureScroll } from './useDisclosureScroll';
 import DailyRoutinePopup, { DailyRoutineManagement } from './DailyRoutine.jsx';
 import {createRoutineEntryGate} from './routineEntryGate.js';
 import { useDailyRoutine } from './useDailyRoutine';
-import { activeRoutineItems, completeRoutine, isRoutineTradingDay, routineProgress, routineRequired } from './dailyRoutine';
+import { activeRoutineItems, completeRoutine, isRoutineTradingDay, normalizeRoutine, routineProgress, routineRequired } from './dailyRoutine';
 import { disclosurePair, disclosureColumns } from './disclosurePairs';
 import { summarizeClosedTrades } from './journalStats';
 import {financeOverdraftWarning, financialValidationMessage, validateAccountFinancialData, validateFinanceMovement, validateTradeFinancialData} from './financialValidation.js';
@@ -117,6 +117,8 @@ import FeatureReadOnly from './FeatureReadOnly.jsx';
 import { setCloudWritesPaused } from './db.js';
 import { AccountCapacityContext } from './capacityContext.js';
 import MemberBell from './MemberBell.jsx';
+import { postNotice } from './appNotices.js';
+import { firstRoutineOfWeek, lastWeekTotal, weekPnlPercent, weekStartMs, weeklyChallengeRows } from './weeklyChallenge.js';
 import MobileProfileSettings from './MobileProfileSettings';
 import MobileDailyRoutine from './MobileDailyRoutine';
 import MobileWorkspaceMenu from './MobileWorkspaceMenu';
@@ -129,7 +131,7 @@ import {nextHeaderState} from './phoneHeaderScroll.js';
 import BackButton from './BackButton.jsx';
 import {MobileRiskPresets, MobileSetupList} from './MobileSetupLists';
 import {useBalancePrivacy} from './BalancePrivacy';
-import {normaliseDisplayPreferences, setDisplayPreferences, displayMetadata, weekStartOffset, startOfDisplayWeek, displayWeekdays, resolveStartPage} from './displayPreferences';
+import {displayPreferences, normaliseDisplayPreferences, setDisplayPreferences, displayMetadata, weekStartOffset, startOfDisplayWeek, displayWeekdays, resolveStartPage} from './displayPreferences';
 import './profileSettingsRedesign.css?panel-position=2';
 import './interactiveAccent.css';
 import LanguageSelector, { useLanguage } from './LanguageSelector';
@@ -6703,8 +6705,9 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
     let sequence = 0;
     const refresh = async () => {
       const request = ++sequence;
-      const authorized = await readMembershipAdmin().catch(() => false);
-      if (live && request === sequence) setMembershipAdmin(authorized);
+      // Only a real answer from the server changes the tab. A busy or failed check keeps it as it was.
+      const authorized = await readMembershipAdmin().catch(() => null);
+      if (live && request === sequence && authorized !== null) setMembershipAdmin(authorized);
     };
     void refresh();
     window.addEventListener('focus', refresh);
@@ -6776,6 +6779,8 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
       // makes an otherwise composited sidebar transition hitch. The journal
       // rows above cover the only non-semantic clickable surfaces we need.
       if (!journalRow) target = target?.closest('button, a, [role="button"], [role="tab"], tr, [tabindex], .tj-settings-section-head') || null;
+      // The routine popup is focusable for keyboard access, but the glow would tint the whole window.
+      if (target?.classList.contains('tj-routine-popup')) return clear();
       if (!target || target.classList.contains('tj-root') || !target.closest('.tj-root') || target.closest(':disabled, [aria-disabled="true"]')) return clear();
       if (target !== active) { clear(); active = target; }
       cancelAnimationFrame(frame);
@@ -7959,6 +7964,33 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
   const routineBalance = dashboardBalances.find(item => item.id === dashboardBalanceId) || dashboardBalances[0];
   const routineChallengeBalance = useMemo(() => routineBalance ? {...routineBalance, trades:account.trades, financeMovements:account.financeMovements, balances:account.balances} : null, [routineBalance, account]);
   const routineChallenge = useBalanceChallenge(routineChallengeBalance, user.id, challengeProgress?.balance?.[routineBalance?.id], challengeProgressReady);
+  // Weekly challenge progress for the Daily Routine: read-only, worked out from each challenge's own saved progress and trades.
+  const routineOff = normalizeRoutine(routineStore.routine).enabled === false;
+  const routineWeekly = useMemo(() => {
+    if (!routinePrompt && !routineOff) return null;
+    const now = new Date(), weekStart = displayPreferences().weekStart;
+    const entries = [];
+    // Same scope as the Challenge page: the open workspace, whose trades are fully loaded.
+    for (const workspace of account && !account.isPlaceholder ? [account] : []) {
+      if (isMultiBalanceWorkspace(workspace)) {
+        for (const balance of activeBalances(workspace)) if (balance.challengeEnabled) entries.push({ id: balance.id, name: balance.name || workspace.name, progress: challengeStateFor(balance.id), scoped: scopeChallengeAccount(workspace, balance) });
+      } else if (workspace.challengeEnabled) entries.push({ id: workspace.id, name: workspace.name, progress: challengeProgress?.account?.[workspace.id] ?? null, scoped: workspace });
+    }
+    const rows = weeklyChallengeRows(entries, now, weekStart);
+    const monday = new Date(weekStartMs(now, weekStart) + (weekStart === 'sunday' ? 86400000 : 0)), friday = new Date(monday.getTime() + 4 * 86400000);
+    const short = date => date.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+    return { rows, lastTotal: lastWeekTotal(rows), firstOfWeek: firstRoutineOfWeek(routineStore.routine, now, weekStart), label: `${short(monday)} – ${short(friday)}` };
+  }, [routinePrompt, routineOff, account, challengeProgress, challengeStateFor, routineStore.routine]);
+  // Routine off but a challenge running: one quiet bell note on the first day of the week, never a popup.
+  useEffect(() => {
+    if (!routineOff || !routineWeekly?.rows?.length || !account || account.isPlaceholder) return;
+    const now = new Date(), weekStart = displayPreferences().weekStart;
+    if (now.getDay() !== (weekStart === 'sunday' ? 0 : 1)) return;
+    const first = routineWeekly.rows[0], more = routineWeekly.rows.length - 1;
+    const last = routineWeekly.lastTotal;
+    const lead = routineWeekly.rows.some(row => row.last != null) ? `Last week you moved ${last > 0 ? '+' : ''}${last} ${Math.abs(last) === 1 ? 'level' : 'levels'}. ` : 'A new week begins. ';
+    postNotice({ key: `week:${account.id}:${new Date(weekStartMs(now, weekStart)).toLocaleDateString('en-CA')}`, kind: 'goal', quiet: true, title: 'New week, new levels', text: `${lead}${first.name} starts at L${first.start}${more > 0 ? ` and ${more} more` : ''}.`, to: 'challenge', label: 'Open' });
+  }, [routineOff, routineWeekly, account]);
   const dashboardGuardrails = useMemo(()=>dashboardAccount?accountGuardrails(dashboardAccount,dashboardAccount.trades):null,[dashboardAccount]);
   const guardrails = useMemo(() => {
     if(!account)return null;
@@ -7967,6 +7999,20 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
     const scoped=selected?scopeChallengeAccount(account,selected):account;
     return {...accountGuardrails(scoped,scoped.trades),tradeEntryLocked:dashboardBalances.length>0 && dashboardBalances.every(balance=>accountLossGuardrails(scopeChallengeAccount(account,balance)).tradeEntryLocked)};
   }, [account,dashboardBalances,dashboardBalanceId]);
+  // Guard and goals speak through the bell. One notice per event: the key carries the account and the period it belongs to.
+  useEffect(() => {
+    if (!account || account.isPlaceholder || !guardrails) return;
+    const today = new Date().toLocaleDateString('en-CA');
+    const month = today.slice(0, 7);
+    if (guardrails.tradeEntryLocked) {
+      const daily = guardrails.dailyLossHit || !guardrails.monthlyLossHit;
+      postNotice({ key: `guard:${account.id}:${daily ? `d:${today}` : `m:${month}`}`, kind: 'guard', urgent: true, to: 'analytics', label: 'Review',
+        title: daily ? 'Daily loss limit reached' : 'Monthly loss limit reached',
+        text: daily ? 'Trade logs are read-only until the next trading day.' : 'Trade logs are read-only until the monthly limit resets.' });
+    }
+    if (guardrails.monthlyGoal > 0 && guardrails.monthlyPnl >= guardrails.monthlyGoal) postNotice({ key: `goal:${account.id}:m:${month}`, kind: 'goal', title: 'Monthly goal reached', text: 'You hit this month\'s target. Well earned.' });
+    if (guardrails.yearlyGoal > 0 && guardrails.yearlyPnl >= guardrails.yearlyGoal) postNotice({ key: `goal:${account.id}:y:${today.slice(0, 4)}`, kind: 'goal', title: 'Yearly goal reached', text: 'You hit this year\'s target. Well earned.' });
+  }, [account, guardrails?.tradeEntryLocked, guardrails?.dailyLossHit, guardrails?.monthlyLossHit, guardrails?.monthlyGoal, guardrails?.monthlyPnl, guardrails?.yearlyGoal, guardrails?.yearlyPnl]);
   useEffect(() => {
     if (!account) { setFinanceReminder([]); return; }
     const check = () => {
@@ -7978,6 +8024,8 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
         if (financeReminderOpen.current.has(saving.id)) return false;
         return claimSavingsReminder({ key: `${user.id}:${account.id}:${saving.id}`, windowKey, saving, now, fallback: financeReminderTimes.current });
       });
+      // The reminder window already opens by itself; the bell keeps a quiet record of it.
+      ready.forEach(saving => postNotice({ key: `savings:${account.id}:${saving.id}:${windowKey}`, kind: 'savings', quiet: true, urgent: true, to: 'finance', label: 'Open', title: `Save ${fmtMoney(savingsAllocation(account, saving).remaining)} to ${saving.name}`, text: 'Your profit allocation is waiting in Finance.' }));
       setFinanceReminder(current => {
         const stillDue = eligible.filter(saving => current.some(item => item.id === saving.id));
         const ids = new Set(stillDue.map(saving => saving.id));
@@ -9491,7 +9539,7 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
             {routineToday.unfinished && <button type="button" className="tj-btn-outline tj-continue-routine-action" disabled={routineTriggerBusy || tradeLogsReadOnly} aria-label={`Continue daily routine, ${routineToday.ticked} of ${routineToday.total} tasks completed`} onClick={continueDailyRoutine}><ClipboardCheck size={15}/>Routine {routineToday.ticked}/{routineToday.total}</button>}
             <button type="button" className="tj-btn-outline tj-start-day-action" disabled={routineTriggerBusy || tradeLogsReadOnly} onClick={() => requireWorkspace(openNewMarkup)}><ScanLine size={15}/>{startDayNeeded ? 'Start day' : 'New markup'}</button>
             <button type="button" className="tj-btn-primary" disabled={guardrails.tradeEntryLocked || tradeLogsReadOnly} onClick={() => requireWorkspace(() => openNewTrade())}><Plus size={16}/>Log trade</button>
-            <MemberBell userId={user?.id}/>
+            <MemberBell userId={user?.id} onAction={(to) => { if (['finance','challenge','analytics','news'].includes(to)) { if (backNav.enabled) navigateMobile(to); else setPage(to); } }}/>
             <div id={PHONE_HEADER_SLOT_ID} className="tj-phone-header-slot"/>
             <div className="tj-header-account-control" ref={accountMenuRef}>
               <button type="button" className="tj-header-account-switcher" aria-label={account.isPlaceholder ? "Add account" : `Switch journal: ${account.name}`} aria-expanded={showAccountMenu} onClick={() => requireWorkspace(() => setShowAccountMenu((open) => !open))}><span className="tj-account-initial" aria-hidden="true">{account.isPlaceholder ? <Plus size={14}/> : accountInitial(account.name)}</span><span>{account.isPlaceholder ? 'Add account' : account.name.length > 14 ? `${account.name.slice(0, 14)}…` : account.name}</span><ChevronDown size={16}/></button>
@@ -9545,7 +9593,7 @@ export function TradingJournalApp({ user, membership, memberAccess, onRefreshMem
       {modal === "account" && !account.isPlaceholder && (!guardrails.tradeEntryLocked || !financialValidation.valid) && <AccountSettingsModal journalReadOnly={tradeLogsReadOnly} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior} navVia={modalVia.current} key={`${account.id}-${accountSettingsPane}`} initialPane={accountSettingsPane} account={account} challenge={challenge} userId={user.id} canUseMultiBalance onClose={() => setModal(null)} onSave={handleSaveAccountSettings} onImport={(trades, onProgress, balanceId) => importTradesToAccount(account, trades, onProgress, balanceId)} onDelete={handleDeleteAccount} onReset={handleResetData} />}
       {modal === "import" && !tradeLogsReadOnly && !account.isPlaceholder && !guardrails.tradeEntryLocked && <ImportTradesModal account={account} onClose={() => setModal(null)} onImport={(plan, onProgress, balanceId) => importTradesToAccount(account, plan, onProgress, balanceId)} />}
       {modal === "profile" && <ProfileSettingsModal navVia={modalVia.current} onLogout={onLogout} routine={routineStore.routine} onUpdateRoutine={updateJournalRoutine} onOpenRoutine={openRoutineManagement} user={{ ...user, user_metadata: { ...user.user_metadata, full_name: profileDetails.fullName, display_name: displayName, avatar_url: personalProfileImage, timezone: profileDetails.timezone, date_format: profileDetails.dateFormat, time_format: profileDetails.timeFormat, privacy_screen_enabled: privacySettings.enabled, privacy_screen_timeout_minutes: privacySettings.timeoutMinutes, theme_palettes: profilePalettes, trade_panel_position:entryPanelPosition, trade_panel_behavior:entryPanelBehavior, ...displayMetadata(displaySettings) } }} account={account} themeValue={profileTheme} themePreference={profileThemePreference} paletteValue={profilePalettes} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior} onPreviewAppearance={(nextTheme, nextPalettes) => { const resolvedTheme = nextTheme === "system" ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") : nextTheme; applyProfilePalettes(nextPalettes, resolvedTheme); setProfileTheme(nextTheme); setProfilePalettes(nextPalettes); }} onClose={() => setModal(null)} onSave={handleSaveProfileSettings} onDeleteProfile={handleDeleteProfile} onSync={syncJournal} syncing={syncing} lastSyncedAt={lastSyncedAt} cloudSyncAccess={cloudSyncAccess} cloudSyncEntitled={cloudSyncEntitled} onOpenPricing={() => window.location.assign('/pricing')} onToggleCloudSync={toggleCloudSync} />}
-      {routinePrompt && isRoutineTradingDay() && <DailyRoutinePopup continueOnly={routineContinueOnly} saveAndOpenMarkup={routineOpenMarkupAfterSave} entryKind={routineEntryKind} routine={routineStore.routine} firstName={(displayName || "Trader").split(/\s+/)[0]} sessionFor={now => entrySessionFromOpenTime(now.toISOString().slice(11,16), now.toISOString().slice(0,10))} accountSummary={{name:routineBalance?.name || account.name,balance:fmtMoney(routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance),cap:guardrails.dailyLossHit ? "Daily cap reached" : "Daily cap open",level:Math.min(routineChallenge.state?.activeLevel || challenge.state?.activeLevel || 1, routineBalance?.challengeLevelCount || account.challengeLevelCount || 30)}} onClose={closeDailyRoutine} onSave={saveDailyRoutine} onSaveTicks={tickedIds => updateJournalRoutine(latest => completeRoutine(latest, tickedIds, new Date()))} onEdit={openRoutineManagement} onNews={() => {closeDailyRoutine();setPage("news");}} onGuardrails={() => {closeDailyRoutine();setPage("analytics");}}/>}
+      {routinePrompt && isRoutineTradingDay() && <DailyRoutinePopup continueOnly={routineContinueOnly} saveAndOpenMarkup={routineOpenMarkupAfterSave} entryKind={routineEntryKind} routine={routineStore.routine} firstName={(displayName || "Trader").split(/\s+/)[0]} sessionFor={now => entrySessionFromOpenTime(now.toISOString().slice(11,16), now.toISOString().slice(0,10))} accountSummary={{name:routineBalance?.name || account.name,balance:fmtMoney(routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance),weekPct:(() => { const scoped = routineBalance ? scopeChallengeAccount(account, routineBalance) : account; return weekPnlPercent({ trades: scoped.trades, financeMovements: scoped.financeMovements, balance: routineBalance ? financeTotals(account,routineBalance.id).tradingBalance : financeTotals(account).tradingBalance, weekStart: displayPreferences().weekStart }); })()}} weekly={routineWeekly} onClose={closeDailyRoutine} onSave={saveDailyRoutine} onSaveTicks={tickedIds => updateJournalRoutine(latest => completeRoutine(latest, tickedIds, new Date()))} onEdit={openRoutineManagement} onNews={() => {closeDailyRoutine();setPage("news");}}/>}
       {modal === "addaccount" && !atAccountLimit && <AddAccountModal allowImport={!tradeLogsReadOnly} onClose={() => setModal(null)} onCreate={handleCreateAccount} userId={user.id} tradePanelPosition={entryPanelPosition} tradePanelBehavior={entryPanelBehavior}/>}
       {dayModalDate && (
         <DayTradesModal
